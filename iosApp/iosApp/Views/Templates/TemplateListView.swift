@@ -4,10 +4,18 @@ import KMPNativeCoroutinesAsync
 
 struct TemplateListView: View {
     private let viewModel = KoinHelper.shared.getTemplateListViewModel()
+    private let workoutViewModel = KoinHelper.shared.getWorkoutSessionViewModel()
 
     @State private var templates: [WorkoutTemplate] = []
     @State private var showDeleteConfirmation = false
     @State private var templateToDelete: WorkoutTemplate? = nil
+
+    // Workout navigation state
+    @State private var showResumePrompt = false
+    @State private var activeWorkoutNavigation = false
+    @State private var isResumeNavigation = false
+    @State private var selectedTemplateId: Int64 = 0
+    @State private var selectedTemplateName: String = ""
 
     var body: some View {
         Group {
@@ -27,6 +35,13 @@ struct TemplateListView: View {
                 }
             }
         }
+        .navigationDestination(isPresented: $activeWorkoutNavigation) {
+            WorkoutSessionView(
+                templateId: selectedTemplateId,
+                templateName: selectedTemplateName,
+                isResume: isResumeNavigation
+            )
+        }
         .alert("Delete Template?", isPresented: $showDeleteConfirmation, presenting: templateToDelete) { template in
             Button("Delete", role: .destructive) {
                 viewModel.deleteTemplate(id: template.id)
@@ -35,8 +50,25 @@ struct TemplateListView: View {
         } message: { template in
             Text("This cannot be undone.")
         }
+        .alert("Resume Workout?", isPresented: $showResumePrompt) {
+            Button("Resume") {
+                isResumeNavigation = true
+                activeWorkoutNavigation = true
+            }
+            Button("Discard", role: .destructive) {
+                workoutViewModel.discardWorkout()
+            }
+        } message: {
+            Text("You have an unfinished workout. Would you like to continue?")
+        }
         .task {
-            await observeTemplates()
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { await observeTemplates() }
+                group.addTask { await observeHasActiveSession() }
+            }
+        }
+        .onAppear {
+            workoutViewModel.checkForActiveSession()
         }
     }
 
@@ -75,15 +107,29 @@ struct TemplateListView: View {
     private var templateList: some View {
         List {
             ForEach(templates, id: \.id) { template in
-                NavigationLink(destination: TemplateEditorView(templateId: template.id)) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(template.name)
-                            .font(.body.weight(.semibold))
-                        Text("\(template.exercises.count) exercise\(template.exercises.count == 1 ? "" : "s")")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                HStack {
+                    NavigationLink(destination: TemplateEditorView(templateId: template.id)) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(template.name)
+                                .font(.body.weight(.semibold))
+                            Text("\(template.exercises.count) exercise\(template.exercises.count == 1 ? "" : "s")")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(minHeight: 40)
                     }
-                    .frame(minHeight: 40)
+
+                    Button {
+                        selectedTemplateId = template.id
+                        selectedTemplateName = template.name
+                        isResumeNavigation = false
+                        activeWorkoutNavigation = true
+                    } label: {
+                        Image(systemName: "play.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(Color(red: 0.4, green: 0.733, blue: 0.416))
+                    }
+                    .buttonStyle(.plain)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
@@ -106,6 +152,18 @@ struct TemplateListView: View {
             }
         } catch {
             print("TemplateList flow observation error: \(error)")
+        }
+    }
+
+    private func observeHasActiveSession() async {
+        do {
+            for try await hasActive in asyncSequence(for: workoutViewModel.hasActiveSessionFlow) {
+                if hasActive.boolValue {
+                    showResumePrompt = true
+                }
+            }
+        } catch {
+            print("Error observing hasActiveSession: \(error)")
         }
     }
 }
