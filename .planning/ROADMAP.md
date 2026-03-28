@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — KMP project scaffolding, Room database, exercise data layer with 873-exercise seeding
+- [x] 01-01-PLAN.md — KMP project scaffolding, Room database, exercise data layer with 873-exercise seeding
 - [ ] 01-02-PLAN.md — ViewModels, Koin DI wiring, iOS navigation shell with placeholder screens
 - [ ] 01-03-PLAN.md — iOS exercise catalog, detail, create exercise, and anatomy SVG picker
 **UI hint**: yes
