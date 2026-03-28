@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Foundation & Exercise Catalog
-**Goal**: Users can launch the app, see the navigation shell, and browse a seeded exercise catalog
+**Goal**: Users can launch the app, see the navigation shell, and browse a seeded exercise catalog with search, filtering, and custom exercise creation
 **Depends on**: Nothing (first phase)
 **Requirements**: EXER-01, EXER-02, EXER-03, NAV-01
 **Success Criteria** (what must be TRUE):
@@ -28,12 +28,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can browse and search a seeded exercise catalog with muscle group filtering
   3. User can create a custom exercise with name and primary muscle group, and it appears in the catalog
   4. App compiles and runs on both Android and iOS from the shared KMP module
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — KMP project scaffolding, Room database, exercise data layer with 873-exercise seeding
+- [ ] 01-02-PLAN.md — ViewModels, Koin DI wiring, iOS navigation shell with placeholder screens
+- [ ] 01-03-PLAN.md — iOS exercise catalog, detail, create exercise, and anatomy SVG picker
+**UI hint**: yes
 
 ### Phase 2: Template Management
 **Goal**: Users can create, edit, and organize workout templates with exercises and targets
@@ -92,7 +93,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Exercise Catalog | 0/0 | Not started | - |
+| 1. Foundation & Exercise Catalog | 0/3 | Planning complete | - |
 | 2. Template Management | 0/0 | Not started | - |
 | 3. Workout Session | 0/0 | Not started | - |
 | 4. History & Settings | 0/0 | Not started | - |
