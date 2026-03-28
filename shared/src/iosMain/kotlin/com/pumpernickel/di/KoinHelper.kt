@@ -5,6 +5,7 @@ import com.pumpernickel.presentation.exercises.ExerciseCatalogViewModel
 import com.pumpernickel.presentation.exercises.ExerciseDetailViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import com.pumpernickel.presentation.templates.TemplateListViewModel
+import com.pumpernickel.presentation.workout.WorkoutSessionViewModel
 import org.koin.mp.KoinPlatform
 
 object KoinHelper {
@@ -21,5 +22,8 @@ object KoinHelper {
         KoinPlatform.getKoin().get()
 
     fun getTemplateEditorViewModel(): TemplateEditorViewModel =
+        KoinPlatform.getKoin().get()
+
+    fun getWorkoutSessionViewModel(): WorkoutSessionViewModel =
         KoinPlatform.getKoin().get()
 }

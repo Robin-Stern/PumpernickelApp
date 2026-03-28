@@ -19,6 +19,7 @@ import com.pumpernickel.presentation.exercises.ExerciseCatalogViewModel
 import com.pumpernickel.presentation.exercises.ExerciseDetailViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import com.pumpernickel.presentation.templates.TemplateListViewModel
+import com.pumpernickel.presentation.workout.WorkoutSessionViewModel
 import com.pumpernickel.readResourceFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -54,6 +55,7 @@ val sharedModule = module {
     viewModel { CreateExerciseViewModel(get()) }
     viewModel { TemplateListViewModel(get()) }
     viewModel { TemplateEditorViewModel(get(), get()) }
+    viewModel { WorkoutSessionViewModel(get(), get()) }
 }
 
 // Common init function
