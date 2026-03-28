@@ -1,0 +1,41 @@
+import SwiftUI
+
+struct WorkoutEmptyStateView: View {
+    var onBrowseExercises: (() -> Void)?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 16) {
+                Image(systemName: "dumbbell.fill")
+                    .font(.system(size: 64))
+                    .foregroundColor(Color(white: 0.62))
+
+                Text("No Workouts Yet")
+                    .font(.title3.weight(.semibold))
+
+                Text("Start by exploring exercises to build your first workout template.")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
+            Spacer()
+
+            Button(action: { onBrowseExercises?() }) {
+                Text("Browse Exercises")
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color(red: 0.4, green: 0.733, blue: 0.416))
+                    .cornerRadius(12)
+            }
+            .padding(.horizontal, 32)
+            .padding(.bottom, 32)
+        }
+        .navigationTitle("Workout")
+    }
+}
