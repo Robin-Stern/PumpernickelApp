@@ -10,8 +10,8 @@ progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 6
-  completed_plans: 3
-  percent: 0
+  completed_plans: 4
+  percent: 40
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 2
-Plan: Not started
-Status: Ready to execute
+Plan: 1 of 3 complete
+Status: Executing
 Last activity: 2026-03-28
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01 P02 | 12min | 2 tasks | 15 files |
 | Phase 01 P03 | 10min | 3 tasks | 11 files |
+| Phase 02 P01 | 8min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Created Xcode project from scratch with KMPNativeCoroutinesAsync SPM 1.0.2 and Gradle embedAndSignAppleFrameworkForXcode build phase
 - [Phase 01]: Added koin-compose-viewmodel to commonMain for viewModel DSL in KMP (koin-core alone insufficient)
 - [Phase 01]: Used nicklockwood/SVGPath SPM for parsing SVG d-attributes to SwiftUI Path; computed isFormValid locally in Swift instead of observing Kotlin Boolean StateFlow
+- [Phase 02]: No @Transaction on DAO methods with function bodies -- KMP-safe for iOS; batch reorder in TemplateRepositoryImpl
+- [Phase 02]: Exercise name resolution at repository level via ExerciseRepository.getExerciseById().first()
+- [Phase 02]: fallbackToDestructiveMigration(dropAllTables = true) for v1-to-v2 migration -- prototype-acceptable
 
 ### Pending Todos
 
@@ -80,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T20:22:31.577Z
-Stopped at: Phase 2 planning complete
-Resume file: .planning/phases/02-template-management/02-01-PLAN.md
+Last session: 2026-03-28T20:33:50Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: .planning/phases/02-template-management/02-02-PLAN.md

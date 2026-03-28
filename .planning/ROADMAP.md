@@ -95,6 +95,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Exercise Catalog | 3/3 | Complete | 2026-03-28 |
-| 2. Template Management | 0/3 | Planning complete | - |
+| 2. Template Management | 1/3 | Executing | - |
 | 3. Workout Session | 0/0 | Not started | - |
 | 4. History & Settings | 0/0 | Not started | - |
