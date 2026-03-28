@@ -12,7 +12,8 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Exercise catalog (local, seeded or user-created) — Validated in Phase 1: Foundation & Exercise Catalog
+- [x] Bottom navigation: Workout, Overview, Nutrition (only Workout functional for now) — Validated in Phase 1: Foundation & Exercise Catalog
 
 ### Active
 
@@ -24,8 +25,6 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - [ ] Track workout progress (current exercise, current set)
 - [ ] Save completed workouts locally
 - [ ] View workout history (list of completed workouts)
-- [ ] Exercise catalog (local, seeded or user-created)
-- [ ] Bottom navigation: Workout, Overview, Nutrition (only Workout functional for now)
 - [ ] Local/offline storage (Room or SQLDelight — no backend for prototype)
 
 ### Out of Scope
@@ -85,4 +84,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after initialization*
+*Last updated: 2026-03-28 after Phase 1 completion*
