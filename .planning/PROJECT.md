@@ -14,11 +14,10 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 
 - [x] Exercise catalog (local, seeded or user-created) — Validated in Phase 1: Foundation & Exercise Catalog
 - [x] Bottom navigation: Workout, Overview, Nutrition (only Workout functional for now) — Validated in Phase 1: Foundation & Exercise Catalog
+- [x] Workout templates with exercises, target sets/reps/weight, rest periods — Validated in Phase 2: Template Management
+- [x] CRUD operations on workout templates — Validated in Phase 2: Template Management
 
 ### Active
-
-- [ ] Workout templates with exercises, target sets/reps/weight, rest periods
-- [ ] CRUD operations on workout templates
 - [ ] Execute a workout: select template → work through exercises → log sets → rest → finish
 - [ ] Set entry: log reps and weight per set
 - [ ] Rest timer between sets with countdown
@@ -84,4 +83,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 1 completion*
+*Last updated: 2026-03-28 after Phase 2 completion*
