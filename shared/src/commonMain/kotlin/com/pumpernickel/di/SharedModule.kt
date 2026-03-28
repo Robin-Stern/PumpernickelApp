@@ -5,8 +5,11 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.pumpernickel.data.db.AppDatabase
 import com.pumpernickel.data.db.DatabaseSeeder
 import com.pumpernickel.data.db.ExerciseDao
+import com.pumpernickel.data.db.WorkoutTemplateDao
 import com.pumpernickel.data.repository.ExerciseRepository
 import com.pumpernickel.data.repository.ExerciseRepositoryImpl
+import com.pumpernickel.data.repository.TemplateRepository
+import com.pumpernickel.data.repository.TemplateRepositoryImpl
 import com.pumpernickel.presentation.exercises.CreateExerciseViewModel
 import com.pumpernickel.presentation.exercises.ExerciseCatalogViewModel
 import com.pumpernickel.presentation.exercises.ExerciseDetailViewModel
@@ -24,15 +27,18 @@ val sharedModule = module {
         get<RoomDatabase.Builder<AppDatabase>>()
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
     single<ExerciseDao> { get<AppDatabase>().exerciseDao() }
+    single<WorkoutTemplateDao> { get<AppDatabase>().workoutTemplateDao() }
 
     // Seeder
     single<DatabaseSeeder> { DatabaseSeeder { readResourceFile("free_exercise_db.json") } }
 
-    // Repository
+    // Repositories
     single<ExerciseRepository> { ExerciseRepositoryImpl(get(), get()) }
+    single<TemplateRepository> { TemplateRepositoryImpl(get(), get()) }
 
     // ViewModels
     viewModel { ExerciseCatalogViewModel(get()) }
