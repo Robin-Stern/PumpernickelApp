@@ -3,13 +3,17 @@ package com.pumpernickel.di
 import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.pumpernickel.data.db.AppDatabase
+import com.pumpernickel.data.db.CompletedWorkoutDao
 import com.pumpernickel.data.db.DatabaseSeeder
 import com.pumpernickel.data.db.ExerciseDao
+import com.pumpernickel.data.db.WorkoutSessionDao
 import com.pumpernickel.data.db.WorkoutTemplateDao
 import com.pumpernickel.data.repository.ExerciseRepository
 import com.pumpernickel.data.repository.ExerciseRepositoryImpl
 import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.data.repository.TemplateRepositoryImpl
+import com.pumpernickel.data.repository.WorkoutRepository
+import com.pumpernickel.data.repository.WorkoutRepositoryImpl
 import com.pumpernickel.presentation.exercises.CreateExerciseViewModel
 import com.pumpernickel.presentation.exercises.ExerciseCatalogViewModel
 import com.pumpernickel.presentation.exercises.ExerciseDetailViewModel
@@ -29,11 +33,12 @@ val sharedModule = module {
         get<RoomDatabase.Builder<AppDatabase>>()
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
-            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
     single<ExerciseDao> { get<AppDatabase>().exerciseDao() }
     single<WorkoutTemplateDao> { get<AppDatabase>().workoutTemplateDao() }
+    single<WorkoutSessionDao> { get<AppDatabase>().workoutSessionDao() }
+    single<CompletedWorkoutDao> { get<AppDatabase>().completedWorkoutDao() }
 
     // Seeder
     single<DatabaseSeeder> { DatabaseSeeder { readResourceFile("free_exercise_db.json") } }
@@ -41,6 +46,7 @@ val sharedModule = module {
     // Repositories
     single<ExerciseRepository> { ExerciseRepositoryImpl(get(), get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get()) }
+    single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get()) }
 
     // ViewModels
     viewModel { ExerciseCatalogViewModel(get()) }
