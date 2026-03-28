@@ -45,12 +45,13 @@ Plans:
   2. Each exercise in a template has configurable target sets, target reps, target weight, and rest period duration
   3. User can edit a template (rename, add/remove exercises, change targets) and delete a template with confirmation
   4. User can reorder exercises within a template via drag-and-drop
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Room entities, DAO, repository, domain models, DB migration for template data layer
+- [ ] 02-02-PLAN.md — TemplateList and TemplateEditor ViewModels, Koin DI, KoinHelper iOS getters
+- [ ] 02-03-PLAN.md — iOS SwiftUI template list, editor, exercise picker views, and MainTabView update
 
 ### Phase 3: Workout Session
 **Goal**: Users can execute a full workout from template selection through set logging, rest timers, and saving the completed workout
@@ -93,7 +94,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Exercise Catalog | 0/3 | Planning complete | - |
-| 2. Template Management | 0/0 | Not started | - |
+| 1. Foundation & Exercise Catalog | 3/3 | Complete | 2026-03-28 |
+| 2. Template Management | 0/3 | Planning complete | - |
 | 3. Workout Session | 0/0 | Not started | - |
 | 4. History & Settings | 0/0 | Not started | - |
