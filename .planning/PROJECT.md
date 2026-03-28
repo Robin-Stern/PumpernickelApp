@@ -16,13 +16,13 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - [x] Bottom navigation: Workout, Overview, Nutrition (only Workout functional for now) — Validated in Phase 1: Foundation & Exercise Catalog
 - [x] Workout templates with exercises, target sets/reps/weight, rest periods — Validated in Phase 2: Template Management
 - [x] CRUD operations on workout templates — Validated in Phase 2: Template Management
+- [x] Execute a workout: select template → work through exercises → log sets → rest → finish — Validated in Phase 3: Workout Session
+- [x] Set entry: log reps and weight per set — Validated in Phase 3: Workout Session
+- [x] Rest timer between sets with countdown — Validated in Phase 3: Workout Session
+- [x] Track workout progress (current exercise, current set) — Validated in Phase 3: Workout Session
+- [x] Save completed workouts locally — Validated in Phase 3: Workout Session
 
 ### Active
-- [ ] Execute a workout: select template → work through exercises → log sets → rest → finish
-- [ ] Set entry: log reps and weight per set
-- [ ] Rest timer between sets with countdown
-- [ ] Track workout progress (current exercise, current set)
-- [ ] Save completed workouts locally
 - [ ] View workout history (list of completed workouts)
 - [ ] Local/offline storage (Room or SQLDelight — no backend for prototype)
 
@@ -83,4 +83,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 2 completion*
+*Last updated: 2026-03-28 after Phase 3 completion*
