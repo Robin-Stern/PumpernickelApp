@@ -24,6 +24,9 @@
 		A10035 /* AnatomyBackShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10035 /* AnatomyBackShape.swift */; };
 		A10036 /* MuscleRegionPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10036 /* MuscleRegionPaths.swift */; };
 		A10040 /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = D10003 /* SVGPath */; };
+		A10050 /* TemplateListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10050 /* TemplateListView.swift */; };
+		A10051 /* TemplateEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10051 /* TemplateEditorView.swift */; };
+		A10052 /* ExercisePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10052 /* ExercisePickerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +45,9 @@
 		B10034 /* AnatomyFrontShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnatomyFrontShape.swift; sourceTree = "<group>"; };
 		B10035 /* AnatomyBackShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnatomyBackShape.swift; sourceTree = "<group>"; };
 		B10036 /* MuscleRegionPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuscleRegionPaths.swift; sourceTree = "<group>"; };
+		B10050 /* TemplateListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateListView.swift; sourceTree = "<group>"; };
+		B10051 /* TemplateEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEditorView.swift; sourceTree = "<group>"; };
+		B10052 /* ExercisePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExercisePickerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,8 +91,19 @@
 				E10004 /* Common */,
 				E10007 /* Exercises */,
 				E10008 /* Anatomy */,
+				E10009 /* Templates */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		E10009 /* Templates */ = {
+			isa = PBXGroup;
+			children = (
+				B10050 /* TemplateListView.swift */,
+				B10051 /* TemplateEditorView.swift */,
+				B10052 /* ExercisePickerView.swift */,
+			);
+			path = Templates;
 			sourceTree = "<group>";
 		};
 		E10007 /* Exercises */ = {
@@ -276,6 +293,9 @@
 				A10034 /* AnatomyFrontShape.swift in Sources */,
 				A10035 /* AnatomyBackShape.swift in Sources */,
 				A10036 /* MuscleRegionPaths.swift in Sources */,
+				A10050 /* TemplateListView.swift in Sources */,
+				A10051 /* TemplateEditorView.swift in Sources */,
+				A10052 /* ExercisePickerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
