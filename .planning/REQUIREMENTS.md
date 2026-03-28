@@ -10,8 +10,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Exercise Management
 
 - [x] **EXER-01**: App ships with a seeded exercise catalog sourced from gymtracker's `free_exercise_db.json` (~873 exercises with muscle groups, equipment, level). Path: `/Users/olli/schenanigans/gymtracker/api/free_exercise_db.json`
-- [ ] **EXER-02**: User can create custom exercises with name and primary muscle group
-- [ ] **EXER-03**: User can browse and search the exercise catalog when building templates or during workouts
+- [x] **EXER-02**: User can create custom exercises with name and primary muscle group
+- [x] **EXER-03**: User can browse and search the exercise catalog when building templates or during workouts
 
 ### Template Management
 
@@ -105,8 +105,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | EXER-01 | Phase 1 | Complete |
-| EXER-02 | Phase 1 | Pending |
-| EXER-03 | Phase 1 | Pending |
+| EXER-02 | Phase 1 | Complete |
+| EXER-03 | Phase 1 | Complete |
 | TMPL-01 | Phase 2 | Pending |
 | TMPL-02 | Phase 2 | Pending |
 | TMPL-03 | Phase 2 | Pending |
