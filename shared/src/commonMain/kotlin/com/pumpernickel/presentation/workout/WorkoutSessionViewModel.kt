@@ -24,6 +24,7 @@ sealed class WorkoutSessionState {
     data object Idle : WorkoutSessionState()
 
     data class Active(
+        val templateId: Long,
         val templateName: String,
         val exercises: List<SessionExercise>,
         val currentExerciseIndex: Int,
@@ -114,6 +115,7 @@ class WorkoutSessionViewModel(
             workoutRepository.createActiveSession(templateId, template.name, now)
 
             _sessionState.value = WorkoutSessionState.Active(
+                templateId = templateId,
                 templateName = template.name,
                 exercises = exercises,
                 currentExerciseIndex = 0,
@@ -180,6 +182,7 @@ class WorkoutSessionViewModel(
             val elapsed = (now - activeSession.startTimeMillis) / 1000
 
             _sessionState.value = WorkoutSessionState.Active(
+                templateId = activeSession.templateId,
                 templateName = activeSession.templateName,
                 exercises = updatedExercises,
                 currentExerciseIndex = activeSession.currentExerciseIndex,
@@ -344,7 +347,7 @@ class WorkoutSessionViewModel(
 
             val completedWorkout = CompletedWorkout(
                 id = 0,
-                templateId = 0, // Will be populated from active session
+                templateId = active.templateId,
                 name = active.templateName,
                 startTimeMillis = active.startTimeMillis,
                 endTimeMillis = endTimeMillis,

@@ -129,6 +129,7 @@ struct TemplateListView: View {
                             .font(.title2)
                             .foregroundColor(Color(red: 0.4, green: 0.733, blue: 0.416))
                     }
+                    .accessibilityLabel("Start Workout")
                     .buttonStyle(.plain)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
