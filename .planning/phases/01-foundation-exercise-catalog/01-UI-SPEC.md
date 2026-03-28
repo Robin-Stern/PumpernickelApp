@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-03-28
+revised: 2026-03-28
 ---
 
 # Phase 1 -- UI Design Contract
@@ -53,12 +54,16 @@ Exceptions:
 
 ## Typography
 
+Two weights only: Regular (400) and Semibold (600).
+
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Body | 16px (16sp / 16pt) | Regular (400) | 1.5 (24px) | Exercise instructions, detail screen text, empty state body |
-| Label | 14px (14sp / 14pt) | Medium (500) | 1.4 (20px) | Filter chips, metadata labels (equipment, level, force), subtitle in list rows |
+| Label | 14px (14sp / 14pt) | Regular (400) | 1.4 (20px) | Filter chips, metadata labels (equipment, level, force), subtitle in list rows |
 | Heading | 20px (20sp / 20pt) | Semibold (600) | 1.2 (24px) | Screen titles, exercise name on detail screen, section headers |
-| Display | 28px (28sp / 28pt) | Bold (700) | 1.2 (34px) | Not used in Phase 1 (reserved for workout session numbers in Phase 3) |
+| Display | 28px (28sp / 28pt) | Semibold (600) | 1.2 (34px) | Not used in Phase 1 (reserved for workout session numbers in Phase 3) |
+
+**Exception -- exercise list row name:** Exercise names in the catalog list (Component 3) use 16px Semibold (600) -- Body size at Heading weight. This is a deliberate one-off to give exercise names visual prominence within the compact list row without increasing font size. This is the only location where weights cross role boundaries.
 
 **Platform mapping:**
 - iOS (SwiftUI): Body = `.body`, Label = `.subheadline`, Heading = `.title3`, Display = `.title1`. Override sizes if platform defaults deviate from values above by more than 2px.
@@ -131,9 +136,10 @@ Components specific to Phase 1. Each entry describes the visual contract.
 | Property | Value |
 |----------|-------|
 | Screen title | "Exercises" (in navigation bar / top bar) |
+| Focal point | The exercise list is the primary focal point. Search bar and filter chips are supporting navigation aids above the list. |
 | Search bar | Sticky at top, placeholder text "Search exercises...", magnifying glass icon leading, clear (X) button when text present |
 | Filter row | Horizontal scrollable row of muscle group chips below search bar, with lg (24px) vertical spacing between search bar and filter row |
-| List | Flat vertical scroll, each row shows exercise name (Heading weight at Body size: 16px semibold) + primary muscle group (Label size, muted color) |
+| List | Flat vertical scroll, each row shows exercise name (16px Semibold -- see Typography Exception) + primary muscle group (Label size, muted color) |
 | Row height | Minimum 56px, vertically centered content |
 | Row separator | 1px hairline, secondary color |
 | Row tap action | Navigate to Exercise Detail screen |
@@ -173,12 +179,13 @@ Components specific to Phase 1. Each entry describes the visual contract.
 | Property | Value |
 |----------|-------|
 | Screen title | Exercise name (Heading size, in navigation bar) |
+| Focal point | The instructions section is the primary focal point -- the actionable content users navigate here to read. Muscle groups and metadata are supporting context above. |
 | Back navigation | Standard platform back button (iOS chevron / Android arrow) |
 | Layout | Vertical scroll, md (16px) horizontal padding |
 | Sections (top to bottom) | Muscle groups, Metadata, Instructions |
 | Muscle groups section | "Primary Muscles" label + chip(s), "Secondary Muscles" label + chip(s) or "None" if empty. Chips are non-interactive display-only, accent-tinted background at 15% opacity with accent text. |
 | Metadata section | Rows of label-value pairs: Equipment, Level, Force, Mechanic, Category. Label in Label style (muted), value in Body style. Vertical spacing sm (8px) between rows. |
-| Instructions section | "Instructions" heading (Heading style), followed by numbered list. Each step is Body style with md (16px) bottom spacing. Step numbers in accent color, semibold. |
+| Instructions section | "Instructions" heading (Heading style), followed by numbered list. Each step is Body style with md (16px) bottom spacing. Step numbers in accent color, Semibold (600). |
 | Image section | Not displayed in prototype (per D-04). No placeholder needed. |
 
 ### 7. Create Exercise Screen (D-14, D-15, D-20)
@@ -292,6 +299,7 @@ App Launch
 | Requirement | Implementation |
 |-------------|---------------|
 | Minimum touch target | 44pt (iOS) / 48dp (Android) for all interactive elements |
+| FAB accessibility label | "Add Exercise" -- announced by screen reader since the FAB uses an icon-only "+" with no visible text label |
 | Anatomy SVG regions | Each region must have an accessibility label matching its muscle group name (e.g., "Chest", "Shoulders") |
 | Color contrast | All text must meet WCAG AA (4.5:1 for body text, 3:1 for large text) against its background in both light and dark modes |
 | Screen reader order | Exercise list: name first, then muscle group. Detail screen: logical top-to-bottom reading order. |
