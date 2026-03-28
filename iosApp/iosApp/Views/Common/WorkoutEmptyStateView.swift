@@ -1,8 +1,6 @@
 import SwiftUI
 
 struct WorkoutEmptyStateView: View {
-    var onBrowseExercises: (() -> Void)?
-
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
@@ -24,7 +22,7 @@ struct WorkoutEmptyStateView: View {
 
             Spacer()
 
-            Button(action: { onBrowseExercises?() }) {
+            NavigationLink(destination: ExerciseCatalogView()) {
                 Text("Browse Exercises")
                     .font(.body.weight(.semibold))
                     .foregroundColor(.white)

@@ -16,6 +16,14 @@
 		A10007 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10007 /* Preview Assets.xcassets */; };
 		A10020 /* KMPNativeCoroutinesAsync in Frameworks */ = {isa = PBXBuildFile; productRef = D10001 /* KMPNativeCoroutinesAsync */; };
 		A10021 /* KMPNativeCoroutinesCore in Frameworks */ = {isa = PBXBuildFile; productRef = D10002 /* KMPNativeCoroutinesCore */; };
+		A10030 /* ExerciseCatalogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10030 /* ExerciseCatalogView.swift */; };
+		A10031 /* ExerciseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10031 /* ExerciseDetailView.swift */; };
+		A10032 /* CreateExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10032 /* CreateExerciseView.swift */; };
+		A10033 /* AnatomyPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10033 /* AnatomyPickerView.swift */; };
+		A10034 /* AnatomyFrontShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10034 /* AnatomyFrontShape.swift */; };
+		A10035 /* AnatomyBackShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10035 /* AnatomyBackShape.swift */; };
+		A10036 /* MuscleRegionPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10036 /* MuscleRegionPaths.swift */; };
+		A10040 /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = D10003 /* SVGPath */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +35,13 @@
 		B10006 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B10007 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		B10010 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10030 /* ExerciseCatalogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCatalogView.swift; sourceTree = "<group>"; };
+		B10031 /* ExerciseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDetailView.swift; sourceTree = "<group>"; };
+		B10032 /* CreateExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateExerciseView.swift; sourceTree = "<group>"; };
+		B10033 /* AnatomyPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnatomyPickerView.swift; sourceTree = "<group>"; };
+		B10034 /* AnatomyFrontShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnatomyFrontShape.swift; sourceTree = "<group>"; };
+		B10035 /* AnatomyBackShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnatomyBackShape.swift; sourceTree = "<group>"; };
+		B10036 /* MuscleRegionPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuscleRegionPaths.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -36,6 +51,7 @@
 			files = (
 				A10020 /* KMPNativeCoroutinesAsync in Frameworks */,
 				A10021 /* KMPNativeCoroutinesCore in Frameworks */,
+				A10040 /* SVGPath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -67,8 +83,31 @@
 			children = (
 				B10002 /* MainTabView.swift */,
 				E10004 /* Common */,
+				E10007 /* Exercises */,
+				E10008 /* Anatomy */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		E10007 /* Exercises */ = {
+			isa = PBXGroup;
+			children = (
+				B10030 /* ExerciseCatalogView.swift */,
+				B10031 /* ExerciseDetailView.swift */,
+				B10032 /* CreateExerciseView.swift */,
+			);
+			path = Exercises;
+			sourceTree = "<group>";
+		};
+		E10008 /* Anatomy */ = {
+			isa = PBXGroup;
+			children = (
+				B10033 /* AnatomyPickerView.swift */,
+				B10034 /* AnatomyFrontShape.swift */,
+				B10035 /* AnatomyBackShape.swift */,
+				B10036 /* MuscleRegionPaths.swift */,
+			);
+			path = Anatomy;
 			sourceTree = "<group>";
 		};
 		E10004 /* Common */ = {
@@ -125,6 +164,7 @@
 			packageProductDependencies = (
 				D10001 /* KMPNativeCoroutinesAsync */,
 				D10002 /* KMPNativeCoroutinesCore */,
+				D10003 /* SVGPath */,
 			);
 			productName = iosApp;
 			productReference = B10010 /* iosApp.app */;
@@ -156,6 +196,7 @@
 			mainGroup = E10001;
 			packageReferences = (
 				D10010 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */,
+				D10011 /* XCRemoteSwiftPackageReference "SVGPath" */,
 			);
 			productRefGroup = E10010 /* Products */;
 			projectDirPath = "";
@@ -228,6 +269,13 @@
 				A10003 /* WorkoutEmptyStateView.swift in Sources */,
 				A10004 /* PlaceholderTabView.swift in Sources */,
 				A10005 /* FlowObservation.swift in Sources */,
+				A10030 /* ExerciseCatalogView.swift in Sources */,
+				A10031 /* ExerciseDetailView.swift in Sources */,
+				A10032 /* CreateExerciseView.swift in Sources */,
+				A10033 /* AnatomyPickerView.swift in Sources */,
+				A10034 /* AnatomyFrontShape.swift in Sources */,
+				A10035 /* AnatomyBackShape.swift in Sources */,
+				A10036 /* MuscleRegionPaths.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -453,6 +501,14 @@
 				version = 1.0.2;
 			};
 		};
+		D10011 /* XCRemoteSwiftPackageReference "SVGPath" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nicklockwood/SVGPath";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -465,6 +521,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D10010 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */;
 			productName = KMPNativeCoroutinesCore;
+		};
+		D10003 /* SVGPath */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D10011 /* XCRemoteSwiftPackageReference "SVGPath" */;
+			productName = SVGPath;
 		};
 /* End XCSwiftPackageProductDependency section */
 
