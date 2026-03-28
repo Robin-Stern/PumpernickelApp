@@ -63,13 +63,13 @@ Plans:
   3. User can see current workout progress (exercise X of Y, set X of Y) and the workout's elapsed duration
   4. User can finish a workout and it is saved to local storage with all sets, reps, weights, and duration
   5. If the app is killed or crashes during a workout, the session can be resumed on next launch
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md — Room entities, DAOs, domain models, WorkoutRepository, DB migration v2 to v3
+- [ ] 03-02-PLAN.md — WorkoutSessionViewModel state machine, rest timer, elapsed ticker, Koin DI wiring
+- [ ] 03-03-PLAN.md — iOS SwiftUI workout session views, template list integration, crash recovery UI
 
 ### Phase 4: History & Settings
 **Goal**: Users can review past workouts, see previous performance during active sessions, and configure weight units
@@ -95,6 +95,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Exercise Catalog | 3/3 | Complete | 2026-03-28 |
-| 2. Template Management | 1/3 | Executing | - |
-| 3. Workout Session | 0/0 | Not started | - |
+| 2. Template Management | 3/3 | Complete | 2026-03-28 |
+| 3. Workout Session | 0/3 | Planned | - |
 | 4. History & Settings | 0/0 | Not started | - |
