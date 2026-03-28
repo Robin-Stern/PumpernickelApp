@@ -51,7 +51,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Room entities, DAO, repository, domain models, DB migration for template data layer
 - [x] 02-02-PLAN.md — TemplateList and TemplateEditor ViewModels, Koin DI, KoinHelper iOS getters
-- [ ] 02-03-PLAN.md — iOS SwiftUI template list, editor, exercise picker views, and MainTabView update
+- [x] 02-03-PLAN.md — iOS SwiftUI template list, editor, exercise picker views, and MainTabView update
 
 ### Phase 3: Workout Session
 **Goal**: Users can execute a full workout from template selection through set logging, rest timers, and saving the completed workout
