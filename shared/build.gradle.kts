@@ -26,10 +26,14 @@ kotlin {
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
             implementation(libs.koin.core)
+            implementation(libs.koin.compose.viewmodel)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
             implementation(libs.lifecycle.viewmodel)
+        }
+        androidMain.dependencies {
+            implementation(libs.koin.android)
         }
     }
 }
