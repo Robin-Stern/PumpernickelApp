@@ -15,11 +15,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Template Management
 
-- [ ] **TMPL-01**: User can create a workout template with a name and a list of exercises
-- [ ] **TMPL-02**: Each exercise in a template has target sets, target reps, target weight, and rest period duration
-- [ ] **TMPL-03**: User can edit an existing template (rename, add/remove exercises, change targets)
-- [ ] **TMPL-04**: User can delete a template with confirmation
-- [ ] **TMPL-05**: User can reorder exercises within a template via drag-and-drop
+- [x] **TMPL-01**: User can create a workout template with a name and a list of exercises
+- [x] **TMPL-02**: Each exercise in a template has target sets, target reps, target weight, and rest period duration
+- [x] **TMPL-03**: User can edit an existing template (rename, add/remove exercises, change targets)
+- [x] **TMPL-04**: User can delete a template with confirmation
+- [x] **TMPL-05**: User can reorder exercises within a template via drag-and-drop
 
 ### Workout Execution
 
@@ -107,11 +107,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXER-01 | Phase 1 | Complete |
 | EXER-02 | Phase 1 | Complete |
 | EXER-03 | Phase 1 | Complete |
-| TMPL-01 | Phase 2 | Pending |
-| TMPL-02 | Phase 2 | Pending |
-| TMPL-03 | Phase 2 | Pending |
-| TMPL-04 | Phase 2 | Pending |
-| TMPL-05 | Phase 2 | Pending |
+| TMPL-01 | Phase 2 | Complete |
+| TMPL-02 | Phase 2 | Complete |
+| TMPL-03 | Phase 2 | Complete |
+| TMPL-04 | Phase 2 | Complete |
+| TMPL-05 | Phase 2 | Complete |
 | WORK-01 | Phase 3 | Pending |
 | WORK-02 | Phase 3 | Pending |
 | WORK-03 | Phase 3 | Pending |
