@@ -24,13 +24,13 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Workout Execution
 
 - [x] **WORK-01**: User can start a workout by selecting a template, which loads exercises and targets into an active session
-- [ ] **WORK-02**: User can log reps and weight for each set of each exercise
-- [ ] **WORK-03**: User can mark a set as complete, advancing to the rest timer
-- [ ] **WORK-04**: Rest timer auto-starts after completing a set with a countdown matching the exercise's configured rest period
-- [ ] **WORK-05**: Rest timer alerts the user (vibration) when rest period ends
-- [ ] **WORK-06**: User can see current progress during a workout (current exercise X of Y, current set X of Y)
+- [x] **WORK-02**: User can log reps and weight for each set of each exercise
+- [x] **WORK-03**: User can mark a set as complete, advancing to the rest timer
+- [x] **WORK-04**: Rest timer auto-starts after completing a set with a countdown matching the exercise's configured rest period
+- [x] **WORK-05**: Rest timer alerts the user (vibration) when rest period ends
+- [x] **WORK-06**: User can see current progress during a workout (current exercise X of Y, current set X of Y)
 - [x] **WORK-07**: User can finish and save a completed workout to local storage
-- [ ] **WORK-08**: Workout duration is automatically tracked (start time, end time, total duration)
+- [x] **WORK-08**: Workout duration is automatically tracked (start time, end time, total duration)
 - [x] **WORK-09**: Active workout session persists across app restarts (crash recovery / session resume)
 
 ### History
@@ -113,13 +113,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TMPL-04 | Phase 2 | Complete |
 | TMPL-05 | Phase 2 | Complete |
 | WORK-01 | Phase 3 | Complete |
-| WORK-02 | Phase 3 | Pending |
-| WORK-03 | Phase 3 | Pending |
-| WORK-04 | Phase 3 | Pending |
-| WORK-05 | Phase 3 | Pending |
-| WORK-06 | Phase 3 | Pending |
+| WORK-02 | Phase 3 | Complete |
+| WORK-03 | Phase 3 | Complete |
+| WORK-04 | Phase 3 | Complete |
+| WORK-05 | Phase 3 | Complete |
+| WORK-06 | Phase 3 | Complete |
 | WORK-07 | Phase 3 | Complete |
-| WORK-08 | Phase 3 | Pending |
+| WORK-08 | Phase 3 | Complete |
 | WORK-09 | Phase 3 | Complete |
 | HIST-01 | Phase 4 | Pending |
 | HIST-02 | Phase 4 | Pending |

@@ -68,7 +68,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Room entities, DAOs, domain models, WorkoutRepository, DB migration v2 to v3
-- [ ] 03-02-PLAN.md — WorkoutSessionViewModel state machine, rest timer, elapsed ticker, Koin DI wiring
+- [x] 03-02-PLAN.md — WorkoutSessionViewModel state machine, rest timer, elapsed ticker, Koin DI wiring
 - [ ] 03-03-PLAN.md — iOS SwiftUI workout session views, template list integration, crash recovery UI
 
 ### Phase 4: History & Settings
