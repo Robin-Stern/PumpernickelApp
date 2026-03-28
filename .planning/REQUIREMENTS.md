@@ -42,7 +42,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Navigation & Settings
 
-- [ ] **NAV-01**: App has bottom navigation with three tabs: Workout, Overview, Nutrition (only Workout functional)
+- [x] **NAV-01**: App has bottom navigation with three tabs: Workout, Overview, Nutrition (only Workout functional)
 - [ ] **NAV-02**: User can toggle between kg and lbs as the weight unit
 - [ ] **NAV-03**: Selected unit applies globally to all weight displays and entries
 
@@ -125,7 +125,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HIST-02 | Phase 4 | Pending |
 | HIST-03 | Phase 4 | Pending |
 | HIST-04 | Phase 4 | Pending |
-| NAV-01 | Phase 1 | Pending |
+| NAV-01 | Phase 1 | Complete |
 | NAV-02 | Phase 4 | Pending |
 | NAV-03 | Phase 4 | Pending |
 

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-03-28T18:10:44.011Z"
-last_activity: 2026-03-28 -- Phase 01 execution started
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-28T19:04:35.117Z"
+last_activity: 2026-03-28
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 01 (foundation-exercise-catalog) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 01
-Last activity: 2026-03-28 -- Phase 01 execution started
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01 P02 | 12min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,9 @@ Recent decisions affecting current work:
 
 - [Roadmap]: 4-phase coarse roadmap derived from 24 requirements across 5 categories
 - [Roadmap]: Phase ordering matches research-recommended dependency chain (data -> templates -> workout session -> history)
+- [Phase 01]: Used kotlin.time.Clock.System (stdlib) instead of deprecated kotlinx.datetime.Clock.System for timestamp generation in KMP
+- [Phase 01]: Created Xcode project from scratch with KMPNativeCoroutinesAsync SPM 1.0.2 and Gradle embedAndSignAppleFrameworkForXcode build phase
+- [Phase 01]: Added koin-compose-viewmodel to commonMain for viewModel DSL in KMP (koin-core alone insufficient)
 
 ### Pending Todos
 
@@ -74,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T17:33:49.182Z
-Stopped at: Phase 1 UI-SPEC approved
-Resume file: .planning/phases/01-foundation-exercise-catalog/01-UI-SPEC.md
+Last session: 2026-03-28T19:04:35.114Z
+Stopped at: Completed 01-02-PLAN.md
+Resume file: None
