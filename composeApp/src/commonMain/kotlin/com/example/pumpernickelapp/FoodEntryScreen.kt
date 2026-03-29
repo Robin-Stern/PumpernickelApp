@@ -32,7 +32,7 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
-fun FoodEntryScreen(viewModel: FoodViewModel) {
+fun FoodEntryScreen(viewModel: FoodViewModel, modifier: Modifier = Modifier) {
     var name by remember { mutableStateOf("") }
     var calories by remember { mutableStateOf("") }
     var protein by remember { mutableStateOf("") }
@@ -48,11 +48,11 @@ fun FoodEntryScreen(viewModel: FoodViewModel) {
         errorMessage = null
         successMessage = null
 
-        val caloriesVal = calories.toDoubleOrNull()
-        val proteinVal = protein.toDoubleOrNull()
-        val fatVal = fat.toDoubleOrNull()
-        val carbsVal = carbohydrates.toDoubleOrNull()
-        val sugarVal = sugar.toDoubleOrNull()
+        val caloriesVal = calories.replace(',', '.').toDoubleOrNull()
+        val proteinVal = protein.replace(',', '.').toDoubleOrNull()
+        val fatVal = fat.replace(',', '.').toDoubleOrNull()
+        val carbsVal = carbohydrates.replace(',', '.').toDoubleOrNull()
+        val sugarVal = sugar.replace(',', '.').toDoubleOrNull()
 
         when {
             name.isBlank() -> errorMessage = "Name darf nicht leer sein."
@@ -89,6 +89,7 @@ fun FoodEntryScreen(viewModel: FoodViewModel) {
     }
 
     Scaffold(
+        modifier = modifier,
         topBar = { TopAppBar(title = { Text("Lebensmittel erfassen") }) }
     ) { innerPadding ->
         Column(

@@ -19,7 +19,19 @@ class FoodRepository {
         return json.decodeFromString(raw)
     }
 
+    fun saveRecipe(recipe: Food.Recipe) {
+        val current = loadRecipes().toMutableList()
+        current.add(recipe)
+        settings.putString(KEY_RECIPES, json.encodeToString(current))
+    }
+
+    fun loadRecipes(): List<Food.Recipe> {
+        val raw = settings.getStringOrNull(KEY_RECIPES) ?: return emptyList()
+        return json.decodeFromString(raw)
+    }
+
     private companion object {
         const val KEY_FOODS = "foods"
+        const val KEY_RECIPES = "recipes"
     }
 }
