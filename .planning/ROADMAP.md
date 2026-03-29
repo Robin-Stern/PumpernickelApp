@@ -47,7 +47,7 @@ Plans:
 **Plans:** 2 plans
 Plans:
 - [x] 08-01-PLAN.md — Room migration 3-to-4, DAO/repository exerciseOrder methods, ViewModel reorder/skip/crash-recovery logic
-- [ ] 08-02-PLAN.md — SwiftUI exercise overview with completed/current/pending sections, drag reorder, and skip button
+- [x] 08-02-PLAN.md — SwiftUI exercise overview with completed/current/pending sections, drag reorder, and skip button
 
 ### Phase 9: Abandon Guards & Context Menu
 **Requirements:** FLOW-05, FLOW-06
