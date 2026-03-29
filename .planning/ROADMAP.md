@@ -80,12 +80,13 @@ Plans:
   2. User can tap a history entry to see full workout detail with all exercises, sets, reps, and weights
   3. During an active workout, user can see what they did last time for each exercise (previous performance inline)
   4. User can toggle between kg and lbs in settings, and the selected unit applies globally to all weight displays and entries
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md — DAO history queries, DataStore Preferences, WeightUnit domain model, SettingsRepository, WorkoutRepository extensions
+- [ ] 04-02-PLAN.md — WorkoutHistoryViewModel, SettingsViewModel, WorkoutSessionViewModel previous performance, Koin DI wiring
+- [ ] 04-03-PLAN.md — iOS SwiftUI history list, detail, settings views, previous performance display, global unit integration
 
 ## Progress
 
@@ -97,4 +98,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Foundation & Exercise Catalog | 3/3 | Complete | 2026-03-28 |
 | 2. Template Management | 3/3 | Complete | 2026-03-28 |
 | 3. Workout Session | 3/3 | Complete | 2026-03-28 |
-| 4. History & Settings | 0/0 | Not started | - |
+| 4. History & Settings | 0/3 | Not started | - |
