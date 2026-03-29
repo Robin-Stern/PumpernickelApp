@@ -3,6 +3,14 @@ import Shared
 import KMPNativeCoroutinesAsync
 import UIKit
 
+// Fix side-by-side wheel picker touch overlap (ENTRY-01, ENTRY-02)
+// Source: swiftuirecipes.com/blog/multi-column-wheel-picker-in-swiftui
+extension UIPickerView {
+    open override var intrinsicContentSize: CGSize {
+        CGSize(width: UIView.noIntrinsicMetric, height: 150)
+    }
+}
+
 struct WorkoutSessionView: View {
     var templateId: Int64 = 0
     var templateName: String = ""
@@ -18,19 +26,24 @@ struct WorkoutSessionView: View {
     @State private var previousPerformance: [String: CompletedExercise] = [:]
     @State private var weightUnit: WeightUnit = .kg
 
-    // Input fields for current set
-    @State private var repsInput: String = ""
-    @State private var weightInput: String = ""
+    // Picker selections for current set (ENTRY-01, ENTRY-02)
+    @State private var selectedReps: Int = 0
+    @State private var selectedWeightKgX10: Int = 0
 
     // Edit set sheet
     @State private var showEditSheet = false
     @State private var editExerciseIndex: Int32 = 0
     @State private var editSetIndex: Int32 = 0
-    @State private var editRepsInput: String = ""
-    @State private var editWeightInput: String = ""
+    // Picker selections for edit sheet
+    @State private var editSelectedReps: Int = 0
+    @State private var editSelectedWeightKgX10: Int = 0
 
     // Track previous rest state for haptic trigger
     @State private var previousRestWasResting = false
+
+    // Picker value arrays
+    private let repsRange = Array(0...50)
+    private let weightValuesKgX10 = Array(stride(from: 0, through: 10000, by: 25))
 
     var body: some View {
         Group {
@@ -85,6 +98,7 @@ struct WorkoutSessionView: View {
                 group.addTask { await observeElapsedSeconds() }
                 group.addTask { await observePreviousPerformance() }
                 group.addTask { await observeWeightUnit() }
+                group.addTask { await observePreFill() }
             }
         }
     }
@@ -226,59 +240,61 @@ struct WorkoutSessionView: View {
 
     private func setInputSection(exercise: SessionExercise, setIdx: Int) -> some View {
         VStack(spacing: 16) {
-            HStack(spacing: 16) {
-                VStack(spacing: 4) {
-                    Text("Reps")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    TextField("0", text: $repsInput)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.center)
-                        .font(.title2.weight(.semibold))
-                        .frame(width: 80)
-                        .padding(.vertical, 12)
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .cornerRadius(12)
-                }
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
+                    // Reps picker (ENTRY-01)
+                    VStack(spacing: 4) {
+                        Text("Reps")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Picker("Reps", selection: $selectedReps) {
+                            ForEach(repsRange, id: \.self) { value in
+                                Text("\(value)").tag(value)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(width: geometry.size.width / 2)
+                        .clipped()
+                    }
 
-                VStack(spacing: 4) {
-                    Text("Weight (\(weightUnit.label))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    TextField("0", text: $weightInput)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.center)
-                        .font(.title2.weight(.semibold))
-                        .frame(width: 100)
-                        .padding(.vertical, 12)
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .cornerRadius(12)
+                    // Weight picker (ENTRY-02, ENTRY-03)
+                    VStack(spacing: 4) {
+                        Text("Weight (\(weightUnit.label))")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Picker("Weight", selection: $selectedWeightKgX10) {
+                            ForEach(weightValuesKgX10, id: \.self) { kgX10 in
+                                Text(weightUnit.formatWeight(kgX10: Int32(kgX10)))
+                                    .tag(kgX10)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(width: geometry.size.width / 2)
+                        .clipped()
+                    }
                 }
             }
+            .frame(height: 170)
 
+            // Complete Set button (ENTRY-06: disabled when reps == 0)
             Button("Complete Set") {
-                let reps = Int32(repsInput) ?? 0
-                let weightKgX10 = parseWeightKgX10(weightInput)
-                viewModel.completeSet(reps: reps, weightKgX10: weightKgX10)
+                viewModel.completeSet(
+                    reps: Int32(selectedReps),
+                    weightKgX10: Int32(selectedWeightKgX10)
+                )
             }
             .font(.body.weight(.semibold))
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 48)
-            .background(Color(red: 0.4, green: 0.733, blue: 0.416))
+            .background(selectedReps == 0
+                ? Color.gray
+                : Color(red: 0.4, green: 0.733, blue: 0.416))
             .cornerRadius(12)
             .padding(.horizontal, 32)
+            .disabled(selectedReps == 0)
         }
         .padding(.vertical, 8)
-        .onAppear {
-            prefillInputs(exercise: exercise, setIdx: setIdx)
-        }
-        .onChange(of: setIdx) { _, newIdx in
-            prefillInputs(exercise: exercise, setIdx: newIdx)
-        }
-        .onChange(of: exercise.exerciseName) { _, _ in
-            prefillInputs(exercise: exercise, setIdx: setIdx)
-        }
     }
 
     // MARK: - Completed Sets Section
@@ -302,9 +318,8 @@ struct WorkoutSessionView: View {
                             onTap: {
                                 editExerciseIndex = exIdx
                                 editSetIndex = set.setIndex
-                                editRepsInput = "\(set.actualReps?.int32Value ?? 0)"
-                                let w = set.actualWeightKgX10?.int32Value ?? 0
-                                editWeightInput = formatWeightInput(w)
+                                editSelectedReps = Int(set.actualReps?.int32Value ?? 0)
+                                editSelectedWeightKgX10 = snapToWeightStep(Int(set.actualWeightKgX10?.int32Value ?? 0))
                                 showEditSheet = true
                             }
                         )
@@ -323,44 +338,46 @@ struct WorkoutSessionView: View {
                 Text("Edit Set \(editSetIndex + 1)")
                     .font(.title3.weight(.bold))
 
-                HStack(spacing: 16) {
-                    VStack(spacing: 4) {
-                        Text("Reps")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        TextField("0", text: $editRepsInput)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.center)
-                            .font(.title2.weight(.semibold))
-                            .frame(width: 80)
-                            .padding(.vertical, 12)
-                            .background(Color(UIColor.secondarySystemBackground))
-                            .cornerRadius(12)
-                    }
+                GeometryReader { geometry in
+                    HStack(spacing: 0) {
+                        VStack(spacing: 4) {
+                            Text("Reps")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Picker("Reps", selection: $editSelectedReps) {
+                                ForEach(repsRange, id: \.self) { value in
+                                    Text("\(value)").tag(value)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(width: geometry.size.width / 2)
+                            .clipped()
+                        }
 
-                    VStack(spacing: 4) {
-                        Text("Weight (\(weightUnit.label))")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        TextField("0", text: $editWeightInput)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.center)
-                            .font(.title2.weight(.semibold))
-                            .frame(width: 100)
-                            .padding(.vertical, 12)
-                            .background(Color(UIColor.secondarySystemBackground))
-                            .cornerRadius(12)
+                        VStack(spacing: 4) {
+                            Text("Weight (\(weightUnit.label))")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Picker("Weight", selection: $editSelectedWeightKgX10) {
+                                ForEach(weightValuesKgX10, id: \.self) { kgX10 in
+                                    Text(weightUnit.formatWeight(kgX10: Int32(kgX10)))
+                                        .tag(kgX10)
+                                }
+                            }
+                            .pickerStyle(.wheel)
+                            .frame(width: geometry.size.width / 2)
+                            .clipped()
+                        }
                     }
                 }
+                .frame(height: 170)
 
                 Button("Save") {
-                    let reps = Int32(editRepsInput) ?? 0
-                    let weightKgX10 = parseWeightKgX10(editWeightInput)
                     viewModel.editCompletedSet(
                         exerciseIndex: editExerciseIndex,
                         setIndex: editSetIndex,
-                        reps: reps,
-                        weightKgX10: weightKgX10
+                        reps: Int32(editSelectedReps),
+                        weightKgX10: Int32(editSelectedWeightKgX10)
                     )
                     showEditSheet = false
                 }
@@ -402,20 +419,6 @@ struct WorkoutSessionView: View {
                         generator.notificationOccurred(.success)
                     }
                     previousRestWasResting = active.restState is RestState.Resting
-
-                    // Update input fields when cursor changes
-                    let exIdx = Int(active.currentExerciseIndex)
-                    let setIdx = Int(active.currentSetIndex)
-                    if exIdx < active.exercises.count {
-                        let exercise = active.exercises[exIdx]
-                        if setIdx < exercise.sets.count {
-                            let currentSet = exercise.sets[setIdx]
-                            if !currentSet.isCompleted {
-                                repsInput = "\(currentSet.targetReps)"
-                                weightInput = formatWeightInput(currentSet.targetWeightKgX10)
-                            }
-                        }
-                    }
                 }
 
                 self.sessionState = newState
@@ -455,6 +458,17 @@ struct WorkoutSessionView: View {
         }
     }
 
+    private func observePreFill() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.preFillFlow) {
+                self.selectedReps = Int(value.reps)
+                self.selectedWeightKgX10 = snapToWeightStep(Int(value.weightKgX10))
+            }
+        } catch {
+            print("PreFill observation error: \(error)")
+        }
+    }
+
     // MARK: - Previous Performance Formatting
 
     private func formatPreviousPerformance(_ exercise: CompletedExercise) -> String {
@@ -479,27 +493,9 @@ struct WorkoutSessionView: View {
 
     // MARK: - Helpers
 
-    private func prefillInputs(exercise: SessionExercise, setIdx: Int) {
-        if setIdx < exercise.sets.count {
-            let currentSet = exercise.sets[setIdx]
-            repsInput = "\(currentSet.targetReps)"
-            weightInput = formatWeightInput(currentSet.targetWeightKgX10)
-        }
-    }
-
-    private func formatWeight(_ kgX10: Int32) -> String {
-        return weightUnit.formatWeight(kgX10: kgX10)
-    }
-
-    private func formatWeightInput(_ kgX10: Int32) -> String {
-        let whole = kgX10 / 10
-        let decimal = kgX10 % 10
-        return decimal == 0 ? "\(whole)" : "\(whole).\(decimal)"
-    }
-
-    private func parseWeightKgX10(_ input: String) -> Int32 {
-        guard let value = Double(input), value >= 0 else { return 0 }
-        return Int32(value * 10)
+    /// Snap a kgX10 value to the nearest valid picker step (multiple of 25)
+    private func snapToWeightStep(_ kgX10: Int) -> Int {
+        return ((kgX10 + 12) / 25) * 25  // round to nearest 25
     }
 
     private func formatElapsed(_ seconds: Int64) -> String {
