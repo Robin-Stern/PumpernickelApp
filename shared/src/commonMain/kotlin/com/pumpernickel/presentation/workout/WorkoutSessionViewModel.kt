@@ -38,6 +38,14 @@ sealed class WorkoutSessionState {
         val restState: RestState = RestState.NotResting
     ) : WorkoutSessionState()
 
+    data class Reviewing(
+        val templateId: Long,
+        val templateName: String,
+        val exercises: List<SessionExercise>,
+        val startTimeMillis: Long,
+        val durationMillis: Long
+    ) : WorkoutSessionState()
+
     data class Finished(
         val workoutName: String,
         val durationMillis: Long,
@@ -326,12 +334,18 @@ class WorkoutSessionViewModel(
 
     /**
      * Edit a previously completed set's values (D-11).
+     * Handles both Active and Reviewing states for recap editing (Pitfall 1).
      */
     fun editCompletedSet(exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int) {
         viewModelScope.launch {
-            val active = _sessionState.value as? WorkoutSessionState.Active ?: return@launch
+            val currentState = _sessionState.value
+            val exercises = when (currentState) {
+                is WorkoutSessionState.Active -> currentState.exercises
+                is WorkoutSessionState.Reviewing -> currentState.exercises
+                else -> return@launch
+            }
 
-            val updatedExercises = active.exercises.mapIndexed { eIdx, exercise ->
+            val updatedExercises = exercises.mapIndexed { eIdx, exercise ->
                 if (eIdx == exerciseIndex) {
                     exercise.copy(
                         sets = exercise.sets.map { set ->
@@ -347,7 +361,12 @@ class WorkoutSessionViewModel(
             }
 
             workoutRepository.updateSetValues(exerciseIndex, setIndex, reps, weightKgX10)
-            _sessionState.value = active.copy(exercises = updatedExercises)
+
+            _sessionState.value = when (currentState) {
+                is WorkoutSessionState.Active -> currentState.copy(exercises = updatedExercises)
+                is WorkoutSessionState.Reviewing -> currentState.copy(exercises = updatedExercises)
+                else -> return@launch
+            }
         }
     }
 
@@ -376,10 +395,11 @@ class WorkoutSessionViewModel(
     }
 
     /**
-     * Finish the workout (D-16, D-17, D-18, WORK-07, WORK-08).
-     * Saves completed workout to history and clears active session.
+     * Enter the workout review/recap screen (D-01, FLOW-01).
+     * Cancels timers and transitions to Reviewing state without saving.
+     * Active session in Room stays intact for crash recovery (Pitfall 2).
      */
-    fun finishWorkout() {
+    fun enterReview() {
         viewModelScope.launch {
             val active = _sessionState.value as? WorkoutSessionState.Active ?: return@launch
 
@@ -389,8 +409,25 @@ class WorkoutSessionViewModel(
             val endTimeMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
             val durationMillis = endTimeMillis - active.startTimeMillis
 
-            // Build CompletedWorkout from active state (only completed sets)
-            val completedExercises = active.exercises.mapIndexedNotNull { order, exercise ->
+            _sessionState.value = WorkoutSessionState.Reviewing(
+                templateId = active.templateId,
+                templateName = active.templateName,
+                exercises = active.exercises,
+                startTimeMillis = active.startTimeMillis,
+                durationMillis = durationMillis
+            )
+        }
+    }
+
+    /**
+     * Save the reviewed workout to history and transition to Finished (D-02, WORK-07, WORK-08).
+     * Performs the save logic previously in finishWorkout(), from the Reviewing state.
+     */
+    fun saveReviewedWorkout() {
+        viewModelScope.launch {
+            val reviewing = _sessionState.value as? WorkoutSessionState.Reviewing ?: return@launch
+
+            val completedExercises = reviewing.exercises.mapIndexedNotNull { order, exercise ->
                 val completedSets = exercise.sets
                     .filter { it.isCompleted }
                     .map { set ->
@@ -410,13 +447,15 @@ class WorkoutSessionViewModel(
                 } else null
             }
 
+            val endTimeMillis = reviewing.startTimeMillis + reviewing.durationMillis
+
             val completedWorkout = CompletedWorkout(
                 id = 0,
-                templateId = active.templateId,
-                name = active.templateName,
-                startTimeMillis = active.startTimeMillis,
+                templateId = reviewing.templateId,
+                name = reviewing.templateName,
+                startTimeMillis = reviewing.startTimeMillis,
                 endTimeMillis = endTimeMillis,
-                durationMillis = durationMillis,
+                durationMillis = reviewing.durationMillis,
                 exercises = completedExercises
             )
 
@@ -427,8 +466,8 @@ class WorkoutSessionViewModel(
 
             val totalSets = completedExercises.sumOf { it.sets.size }
             _sessionState.value = WorkoutSessionState.Finished(
-                workoutName = active.templateName,
-                durationMillis = durationMillis,
+                workoutName = reviewing.templateName,
+                durationMillis = reviewing.durationMillis,
                 totalSets = totalSets,
                 totalExercises = completedExercises.size
             )
