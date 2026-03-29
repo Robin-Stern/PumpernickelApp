@@ -15,6 +15,8 @@ struct WorkoutSessionView: View {
     @State private var sessionState: WorkoutSessionState = WorkoutSessionState.Idle.shared
     @State private var elapsedSeconds: Int64 = 0
     @State private var showExerciseOverview = false
+    @State private var previousPerformance: [String: CompletedExercise] = [:]
+    @State private var weightUnit: WeightUnit = .kg
 
     // Input fields for current set
     @State private var repsInput: String = ""
@@ -81,6 +83,8 @@ struct WorkoutSessionView: View {
             await withTaskGroup(of: Void.self) { group in
                 group.addTask { await observeSessionState() }
                 group.addTask { await observeElapsedSeconds() }
+                group.addTask { await observePreviousPerformance() }
+                group.addTask { await observeWeightUnit() }
             }
         }
     }
@@ -204,6 +208,17 @@ struct WorkoutSessionView: View {
                 .font(.headline)
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Previous performance (HIST-04, D-08, D-09)
+            if let prevExercise = previousPerformance[exercise.exerciseId] {
+                let prevText = formatPreviousPerformance(prevExercise)
+                if !prevText.isEmpty {
+                    Text("Last: \(prevText)")
+                        .font(.subheadline)
+                        .foregroundColor(.orange)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
         }
     }
 
@@ -227,7 +242,7 @@ struct WorkoutSessionView: View {
                 }
 
                 VStack(spacing: 4) {
-                    Text("Weight (kg)")
+                    Text("Weight (\(weightUnit.label))")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     TextField("0", text: $weightInput)
@@ -283,6 +298,7 @@ struct WorkoutSessionView: View {
                             actualReps: set.actualReps?.int32Value ?? 0,
                             actualWeightKgX10: set.actualWeightKgX10?.int32Value ?? 0,
                             isCompleted: set.isCompleted,
+                            weightUnit: weightUnit,
                             onTap: {
                                 editExerciseIndex = exIdx
                                 editSetIndex = set.setIndex
@@ -323,7 +339,7 @@ struct WorkoutSessionView: View {
                     }
 
                     VStack(spacing: 4) {
-                        Text("Weight (kg)")
+                        Text("Weight (\(weightUnit.label))")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         TextField("0", text: $editWeightInput)
@@ -419,6 +435,48 @@ struct WorkoutSessionView: View {
         }
     }
 
+    private func observePreviousPerformance() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.previousPerformanceFlow) {
+                self.previousPerformance = value
+            }
+        } catch {
+            print("Previous performance observation error: \(error)")
+        }
+    }
+
+    private func observeWeightUnit() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.weightUnitFlow) {
+                self.weightUnit = value
+            }
+        } catch {
+            print("Weight unit observation error: \(error)")
+        }
+    }
+
+    // MARK: - Previous Performance Formatting
+
+    private func formatPreviousPerformance(_ exercise: CompletedExercise) -> String {
+        let sets = exercise.sets
+        if sets.isEmpty { return "" }
+
+        // If all sets have same reps and weight, show compact format: "3x10 @ 50.0 kg"
+        let firstSet = sets[0]
+        let allSame = sets.allSatisfy {
+            $0.actualReps == firstSet.actualReps && $0.actualWeightKgX10 == firstSet.actualWeightKgX10
+        }
+
+        if allSame {
+            return "\(sets.count)x\(firstSet.actualReps) @ \(weightUnit.formatWeight(kgX10: firstSet.actualWeightKgX10))"
+        }
+
+        // Different sets: show each briefly "10x50.0 kg, 8x50.0 kg, 6x50.0 kg"
+        return sets.map { set in
+            "\(set.actualReps)x\(weightUnit.formatWeight(kgX10: set.actualWeightKgX10))"
+        }.joined(separator: ", ")
+    }
+
     // MARK: - Helpers
 
     private func prefillInputs(exercise: SessionExercise, setIdx: Int) {
@@ -430,9 +488,7 @@ struct WorkoutSessionView: View {
     }
 
     private func formatWeight(_ kgX10: Int32) -> String {
-        let whole = kgX10 / 10
-        let decimal = kgX10 % 10
-        return decimal == 0 ? "\(whole) kg" : "\(whole).\(decimal) kg"
+        return weightUnit.formatWeight(kgX10: kgX10)
     }
 
     private func formatWeightInput(_ kgX10: Int32) -> String {

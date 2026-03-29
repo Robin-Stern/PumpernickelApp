@@ -10,6 +10,9 @@ struct TemplateListView: View {
     @State private var showDeleteConfirmation = false
     @State private var templateToDelete: WorkoutTemplate? = nil
 
+    // Settings sheet state
+    @State private var showSettings = false
+
     // Workout navigation state
     @State private var showResumePrompt = false
     @State private var activeWorkoutNavigation = false
@@ -27,8 +30,18 @@ struct TemplateListView: View {
         }
         .navigationTitle("Workout")
         .toolbar {
-            if !templates.isEmpty {
-                ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .navigationBarLeading) {
+                NavigationLink(destination: WorkoutHistoryListView()) {
+                    Image(systemName: "clock.arrow.circlepath")
+                }
+            }
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                if !templates.isEmpty {
                     NavigationLink(destination: TemplateEditorView()) {
                         Image(systemName: "plus")
                     }
@@ -60,6 +73,9 @@ struct TemplateListView: View {
             }
         } message: {
             Text("You have an unfinished workout. Would you like to continue?")
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
         }
         .task {
             await withTaskGroup(of: Void.self) { group in

@@ -6,6 +6,7 @@ struct WorkoutSetRow: View {
     let actualReps: Int32
     let actualWeightKgX10: Int32
     let isCompleted: Bool
+    var weightUnit: WeightUnit = .kg
     var onTap: (() -> Void)? = nil
 
     var body: some View {
@@ -38,8 +39,6 @@ struct WorkoutSetRow: View {
     }
 
     private func formatWeight(_ kgX10: Int32) -> String {
-        let whole = kgX10 / 10
-        let decimal = kgX10 % 10
-        return decimal == 0 ? "\(whole) kg" : "\(whole).\(decimal) kg"
+        return weightUnit.formatWeight(kgX10: kgX10)
     }
 }
