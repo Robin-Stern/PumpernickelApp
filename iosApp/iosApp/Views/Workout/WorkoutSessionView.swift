@@ -50,6 +50,8 @@ struct WorkoutSessionView: View {
         Group {
             if let active = sessionState as? WorkoutSessionState.Active {
                 activeWorkoutView(active)
+            } else if let reviewing = sessionState as? WorkoutSessionState.Reviewing {
+                recapView(reviewing)
             } else if let finished = sessionState as? WorkoutSessionState.Finished {
                 WorkoutFinishedView(
                     workoutName: finished.workoutName,
@@ -169,7 +171,7 @@ struct WorkoutSessionView: View {
                 }
                 if hasCompletedSets {
                     Button("Finish Workout") {
-                        viewModel.finishWorkout()
+                        viewModel.enterReview()
                     }
                     .font(.body.weight(.semibold))
                     .foregroundColor(.white)
@@ -412,6 +414,130 @@ struct WorkoutSessionView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Recap View (FLOW-01, FLOW-02)
+
+    @ViewBuilder
+    private func recapView(_ reviewing: WorkoutSessionState.Reviewing) -> some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                // Summary header
+                VStack(spacing: 8) {
+                    Text("Workout Recap")
+                        .font(.title2.weight(.bold))
+                    Text(reviewing.templateName)
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+
+                    // Duration and stats
+                    HStack(spacing: 24) {
+                        let completedExercises = reviewing.exercises.filter { ex in
+                            ex.sets.contains { $0.isCompleted }
+                        }
+                        let totalSets = completedExercises.reduce(0) { sum, ex in
+                            sum + ex.sets.filter { $0.isCompleted }.count
+                        }
+
+                        VStack {
+                            Text("\(completedExercises.count)")
+                                .font(.title3.weight(.bold))
+                            Text("Exercises")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        VStack {
+                            Text("\(totalSets)")
+                                .font(.title3.weight(.bold))
+                            Text("Sets")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        VStack {
+                            Text(formatDuration(reviewing.durationMillis))
+                                .font(.title3.weight(.bold))
+                            Text("Duration")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(.top, 4)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color(UIColor.secondarySystemBackground))
+                .cornerRadius(16)
+
+                // Exercise sections (per D-03, D-04 - only exercises with completed sets shown)
+                ForEach(Array(reviewing.exercises.enumerated()), id: \.offset) { originalIndex, exercise in
+                    let completedSets = exercise.sets.filter { $0.isCompleted }
+                    if !completedSets.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            // Exercise header (per D-04)
+                            HStack {
+                                Text(exercise.exerciseName)
+                                    .font(.headline)
+                                Spacer()
+                                Text("\(completedSets.count) sets")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            // Set rows - tappable for edit (per D-05, D-06, FLOW-02)
+                            ForEach(completedSets, id: \.setIndex) { set in
+                                WorkoutSetRow(
+                                    setIndex: set.setIndex,
+                                    actualReps: set.actualReps?.int32Value ?? 0,
+                                    actualWeightKgX10: set.actualWeightKgX10?.int32Value ?? 0,
+                                    isCompleted: true,
+                                    weightUnit: weightUnit,
+                                    onTap: {
+                                        editExerciseIndex = Int32(originalIndex)
+                                        editSetIndex = set.setIndex
+                                        editSelectedReps = Int(set.actualReps?.int32Value ?? 0)
+                                        editSelectedWeightKgX10 = snapToWeightStep(Int(set.actualWeightKgX10?.int32Value ?? 0))
+                                        showEditSheet = true
+                                    }
+                                )
+                            }
+                        }
+                        .padding()
+                        .background(Color(UIColor.secondarySystemBackground))
+                        .cornerRadius(12)
+                    }
+                }
+
+                // Save Workout button (per D-02) - prominent, green, at bottom
+                Button("Save Workout") {
+                    viewModel.saveReviewedWorkout()
+                }
+                .font(.body.weight(.semibold))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .background(Color(red: 0.4, green: 0.733, blue: 0.416))
+                .cornerRadius(12)
+                .padding(.horizontal, 32)
+                .padding(.top, 8)
+            }
+            .padding()
+        }
+        .navigationTitle("Recap")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+    }
+
+    // MARK: - Duration Formatting
+
+    private func formatDuration(_ millis: Int64) -> String {
+        let totalSeconds = millis / 1000
+        let h = totalSeconds / 3600
+        let m = (totalSeconds % 3600) / 60
+        let s = totalSeconds % 60
+        if h > 0 { return String(format: "%dh %02dm", h, m) }
+        return String(format: "%dm %02ds", m, s)
     }
 
     // MARK: - Flow Observation
