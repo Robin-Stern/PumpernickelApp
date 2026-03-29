@@ -1,285 +1,385 @@
 # Domain Pitfalls
 
-**Domain:** KMP Compose Multiplatform fitness/workout tracking app (iOS-first, local storage)
-**Researched:** 2026-03-28
+**Domain:** v1.1 Workout Polish & Firmware Parity -- scroll wheel pickers, state machine expansion, mid-workout reorder, abandon guards, post-workout recap, context menus, personal bests
+**Researched:** 2026-03-29
+**Applies to:** Existing KMP + SwiftUI workout app (v1.0 shipped)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, data loss, or weeks of wasted time.
+Mistakes that cause rewrites, data corruption, or broken user flows.
 
-### Pitfall 1: Rest Timer Dies When App Backgrounds on iOS
+### Pitfall 1: Side-by-Side SwiftUI Picker Wheels Have Overlapping Touch Areas
 
-**What goes wrong:** iOS suspends your app seconds after the user locks the screen or switches to another app. A `kotlinx.coroutines` delay-based countdown timer silently stops. The user comes back after a 90-second rest, and the timer shows 87 seconds remaining. For a workout app, this is a trust-destroying bug -- rest timing is core to the exercise flow.
+**What goes wrong:** You replace the current reps `TextField` and weight `TextField` with two `.wheel`-style `Picker` views in an `HStack`. The pickers render correctly, but the touch/drag areas overlap. Scrolling the reps picker also scrolls the weight picker, or the left picker's drag area extends off-screen to the left while the right picker's drag area extends off-screen to the right. On some iOS versions, the middle picker (if three exist) becomes entirely unscrollable.
 
-**Why it happens:** iOS does not allow arbitrary background execution. Unlike Android (which has foreground services), iOS will suspend your process. Kotlin coroutines have no special immunity to this -- they are paused along with the process.
+**Why it happens:** SwiftUI's `.wheel` Picker internally uses `UIPickerView`, which claims an intrinsic content size wider than its visible frame. When multiple wheel pickers sit side-by-side in an `HStack`, their gesture recognizer hit areas overlap because UIKit does not clip them to the SwiftUI frame.
 
-**Consequences:** Timer shows wrong time after returning to app. Users lose trust in the app's core mechanic. If the timer drives workout state transitions (auto-advance to next set), those transitions never fire.
+**Consequences:** The core input mechanism (reps + weight entry) becomes unusable. This is the single most user-facing feature in v1.1 -- if the pickers do not work, the entire milestone fails.
 
 **Prevention:**
-- Do NOT rely on coroutine delay for elapsed time. Store the `startTime` (epoch millis) when the rest period begins. On every UI tick and on resume, calculate `elapsed = now - startTime`. The timer is always correct regardless of suspension.
-- Schedule an iOS local notification (via `expect/actual` wrapping `UNUserNotificationCenter`) for the rest period end time. If the user is in another app, they still get a "Rest complete" alert.
-- On resume (`Lifecycle.Event.ON_RESUME`), immediately recalculate timer state from the stored start time. If rest is already over, advance the workout state.
+1. Apply `.clipped()` to EACH individual `Picker` view (not just the parent `HStack`). This constrains the visible rendering but does not fully fix the touch area on all iOS versions.
+2. Wrap pickers in a `GeometryReader` and explicitly set each picker's `frame(width:)` to `geometry.size.width / numberOfPickers`. Then apply `.clipped()`.
+3. Add the `UIPickerView` intrinsic content size override to the iOS app:
+   ```swift
+   extension UIPickerView {
+       open override var intrinsicContentSize: CGSize {
+           CGSize(width: UIView.noIntrinsicMetric, height: 150)
+       }
+   }
+   ```
+   This tells UIKit the picker has no intrinsic width, forcing it to respect the SwiftUI frame. This is a global override -- place it in the app's `Extensions/` folder.
+4. Test on a REAL DEVICE, not just the simulator. Touch area bugs manifest differently on physical hardware.
+5. If the native `Picker(.wheel)` approach remains broken, fall back to a `UIViewRepresentable` wrapping `UIPickerView` directly. This gives full control over component count, row height, and gesture handling.
 
-**Detection:** Test by starting a rest timer, backgrounding the app for longer than the rest period, and returning. If the timer does not show 0 or advance, you have this bug.
+**Detection:** Place two wheel pickers side-by-side, attempt to scroll only the left one. If the right one also scrolls, you have this bug.
 
-**Phase relevance:** Must be solved in the very first phase that implements the rest timer. Do not defer.
+**Phase relevance:** First phase -- scroll wheel implementation. This is a blocker that must be prototyped and validated before building the full reps/weight picker UI.
 
-**Confidence:** HIGH -- this is a fundamental iOS platform behavior, well-documented by Apple.
+**Confidence:** HIGH -- documented in multiple Apple Developer Forum threads ([thread/690610](https://developer.apple.com/forums/thread/690610), [thread/690791](https://developer.apple.com/forums/thread/690791)) and community posts. Known issue since iOS 15.
 
 ---
 
-### Pitfall 2: Workout Session Lost on Process Death / Crash
+### Pitfall 2: Sealed Class Expansion Silently Breaks Swift Switch Statements
 
-**What goes wrong:** User is 40 minutes into a workout. iOS kills the app (memory pressure, user force-quit, crash). They reopen and land on the home screen with zero workout data. All logged sets are gone.
+**What goes wrong:** You add new states to `WorkoutSessionState` (e.g., `Recap`, `Reordering`, `Abandoning`) in the Kotlin sealed class. The Kotlin code compiles fine because `when` is exhaustive. The Swift code in `WorkoutSessionView.swift` also compiles fine because it does not use exhaustive switching -- it uses `if let active = sessionState as? WorkoutSessionState.Active`. The new states silently fall through to the `else` branch (the loading spinner), and the user sees a spinner when they should see the recap screen.
 
-**Why it happens:** Workout state is held only in ViewModel memory (StateFlow). Neither Room nor SQLDelight is written to until the "finish workout" action. Process death wipes the ViewModel.
+**Why it happens:** Kotlin sealed classes compile to regular Objective-C classes when exported to Swift. Swift cannot perform exhaustive pattern matching on them. The current codebase uses `if let` casting chains:
+```swift
+if let active = sessionState as? WorkoutSessionState.Active {
+    activeWorkoutView(active)
+} else if let finished = sessionState as? WorkoutSessionState.Finished {
+    WorkoutFinishedView(...)
+} else {
+    // Idle / loading -- THIS catches ALL unknown states
+    ProgressView()
+}
+```
+Any new sealed subclass silently lands in the `else` branch.
 
-**Consequences:** Complete data loss of an in-progress workout. Users will not use the app for real workouts after experiencing this once.
+**Consequences:** New features appear broken (showing spinner instead of UI), and the cause is non-obvious because there is no compiler warning or runtime error.
 
 **Prevention:**
-- Persist workout session state to the database incrementally. Every completed set should be written to a `workout_sessions` table (or similar) immediately, not batched at the end.
-- Store a `WorkoutSession` row with status `IN_PROGRESS` when the workout starts. Include current exercise index and set index.
-- On app launch, check for `IN_PROGRESS` sessions. If found, offer to resume. This is the "crash recovery" path.
-- The gymtracker firmware reference already uses an FSM pattern -- adapt this to persist the FSM state to disk, not just hold it in memory.
+1. **Before adding any new sealed subclass**, audit ALL Swift files that switch on that sealed class. The current `WorkoutSessionView.swift` has the critical switch at line 37-60.
+2. Add explicit `else if let` branches for every new state BEFORE the final `else` fallback.
+3. Add a `fatalError("Unknown WorkoutSessionState: \(sessionState)")` or at minimum a `print("WARNING: Unhandled state: \(sessionState)")` in the final `else` branch during development. This makes silent failures loud.
+4. Consider restructuring the Swift side to use a helper function that maps ALL known states explicitly, making it harder to forget one:
+   ```swift
+   @ViewBuilder
+   private func viewForState(_ state: WorkoutSessionState) -> some View {
+       if let idle = state as? WorkoutSessionState.Idle { ... }
+       else if let active = state as? WorkoutSessionState.Active { ... }
+       else if let finished = state as? WorkoutSessionState.Finished { ... }
+       else if let recap = state as? WorkoutSessionState.Recap { ... }
+       else { fatalError("Unhandled state: \(state)") }
+   }
+   ```
+5. **Do NOT adopt SKIE** just for this -- the project explicitly excludes SKIE in CLAUDE.md constraints, and adding a build tool dependency mid-milestone for one pattern is not worth the risk.
 
-**Detection:** Start a workout, log 3 sets, then force-kill the app from the iOS task switcher. Reopen. If there is no recovery prompt, you have this pitfall.
+**Detection:** Add a new sealed subclass, build and run without updating Swift. If the app shows the wrong UI (spinner) instead of crashing or warning, you have this pitfall.
 
-**Phase relevance:** Must be designed into the data model from the start. Retrofitting crash recovery onto a "save only at end" model is a rewrite.
+**Phase relevance:** EVERY phase that adds a new state. Create a checklist: "Did I update the Swift switch for this state?" This applies to adding `Recap`, `Reordering`, and any future states.
 
-**Confidence:** HIGH -- standard mobile development concern, amplified for workout apps where sessions are long-running (30-90 min).
+**Confidence:** HIGH -- this is a fundamental KMP/ObjC interop limitation. Verified in [Kotlin Slack thread](https://slack-chats.kotlinlang.org/t/451273/i-have-a-kmm-project-with-sealed-classes-and-classes-inside-), [SKIE docs](https://skie.touchlab.co/features/sealed), and [JetBrains YouTrack KT-45204](https://youtrack.jetbrains.com/issue/KT-45204).
 
 ---
 
-### Pitfall 3: iOS Lifecycle Mismatch Causes Double-Firing Effects and Stale State
+### Pitfall 3: Mid-Workout Exercise Reorder Invalidates currentExerciseIndex
 
-**What goes wrong:** `LaunchedEffect` and `DisposableEffect` fire unexpectedly on iOS when navigating between screens. A timer resets, a database query re-executes, or a state machine reinitializes when the user navigates forward (not just back).
+**What goes wrong:** User is on exercise index 2 (Bench Press). They open the reorder sheet and drag Bench Press from position 2 to position 0. The `currentExerciseIndex` still points at index 2, which is now a different exercise (e.g., Squats). The user returns from the reorder sheet to find they are suddenly logging sets for the wrong exercise. Worse: any sets already persisted to Room are keyed by `exerciseIndex`, so the crash recovery data now maps completed sets to the wrong exercises.
 
-**Why it happens:** On iOS, Compose Multiplatform's lifecycle integration behaves differently from Android. When a `UIViewController` hosting Compose leaves the screen (even for forward navigation into a deeper screen), lifecycle events fire as if the composable is being disposed. This triggers `DisposableEffect` onDispose and re-triggers `LaunchedEffect` when returning. Android does not behave this way -- effects persist across the activity lifetime.
+**Why it happens:** The current `WorkoutSessionState.Active` stores `currentExerciseIndex: Int` as a direct array index:
+```kotlin
+data class Active(
+    val exercises: List<SessionExercise>,
+    val currentExerciseIndex: Int,  // Direct index into exercises list
+    val currentSetIndex: Int,
+    ...
+)
+```
+Reordering the `exercises` list changes what index 2 points to, but the `currentExerciseIndex` value is not updated.
 
-**Consequences:** Workout timer resets when navigating to an exercise detail and back. Database queries re-execute unnecessarily. State machines reset to initial state.
+**Consequences:** Wrong exercise shown after reorder. Completed sets attributed to wrong exercise in Room. Crash recovery restores corrupted data. This is a data integrity bug, not just a UI glitch.
 
 **Prevention:**
-- Do NOT put workout session state inside composable-scoped effects. Use a ViewModel that survives navigation. The ViewModel's `viewModelScope` is the correct coroutine scope for ongoing operations.
-- Use `collectAsState()` to observe ViewModel StateFlow from composables, rather than launching collectors inside `LaunchedEffect`.
-- If you must use `LaunchedEffect` with a key, make the key stable and meaningful (e.g., `workoutId`), not `Unit` which re-fires on every recomposition of the composable.
-- Test every screen transition on iOS specifically -- do not assume Android behavior matches.
+1. **Use an indirection array** (the firmware pattern mentioned in the milestone context). Instead of reordering the `exercises` list itself, maintain a separate `exerciseOrder: List<Int>` that maps display position to original index:
+   ```kotlin
+   data class Active(
+       val exercises: List<SessionExercise>,        // NEVER reordered
+       val exerciseOrder: List<Int>,                 // [2, 0, 1] = display order
+       val currentExercisePosition: Int,             // Index into exerciseOrder
+       val currentSetIndex: Int,
+       ...
+   )
+   ```
+   The current exercise is always `exercises[exerciseOrder[currentExercisePosition]]`. Reordering only mutates `exerciseOrder`, never `exercises`.
+2. **Alternative: Track by exerciseId, not index.** Store `currentExerciseId: String` instead of `currentExerciseIndex: Int`. After reorder, find the exercise by ID. This is simpler but requires a lookup on every access.
+3. **Update Room crash recovery data** when reordering. The current `saveCompletedSet` uses `exerciseIndex` as a key. If exercises can be reordered, this key must either be the original (pre-reorder) index or the exercise ID.
+4. **Test the following sequence:** Start workout -> complete 2 sets on exercise 2 -> reorder exercise 2 to position 0 -> verify sets are still attributed to the correct exercise -> force-kill app -> resume -> verify recovered data is correct.
 
-**Detection:** Navigate forward from the active workout screen to any detail screen, then back. If timers reset or state changes, you have this bug.
+**Detection:** Complete sets on exercise B, reorder so exercise A is where B was, check if the set data follows exercise B or stays at the index.
 
-**Phase relevance:** Foundation phase. The navigation and ViewModel architecture must account for this from day one.
+**Phase relevance:** Must be designed BEFORE implementing reorder. Retrofitting the indirection array onto a direct-index model requires changing every place that reads `currentExerciseIndex` (ViewModel + Swift views + Room persistence).
 
-**Confidence:** HIGH -- documented in [JetBrains GitHub issue #3890](https://github.com/JetBrains/compose-multiplatform/issues/3890) and [#3889](https://github.com/JetBrains/compose-multiplatform/issues/3889).
+**Confidence:** HIGH -- this is a well-known array-index-invalidation bug. The milestone context explicitly calls out the "indirection array pattern from firmware" as the solution.
 
 ---
 
-### Pitfall 4: Database Migrations Silently Wipe Data on iOS
+### Pitfall 4: Abandon Guard Cannot Intercept NavigationStack Back Gesture
 
-**What goes wrong:** You add a column to an entity (e.g., adding `notes` to a `WorkoutSet`). On Android, Room handles the migration. On iOS, the migration fails silently and Room falls back to destructive migration, wiping the entire database. The user's workout history vanishes.
+**What goes wrong:** The user swipes from the left edge during an active workout. The `NavigationStack` pops the `WorkoutSessionView` without any confirmation dialog. The workout state in the ViewModel is now orphaned -- the view is gone, but the workout was never finished or discarded. If the user starts a new workout, they may get a "resume previous workout?" prompt for the abandoned one, but the UX is confusing and data may be in an inconsistent state.
 
-**Why it happens:** If `fallbackToDestructiveMigration()` is set (common in tutorials and starter templates), a missing or broken migration deletes all tables and recreates them. iOS SQLite handles `ALTER TABLE` slightly differently from Android's SQLite version, particularly around non-null default values. A migration that passes on Android can fail on iOS.
+**Why it happens:** The current code already uses `.navigationBarBackButtonHidden(true)` (line 61 of `WorkoutSessionView.swift`), which hides the back button AND disables the swipe-back gesture on standard push navigation. However, this means the ONLY way back is a custom back button that you control. The current code has NO custom back button -- the only exit is "Finish Workout." This is correct for the current v1.0 flow, but v1.1 requires an "abandon" option.
 
-**Consequences:** Silent, total data loss. No crash, no error message -- just empty tables.
+The danger emerges if:
+(a) Someone removes `.navigationBarBackButtonHidden(true)` during refactoring, re-enabling unguarded back swipe.
+(b) The workout session is refactored to use `.sheet()` or `.fullScreenCover()` instead of `navigationDestination`, where `interactiveDismissDisabled` is needed instead.
+(c) Future iOS versions change the behavior of `navigationBarBackButtonHidden` with respect to the swipe gesture.
+
+**Consequences:** Unguarded workout abandonment. Orphaned session state. Confused users who accidentally swiped back and lost their workout.
 
 **Prevention:**
-- Never use `fallbackToDestructiveMigration()` except in debug builds. Remove it before any user testing.
-- Write explicit `Migration` objects for every schema change. Test them on both platforms.
-- Add an integration test that opens a pre-populated database, runs the migration, and verifies data survives. Run this test on both Android and iOS targets in CI.
-- Since Database Inspector is Android-only, build a debug DAO that can dump table schemas programmatically so you can verify migrations on iOS.
-- Consider using version-numbered `.sq` files if you go with SQLDelight, which has a more explicit migration story.
+1. **Keep `.navigationBarBackButtonHidden(true)` on `WorkoutSessionView`.** This is already correct in the codebase.
+2. **Add a custom toolbar button** (e.g., X or "End") that shows a confirmation `Alert`:
+   ```swift
+   .toolbar {
+       ToolbarItem(placement: .navigationBarLeading) {
+           Button {
+               showAbandonConfirmation = true
+           } label: {
+               Image(systemName: "xmark")
+           }
+       }
+   }
+   .alert("End Workout?", isPresented: $showAbandonConfirmation) {
+       Button("Save & Exit") { viewModel.finishWorkout() }
+       Button("Discard", role: .destructive) { viewModel.discardWorkout(); dismiss() }
+       Button("Cancel", role: .cancel) { }
+   }
+   ```
+3. **If switching to `.fullScreenCover()`** (which might feel more appropriate for the immersive workout experience), use `.interactiveDismissDisabled(true)` to prevent swipe-down dismissal. `.fullScreenCover` does not have a back swipe gesture at all, which is an advantage for this use case.
+4. **Add the abandon guard to the ViewModel side too:** The `discardWorkout()` method already exists. Ensure `finishWorkout()` can handle partially-completed workouts (it already does -- it filters to only completed sets).
+5. **Test:** Navigate to workout -> try to swipe back from left edge -> verify nothing happens. Try to tap the back area in the nav bar -> verify nothing happens.
 
-**Detection:** Change a schema, run on iOS without providing a migration, check if data persists. If it doesn't, and no error was thrown, you have this pitfall.
+**Detection:** Remove `navigationBarBackButtonHidden` temporarily and observe if back swipe is possible. If so, the guard is presentation-layer only and fragile.
 
-**Phase relevance:** Data model phase. Establish migration discipline from the first schema. Do not wait until you have user data to start caring about migrations.
+**Phase relevance:** Same phase as abandon guards. The ViewModel logic (save/discard) and the SwiftUI guard (prevent back) must ship together.
 
-**Confidence:** HIGH -- documented in Android developer docs and multiple KMP migration guides.
+**Confidence:** HIGH -- the current codebase already prevents this correctly, but the fix is fragile (one line removal breaks it). Verified via [Apple docs](https://developer.apple.com/documentation/swiftui/view/navigationbarbackbuttonhidden(_:)) and [community posts](https://medium.com/@yunchingtan/swiftui-disable-back-swipe-gesture-dynamically-56c32d55cc4d).
 
 ---
 
 ## Moderate Pitfalls
 
-### Pitfall 5: iOS Keyboard Covers Weight/Rep Input Fields
+### Pitfall 5: Weight Picker with 2.5kg Steps Requires Pre-Computed Value Array, Not a Range
 
-**What goes wrong:** On the set logging screen, the user taps the weight or reps `TextField`. The iOS software keyboard slides up and covers the input field. The user is typing blind, which is especially bad when entering precise weights.
+**What goes wrong:** You try to create a SwiftUI `Picker` with `ForEach(0...4000, id: \.self)` representing 0.0 to 400.0 kg in 0.1 increments, or `stride(from: 0, through: 10000, by: 25)` for 2.5kg steps with kgX10 storage. The picker has 401 items (0, 25, 50, ..., 10000). This seems manageable, but:
+- The picker scrolls sluggishly on older devices due to the number of items.
+- The `Picker` value is an `Int` (kgX10), but the displayed text shows "62.5 kg." If the `.tag()` does not match the binding type exactly, selection silently breaks.
+- Users find it hard to scroll from 0 to 100kg quickly (40 rows of scrolling in 2.5kg increments).
 
-**Why it happens:** Compose Multiplatform's iOS `TextField` keyboard avoidance behaves differently from Android. The `WindowInsets` API for keyboard avoidance exists but requires explicit handling. Material `TextField` on iOS has known issues with keyboard interaction (tracked in JetBrains issues [#3621](https://github.com/JetBrains/compose-multiplatform/issues/3621), [#3530](https://github.com/JetBrains/compose-multiplatform/issues/3530)).
+**Why it happens:** The weight domain (0-1000 kg per the milestone spec) at 2.5kg steps = 401 items. At finer granularity (0.5kg = 2001 items, 0.1kg = 10001 items), performance degrades. The `.wheel` style renders ALL items eagerly (unlike a `List` which is lazy).
 
 **Prevention:**
-- Wrap scrollable content in a `Column` inside a `verticalScroll` modifier with `imePadding()` applied to the parent.
-- Test every input screen on a real iOS device (simulator keyboard behavior differs).
-- Use `keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)` for weight and rep fields to get the numeric pad, which is shorter and less likely to obscure content.
-- Consider placing input fields in the upper portion of the screen, or using a bottom sheet that sits above the keyboard.
+1. **Use the kgX10 integer as the picker value.** The binding should be `@State private var weightKgX10: Int32`. Each picker row is tagged with the kgX10 value: `.tag(Int32(value))`. Display text converts: `"\(value / 10).\(value % 10)"`.
+2. **Split into two pickers** for the weight: a "whole kg" picker (0-200 range) and a "decimal" picker (0, 5 for 0.0/0.5 increments, or 0, 2, 5, 7 for 0.25kg increments). This dramatically reduces the number of rows per picker and makes fast scrolling practical. This is how iOS clock/time pickers work (hours + minutes as separate wheels).
+3. **Pre-compute the value array** as a constant, not in a `ForEach` closure:
+   ```swift
+   private let weightValues: [Int32] = stride(from: 0, through: 10000, by: 25).map { Int32($0) }
+   ```
+4. **Always use explicit `.tag()`.** SwiftUI's implicit tagging with `ForEach` only works when the `id` type matches the binding type. Type mismatches between `Int`, `Int32`, and `Int64` cause silent selection failures, especially across the KMP/Swift bridge where Kotlin `Int` becomes Swift `Int32`.
 
-**Detection:** Run on a real iOS device, tap every text field, verify nothing is obscured.
+**Detection:** Set the picker binding to a value, then scroll to a different value and release. If the picker snaps back to the original value or the binding does not update, you have a tag type mismatch.
 
-**Phase relevance:** UI implementation phase. Test early on a real device, not just simulator.
+**Phase relevance:** Scroll wheel implementation phase. Prototype the weight picker early and test on device.
 
-**Confidence:** MEDIUM -- issues are documented but behavior has improved in recent Compose Multiplatform versions (1.8+). Verify with your target version.
+**Confidence:** HIGH -- tag type mismatches are the number one cause of broken SwiftUI Pickers per [Apple Developer Forums](https://developer.apple.com/forums/thread/689794) and [community guides](https://dev.to/devin-rosario/fix-swiftui-picker-not-updating-selection-common-issues-3da).
 
 ---
 
-### Pitfall 6: 20-Minute iOS Builds Kill Development Velocity
+### Pitfall 6: Picker State Resets When Unrelated ViewModel State Updates
 
-**What goes wrong:** Every code change triggers a Kotlin/Native compilation for iOS that takes 10-20 minutes. Development becomes painfully slow. You start avoiding running on iOS and only testing on Android, which leads to iOS-specific bugs shipping late.
+**What goes wrong:** The user is scrolling the weight picker to select 80kg. While the wheel is spinning, the elapsed time ticker updates (every second), causing a `sessionState` re-emission. SwiftUI re-renders the view, and the picker "jumps" back to the previous value, interrupting the user's scroll.
 
-**Why it happens:** Kotlin/Native compiles Kotlin to native machine code (LLVM), which is inherently slower than JVM compilation. Building for multiple iOS architectures (simulator arm64, simulator x86_64, device arm64) multiplies the cost. Default Gradle configuration does not enable caching or limit target architectures.
+**Why it happens:** The current `WorkoutSessionView` observes `sessionState` via `asyncSequence`, and `sessionState` is re-emitted every second (because `updateRestState` or the elapsed ticker causes a new `Active` copy). Each re-emission triggers a view update. If the picker's binding source is derived from `sessionState`, the picker re-renders with the old value while the user is mid-scroll.
+
+The existing code already has this issue with text fields (the `prefillInputs` method fires on state changes), but text fields are more forgiving -- users type and submit, they do not hold a continuous scroll gesture.
+
+**Consequences:** Maddening UX where the picker fights the user. Users cannot reliably select values.
 
 **Prevention:**
-- Set `kotlin.native.cacheKind=static` in `gradle.properties` for faster incremental rebuilds.
-- During development, only build for the simulator architecture you are actually using. Do not build all architectures on every change.
-- Enable Gradle configuration cache and build cache (`org.gradle.configuration-cache=true`, `org.gradle.caching=true`).
-- Use Gradle convention plugins to avoid duplicating build configuration across modules. Version updates become one-line changes instead of find-and-replace.
-- Set a consistent `jvmToolchain` across all modules to avoid recompilation from toolchain mismatches.
+1. **Separate picker state from session state.** The reps and weight picker bindings should be `@State` variables LOCAL to the view, not derived from the ViewModel on every emission. Only sync from ViewModel -> local state when the exercise/set cursor changes (new exercise or new set), not on every state emission.
+2. **Use `.onChange(of: active.currentExerciseIndex)` and `.onChange(of: active.currentSetIndex)` to trigger prefill**, not a continuous observation. The current code partially does this (lines 276-281 of `WorkoutSessionView.swift`), but the `observeSessionState` async function ALSO updates inputs (lines 407-417), creating a double-update path.
+3. **Remove the input prefill from `observeSessionState`.** The current code has TWO places that update `repsInput`/`weightInput`: the `prefillInputs` method (called from `onAppear`/`onChange`) and the `observeSessionState` observer. Eliminate the duplicate. Keep only the `onChange` path.
+4. **For the picker specifically:** Use `@State private var selectedReps: Int32` as the binding. Only write to it when the exercise/set changes. Let the picker own the value during scrolling.
 
-**Detection:** Time your first iOS build and your incremental build after a one-line Kotlin change. If incremental is over 2 minutes, optimize.
+**Detection:** Start a workout, begin scrolling a picker, and watch if it jumps every second (timer tick). If so, state updates are interfering with picker interaction.
 
-**Phase relevance:** Project setup phase. Get build configuration right from day one. Fixing this later means fighting Gradle while also trying to ship features.
+**Phase relevance:** Scroll wheel implementation phase. Must be solved as part of the text-field-to-picker migration.
 
-**Confidence:** HIGH -- widely reported, with documented fixes.
+**Confidence:** HIGH -- this is a direct consequence of the current architecture. The existing code's dual input-update paths (lines 276-281 and 407-417 of `WorkoutSessionView.swift`) make this inevitable unless refactored.
 
 ---
 
-### Pitfall 7: Material Design UI Feels Wrong on iOS
+### Pitfall 7: Post-Workout Recap State Must Be Immutable Snapshot, Not Live
 
-**What goes wrong:** The app ships with Material 3 components everywhere. iOS users find it jarring -- navigation bars look wrong, switches look wrong, the bottom sheet behavior is wrong, the whole thing feels like "an Android app on my iPhone." For a university project targeting iOS-first, this undermines the premise.
+**What goes wrong:** The user finishes their workout. A recap screen appears showing all exercises and sets. The user edits a set's reps in the recap. The edit triggers a Room write, which triggers a Flow re-emission, which causes the recap list to re-render from the database. But the database save has not completed yet, so the list flickers or shows stale data, or worse, the edit appears to revert.
 
-**Why it happens:** Compose Multiplatform defaults to Material Design components. There is no built-in Cupertino/iOS-native component kit from JetBrains. The assumption that "shared UI = identical UI" leads to an app that feels native on neither platform.
+**Why it happens:** If the recap screen reads data reactively from the same Room Flows that the active workout uses, edits create a write-read-render cycle with race conditions. The current `finishWorkout()` method writes to Room and then transitions to `Finished` state, which only carries summary data (name, duration, total sets/exercises), not the full exercise/set breakdown needed for a recap.
 
-**Consequences:** Poor user experience on iOS. Evaluators (professors) who are iOS users will notice immediately.
+**Consequences:** Flickering UI during recap edits. Lost edits. User confusion about whether their changes were saved.
 
 **Prevention:**
-- Accept Material Design as the foundation but customize it to feel less jarring on iOS. Use iOS-style color schemes, rounded corners, and spacing conventions.
-- For critical touchpoints (navigation bar, back navigation), consider using `expect/actual` to provide platform-appropriate behavior.
-- Look into community libraries like `compose-cupertino` (by Alex Zhukovich) that provide iOS-style components for Compose Multiplatform. Evaluate maturity before adopting.
-- Prioritize behavior over appearance: iOS users care more about swipe-back gestures working correctly than about the exact shape of a button.
+1. **Create the recap state as an immutable snapshot** captured at the moment of finishing. Add a new sealed class variant:
+   ```kotlin
+   data class Recap(
+       val workoutName: String,
+       val durationMillis: Long,
+       val exercises: List<SessionExercise>,  // Full snapshot, not a Room Flow
+       val startTimeMillis: Long
+   ) : WorkoutSessionState()
+   ```
+2. **Transition to `Recap` instead of `Finished`** when the user taps "Finish Workout." The recap holds the complete exercise/set data in memory. Edits modify this in-memory snapshot. Only when the user confirms "Save" does the final data write to Room.
+3. **Keep the current `Finished` state** as the post-save summary screen. The flow becomes: `Active -> Recap -> (user confirms) -> Finished`.
+4. **Do NOT read from Room during recap.** The recap data lives entirely in the ViewModel's state. This avoids write-read race conditions.
 
-**Detection:** Show the app to an iOS user and ask "Does this feel like an iPhone app?" If they hesitate, you have this problem.
+**Detection:** Finish a workout, edit a set in recap, observe if the UI flickers or the edit reverts.
 
-**Phase relevance:** UI implementation phase. Make this decision early -- switching component styles later means touching every screen.
+**Phase relevance:** Post-workout recap phase. Design the state transition (Active -> Recap -> Finished) before implementing the recap UI.
 
-**Confidence:** MEDIUM -- the severity depends on the evaluator's expectations and how much iOS-native feel matters for grading.
+**Confidence:** MEDIUM -- this is an architectural design recommendation based on the current codebase structure. Not a verified bug, but a predictable consequence of the current data flow.
 
 ---
 
-### Pitfall 8: Navigation Swipe-Back Gesture Broken or Janky on iOS
+### Pitfall 8: Auto-Increment Prefill Conflicts with Scroll Wheel Selection
 
-**What goes wrong:** Users swipe from the left edge to go back (the most fundamental iOS gesture). Either nothing happens, or the animation is janky and non-native-feeling, or it works on some screens but not others.
+**What goes wrong:** Auto-increment feature: after completing set 1 (10 reps, 60kg), set 2 pre-fills with 10 reps and 60kg (the actual values from set 1, not the template targets). With text fields, this is straightforward -- just set the text. With scroll wheels, pre-filling means programmatically scrolling the picker to a value. If the prefill happens while the picker is already rendered, it causes a visible "snap" animation. If the prefill value is not in the picker's value array (e.g., the user entered a freeform value via the old text field that is not a valid 2.5kg increment), the picker cannot represent it.
 
-**Why it happens:** Compose Multiplatform's navigation library has experimental support for iOS back gestures as of recent versions. However, it does not perfectly replicate the native iOS interactive dismissal (where you see the previous screen sliding in behind). Custom composable transitions may conflict with the gesture system.
+**Why it happens:** The current `prefillInputs` function sets string values (`repsInput`, `weightInput`). Scroll wheels are bound to `Int32` values. The prefill logic must change from string manipulation to integer value assignment. Additionally, the `targetWeightKgX10` from the template might not align to the 2.5kg grid (e.g., a template with 67.5kg target = kgX10 of 675, which is valid if using 2.5kg steps, but 63kg = 630 is NOT a 2.5kg step).
 
-**Consequences:** The app feels broken on iOS. Swipe-back is muscle memory for every iOS user.
+**Consequences:** Picker shows wrong value, picker cannot represent the value, or picker snaps visually when prefilling.
 
 **Prevention:**
-- Use the official Compose Navigation library's built-in back gesture support (enabled by default on iOS in recent versions). Do not fight it with custom transition animations.
-- Test swipe-back on every screen transition, not just the main ones.
-- If the official library's back gesture is insufficient, evaluate Decompose as a navigation library -- it has more mature iOS back gesture support.
-- Avoid WebView or other UIKit interop on screens where back gesture matters, as gesture conflicts arise.
+1. **Snap prefill values to the nearest valid picker step.** If using 2.5kg steps (kgX10 increments of 25), round `targetWeightKgX10` to the nearest multiple of 25:
+   ```kotlin
+   fun snapToStep(kgX10: Int, stepKgX10: Int = 25): Int {
+       return ((kgX10 + stepKgX10 / 2) / stepKgX10) * stepKgX10
+   }
+   ```
+2. **Apply the auto-increment values ONLY when the cursor changes** (new set or new exercise), not on every state update. Use the same `onChange` trigger as the picker state management.
+3. **Animate the prefill** using `.animation(.default)` on the picker, rather than having it snap. This gives visual feedback that the picker was programmatically set.
+4. **Consider making the step configurable per exercise** (some exercises use 1.25kg plates, others use 2.5kg). But for v1.1, a global 2.5kg step is sufficient.
 
-**Detection:** Navigate 3 screens deep, then swipe back from the left edge on each. If any transition feels wrong or does not work, address it.
+**Detection:** Complete a set with a non-standard weight, advance to the next set, verify the picker shows the correct (snapped) value without glitching.
 
-**Phase relevance:** Navigation setup phase. Choose the navigation library with this in mind.
+**Phase relevance:** Auto-increment phase. Must be implemented alongside or after the scroll wheel picker, not before.
 
-**Confidence:** MEDIUM -- the official library has improved significantly, but edge cases remain. Test with your specific version.
+**Confidence:** MEDIUM -- the snap-to-step logic is straightforward, but the visual picker animation behavior requires device testing.
 
 ---
 
-### Pitfall 9: Coroutine Exception Crashes iOS App Silently
+### Pitfall 9: Context Menu Conflicts with List Scroll and Long-Press Gestures
 
-**What goes wrong:** A Kotlin `suspend` function throws an exception. On Android, it propagates normally through the coroutine hierarchy. On iOS, the app crashes with no meaningful stack trace because Kotlin/Native exceptions do not automatically bridge to Swift error handling.
+**What goes wrong:** You add `.contextMenu` to each exercise row in the exercise overview sheet (for "Skip Exercise", "Move Up", "Move Down" actions). The long-press gesture for the context menu conflicts with the drag gesture for list reordering (`onMove`). Users try to long-press to reorder but get the context menu instead, or they try to invoke the context menu but accidentally start a drag.
 
-**Why it happens:** Kotlin suspend functions called from Swift/ObjC do not propagate exceptions as Swift `Error`. Without `@Throws(Throwable::class)` annotation, the exception is uncatchable on the iOS side and crashes the app. Even within shared Kotlin code, unhandled exceptions in coroutines launched on iOS can produce opaque crash logs.
+**Why it happens:** SwiftUI's `.contextMenu` uses a long-press gesture recognizer. The `onMove` (drag to reorder) also uses a long-press gesture. When both are present on the same list row, gesture priority is ambiguous and platform-version-dependent.
 
-**Consequences:** Crashes during workout sessions (the worst possible time). Difficult to debug because the stack trace is unhelpful on iOS.
+**Consequences:** Users cannot reliably access either reordering or the context menu. The interaction feels broken.
 
 **Prevention:**
-- Add `@Throws(Exception::class)` to any suspend function exposed to iOS/Swift.
-- Use `CoroutineExceptionHandler` on every `CoroutineScope` and `viewModelScope` to catch and log unhandled exceptions instead of crashing.
-- Wrap database operations and any IO in try/catch within the shared module, not at the UI layer.
-- If using KMP-NativeCoroutines library, it handles this bridging automatically. Consider it for any suspend functions exposed to Swift.
+1. **Do NOT use both `.contextMenu` and `onMove` on the same list row.** Choose one interaction pattern per surface.
+2. **Option A: Context menu for actions, Edit mode for reorder.** Use `.contextMenu` for quick actions (skip, etc.). Use SwiftUI's `EditButton` / `editMode` to enter a reorder mode where drag handles appear and context menus are hidden.
+3. **Option B: No context menu, use swipe actions + sheet for reorder.** Use `.swipeActions` for quick actions (skip exercise, etc.). Use a dedicated "Reorder" button that opens the reorder sheet (similar to the current `ExerciseOverviewSheet` but with drag handles).
+4. **Option C (recommended for this app): Keep the existing exercise overview sheet as the reorder surface.** The current `ExerciseOverviewSheet` already shows exercises with a "jump to" tap action. Add drag-to-reorder in that sheet. Add context menu on the main workout view's exercise header (not in a List, so no conflict with onMove).
 
-**Detection:** Throw an exception in a suspend function called from a composable. If the iOS app crashes instead of showing an error state, you have this pitfall.
+**Detection:** Add both `.contextMenu` and `onMove` to a List row. Try to reorder. If the context menu appears instead, you have the conflict.
 
-**Phase relevance:** Foundation phase. Establish error handling patterns from the first coroutine.
+**Phase relevance:** Context menu and reorder phases. Design the interaction model before implementing either feature.
 
-**Confidence:** HIGH -- documented in Kotlin docs and widely discussed in KMP community.
+**Confidence:** HIGH -- well-known SwiftUI gesture conflict. Verified in [Apple documentation](https://developer.apple.com/documentation/swiftui/contextmenu) and community discussions.
 
 ---
 
-### Pitfall 10: Overengineering expect/actual Instead of Using Interfaces
+### Pitfall 10: Adding Room Migration for New Fields Without Bumping Schema Version
 
-**What goes wrong:** The developer creates `expect/actual` declarations for everything that differs between platforms -- database construction, timer utilities, notification scheduling, settings storage. The `commonMain` module becomes tightly coupled to platform specifics. Testing requires running on actual platform targets instead of JVM.
+**What goes wrong:** You add a `personalBestKgX10` column to a Room entity to support the personal best display feature. You forget to increment the database version number or add a migration. On Android, Room crashes on launch with "Room cannot verify the data integrity." On iOS, if `fallbackToDestructiveMigration()` is enabled (it should not be per Pitfall 4 in the v1.0 research), all data is silently wiped.
 
-**Why it happens:** `expect/actual` is the first pattern KMP newcomers learn. It seems like the right tool for every platform difference. The alternative (interface + dependency injection) feels like more boilerplate initially.
+**Why it happens:** Room validates the schema at runtime against the compiled schema. Any entity change (new column, new table, new index) requires a version bump + migration. This is easy to forget when adding "just one column."
 
-**Consequences:** Shared code becomes hard to unit test (can't run on JVM). Platform-specific code bleeds into common modules. Adding a third platform later requires implementing every `actual` declaration.
+**Consequences:** App crashes on launch (Android) or data loss (iOS with destructive fallback). Users lose their workout history.
 
 **Prevention:**
-- Use `expect/actual` only for things that are truly compile-time platform decisions (e.g., creating a database driver, providing a platform context).
-- For everything else, define an interface in `commonMain` and inject the platform implementation via Koin. This keeps common code testable on JVM.
-- Rule of thumb: if you can define it as an interface with a single implementation per platform, prefer interface + DI over expect/actual.
+1. **The app is already at schema version 3** (based on the v1.0 shipped state). Any new entity change bumps to version 4 with an explicit `Migration(3, 4)`.
+2. **Before writing any Room entity change, write the migration FIRST.** This forces you to think about the ALTER TABLE statement before modifying the entity class.
+3. **Test the migration on both platforms** by installing the v1.0 build, creating data, then installing the v1.1 build and verifying data survives.
+4. **For the personal best feature specifically:** Consider whether you need a new column at all. Personal bests can be computed from the existing `completed_workouts` / `completed_sets` tables with a MAX query. Adding a denormalized column is premature optimization for a local-only app.
 
-**Detection:** Count your `expect` declarations. If there are more than 5-8 in a prototype app, you are likely overusing the pattern.
+**Detection:** Change an entity, build and run. If the app crashes on launch, you forgot the migration.
 
-**Phase relevance:** Architecture/foundation phase. Establish the DI pattern early.
+**Phase relevance:** Any phase that touches Room entities. Most likely the personal best display phase.
 
-**Confidence:** HIGH -- this is a widely discussed KMP architectural best practice.
+**Confidence:** HIGH -- this was already flagged in v1.0 research (Pitfall 4). Re-flagged here because v1.1 will likely need schema changes.
 
 ---
 
 ## Minor Pitfalls
 
-### Pitfall 11: Flow collectAsState Behavior Differs Between Android and iOS
+### Pitfall 11: Kotlin Int vs Swift Int32 Tag Mismatch in Pickers
 
-**What goes wrong:** A `StateFlow` observed with `.collectAsState()` keeps the subscription alive when the Android app goes to background, but pauses collection on iOS when the user presses the home button. If the workout timer is updating state via a Flow, the UI goes stale on iOS background/foreground transitions.
+**What goes wrong:** You create a SwiftUI `Picker` binding of type `Int` (Swift's native integer, which is 64-bit on iOS). The `ForEach` iterates over values from the KMP shared module, which are `Int32` (Kotlin `Int` maps to `Int32` in Swift). The `.tag()` uses `Int32` values. The binding is `Int`. Tags do not match the binding type. The picker never updates the binding.
 
-**Prevention:** Rely on `Lifecycle`-aware collection (`collectAsStateWithLifecycle` where available) and recalculate state on resume rather than depending on continuous Flow emission. Store authoritative state in the database, not just in a Flow.
-
-**Phase relevance:** Any phase using Flows. Be aware from the start.
-
-**Confidence:** HIGH -- documented in [JetBrains GitHub issue #3889](https://github.com/JetBrains/compose-multiplatform/issues/3889).
-
----
-
-### Pitfall 12: Koin Module Not Initialized on iOS Entry Point
-
-**What goes wrong:** The app works perfectly on Android but crashes on iOS launch with "No definition found for class" errors. Dependency injection simply was not started.
-
-**Prevention:** Ensure `initKoin()` is called from the iOS app entry point (e.g., in `MainViewController.kt` or the iOS `AppDelegate` equivalent via `expect/actual`). Android typically handles this in `Application.onCreate()`, but iOS has a different entry point. Follow Koin's KMP setup guide exactly.
-
-**Detection:** First run on iOS. If it crashes immediately with Koin resolution errors, you missed this step.
-
-**Phase relevance:** Initial project setup.
-
-**Confidence:** HIGH -- Koin's own docs flag this as a common mistake.
-
----
-
-### Pitfall 13: Weight Stored as Float Causes Precision Drift
-
-**What goes wrong:** User enters 62.5 kg. After a few save/load cycles, the value displays as 62.499999 or 62.500001. Float/Double precision errors accumulate, and the displayed weight looks wrong.
-
-**Prevention:** Store weight as an integer in the smallest unit (e.g., grams or decigrams, matching gymtracker's `kg x 10` approach). Display by dividing: `625 / 10 = 62.5`. Never store user-facing decimal weights as Float or Double in the database. Use `Int` or `Long` columns.
-
-**Phase relevance:** Data model design. Get this right in the schema, not as a UI format hack later.
-
-**Confidence:** HIGH -- fundamental floating-point behavior; the gymtracker reference already solved this with `kg * 10`.
-
----
-
-### Pitfall 14: Version Mismatch Between Kotlin, Compose, and Libraries Breaks Build
-
-**What goes wrong:** Updating Kotlin from 2.0 to 2.1 breaks Compose Multiplatform. Or updating Compose Multiplatform breaks a third-party library. The build fails with cryptic compiler errors about incompatible metadata.
+**Why it happens:** Kotlin's `Int` is 32-bit and maps to Swift's `Int32` (via Objective-C `int32_t`). Swift's `Int` is 64-bit on all Apple platforms. SwiftUI Picker requires the `.tag()` type to EXACTLY match the `@State` binding type. `Int32 != Int` in Swift, so the tag comparison always fails.
 
 **Prevention:**
-- Use the [JetBrains compatibility matrix](https://kotlinlang.org/docs/multiplatform/compose-compatibility-and-versioning.html) to pick compatible versions of Kotlin, Compose Multiplatform, and AGP.
-- Pin all versions in a Gradle version catalog (`libs.versions.toml`).
-- Do not update Kotlin, Compose, or AGP independently. Update them together using the compatibility matrix.
-- Lock dependency versions early and do not update mid-milestone unless forced by a blocker.
+1. **Always use `Int32` for picker bindings when the values come from KMP.** Or convert all KMP values to Swift `Int` before tagging.
+2. **Be explicit with tags:** `.tag(Int32(value))` if the binding is `Int32`, or `.tag(Int(value))` if the binding is `Int`.
+3. **Add a debug helper** that prints the binding value on change to verify it updates.
 
-**Phase relevance:** Project setup. Define versions once and do not touch them during development unless necessary.
+**Detection:** Scroll the picker, check if the binding value changes in a debug print. If it stays at the initial value, tag types are mismatched.
 
-**Confidence:** HIGH -- version conflicts are the most commonly reported KMP build issue.
+**Phase relevance:** Scroll wheel implementation. A silent bug that wastes hours debugging.
+
+**Confidence:** HIGH -- well-documented SwiftUI behavior. Verified in [Apple Developer Forums](https://developer.apple.com/forums/thread/118813) and [DEV Community](https://dev.to/devin-rosario/fix-swiftui-picker-not-updating-selection-common-issues-3da).
+
+---
+
+### Pitfall 12: Reorder Persistence in Room Uses exerciseIndex That Changes Meaning After Reorder
+
+**What goes wrong:** The current `saveCompletedSet(exerciseIndex, setIndex, reps, weightKgX10, timestamp)` in `WorkoutRepository` persists sets keyed by their exercise index. After a reorder, exerciseIndex 0 might refer to a different exercise than it did when the set was originally completed. If the user reorders mid-workout and then the app crashes, recovery will assign sets to the wrong exercises.
+
+**Why it happens:** The `exerciseIndex` is a positional key, not a stable identifier. Reordering changes the position-to-exercise mapping.
+
+**Prevention:**
+1. **Store `exerciseId: String` alongside `exerciseIndex` in the active session persistence.** Use `exerciseId` as the stable key for recovery, and `exerciseIndex` as the display order (which can be updated on reorder).
+2. **Or: Persist the current `exerciseOrder` array** (from Pitfall 3's indirection array) to Room as part of the active session state. On recovery, reconstruct the order from this persisted array.
+
+**Detection:** Complete sets, reorder exercises, force-kill app, resume. Check if sets are attributed to the correct exercises.
+
+**Phase relevance:** Reorder phase. Must be addressed as part of the reorder implementation, not after.
+
+**Confidence:** HIGH -- direct consequence of the current data model design.
+
+---
+
+### Pitfall 13: Personal Best Query Performance on Large History
+
+**What goes wrong:** The personal best feature queries completed workouts to find the maximum weight for each exercise. With a naive query (`SELECT MAX(weightKgX10) FROM completed_sets WHERE exerciseId = ?`), this is fast. But if you need to display "personal best per exercise" for ALL exercises in the current workout simultaneously, you run N queries (one per exercise) on every state update.
+
+**Prevention:**
+1. **Query personal bests once at workout start** (in `startWorkout()`, alongside the existing `getPreviousPerformance()` call). Store them in a `Map<String, Int>` in the ViewModel.
+2. **Add a Room DAO query** that fetches personal bests for multiple exercises in a single query:
+   ```kotlin
+   @Query("SELECT exerciseId, MAX(actualWeightKgX10) as maxWeight FROM completed_sets WHERE exerciseId IN (:exerciseIds) GROUP BY exerciseId")
+   suspend fun getPersonalBests(exerciseIds: List<String>): List<PersonalBest>
+   ```
+3. **Do NOT observe this as a Flow** during the active workout. Personal bests only change when a workout is saved, not during execution. A one-time query is sufficient.
+
+**Detection:** Profile the workout start time with 50+ workout history entries. If it takes more than 500ms, optimize the query.
+
+**Phase relevance:** Personal best display phase. Minor performance concern that is easy to prevent with proper query design.
+
+**Confidence:** MEDIUM -- performance depends on history size. For a university project with limited real data, this may never be noticeable. But the fix is trivial, so do it right.
 
 ---
 
@@ -287,30 +387,33 @@ Mistakes that cause rewrites, data loss, or weeks of wasted time.
 
 | Phase Topic | Likely Pitfall | Mitigation |
 |-------------|---------------|------------|
-| Project setup / scaffolding | Slow iOS builds (Pitfall 6), version mismatches (Pitfall 14), Koin not initialized on iOS (Pitfall 12) | Configure Gradle caching, pin versions from compatibility matrix, test iOS launch immediately |
-| Data model / database | Destructive migration (Pitfall 4), float precision (Pitfall 13) | Never use `fallbackToDestructiveMigration()`, use integer weight storage |
-| Workout session state machine | Session loss on process death (Pitfall 2), lifecycle mismatch (Pitfall 3) | Persist FSM state to DB incrementally, keep state in ViewModel not LaunchedEffect |
-| Rest timer implementation | Timer dies in background (Pitfall 1), Flow behavior difference (Pitfall 11) | Epoch-based timing, local notifications for background, recalculate on resume |
-| Navigation | Swipe-back broken (Pitfall 8), lifecycle effects re-fire (Pitfall 3) | Test every transition on iOS, use ViewModel-scoped state |
-| UI / input forms | Keyboard covers inputs (Pitfall 5), Material feels wrong on iOS (Pitfall 7) | `imePadding()`, numeric keyboard, test on real iOS device |
-| Error handling | Coroutine exceptions crash iOS (Pitfall 9) | `@Throws`, `CoroutineExceptionHandler`, wrap IO in try/catch |
-| Architecture patterns | expect/actual overuse (Pitfall 10) | Prefer interface + Koin DI, limit expect/actual to platform bootstrapping |
+| Scroll wheel pickers | Touch area overlap (P1), tag type mismatch (P11), picker state reset on timer tick (P6) | Prototype two side-by-side pickers first. Use `GeometryReader` + `.clipped()` + `UIPickerView` extension. Use `Int32` consistently. Separate picker state from session state. |
+| Auto-increment set logic | Prefill conflicts with picker (P8), snap-to-step needed (P8) | Apply prefill only on cursor change. Round template values to nearest valid step. |
+| Minimal "doing set" screen | Picker state reset (P6) | Keep picker bindings as local `@State`, not derived from ViewModel on every emission. |
+| Post-workout recap/edit | Recap must be snapshot (P7), sealed class expansion (P2) | Add `Recap` state to sealed class. Update Swift switch. Use in-memory snapshot, not Room Flow. |
+| Mid-workout exercise reorder | Index invalidation (P3), Room key invalidation (P12), gesture conflict with context menu (P9) | Use indirection array. Persist exerciseId not just index. Choose one gesture pattern per surface. |
+| Abandon guards | Back gesture interception (P4) | Keep `navigationBarBackButtonHidden(true)`. Add custom X button with confirmation alert. |
+| Context menu | Gesture conflict with reorder (P9) | Do not combine `.contextMenu` and `onMove` on same row. Use separate surfaces. |
+| Personal best display | Room migration (P10), query performance (P13) | Compute from existing data if possible. Single query at workout start. |
+| General sealed class expansion | Silent Swift fallthrough (P2) | Audit all Swift switch sites before adding any new sealed subclass. Add warning in else branch. |
 
 ---
 
 ## Sources
 
-- [JetBrains: Compose Multiplatform 1.8.0 iOS Stable](https://blog.jetbrains.com/kotlin/2025/05/compose-multiplatform-1-8-0-released-compose-multiplatform-for-ios-is-stable-and-production-ready/) -- Confidence: HIGH
-- [JetBrains GitHub Issue #3890: LaunchedEffect/DisposableEffect lifecycle on iOS](https://github.com/JetBrains/compose-multiplatform/issues/3890) -- Confidence: HIGH
-- [JetBrains GitHub Issue #3889: Flow subscription difference Android vs iOS](https://github.com/JetBrains/compose-multiplatform/issues/3889) -- Confidence: HIGH
-- [JetBrains GitHub Issue #3621: iOS TextField keyboard issues](https://github.com/JetBrains/compose-multiplatform/issues/3621) -- Confidence: HIGH
-- [Kotlin Docs: Kotlin/Native memory management](https://kotlinlang.org/docs/native-memory-manager.html) -- Confidence: HIGH
-- [Kotlin Docs: Compatibility and versioning](https://kotlinlang.org/docs/multiplatform/compose-compatibility-and-versioning.html) -- Confidence: HIGH
-- [Apple Developer Forums: countdown timer in background](https://developer.apple.com/forums/thread/133640) -- Confidence: HIGH
-- [Android Developers: Room KMP setup](https://developer.android.com/kotlin/multiplatform/room) -- Confidence: HIGH
-- [Android Developers Blog: Room 3.0](https://android-developers.googleblog.com/2026/03/room-30-modernizing-room.html) -- Confidence: HIGH
-- [Koin: KMP advanced patterns](https://insert-koin.io/docs/reference/koin-mp/kmp/) -- Confidence: HIGH
-- [KMP vs CMP: Lessons from real projects](https://www.aetherius-solutions.com/blog-posts/kotlin-multiplatform-vs-compose-multiplatform) -- Confidence: MEDIUM
-- [KMP Architecture best practices (carrion.dev)](https://carrion.dev/en/posts/kmp-architecture/) -- Confidence: MEDIUM
-- [Compose Multiplatform iOS back gesture (Slack)](https://slack-chats.kotlinlang.org/t/22307386/i-wish-compose-multiplatform-had-better-back-handling-for-io) -- Confidence: MEDIUM
-- [Medium: KMP iOS build optimization](https://medium.com/@houssembababendermel/how-i-fixed-my-kmp-ios-build-from-20-minute-builds-to-lightning-fast-c4f0f5c102b0) -- Confidence: MEDIUM
+- [Apple Developer Forums: Side by side Picker wheels failing](https://developer.apple.com/forums/thread/690610) -- Confidence: HIGH
+- [Apple Developer Forums: Picker overlapping each other](https://developer.apple.com/forums/thread/690791) -- Confidence: HIGH
+- [Apple Developer Forums: Picker wheel value selection issues](https://developer.apple.com/forums/thread/689794) -- Confidence: HIGH
+- [Apple Developer Forums: Picker jumps during state changes](https://developer.apple.com/forums/thread/127218) -- Confidence: HIGH
+- [Apple Developer Forums: Picker binding not working](https://developer.apple.com/forums/thread/118813) -- Confidence: HIGH
+- [SwiftUI Recipes: Multi Column Wheel Picker](https://swiftuirecipes.com/blog/multi-column-wheel-picker-in-swiftui) -- Confidence: HIGH
+- [Apple Developer Documentation: interactiveDismissDisabled](https://developer.apple.com/documentation/swiftui/view/interactivedismissdisabled(_:)) -- Confidence: HIGH
+- [Apple Developer Documentation: navigationBarBackButtonHidden](https://developer.apple.com/documentation/swiftui/view/navigationbarbackbuttonhidden(_:)) -- Confidence: HIGH
+- [SKIE: Sealed class interop](https://skie.touchlab.co/features/sealed) -- Confidence: HIGH
+- [JetBrains YouTrack KT-45204: Sealed classes in Swift](https://youtrack.jetbrains.com/issue/KT-45204) -- Confidence: HIGH
+- [DEV Community: Fix SwiftUI Picker not updating selection](https://dev.to/devin-rosario/fix-swiftui-picker-not-updating-selection-common-issues-3da) -- Confidence: HIGH
+- [Medium: Disable back swipe gesture dynamically](https://medium.com/@yunchingtan/swiftui-disable-back-swipe-gesture-dynamically-56c32d55cc4d) -- Confidence: MEDIUM
+- [Medium: Enhancing SwiftUI navigation](https://ahmed-yamany.medium.com/enhancing-swiftui-navigation-a-guide-to-disabling-interactive-pop-gesture-3494be66a000) -- Confidence: MEDIUM
+- [Kotlin Slack: Sealed classes in KMM](https://slack-chats.kotlinlang.org/t/451273/i-have-a-kmm-project-with-sealed-classes-and-classes-inside-) -- Confidence: MEDIUM
+- [Medium: State management in KMP](https://medium.com/@hiren6997/state-management-in-kotlin-multiplatform-my-complete-survival-guide-c03b32c08038) -- Confidence: MEDIUM
+- [Apple Community: SwiftUI bug with wheel pickers](https://discussions.apple.com/thread/254616862) -- Confidence: MEDIUM

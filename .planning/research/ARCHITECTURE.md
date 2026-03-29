@@ -1,636 +1,577 @@
-# Architecture Patterns
+# Architecture Patterns: v1.1 Workout Polish & Firmware Parity
 
-**Domain:** Fitness/workout tracking mobile app (KMP Compose Multiplatform)
-**Researched:** 2026-03-28
+**Domain:** Feature integration into existing KMP ViewModel + SwiftUI architecture
+**Researched:** 2026-03-29
+**Overall confidence:** HIGH (based on direct codebase analysis + firmware reference)
+
+## Executive Summary
+
+The v1.1 features split cleanly into three categories by where they live architecturally:
+
+1. **SwiftUI-only changes** (no KMP ViewModel modifications): scroll wheel pickers, minimal "doing set" screen, UI polish
+2. **KMP ViewModel extensions** (new methods/state, no state machine restructure): auto-increment logic, personal best queries, exercise reorder
+3. **State machine evolution** (new states or transitions): post-workout recap/edit, abandon guards
+
+The existing `WorkoutSessionState` sealed class (Idle/Active/Finished) needs one new state: `Reviewing` -- a post-finish editing phase before the workout is persisted to history. The `Active` state gains an `exerciseOrder` field for mid-workout reorder. Everything else layers onto the existing architecture without structural changes.
 
 ## Recommended Architecture
 
-**Pattern:** MVVM + Clean Architecture (single shared module, feature packages)
-**Why:** This is the standard, well-documented approach for KMP Compose Multiplatform apps. A single shared module with feature packages (not separate Gradle modules per feature) is the right granularity for a prototype/university project. Full multi-module Clean Architecture is overkill at this scale.
-
-### High-Level Structure
+### Current Architecture (v1.0)
 
 ```
-PumpernickelApp/
-├── composeApp/                          # Shared KMP module (all platforms)
-│   └── src/
-│       ├── commonMain/kotlin/
-│       │   └── com.pumpernickel.app/
-│       │       ├── App.kt               # Root @Composable, NavHost, Koin init
-│       │       ├── navigation/
-│       │       │   └── AppNavigation.kt  # NavHost + route definitions
-│       │       │
-│       │       ├── data/                 # Data layer
-│       │       │   ├── local/
-│       │       │   │   ├── AppDatabase.kt        # Room @Database definition
-│       │       │   │   ├── dao/
-│       │       │   │   │   ├── TemplateDao.kt
-│       │       │   │   │   ├── ExerciseDao.kt
-│       │       │   │   │   └── WorkoutDao.kt
-│       │       │   │   └── entity/
-│       │       │   │       ├── WorkoutTemplateEntity.kt
-│       │       │   │       ├── ExerciseEntity.kt
-│       │       │   │       ├── CompletedWorkoutEntity.kt
-│       │       │   │       └── ...
-│       │       │   └── repository/
-│       │       │       ├── TemplateRepositoryImpl.kt
-│       │       │       ├── ExerciseRepositoryImpl.kt
-│       │       │       └── WorkoutRepositoryImpl.kt
-│       │       │
-│       │       ├── domain/              # Domain layer (interfaces + models)
-│       │       │   ├── model/
-│       │       │   │   ├── WorkoutTemplate.kt
-│       │       │   │   ├── Exercise.kt
-│       │       │   │   ├── CompletedWorkout.kt
-│       │       │   │   ├── CompletedExercise.kt
-│       │       │   │   ├── CompletedSet.kt
-│       │       │   │   └── WorkoutSession.kt     # Active session state
-│       │       │   └── repository/
-│       │       │       ├── TemplateRepository.kt  # Interface
-│       │       │       ├── ExerciseRepository.kt  # Interface
-│       │       │       └── WorkoutRepository.kt   # Interface
-│       │       │
-│       │       ├── feature/             # Feature packages (presentation)
-│       │       │   ├── workout/
-│       │       │   │   ├── session/
-│       │       │   │   │   ├── WorkoutSessionViewModel.kt  # THE core VM
-│       │       │   │   │   ├── WorkoutSessionState.kt      # UI state sealed class
-│       │       │   │   │   ├── ActiveWorkoutScreen.kt      # Set entry screen
-│       │       │   │   │   ├── RestTimerScreen.kt          # Countdown rest
-│       │       │   │   │   ├── WorkoutFinishScreen.kt      # Recap + save
-│       │       │   │   │   └── components/                 # Shared composables
-│       │       │   │   ├── templates/
-│       │       │   │   │   ├── TemplateListViewModel.kt
-│       │       │   │   │   ├── TemplateListScreen.kt
-│       │       │   │   │   ├── TemplateDetailViewModel.kt
-│       │       │   │   │   ├── TemplateDetailScreen.kt
-│       │       │   │   │   └── TemplateEditScreen.kt
-│       │       │   │   └── history/
-│       │       │   │       ├── HistoryListViewModel.kt
-│       │       │   │       ├── HistoryListScreen.kt
-│       │       │   │       └── HistoryDetailScreen.kt
-│       │       │   ├── overview/        # Future: F3 dashboard
-│       │       │   └── nutrition/       # Future: F2 nutrition
-│       │       │
-│       │       ├── di/                  # Koin modules
-│       │       │   ├── AppModule.kt     # ViewModels
-│       │       │   ├── DataModule.kt    # Database, DAOs, Repositories
-│       │       │   └── PlatformModule.kt # expect declarations
-│       │       │
-│       │       └── ui/                  # Shared UI components
-│       │           ├── theme/
-│       │           ├── components/      # Reusable composables
-│       │           └── navigation/      # Bottom nav bar
-│       │
-│       ├── androidMain/kotlin/
-│       │   └── com.pumpernickel.app/
-│       │       ├── di/PlatformModule.android.kt  # actual DB builder
-│       │       └── MainApplication.kt
-│       │
-│       └── iosMain/kotlin/
-│           └── com.pumpernickel.app/
-│               ├── di/PlatformModule.ios.kt      # actual DB builder
-│               └── MainViewController.kt
-│
-├── androidApp/                          # Android thin wrapper
-│   └── src/main/
-│       ├── AndroidManifest.xml
-│       └── MainActivity.kt             # setContent { App() }
-│
-└── iosApp/                              # Xcode project
-    └── iosApp/
-        └── ContentView.swift            # UIKit host for ComposeView
+SwiftUI (WorkoutSessionView)
+  |-- observes StateFlow via NativeCoroutinesAsync
+  |-- @State for local UI (input fields, sheet toggles)
+  v
+KMP ViewModel (WorkoutSessionViewModel)
+  |-- sealed class: Idle | Active | Finished
+  |-- Active holds: exercises[], cursor, restState
+  |-- methods: startWorkout, completeSet, skipRest, finishWorkout, etc.
+  v
+Repository (WorkoutRepository)
+  |-- active session CRUD (crash recovery)
+  |-- completed workout persistence
+  v
+Room DAOs (WorkoutSessionDao, CompletedWorkoutDao)
+```
+
+### Target Architecture (v1.1)
+
+```
+SwiftUI (WorkoutSessionView) -- EXTENDED
+  |-- scroll wheel pickers replace TextField inputs
+  |-- minimal "doing set" view (exercise name + set number only)
+  |-- abandon guard alerts (.alert modifier)
+  |-- context menu (actionSheet / confirmationDialog)
+  |-- personal best display (reads new StateFlow)
+  v
+KMP ViewModel (WorkoutSessionViewModel) -- EXTENDED
+  |-- sealed class: Idle | Active | Reviewing | Finished
+  |                                 ^^^^^^^^^
+  |                                 NEW STATE
+  |-- Active gains: exerciseOrder[] for reorder
+  |-- new methods: reorderExercise, getPersonalBest, finishForReview, saveReviewedWorkout, editReviewedSet
+  |-- auto-increment logic: embedded in completeSet cursor advance
+  v
+Repository (WorkoutRepository) -- EXTENDED
+  |-- new: getPersonalBest(exerciseId) query
+  |-- active session now persists exerciseOrder
+  v
+Room DAOs -- EXTENDED
+  |-- CompletedWorkoutDao: new PB query
+  |-- WorkoutSessionDao: exerciseOrder persistence (optional, for crash recovery)
 ```
 
 ### Component Boundaries
 
 | Component | Responsibility | Communicates With |
 |-----------|---------------|-------------------|
-| **Navigation (NavHost)** | Route management, screen transitions, back stack | Screens, ViewModels (via scoping) |
-| **WorkoutSessionViewModel** | Active workout state machine, timer, set tracking | WorkoutRepository, TemplateRepository |
-| **TemplateListViewModel** | Template CRUD list operations | TemplateRepository |
-| **TemplateDetailViewModel** | Single template view/edit | TemplateRepository, ExerciseRepository |
-| **HistoryListViewModel** | Completed workout browsing | WorkoutRepository |
-| **Room Database (AppDatabase)** | Local SQLite persistence | DAOs (generated) |
-| **Repository implementations** | Data access, entity-to-model mapping | DAOs, domain models |
-| **Koin DI** | Wiring everything together | All components |
+| `WorkoutSessionView` (SwiftUI) | UI rendering, gesture handling, picker presentation, alerts | ViewModel via StateFlow observation |
+| `ScrollWheelPicker` (SwiftUI) | iOS-native Picker(.wheel) for reps/weight input | Parent view via @Binding |
+| `WorkoutRecapView` (SwiftUI) | Post-workout review/edit UI | ViewModel via Reviewing state |
+| `WorkoutSessionViewModel` (KMP) | State machine, business logic, data orchestration | Repository layer |
+| `WorkoutRepository` (KMP) | Data access abstraction | Room DAOs |
+| `CompletedWorkoutDao` (Room) | Personal best queries, workout history | SQLite via Room |
+| `WorkoutSessionDao` (Room) | Active session crash recovery | SQLite via Room |
 
 ### Data Flow
 
+**Set completion with auto-increment:**
 ```
-User Action
-    |
-    v
-Screen (@Composable) --- observes StateFlow ---> ViewModel
-    |                                               |
-    | (events/intents)                              | (business logic)
-    v                                               v
-ViewModel.onEvent(event) ---> Repository Interface (domain)
-                                        |
-                                        v
-                              RepositoryImpl (data) ---> Room DAO ---> SQLite
-                                        |
-                                        v
-                              Domain Model (mapped from Entity)
-                                        |
-                                        v
-                              StateFlow<UiState> updated
-                                        |
-                                        v
-                              Compose recomposes screen
+User scrolls picker -> SwiftUI @State updates -> tap "Complete Set"
+  -> ViewModel.completeSet(reps, weightKgX10)
+    -> persist to Room (crash recovery)
+    -> compute next cursor
+    -> emit new Active state with next set pre-filled from ACTUAL values of just-completed set
+  -> SwiftUI observes new state
+    -> picker values update to previous set's actuals (auto-increment)
 ```
 
-**Data flows one direction:** User -> Screen -> ViewModel -> Repository -> Database. State flows back via `StateFlow` observation. No component reaches "up" the chain.
+**Post-workout recap flow:**
+```
+User taps "Finish Workout"
+  -> ViewModel.finishForReview()
+    -> cancel timers
+    -> emit Reviewing state (holds editable workout data, NOT yet persisted)
+  -> SwiftUI renders WorkoutRecapView
+    -> user can edit set values, review exercises
+    -> tap "Save" -> ViewModel.saveReviewedWorkout()
+      -> persist to completed_workouts
+      -> clear active session
+      -> emit Finished state (summary display)
+    -> tap "Back to Workout" -> ViewModel.returnToActive()
+      -> re-emit Active state (resume workout)
+```
 
-## Mapping the Firmware FSM to Mobile Architecture
+**Exercise reorder during workout:**
+```
+User opens context menu -> "Reorder Exercises"
+  -> SwiftUI shows reorder sheet (reads exercises + exerciseOrder from Active state)
+  -> user drags/reorders
+  -> ViewModel.reorderExercises(newOrder: List<Int>)
+    -> updates Active.exerciseOrder
+    -> persists order to Room (crash recovery)
+    -> emits updated Active state
+  -> UI reflects new exercise sequence
+```
 
-The firmware uses an explicit FSM (`AppState` enum + `Transition` table) because embedded systems need manual state management. In a mobile app with Compose + Navigation, the FSM decomposes into two complementary mechanisms:
+## Feature-by-Feature Integration Analysis
 
-### What the Firmware FSM Does (and How to Replace It)
+### 1. Scroll Wheel Pickers
 
-| Firmware Concept | Mobile Equivalent | Why |
-|-----------------|-------------------|-----|
-| `AppState` enum (77 states) | Navigation routes + ViewModel state | Navigation handles screen-to-screen; ViewModel handles within-screen state |
-| `getTransitions()` table | Navigation graph + ViewModel event handlers | NavHost defines valid routes; ViewModel validates transitions |
-| `NavigationIntent` | Navigation arguments (type-safe routes) | `@Serializable data class` routes carry context |
-| `switchTo` (no history) | `navController.navigate() { popUpTo(...) }` | Pop back stack to prevent return to intermediate states |
-| `navigateTo` (with history) | `navController.navigate()` (default) | Standard push onto back stack |
-| File-scope globals (`workoutCurrentExerciseIdx`, etc.) | `WorkoutSessionViewModel` state | Scoped to workout navigation sub-graph lifetime |
+**Category:** SwiftUI-only
 
-### The Workout Session: One ViewModel, Multiple Screens
+**What changes:**
+- Replace `TextField` with `Picker(.wheel)` in `setInputSection()` and `editSetSheet`
+- Reps picker: 0-50 integer range
+- Weight picker: 0-999.5 in 2.5 steps (matching firmware's 25-increment on kgX10)
 
-The firmware's core workout loop (`WORKOUT_START_SET -> WORKOUT_SET_ENTRY -> WORKOUT_REST -> next/finish`) uses shared mutable globals across states. In mobile, this maps to **one `WorkoutSessionViewModel` shared across all workout session screens**.
+**KMP changes:** NONE. The ViewModel already receives `reps: Int` and `weightKgX10: Int` from `completeSet()`. The picker is purely a SwiftUI input mechanism.
+
+**Implementation detail:**
+```swift
+// Reps picker
+Picker("Reps", selection: $repsValue) {
+    ForEach(0...50, id: \.self) { Text("\($0)") }
+}
+.pickerStyle(.wheel)
+.frame(width: 80, height: 120)
+
+// Weight picker: generate values 0, 25, 50, ..., 10000 (0.0 to 1000.0 kg)
+// Display as formatted weight, bind to kgX10 Int
+Picker("Weight", selection: $weightKgX10) {
+    ForEach(Array(stride(from: 0, through: 10000, by: 25)), id: \.self) { val in
+        Text(formatWeight(val)).tag(val)
+    }
+}
+.pickerStyle(.wheel)
+.frame(width: 120, height: 120)
+```
+
+**Firmware reference:** The firmware uses a rotary encoder with 2.5kg steps for weight and 1-step for reps. The SwiftUI Picker(.wheel) provides the same tactile scroll experience on iOS.
+
+**Risk:** Picker with 401 weight values (0 to 10000 by 25) may lag on older devices. If so, reduce range or use a custom wheel. Test on physical device early.
+
+### 2. Auto-Increment Set Logic
+
+**Category:** KMP ViewModel change (minor)
+
+**What changes in KMP:**
+The `completeSet()` method currently advances the cursor and the SwiftUI `prefillInputs()` reads `targetReps`/`targetWeightKgX10` from the template. Auto-increment means the NEXT set should pre-fill with the ACTUAL values of the just-completed set, not the template targets.
+
+**Current behavior (v1.0):**
+```kotlin
+// SessionSet has targetReps and targetWeightKgX10 from template
+// SwiftUI prefillInputs() reads: currentSet.targetReps, currentSet.targetWeightKgX10
+```
+
+**New behavior (v1.1) -- Recommended approach:**
+In `completeSet()`, after advancing the cursor, update the next set's target values to match the just-completed set's actuals. This keeps the data flow simple: SwiftUI still reads `targetReps`/`targetWeightKgX10` but those now reflect the previous set's actuals.
 
 ```kotlin
-// Route definitions for the workout flow
-@Serializable object WorkoutRoutes {
-    @Serializable object TemplateList          // Select a template
-    @Serializable data class TemplateDetail(val templateId: Long)
-    @Serializable data class ActiveWorkout(val templateId: Long)  // Entry point
-    @Serializable object SetEntry              // Log reps/weight
-    @Serializable object RestTimer             // Countdown timer
-    @Serializable object WorkoutFinish         // Recap + save
+fun completeSet(reps: Int, weightKgX10: Int) {
+    viewModelScope.launch {
+        val active = _sessionState.value as? WorkoutSessionState.Active ?: return@launch
+        // ... existing set completion logic ...
+
+        // Auto-increment: update next set's targets to this set's actuals
+        val nextCursor = computeNextCursor(exIdx, setIdx, active.exercises)
+        val updatedExercises = /* existing update */ .let { exercises ->
+            val (nextExIdx, nextSetIdx) = nextCursor
+            if (nextExIdx == exIdx && nextSetIdx > setIdx) {
+                // Same exercise, next set -> auto-increment from actuals
+                exercises.mapIndexed { eIdx, exercise ->
+                    if (eIdx == nextExIdx) {
+                        exercise.copy(sets = exercise.sets.map { set ->
+                            if (set.setIndex == nextSetIdx && !set.isCompleted) {
+                                set.copy(targetReps = reps, targetWeightKgX10 = weightKgX10)
+                            } else set
+                        })
+                    } else exercise
+                }
+            } else exercises // Different exercise: use template targets (no auto-increment)
+        }
+        // ... emit state ...
+    }
 }
 ```
 
+**Firmware reference confirms this approach:** The firmware does `prevSet.reps` / `prevSet.weight_kg_x10` for subsequent sets within the same exercise, and template targets for the first set. This is exactly the behavior described above.
+
+**SwiftUI changes:** NONE beyond what already exists. `prefillInputs()` already reads `targetReps`/`targetWeightKgX10`, which will now contain auto-incremented values.
+
+### 3. Minimal "Doing Set" Screen
+
+**Category:** SwiftUI-only
+
+**What changes:**
+The firmware has a `WorkoutStartSetState` that shows just the set number, exercise name, and "press when done" -- a minimal screen displayed WHILE the user is physically performing the set (rack the weight, do reps, then tap to enter values).
+
+In the mobile app, this translates to a simplified view state within `activeWorkoutView`:
+- Show: exercise name, "SET 3", muscle group (optional)
+- Hide: input pickers, completed sets list, all other UI
+- Single tap to transition to the set entry pickers
+
+**Implementation:** Add a `@State private var isDoingSet: Bool = false` toggle in SwiftUI. When true, render a minimal center-screen display. When the user taps (or a timer-based auto-transition fires), flip to the picker entry view.
+
+**KMP changes:** NONE. This is a UI presentation mode within the same `Active` ViewModel state. The ViewModel does not need to know whether the user is looking at the minimal screen or the picker screen.
+
+**Firmware reference:** `WorkoutStartSetState` shows "SET [number]" + exercise name. SELECT transitions to `WorkoutSetEntryState` (pickers). Direct mapping to an `isDoingSet` toggle in SwiftUI.
+
+### 4. Post-Workout Recap/Edit
+
+**Category:** State machine evolution (new `Reviewing` state)
+
+**What changes in KMP:**
+
+Add a new state to the sealed class:
 ```kotlin
-// The WorkoutSessionViewModel replaces firmware's global workout state
-class WorkoutSessionViewModel(
-    private val workoutRepository: WorkoutRepository,
-    private val templateRepository: TemplateRepository,
-) : ViewModel() {
-
-    // Replaces: workoutCurrentExerciseIdx, workoutCurrentSetIdx, exerciseOrder[]
-    private val _sessionState = MutableStateFlow<WorkoutSessionState>(WorkoutSessionState.NotStarted)
-    val sessionState: StateFlow<WorkoutSessionState> = _sessionState.asStateFlow()
-
-    // Replaces: CompletedWorkout being built across FSM states
-    private val _activeWorkout = MutableStateFlow<ActiveWorkoutData?>(null)
-    val activeWorkout: StateFlow<ActiveWorkoutData?> = _activeWorkout.asStateFlow()
-
-    // Replaces: WorkoutSetEntryState::sharedStartMs / sharedDurationSec
-    private val _restTimer = MutableStateFlow<RestTimerState?>(null)
-    val restTimer: StateFlow<RestTimerState?> = _restTimer.asStateFlow()
-
-    fun startWorkout(templateId: Long) { /* Load template, initialize session */ }
-    fun confirmSet(reps: Int, weightKgX10: Int) { /* Save set, advance state */ }
-    fun startRestTimer() { /* Begin countdown using viewModelScope coroutine */ }
-    fun skipRest() { /* Advance to next set/exercise */ }
-    fun finishWorkout() { /* Save completed workout to database */ }
-    fun reorderExercise(from: Int, to: Int) { /* Swap in pending queue */ }
-}
-```
-
-```kotlin
-// Session state sealed class -- replaces the firmware's AppState enum for workout flow
 sealed class WorkoutSessionState {
-    object NotStarted : WorkoutSessionState()
+    data object Idle : WorkoutSessionState()
+    data class Active(/* existing */) : WorkoutSessionState()
 
-    data class Active(
+    data class Reviewing(
+        val templateId: Long,
         val templateName: String,
-        val currentExerciseIndex: Int,
-        val currentSetIndex: Int,
-        val totalExercises: Int,
-        val exerciseOrder: List<Int>,      // Replaces exerciseOrder[] array
-        val currentExercise: Exercise,
-        val targetSets: Int,
-        val targetReps: Int,
-        val targetWeightKgX10: Int,
-        val completedSets: List<CompletedSet>,
+        val exercises: List<SessionExercise>,  // Editable
+        val startTimeMillis: Long,
+        val durationMillis: Long
     ) : WorkoutSessionState()
 
-    data class Resting(
-        val remainingSeconds: Int,
-        val totalSeconds: Int,
-        val nextExerciseName: String?,      // Replaces WorkoutRestState's next-exercise hint
-        val isLastExercise: Boolean,
-    ) : WorkoutSessionState()
-
-    data class Finishing(
-        val workoutName: String,
-        val exercises: List<CompletedExercise>,
-        val startTime: String,
-        val endTime: String,
-    ) : WorkoutSessionState()
-
-    object Saved : WorkoutSessionState()
+    data class Finished(/* existing */) : WorkoutSessionState()
 }
 ```
 
-### How the ViewModel Replaces Each Firmware State
+**New ViewModel methods:**
+```kotlin
+// Transition: Active -> Reviewing (replaces direct Active -> Finished)
+fun finishForReview() {
+    // Cancel timers, compute duration, emit Reviewing state
+    // DO NOT persist to completed_workouts yet
+}
 
-| Firmware State | Mobile Screen | ViewModel Action |
-|---------------|---------------|-----------------|
-| `READ_WORKOUTS_LIST` (with START_WORKOUT intent) | `TemplateListScreen` | `TemplateListViewModel.loadTemplates()` |
-| `WORKOUT_START_SET` | `ActiveWorkoutScreen` (showing "SET N" UI) | `sessionState = Active(...)` |
-| `WORKOUT_SET_ENTRY` | `ActiveWorkoutScreen` (reps/weight pickers shown) | Same screen, pickers are part of Active state UI |
-| `WORKOUT_REST` | `RestTimerScreen` | `sessionState = Resting(...)`, coroutine ticks timer |
-| `WORKOUT_FINISH` | `WorkoutFinishScreen` | `sessionState = Finishing(...)` |
-| `WORKOUT_SAVE` | `WorkoutFinishScreen` (save button) | `finishWorkout()` -> `sessionState = Saved` |
-| `WORKOUT_RESUME_PROMPT` | Dialog on `TemplateListScreen` | Check for active session in DB on app launch |
-| `WORKOUT_CONTEXT_MENU` | Bottom sheet on `ActiveWorkoutScreen` | `showContextMenu = true` in UI state |
-| `WORKOUT_EXERCISE_LIST` | Bottom sheet content | Part of context menu composable |
-| `WORKOUT_EXERCISE_MOVE_MODE` | Drag-to-reorder in list | `reorderExercise(from, to)` |
-| `WORKOUT_ABANDON_CONFIRM` | Alert dialog | `showAbandonDialog = true` |
+// Edit a set during review
+fun editReviewedSet(exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int) {
+    // Update Reviewing state's exercises list
+}
 
-### Key Insight: Fewer Screens, More State
+// Save reviewed workout: Reviewing -> Finished
+fun saveReviewedWorkout() {
+    // Persist to completed_workouts (same logic as current finishWorkout)
+    // Clear active session
+    // Emit Finished state
+}
 
-The firmware needs 15+ states for the workout flow because each "screen" is an explicit state in the FSM. In mobile Compose, **many firmware states collapse into UI state within a single screen**:
+// Go back to workout: Reviewing -> Active
+fun returnToActive() {
+    // Re-emit Active state, restart timers
+}
+```
 
-- `WORKOUT_START_SET` + `WORKOUT_SET_ENTRY` = one `ActiveWorkoutScreen` (set entry is always visible, no separate "doing set" screen needed on a phone)
-- `WORKOUT_CONTEXT_MENU` + `WORKOUT_EXERCISE_LIST` + `WORKOUT_EXERCISE_MOVE_MODE` = bottom sheet overlay on `ActiveWorkoutScreen`
-- `WORKOUT_ABANDON_CONFIRM` = alert dialog, not a screen
-- `WORKOUT_FINISH` + `WORKOUT_RECAP` + `WORKOUT_SAVE` = one `WorkoutFinishScreen` with recap content and a save button
+**Flow change:**
+- **v1.0:** `Active` -> `finishWorkout()` -> `Finished` (auto-saves)
+- **v1.1:** `Active` -> `finishForReview()` -> `Reviewing` -> `saveReviewedWorkout()` -> `Finished`
+- **v1.1 escape hatch:** `Reviewing` -> `returnToActive()` -> `Active` (resume workout)
 
-**Final screen count for workout flow: 4 screens** (TemplateList, ActiveWorkout, RestTimer, WorkoutFinish) vs 15+ firmware states.
+**SwiftUI changes:** New `WorkoutRecapView` that renders the `Reviewing` state with editable exercise/set cards. Replaces or wraps the existing `WorkoutFinishedView` flow.
 
-### Navigation Graph Structure
+**Firmware reference:** The firmware has `WorkoutFinishState` -> `WorkoutRecapState` -> `WorkoutSaveState`. The recap shows exercises with their sets/best weight and lets the user scroll through before saving. The `Reviewing` state maps to this.
+
+**Active session cleanup:** The active session in Room should NOT be cleared when entering `Reviewing`. Only clear it when `saveReviewedWorkout()` or `discardWorkout()` is called. This preserves crash recovery through the review phase.
+
+### 5. Mid-Workout Exercise Reorder
+
+**Category:** KMP ViewModel extension (Active state modification)
+
+**What changes in KMP:**
+
+Add `exerciseOrder` to the `Active` state:
+```kotlin
+data class Active(
+    val templateId: Long,
+    val templateName: String,
+    val exercises: List<SessionExercise>,
+    val exerciseOrder: List<Int>,  // NEW: indices into exercises[], determines execution order
+    val currentQueuePosition: Int, // NEW: position in exerciseOrder
+    val currentExerciseIndex: Int,  // Keep: actual index into exercises[] (derived from exerciseOrder[currentQueuePosition])
+    val currentSetIndex: Int,
+    val startTimeMillis: Long,
+    val restState: RestState = RestState.NotResting
+) : WorkoutSessionState()
+```
+
+**New ViewModel methods:**
+```kotlin
+// Reorder remaining exercises (cannot reorder already-completed ones)
+fun reorderExercises(newOrder: List<Int>) {
+    val active = _sessionState.value as? WorkoutSessionState.Active ?: return
+    // Validate: completed exercises stay in place, only pending ones can move
+    // Update exerciseOrder + persist to Room for crash recovery
+    _sessionState.value = active.copy(exerciseOrder = newOrder)
+}
+
+// Skip current exercise (move to end of queue) -- firmware "skip" behavior
+fun skipCurrentExercise() {
+    val active = _sessionState.value as? WorkoutSessionState.Active ?: return
+    // Swap current with next in exerciseOrder (firmware behavior)
+    // Advance cursor to the new current exercise
+}
+```
+
+**Impact on existing methods:**
+- `computeNextCursor()` must use `exerciseOrder` to determine the next exercise instead of sequential index iteration
+- `startWorkout()` initializes `exerciseOrder` as identity: `[0, 1, 2, ..., n-1]`
+- `resumeWorkout()` must restore `exerciseOrder` from Room
+- `finishForReview()` / `saveReviewedWorkout()` should compact exercises to template order (matching firmware `WorkoutFinishState` behavior)
+
+**Room changes:** Add `exerciseOrder` column to `ActiveSessionEntity` (stored as comma-separated string or JSON). This is a schema migration (version 4).
+
+**SwiftUI changes:** New `ExerciseReorderSheet` with drag-and-drop (SwiftUI `List` with `.onMove`). Only pending exercises (not yet started/completed) can be reordered.
+
+**Firmware reference:** The firmware uses an `exerciseOrder[]` array as an indirection layer. `workoutQueuePos` is the current position in the queue. This is exactly the architecture recommended above. The firmware's `WorkoutExerciseMoveState` allows moving exercises up/down with encoder rotation.
+
+### 6. Abandon Guards
+
+**Category:** Mixed (KMP ViewModel minor + SwiftUI alerts)
+
+**What changes in KMP:**
+The ViewModel already has `discardWorkout()`. For "Save & Exit" (the firmware's default abandon option), we need:
 
 ```kotlin
-// In AppNavigation.kt
-@Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
+// Save current progress as a completed workout and exit
+fun saveAndExit() {
+    // Same as finishForReview() -> saveReviewedWorkout() but without the review step
+    // Or: directly call existing finishWorkout() logic
+}
+```
 
-    Scaffold(
-        bottomBar = { BottomNavBar(navController) }
-    ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = MainRoutes.Workout,
-            modifier = Modifier.padding(padding)
-        ) {
-            // Tab 1: Workout
-            navigation<MainRoutes.Workout>(startDestination = WorkoutRoutes.TemplateList) {
-                composable<WorkoutRoutes.TemplateList> {
-                    TemplateListScreen(
-                        onTemplateSelected = { id -> navController.navigate(WorkoutRoutes.ActiveWorkout(id)) },
-                        onTemplateEdit = { id -> navController.navigate(WorkoutRoutes.TemplateDetail(id)) }
-                    )
-                }
-                composable<WorkoutRoutes.TemplateDetail> { /* ... */ }
+**SwiftUI changes:** This is primarily a SwiftUI concern -- intercepting the back navigation gesture and showing a confirmation alert.
 
-                // Workout session sub-graph (shared ViewModel scope)
-                navigation<WorkoutRoutes.ActiveWorkout>(startDestination = WorkoutRoutes.SetEntry) {
-                    composable<WorkoutRoutes.SetEntry> { entry ->
-                        val parentEntry = remember(entry) {
-                            navController.getBackStackEntry(WorkoutRoutes.ActiveWorkout)
-                        }
-                        val sessionVm: WorkoutSessionViewModel = koinViewModel(
-                            viewModelStoreOwner = parentEntry
-                        )
-                        ActiveWorkoutScreen(sessionVm, navController)
-                    }
-                    composable<WorkoutRoutes.RestTimer> { entry ->
-                        // Same ViewModel, scoped to ActiveWorkout sub-graph
-                        val parentEntry = remember(entry) {
-                            navController.getBackStackEntry(WorkoutRoutes.ActiveWorkout)
-                        }
-                        val sessionVm: WorkoutSessionViewModel = koinViewModel(
-                            viewModelStoreOwner = parentEntry
-                        )
-                        RestTimerScreen(sessionVm, navController)
-                    }
-                    composable<WorkoutRoutes.WorkoutFinish> { /* same pattern */ }
-                }
+```swift
+// In activeWorkoutView or its parent:
+@State private var showAbandonAlert = false
+
+// Intercept back button
+.navigationBarBackButtonHidden(true)
+.toolbar {
+    ToolbarItem(placement: .navigationBarLeading) {
+        Button("Back") {
+            let hasCompletedSets = /* check Active state */
+            if hasCompletedSets {
+                showAbandonAlert = true
+            } else {
+                viewModel.discardWorkout()
+                dismiss()
             }
-
-            // Tab 2: Overview (future)
-            composable<MainRoutes.Overview> { PlaceholderScreen("Overview") }
-
-            // Tab 3: Nutrition (future)
-            composable<MainRoutes.Nutrition> { PlaceholderScreen("Nutrition") }
         }
     }
 }
+.alert("Abandon Workout?", isPresented: $showAbandonAlert) {
+    Button("Save & Exit") { viewModel.saveAndExit(); dismiss() }
+    Button("Discard", role: .destructive) { viewModel.discardWorkout(); dismiss() }
+    Button("Cancel", role: .cancel) { }
+}
 ```
 
-**Critical detail:** The `WorkoutSessionViewModel` is scoped to the `ActiveWorkout` navigation sub-graph. It lives as long as the user is in any workout session screen and is automatically destroyed when the user navigates out (back to template list or saves). This replaces the firmware pattern of resetting global state on `WORKOUT_SAVE -> START` transition.
+**Firmware reference:** `WorkoutAbandonConfirmState` offers "Save & Exit" (default, safe) and "Discard". The guard activates only when sets have been confirmed (exactly matching the `hasCompletedSets` check). Crucial detail: Save & Exit routes through `WorkoutFinishState` -> recap flow. For the mobile app, `saveAndExit()` can either go through the recap or save directly -- recommend saving directly (faster UX on mobile).
 
-### Rest Timer Implementation
+### 7. Context Menu
 
-The firmware uses `millis()` elapsed time comparisons. In KMP, use a coroutine in `viewModelScope`:
+**Category:** SwiftUI-only presentation + KMP methods already exist or planned
 
+**What changes:**
+The context menu surfaces actions available during a workout:
+- **Skip Exercise** -> calls `skipCurrentExercise()` (new, from section 5)
+- **Reorder Exercises** -> opens `ExerciseReorderSheet` (new, from section 5)
+- **Finish Workout** -> calls `finishForReview()` (new, from section 4)
+
+**SwiftUI implementation:** Use `.confirmationDialog` or a custom sheet triggered from a toolbar button (the existing list.bullet button could transform into this, or add a separate ellipsis button).
+
+**KMP changes:** All methods already covered in sections 4 and 5.
+
+**Firmware reference:** `WorkoutContextMenuState` has "Skip Current Exercise" and "Adjust Order". Direct mapping.
+
+### 8. Personal Best Display
+
+**Category:** KMP data layer + ViewModel extension + SwiftUI display
+
+**What changes in KMP:**
+
+**New DAO query:**
 ```kotlin
-// Inside WorkoutSessionViewModel
-private var timerJob: Job? = null
+// In CompletedWorkoutDao:
+@Query("""
+    SELECT MAX(s.actualWeightKgX10)
+    FROM completed_workout_sets s
+    JOIN completed_workout_exercises e ON s.workoutExerciseId = e.id
+    WHERE e.exerciseId = :exerciseId
+""")
+suspend fun getPersonalBestWeight(exerciseId: String): Int?
 
-fun startRestTimer(durationSeconds: Int) {
-    timerJob?.cancel()
-    val startTime = Clock.System.now()
-    _sessionState.value = WorkoutSessionState.Resting(
-        remainingSeconds = durationSeconds,
-        totalSeconds = durationSeconds,
-        nextExerciseName = getNextExerciseName(),
-        isLastExercise = isOnLastExercise(),
-    )
-
-    timerJob = viewModelScope.launch {
-        while (true) {
-            delay(1000L)
-            val elapsed = (Clock.System.now() - startTime).inWholeSeconds.toInt()
-            val remaining = (durationSeconds - elapsed).coerceAtLeast(0)
-            _sessionState.value = (_sessionState.value as? WorkoutSessionState.Resting)
-                ?.copy(remainingSeconds = remaining)
-                ?: break
-            if (remaining <= 0) break
-        }
-    }
-}
+// Also useful: best volume (reps * weight) per set
+@Query("""
+    SELECT MAX(CAST(s.actualReps AS INTEGER) * CAST(s.actualWeightKgX10 AS INTEGER))
+    FROM completed_workout_sets s
+    JOIN completed_workout_exercises e ON s.workoutExerciseId = e.id
+    WHERE e.exerciseId = :exerciseId
+""")
+suspend fun getPersonalBestVolume(exerciseId: String): Long?
 ```
+
+**New StateFlow in ViewModel:**
+```kotlin
+// Map of exerciseId -> personal best weight (kgX10)
+private val _personalBests = MutableStateFlow<Map<String, Int>>(emptyMap())
+@NativeCoroutinesState
+val personalBests: StateFlow<Map<String, Int>> = _personalBests.asStateFlow()
+```
+
+Load personal bests in `startWorkout()` / `resumeWorkout()` alongside previous performance loading.
+
+**SwiftUI changes:** Display "PB: 72.5 kg" below/beside the set entry pickers, similar to how previous performance is already shown. Only show when the current weight entry approaches or exceeds the PB.
+
+**Firmware reference:** The firmware stores PB as `trend.averageWeight_kg_x10` (average, not max). Recommend using MAX weight instead -- more motivating and standard in fitness apps. The firmware displays "PB:XX.X" at the bottom of the set entry screen.
 
 ## Patterns to Follow
 
-### Pattern 1: Unidirectional Data Flow (UDF)
-**What:** Events flow down (user -> ViewModel), state flows up (ViewModel -> UI via StateFlow).
-**When:** Always. Every screen follows this pattern.
+### Pattern 1: State Extensions via Data Class Copy
+
+**What:** Extend existing states by adding fields to data classes rather than creating new sealed class variants.
+**When:** Adding data to an existing state (exerciseOrder to Active, personalBests alongside session).
 **Example:**
 ```kotlin
-// ViewModel exposes state, accepts events
-class TemplateListViewModel(
-    private val repository: TemplateRepository
-) : ViewModel() {
-    private val _uiState = MutableStateFlow(TemplateListUiState())
-    val uiState: StateFlow<TemplateListUiState> = _uiState.asStateFlow()
+// Good: extend Active with new field
+data class Active(
+    // ... existing fields ...
+    val exerciseOrder: List<Int>,  // New field with default
+) : WorkoutSessionState()
 
-    fun onEvent(event: TemplateListEvent) {
-        when (event) {
-            is TemplateListEvent.DeleteTemplate -> deleteTemplate(event.id)
-            is TemplateListEvent.Refresh -> loadTemplates()
-        }
-    }
-}
-
-// Screen observes state, sends events
-@Composable
-fun TemplateListScreen(viewModel: TemplateListViewModel = koinViewModel()) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    // Render uiState, call viewModel.onEvent(...) on user action
-}
+// Bad: creating a separate ActiveWithReorder state
 ```
 
-### Pattern 2: Repository Pattern with Room
-**What:** Repository interface in domain layer, implementation in data layer with Room DAOs.
-**When:** All data access. No DAO calls from ViewModels directly.
+### Pattern 2: New States for New Lifecycle Phases
+
+**What:** Add new sealed class variants when a genuinely new lifecycle phase exists.
+**When:** The user is in a conceptually different mode (reviewing vs actively working out).
 **Example:**
 ```kotlin
-// domain/repository/TemplateRepository.kt
-interface TemplateRepository {
-    fun getTemplates(): Flow<List<WorkoutTemplate>>
-    suspend fun getTemplateById(id: Long): WorkoutTemplate?
-    suspend fun insertTemplate(template: WorkoutTemplate): Long
-    suspend fun deleteTemplate(id: Long)
-}
-
-// data/repository/TemplateRepositoryImpl.kt
-class TemplateRepositoryImpl(
-    private val templateDao: TemplateDao
-) : TemplateRepository {
-    override fun getTemplates(): Flow<List<WorkoutTemplate>> =
-        templateDao.getAll().map { entities -> entities.map { it.toDomainModel() } }
-}
+// Reviewing is NOT "Active with a flag" -- it's a different lifecycle phase
+// Timers are stopped, data is not being collected, user intent is review/edit
+data class Reviewing(...) : WorkoutSessionState()
 ```
 
-### Pattern 3: Koin DI Module Organization
-**What:** Separate Koin modules for data, domain (if use cases exist), and presentation.
-**When:** Always. Declare in commonMain, platform-specific actuals for database builder.
+### Pattern 3: SwiftUI-Side UI Modes Within Same ViewModel State
+
+**What:** Use `@State` booleans in SwiftUI for UI presentation variants that do not affect business logic.
+**When:** The ViewModel's Active state is unchanged, but the UI shows different views (minimal set screen vs. picker entry).
 **Example:**
-```kotlin
-// di/DataModule.kt
-val dataModule = module {
-    single { getRoomDatabase(get()) }  // get() provides platform-specific builder
-    single { get<AppDatabase>().templateDao() }
-    single { get<AppDatabase>().exerciseDao() }
-    single { get<AppDatabase>().workoutDao() }
-    single<TemplateRepository> { TemplateRepositoryImpl(get()) }
-    single<WorkoutRepository> { WorkoutRepositoryImpl(get()) }
-}
-
-// di/AppModule.kt
-val appModule = module {
-    viewModelOf(::TemplateListViewModel)
-    viewModelOf(::TemplateDetailViewModel)
-    viewModelOf(::WorkoutSessionViewModel)
-    viewModelOf(::HistoryListViewModel)
-}
+```swift
+@State private var isDoingSet = false  // UI-only toggle, no ViewModel involvement
 ```
 
-### Pattern 4: Session Persistence for Crash Recovery
-**What:** Save active workout state to a dedicated Room table on every set confirmation, so a crash or app kill does not lose workout progress.
-**When:** During active workout sessions. Mirrors the firmware's approach of writing to flash on every set.
-**Example:**
-```kotlin
-// On confirmSet(), persist immediately
-suspend fun confirmSet(reps: Int, weightKgX10: Int) {
-    // 1. Update in-memory state
-    // 2. Persist to active_session table (Room)
-    workoutRepository.saveActiveSession(currentSession)
-    // 3. Advance to next state
-}
+### Pattern 4: Indirection Arrays for Reorderable Collections
 
-// On app launch, check for interrupted session
-fun checkForActiveSession() {
-    viewModelScope.launch {
-        val session = workoutRepository.getActiveSession()
-        if (session != null) {
-            _showResumeDialog.value = true
-        }
-    }
-}
-```
+**What:** Use an order array (`exerciseOrder: List<Int>`) to maintain logical order separate from physical array indices.
+**When:** Items can be reordered but their data must remain at stable indices (sets reference exercises by index).
+**Why:** Avoids moving data in the exercises array (which would break set references, Room persistence, and crash recovery).
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: God ViewModel
-**What:** Putting all workout logic (templates, session, history) in one massive ViewModel.
-**Why bad:** Untestable, unclear lifecycle, hard to reason about state.
-**Instead:** One ViewModel per logical concern. `TemplateListViewModel` for browsing, `WorkoutSessionViewModel` for active sessions, `HistoryListViewModel` for history. The session ViewModel is the largest by necessity, but template and history management are separate.
+### Anti-Pattern 1: Putting UI State in the ViewModel
 
-### Anti-Pattern 2: Direct DAO Access from Composables
-**What:** Calling `database.templateDao().getAll()` inside a `@Composable` or passing DAOs to screens.
-**Why bad:** Tight coupling to Room, no place for mapping/business logic, untestable.
-**Instead:** Always go through Repository -> ViewModel -> StateFlow.
+**What:** Adding `isDoingSet`, `showAbandonAlert`, `showContextMenu` to the KMP ViewModel.
+**Why bad:** These are iOS-specific UI concerns. Adding them to the shared ViewModel couples it to iOS presentation logic and makes the ViewModel harder to test and maintain.
+**Instead:** Keep these as `@State` in SwiftUI. The ViewModel exposes data and actions; the view decides how to present them.
 
-### Anti-Pattern 3: Exposing MutableStateFlow to UI
-**What:** Making `_uiState` public or exposing `MutableStateFlow` from ViewModel.
-**Why bad:** UI can accidentally mutate state, breaking unidirectional flow.
-**Instead:** Expose `StateFlow` (read-only) via `.asStateFlow()`.
+### Anti-Pattern 2: Multiple StateFlows for Related State
 
-### Anti-Pattern 4: Navigation Logic in Composables
-**What:** Complex conditional navigation inside `@Composable` functions based on ViewModel state.
-**Why bad:** Navigation becomes tangled with rendering, hard to test, race conditions.
-**Instead:** ViewModel emits navigation events as one-shot `SharedFlow` or `Channel`, screen collects and calls `navController.navigate()`. Or: ViewModel sets a "navigation target" state that the screen observes.
+**What:** Creating separate StateFlows for `exerciseOrder`, `currentQueuePosition`, etc.
+**Why bad:** SwiftUI observes each flow independently, causing intermediate states where exerciseOrder has updated but currentQueuePosition has not. This creates UI flicker and potential crashes.
+**Instead:** Embed all related state in the `Active` data class. One emission = one consistent snapshot.
 
-### Anti-Pattern 5: Duplicating Firmware's Explicit FSM
-**What:** Creating a `WorkoutState` enum with 15 values and a giant `when` block to mirror the firmware.
-**Why bad:** Navigation already manages screen state. Adding a parallel FSM creates two sources of truth.
-**Instead:** Let Navigation own screen-to-screen transitions. Let ViewModel own within-screen state. The sealed class `WorkoutSessionState` is sufficient -- it has 4-5 variants, not 15.
+### Anti-Pattern 3: Persisting Reviewed Workout Before User Confirms Save
 
-## Data Model (Room Entities)
+**What:** Writing to `completed_workouts` when entering the Reviewing state.
+**Why bad:** The user might edit values or go back to the workout. Early persistence means stale data in history.
+**Instead:** Keep reviewed data in the ViewModel's `Reviewing` state. Only persist on explicit "Save" action.
 
-Adapted from the firmware's `DataModels.h`, using Room conventions:
+### Anti-Pattern 4: Reordering by Moving Data in the Exercises Array
+
+**What:** Actually reordering `Active.exercises` list elements during mid-workout reorder.
+**Why bad:** `ActiveSessionSetEntity` references exercises by `exerciseIndex` (array position). Moving exercises breaks all existing set references and crash recovery.
+**Instead:** Use the `exerciseOrder` indirection array. The exercises list stays stable; only the order of traversal changes.
+
+## Build Order (Dependency-Aware)
+
+The features have these dependencies:
+
+```
+Auto-increment (2) -> standalone, no deps
+Scroll wheel pickers (1) -> standalone, no deps
+Personal best display (8) -> standalone (DAO query + StateFlow)
+Minimal doing-set screen (3) -> standalone, no deps
+Abandon guards (6) -> depends on saveAndExit, which depends on recap flow (4)
+Exercise reorder (5) -> depends on exerciseOrder in Active state
+Context menu (7) -> depends on skip (5) + finish-for-review (4)
+Post-workout recap (4) -> depends on Reviewing state (core state machine change)
+```
+
+**Recommended build order:**
+
+1. **Auto-increment** (KMP only, 1-2 hours) -- smallest KMP change, immediate UX win, zero risk
+2. **Scroll wheel pickers** (SwiftUI only, 2-3 hours) -- biggest UX upgrade, zero KMP risk
+3. **Personal best display** (KMP DAO + StateFlow + SwiftUI, 2-3 hours) -- standalone, motivating feature
+4. **Post-workout recap/edit** (KMP state machine + SwiftUI, 4-6 hours) -- core state machine change, must come before abandon guards
+5. **Exercise reorder** (KMP Active extension + Room migration + SwiftUI, 4-6 hours) -- introduces exerciseOrder, must come before context menu
+6. **Abandon guards** (KMP minor + SwiftUI alerts, 2-3 hours) -- depends on finishForReview from step 4
+7. **Context menu** (SwiftUI + wires existing KMP methods, 2-3 hours) -- aggregates skip/reorder/finish actions
+8. **Minimal doing-set screen** (SwiftUI only, 1-2 hours) -- pure UI, can slot in anywhere but nice to polish last
+9. **General UI polish** (SwiftUI, ongoing) -- validation, keyboard handling, accessibility
+
+**Phase ordering rationale:**
+- Steps 1-3 are independent and could be parallelized, but sequential is safer for a solo developer
+- Step 4 (recap) is the foundation for steps 6 (abandon guards) and 7 (context menu)
+- Step 5 (reorder) is the foundation for step 7 (context menu's skip/reorder actions)
+- Step 8 (doing set screen) is pure polish and has no downstream dependencies
+
+## Room Schema Migration
+
+v1.1 requires one schema change: adding `exerciseOrder` to `ActiveSessionEntity` for crash recovery of reordered workouts.
 
 ```kotlin
-// Weight stored as Int (kg * 10) for 0.1kg precision, matching firmware convention.
-// Display logic converts: 615 -> "61.5 kg"
-
-@Entity(tableName = "exercises")
-data class ExerciseEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val title: String,
-    val equipment: String,
-    val primaryMuscleId: Int = 0,
-    val secondaryMuscleId: Int = 0,
-)
-
-@Entity(tableName = "workout_templates")
-data class WorkoutTemplateEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val name: String,
-)
-
-@Entity(
-    tableName = "template_exercises",
-    foreignKeys = [
-        ForeignKey(entity = WorkoutTemplateEntity::class, parentColumns = ["id"], childColumns = ["templateId"], onDelete = ForeignKey.CASCADE),
-        ForeignKey(entity = ExerciseEntity::class, parentColumns = ["id"], childColumns = ["exerciseId"]),
-    ]
-)
-data class TemplateExerciseEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val templateId: Long,
-    val exerciseId: Long,
-    val orderIndex: Int,
-    val targetSets: Int,
-    val targetReps: Int,
-    val targetWeightKgX10: Int,   // kg * 10 (0.1kg precision)
-    val restPeriodSeconds: Int,
-)
-
-@Entity(tableName = "completed_workouts")
-data class CompletedWorkoutEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val templateId: Long?,
-    val name: String,
-    val startTime: String,    // ISO8601
-    val endTime: String,      // ISO8601
-    val durationMs: Long,
-)
-
-@Entity(
-    tableName = "completed_exercises",
-    foreignKeys = [
-        ForeignKey(entity = CompletedWorkoutEntity::class, parentColumns = ["id"], childColumns = ["workoutId"], onDelete = ForeignKey.CASCADE),
-    ]
-)
-data class CompletedExerciseEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val workoutId: Long,
-    val exerciseId: Long,
-    val orderIndex: Int,
-    val notes: String = "",
-)
-
-@Entity(
-    tableName = "completed_sets",
-    foreignKeys = [
-        ForeignKey(entity = CompletedExerciseEntity::class, parentColumns = ["id"], childColumns = ["exerciseEntryId"], onDelete = ForeignKey.CASCADE),
-    ]
-)
-data class CompletedSetEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val exerciseEntryId: Long,
-    val setIndex: Int,
-    val reps: Int,
-    val weightKgX10: Int,     // kg * 10 (0.1kg precision)
-    val restPeriodSeconds: Int,
-)
-
-// For crash recovery: persisted active session
-@Entity(tableName = "active_session")
+@Entity(tableName = "active_sessions")
 data class ActiveSessionEntity(
-    @PrimaryKey val id: Long = 1,  // Singleton row
+    @PrimaryKey val id: Long = 1,
     val templateId: Long,
+    val templateName: String,
     val currentExerciseIndex: Int,
     val currentSetIndex: Int,
-    val exerciseOrderJson: String,  // JSON array of exercise indices
-    val startTime: String,
-    val completedDataJson: String,  // JSON snapshot of completed sets so far
+    val currentQueuePosition: Int,  // NEW
+    val exerciseOrderJson: String,   // NEW: e.g., "0,1,2,3"
+    val startTimeMillis: Long,
+    val lastUpdatedMillis: Long
 )
 ```
 
-**Key difference from firmware:** The firmware uses flat packed structs with fixed-size arrays (`MAX_EXERCISES_PER_WORKOUT = 10`, `MAX_SETS_PER_EXERCISE = 5`) because of RAM constraints. The mobile app uses relational tables with no artificial limits. The `active_session` table for crash recovery uses JSON for the variable-size workout-in-progress data because it is transient (deleted on save).
+**Migration:** Room auto-migration or manual `Migration(3, 4)` adding the two columns with defaults (`currentQueuePosition = 0`, `exerciseOrderJson = ""`). Empty exerciseOrderJson means identity order (backward compatible with v1.0 sessions).
 
-## Suggested Build Order
+## KMP/SwiftUI Boundary Summary
 
-Dependencies between components dictate this order:
-
-### Phase 1: Foundation (build first -- everything depends on these)
-1. **Room Database + Entities** -- Everything needs data. Define entities, DAOs, database class.
-2. **Domain models** -- Simple data classes. No dependencies.
-3. **Repository interfaces + implementations** -- Bridge between DB and presentation.
-4. **Koin DI setup** -- Wire database, repos. Platform-specific `expect/actual` for DB builder.
-
-### Phase 2: Template Management (needed before workout can start)
-5. **TemplateListViewModel + Screen** -- Users must see and select templates.
-6. **TemplateDetailViewModel + Screen** -- View/edit a single template.
-7. **Exercise management** -- Seed exercises, exercise picker for templates.
-8. **Navigation shell** -- Bottom nav bar, NavHost, route definitions.
-
-### Phase 3: Workout Session (the core feature, depends on templates existing)
-9. **WorkoutSessionViewModel** -- The heart of the app. State machine, timer, set tracking.
-10. **ActiveWorkoutScreen** -- Set entry UI (reps/weight pickers).
-11. **RestTimerScreen** -- Countdown with coroutine timer.
-12. **WorkoutFinishScreen** -- Recap, save.
-13. **Session persistence** -- active_session table for crash recovery.
-14. **Exercise reordering** -- Bottom sheet with drag-to-reorder.
-
-### Phase 4: History + Polish
-15. **HistoryListViewModel + Screen** -- Browse completed workouts.
-16. **HistoryDetailScreen** -- View exercises/sets of a completed workout.
-17. **Session resume prompt** -- Check for active session on app launch.
-
-**Rationale:** You cannot test workout sessions without templates. You cannot test templates without a database. You cannot test history without completed workouts. This order ensures each phase can be tested end-to-end.
-
-## Scalability Considerations
-
-| Concern | Prototype (now) | If Backend Added Later |
-|---------|-----------------|----------------------|
-| Data storage | Room local only | Add Ktor HTTP client + sync repository layer |
-| Authentication | None | Add auth module, token storage in expect/actual |
-| Template source | Local CRUD | Sync from backend, local cache with Room |
-| Workout upload | Not needed | Background WorkManager/iOS BGTask for upload |
-| Architecture impact | Minimal | Repository interfaces absorb this: swap `LocalTemplateRepo` for `SyncingTemplateRepo` |
-
-The repository pattern pays off here: when a backend is added, only the `data/repository/` implementations change. ViewModels and screens remain untouched.
+| Feature | KMP Changes | SwiftUI Changes |
+|---------|------------|-----------------|
+| Scroll wheel pickers | NONE | Replace TextField with Picker(.wheel) |
+| Auto-increment | Modify `completeSet()` to update next set targets | NONE (already reads targets) |
+| Minimal doing-set screen | NONE | New `@State isDoingSet` + minimal view |
+| Post-workout recap/edit | New `Reviewing` state + 3 methods | New `WorkoutRecapView` |
+| Exercise reorder | `exerciseOrder` in Active + reorder methods + Room migration | New `ExerciseReorderSheet` |
+| Abandon guards | `saveAndExit()` method | `.alert` modifiers on back navigation |
+| Context menu | NONE (wires existing methods) | `.confirmationDialog` or sheet |
+| Personal best display | New DAO query + `personalBests` StateFlow | Display PB label in set entry |
+| UI polish | NONE | Validation, accessibility, keyboard |
 
 ## Sources
 
-- [Kotlin Multiplatform Navigation docs](https://kotlinlang.org/docs/multiplatform/compose-navigation.html) -- Official navigation library setup (HIGH confidence)
-- [Kotlin Multiplatform ViewModel docs](https://kotlinlang.org/docs/multiplatform/compose-viewmodel.html) -- Official lifecycle-viewmodel-compose usage (HIGH confidence)
-- [Android Room KMP setup](https://developer.android.com/kotlin/multiplatform/room) -- Official Room KMP dependencies and expect/actual pattern (HIGH confidence)
-- [KMP Architecture Best Practices (Carrion.dev)](https://carrion.dev/en/posts/kmp-architecture/) -- Clean Architecture + MVVM for KMP (MEDIUM confidence)
-- [Koin Compose Multiplatform docs](https://insert-koin.io/docs/reference/koin-compose/compose/) -- DI integration patterns (HIGH confidence)
-- [Compose Multiplatform 1.10.0 release](https://blog.jetbrains.com/kotlin/2026/01/compose-multiplatform-1-10-0/) -- Navigation 3 and stable features (HIGH confidence)
-- [ViewModel Scoping APIs (Android)](https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-apis) -- Navigation-scoped ViewModel pattern (HIGH confidence)
-- Firmware reference: `/Users/olli/schenanigans/gymtracker/firmware/src/statemachine/` -- FSM states, transitions, data models (direct inspection)
+- Direct codebase analysis of `WorkoutSessionViewModel.kt`, `WorkoutSessionView.swift`, all Room entities and DAOs (HIGH confidence)
+- Direct analysis of gymtracker firmware: `WorkoutSetEntryState.cpp`, `WorkoutStartSetState.cpp`, `WorkoutRecapState.cpp`, `WorkoutFinishState.cpp`, `WorkoutAbandonConfirmState.cpp`, `WorkoutContextMenuState.cpp`, `WorkoutExerciseMoveState.cpp` (HIGH confidence)
+- SwiftUI Picker(.wheel) behavior from Apple documentation and training data (HIGH confidence)
+- Room KMP migration patterns from existing codebase (3 prior migrations) (HIGH confidence)
