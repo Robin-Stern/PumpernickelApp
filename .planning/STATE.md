@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Workout Polish & Firmware Parity
-status: executing
-stopped_at: Phase 7 context gathered
-last_updated: "2026-03-29T15:37:19.203Z"
+status: verifying
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-03-29T15:53:54.448Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
   percent: 50
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Users can select a workout template and execute it set-by-set -- logging reps, weight, and rest periods -- with a clean, reliable flow
-**Current focus:** Phase 06 — personal-best-display
+**Current focus:** Phase 07 — post-workout-recap-edit
 
 ## Current Position
 
-Phase: 7
-Plan: Not started
-Status: Executing Phase 06
+Phase: 07 (post-workout-recap-edit) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 
 Progress: [█████░░░░░] 50%
@@ -64,6 +64,7 @@ Progress: [█████░░░░░] 50%
 | Phase 05 P01 | 3min | 2 tasks | 2 files |
 | Phase 05 P02 | 2min | 2 tasks | 1 files |
 | Phase 06 P01 | 5min | 2 tasks | 5 files |
+| Phase 07 P01 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Pre-fill StateFlow emitted atomically with cursor updates to prevent race conditions; set 0 = template targets, set 1+ = previous set actuals (firmware parity)
 - [Phase 05]: UIPickerView intrinsicContentSize extension for side-by-side wheel picker touch fix; weight picker stores kgX10 Int, displays unit-aware text via formatWeight()
 - [Phase 06]: Volume-weighted average PB (SUM(weight*reps)/SUM(reps)) using integer division matching firmware TrendCalculator.cpp
+- [Phase 07]: Split finishWorkout() into enterReview() + saveReviewedWorkout() for two-step recap-then-save flow
+- [Phase 07]: Store full exercise list in Reviewing state, filter to completed in UI only (avoids index mismatch)
 
 ### Pending Todos
 
@@ -108,7 +111,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T15:37:19.197Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-post-workout-recap-edit/07-CONTEXT.md
+Last session: 2026-03-29T15:53:54.446Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None
 Next step: Execute 05-02-PLAN.md (scroll wheel picker UI)

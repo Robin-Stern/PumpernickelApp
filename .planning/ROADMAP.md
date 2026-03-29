@@ -39,7 +39,7 @@ Plans:
 **Goal:** Add a post-workout recap screen where users review and edit all sets before saving.
 **Plans:** 1 plan
 Plans:
-- [ ] 07-01-PLAN.md — Reviewing state, enterReview()/saveReviewedWorkout() split, and SwiftUI recap screen with tap-to-edit
+- [x] 07-01-PLAN.md — Reviewing state, enterReview()/saveReviewedWorkout() split, and SwiftUI recap screen with tap-to-edit
 
 ### Phase 8: Mid-Workout Exercise Reorder
 **Requirements:** FLOW-03, FLOW-04, FLOW-07
