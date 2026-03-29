@@ -46,7 +46,7 @@ Plans:
 **Goal:** Allow reordering pending exercises mid-workout with in-memory list reorder, Room crash recovery, and skip exercise.
 **Plans:** 2 plans
 Plans:
-- [ ] 08-01-PLAN.md — Room migration 3-to-4, DAO/repository exerciseOrder methods, ViewModel reorder/skip/crash-recovery logic
+- [x] 08-01-PLAN.md — Room migration 3-to-4, DAO/repository exerciseOrder methods, ViewModel reorder/skip/crash-recovery logic
 - [ ] 08-02-PLAN.md — SwiftUI exercise overview with completed/current/pending sections, drag reorder, and skip button
 
 ### Phase 9: Abandon Guards & Context Menu

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Workout Polish & Firmware Parity
-status: verifying
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-29T18:21:17.074Z"
+status: executing
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-29T18:40:03.361Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
   percent: 50
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Users can select a workout template and execute it set-by-set -- logging reps, weight, and rest periods -- with a clean, reliable flow
-**Current focus:** Phase 07 — post-workout-recap-edit
+**Current focus:** Phase 08 — mid-workout-exercise-reorder
 
 ## Current Position
 
-Phase: 8
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 08 (mid-workout-exercise-reorder) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-29
 
 Progress: [█████░░░░░] 50%
@@ -65,6 +65,7 @@ Progress: [█████░░░░░] 50%
 | Phase 05 P02 | 2min | 2 tasks | 1 files |
 | Phase 06 P01 | 5min | 2 tasks | 5 files |
 | Phase 07 P01 | 3min | 2 tasks | 2 files |
+| Phase 08 P01 | 2min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Recent decisions affecting current work:
 - [Phase 06]: Volume-weighted average PB (SUM(weight*reps)/SUM(reps)) using integer division matching firmware TrendCalculator.cpp
 - [Phase 07]: Split finishWorkout() into enterReview() + saveReviewedWorkout() for two-step recap-then-save flow
 - [Phase 07]: Store full exercise list in Reviewing state, filter to completed in UI only (avoids index mismatch)
+- [Phase 08]: Template-original index tracking via parallel MutableList<Int> for correct Room set persistence after reorder
+- [Phase 08]: exerciseOrder CSV string in active_sessions for crash recovery; resumeWorkout() falls back to template order for pre-migration sessions
 
 ### Pending Todos
 
@@ -111,7 +114,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T18:21:17.063Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-mid-workout-exercise-reorder/08-CONTEXT.md
+Last session: 2026-03-29T18:40:03.358Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None
 Next step: Execute 05-02-PLAN.md (scroll wheel picker UI)
