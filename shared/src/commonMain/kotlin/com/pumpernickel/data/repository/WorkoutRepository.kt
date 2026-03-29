@@ -7,7 +7,12 @@ import com.pumpernickel.data.db.CompletedWorkoutEntity
 import com.pumpernickel.data.db.CompletedWorkoutExerciseEntity
 import com.pumpernickel.data.db.CompletedWorkoutSetEntity
 import com.pumpernickel.data.db.WorkoutSessionDao
+import com.pumpernickel.domain.model.CompletedExercise
+import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
+import com.pumpernickel.domain.model.WorkoutSummary
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 interface WorkoutRepository {
     // Active session (crash recovery - WORK-09)
@@ -21,6 +26,11 @@ interface WorkoutRepository {
 
     // Completed workouts (WORK-07)
     suspend fun saveCompletedWorkout(workout: CompletedWorkout)
+
+    // History queries (HIST-01, HIST-02, HIST-03, HIST-04)
+    fun getWorkoutSummaries(): Flow<List<WorkoutSummary>>
+    suspend fun getWorkoutDetail(workoutId: Long): CompletedWorkout?
+    suspend fun getPreviousPerformance(templateId: Long): CompletedWorkout?
 }
 
 // Domain-level representation of active session data (no Room entity leakage)
@@ -165,5 +175,55 @@ class WorkoutRepositoryImpl(
                 completedWorkoutDao.insertSets(setEntities)
             }
         }
+    }
+
+    override fun getWorkoutSummaries(): Flow<List<WorkoutSummary>> {
+        return completedWorkoutDao.getWorkoutSummaries().map { dtos ->
+            dtos.map { dto ->
+                WorkoutSummary(
+                    id = dto.id,
+                    templateId = dto.templateId,
+                    name = dto.name,
+                    startTimeMillis = dto.startTimeMillis,
+                    durationMillis = dto.durationMillis,
+                    exerciseCount = dto.exerciseCount,
+                    totalVolumeKgX10 = dto.totalVolume
+                )
+            }
+        }
+    }
+
+    override suspend fun getWorkoutDetail(workoutId: Long): CompletedWorkout? {
+        val workoutEntity = completedWorkoutDao.getWorkoutById(workoutId) ?: return null
+        val exerciseEntities = completedWorkoutDao.getExercisesForWorkout(workoutId)
+        val exercises = exerciseEntities.map { exerciseEntity ->
+            val setEntities = completedWorkoutDao.getSetsForExercise(exerciseEntity.id)
+            CompletedExercise(
+                exerciseId = exerciseEntity.exerciseId,
+                exerciseName = exerciseEntity.exerciseName,
+                exerciseOrder = exerciseEntity.exerciseOrder,
+                sets = setEntities.map { setEntity ->
+                    CompletedSet(
+                        setIndex = setEntity.setIndex,
+                        actualReps = setEntity.actualReps,
+                        actualWeightKgX10 = setEntity.actualWeightKgX10
+                    )
+                }
+            )
+        }
+        return CompletedWorkout(
+            id = workoutEntity.id,
+            templateId = workoutEntity.templateId,
+            name = workoutEntity.name,
+            startTimeMillis = workoutEntity.startTimeMillis,
+            endTimeMillis = workoutEntity.endTimeMillis,
+            durationMillis = workoutEntity.durationMillis,
+            exercises = exercises
+        )
+    }
+
+    override suspend fun getPreviousPerformance(templateId: Long): CompletedWorkout? {
+        val lastWorkout = completedWorkoutDao.getLastWorkoutForTemplate(templateId) ?: return null
+        return getWorkoutDetail(lastWorkout.id)
     }
 }
