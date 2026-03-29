@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Users can select a workout template and execute it set-by-set -- logging reps, weight, and rest periods -- with a clean, reliable flow
-**Current focus:** Phase 05 — Scroll Wheel Pickers & Auto-Increment
+**Current focus:** Phase 06 — personal-best-display
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-03-29
+Phase: 06 (personal-best-display) — EXECUTING
+Plan: 1 of 1
+Status: Executing Phase 06
+Last activity: 2026-03-29 -- Phase 06 execution started
 
 Progress: [█████░░░░░] 50%
 
