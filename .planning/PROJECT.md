@@ -19,6 +19,11 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - kg/lbs unit toggle with global application via DataStore Preferences
 - ~34,700 LOC Kotlin (KMP shared) + ~13,500 LOC Swift (iOS UI)
 
+**v1.1 Phase 5 complete** (2026-03-29): Scroll wheel pickers and auto-increment
+- iOS wheel pickers for reps (0-50) and weight (0-1000 @ 2.5kg steps) replace text fields
+- Auto-increment: set 2+ pre-fills from previous set's actuals, set 1 from template targets
+- 0-reps validation guard, UIPickerView touch-area fix for side-by-side pickers
+
 **Tech stack in use:** Kotlin 2.3.20, Compose Multiplatform 1.10.3, Room KMP 2.8.4, Koin 4.2.0, Navigation Compose 2.9.2, DataStore Preferences 1.2.1, SwiftUI (iOS)
 
 ## Requirements
@@ -117,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after v1.1 milestone start*
+*Last updated: 2026-03-29 after v1.1 Phase 5 completion*
