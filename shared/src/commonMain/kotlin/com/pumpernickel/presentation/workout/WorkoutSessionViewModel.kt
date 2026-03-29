@@ -82,6 +82,11 @@ class WorkoutSessionViewModel(
     @NativeCoroutinesState
     val preFill: StateFlow<SetPreFill> = _preFill.asStateFlow()
 
+    // Personal best keyed by exerciseId (ENTRY-07)
+    private val _personalBest = MutableStateFlow<Map<String, Int>>(emptyMap())
+    @NativeCoroutinesState
+    val personalBest: StateFlow<Map<String, Int>> = _personalBest.asStateFlow()
+
     // Weight unit for display (NAV-03, D-15)
     @NativeCoroutinesState
     val weightUnit: StateFlow<WeightUnit> = settingsRepository
@@ -141,6 +146,10 @@ class WorkoutSessionViewModel(
                 _previousPerformance.value = emptyMap()
             }
 
+            // Load personal bests (ENTRY-07)
+            val exerciseIds = exercises.map { it.exerciseId }
+            _personalBest.value = workoutRepository.getPersonalBests(exerciseIds)
+
             val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
             workoutRepository.createActiveSession(templateId, template.name, now)
 
@@ -198,6 +207,10 @@ class WorkoutSessionViewModel(
                     }
                 )
             }
+
+            // Load personal bests (ENTRY-07)
+            val exerciseIdsForPb = exercises.map { it.exerciseId }
+            _personalBest.value = workoutRepository.getPersonalBests(exerciseIdsForPb)
 
             // Overlay completed sets from Room
             val updatedExercises = exercises.mapIndexed { exIdx, exercise ->
@@ -433,6 +446,7 @@ class WorkoutSessionViewModel(
             _hasActiveSession.value = false
             _sessionState.value = WorkoutSessionState.Idle
             _previousPerformance.value = emptyMap()
+            _personalBest.value = emptyMap()
         }
     }
 
@@ -443,6 +457,7 @@ class WorkoutSessionViewModel(
         _sessionState.value = WorkoutSessionState.Idle
         _elapsedSeconds.value = 0L
         _previousPerformance.value = emptyMap()
+        _personalBest.value = emptyMap()
         _preFill.value = SetPreFill(reps = 0, weightKgX10 = 0)
     }
 

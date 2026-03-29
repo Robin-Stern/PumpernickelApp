@@ -42,4 +42,15 @@ interface CompletedWorkoutDao {
 
     @Query("SELECT * FROM completed_workouts WHERE id = :workoutId")
     suspend fun getWorkoutById(workoutId: Long): CompletedWorkoutEntity?
+
+    @Query("""
+        SELECT e.exerciseId,
+               SUM(CAST(s.actualWeightKgX10 AS INTEGER) * CAST(s.actualReps AS INTEGER)) / SUM(s.actualReps) AS avgWeightKgX10
+        FROM completed_workout_exercises e
+        INNER JOIN completed_workout_sets s ON s.workoutExerciseId = e.id
+        WHERE e.exerciseId IN (:exerciseIds)
+        AND s.actualReps > 0
+        GROUP BY e.exerciseId
+    """)
+    suspend fun getPersonalBests(exerciseIds: List<String>): List<ExercisePbDto>
 }

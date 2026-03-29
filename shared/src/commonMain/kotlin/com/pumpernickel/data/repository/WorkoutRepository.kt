@@ -31,6 +31,9 @@ interface WorkoutRepository {
     fun getWorkoutSummaries(): Flow<List<WorkoutSummary>>
     suspend fun getWorkoutDetail(workoutId: Long): CompletedWorkout?
     suspend fun getPreviousPerformance(templateId: Long): CompletedWorkout?
+
+    // Personal best (ENTRY-07)
+    suspend fun getPersonalBests(exerciseIds: List<String>): Map<String, Int>
 }
 
 // Domain-level representation of active session data (no Room entity leakage)
@@ -225,5 +228,10 @@ class WorkoutRepositoryImpl(
     override suspend fun getPreviousPerformance(templateId: Long): CompletedWorkout? {
         val lastWorkout = completedWorkoutDao.getLastWorkoutForTemplate(templateId) ?: return null
         return getWorkoutDetail(lastWorkout.id)
+    }
+
+    override suspend fun getPersonalBests(exerciseIds: List<String>): Map<String, Int> {
+        return completedWorkoutDao.getPersonalBests(exerciseIds)
+            .associate { it.exerciseId to it.avgWeightKgX10 }
     }
 }
