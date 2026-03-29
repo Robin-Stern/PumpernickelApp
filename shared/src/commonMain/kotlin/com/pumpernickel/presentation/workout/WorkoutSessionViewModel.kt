@@ -2,6 +2,7 @@ package com.pumpernickel.presentation.workout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.domain.model.CompletedExercise
@@ -9,13 +10,16 @@ import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
 import com.pumpernickel.domain.model.SessionExercise
 import com.pumpernickel.domain.model.SessionSet
+import com.pumpernickel.domain.model.WeightUnit
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 // -- State definitions --
@@ -51,7 +55,8 @@ sealed class RestState {
 
 class WorkoutSessionViewModel(
     private val workoutRepository: WorkoutRepository,
-    private val templateRepository: TemplateRepository
+    private val templateRepository: TemplateRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _sessionState = MutableStateFlow<WorkoutSessionState>(WorkoutSessionState.Idle)
@@ -65,6 +70,17 @@ class WorkoutSessionViewModel(
     private val _hasActiveSession = MutableStateFlow(false)
     @NativeCoroutinesState
     val hasActiveSession: StateFlow<Boolean> = _hasActiveSession.asStateFlow()
+
+    // Previous performance keyed by exerciseId (HIST-04, D-08, D-09)
+    private val _previousPerformance = MutableStateFlow<Map<String, CompletedExercise>>(emptyMap())
+    @NativeCoroutinesState
+    val previousPerformance: StateFlow<Map<String, CompletedExercise>> = _previousPerformance.asStateFlow()
+
+    // Weight unit for display (NAV-03, D-15)
+    @NativeCoroutinesState
+    val weightUnit: StateFlow<WeightUnit> = settingsRepository
+        .weightUnit
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WeightUnit.KG)
 
     private var timerJob: Job? = null
     private var elapsedJob: Job? = null
@@ -111,6 +127,14 @@ class WorkoutSessionViewModel(
                 )
             }
 
+            // Load previous performance (HIST-04, D-09)
+            val previousWorkout = workoutRepository.getPreviousPerformance(templateId)
+            if (previousWorkout != null) {
+                _previousPerformance.value = previousWorkout.exercises.associateBy { it.exerciseId }
+            } else {
+                _previousPerformance.value = emptyMap()
+            }
+
             val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
             workoutRepository.createActiveSession(templateId, template.name, now)
 
@@ -136,6 +160,14 @@ class WorkoutSessionViewModel(
             val activeSession = workoutRepository.getActiveSession() ?: return@launch
             val template = templateRepository.getTemplateById(activeSession.templateId).first()
                 ?: return@launch
+
+            // Load previous performance for resumed workout (HIST-04, D-09)
+            val previousWorkout = workoutRepository.getPreviousPerformance(activeSession.templateId)
+            if (previousWorkout != null) {
+                _previousPerformance.value = previousWorkout.exercises.associateBy { it.exerciseId }
+            } else {
+                _previousPerformance.value = emptyMap()
+            }
 
             // Build exercises from template
             val exercises = template.exercises.map { te ->
@@ -380,6 +412,7 @@ class WorkoutSessionViewModel(
             workoutRepository.clearActiveSession()
             _hasActiveSession.value = false
             _sessionState.value = WorkoutSessionState.Idle
+            _previousPerformance.value = emptyMap()
         }
     }
 
@@ -389,6 +422,7 @@ class WorkoutSessionViewModel(
     fun resetToIdle() {
         _sessionState.value = WorkoutSessionState.Idle
         _elapsedSeconds.value = 0L
+        _previousPerformance.value = emptyMap()
     }
 
     // -- Private helpers --

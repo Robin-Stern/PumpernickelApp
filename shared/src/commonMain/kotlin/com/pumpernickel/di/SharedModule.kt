@@ -12,6 +12,7 @@ import com.pumpernickel.data.repository.ExerciseRepository
 import com.pumpernickel.data.repository.ExerciseRepositoryImpl
 import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.data.repository.TemplateRepositoryImpl
+import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.WorkoutRepositoryImpl
 import com.pumpernickel.presentation.exercises.CreateExerciseViewModel
@@ -19,6 +20,8 @@ import com.pumpernickel.presentation.exercises.ExerciseCatalogViewModel
 import com.pumpernickel.presentation.exercises.ExerciseDetailViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import com.pumpernickel.presentation.templates.TemplateListViewModel
+import com.pumpernickel.presentation.history.WorkoutHistoryViewModel
+import com.pumpernickel.presentation.settings.SettingsViewModel
 import com.pumpernickel.presentation.workout.WorkoutSessionViewModel
 import com.pumpernickel.readResourceFile
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +51,7 @@ val sharedModule = module {
     single<ExerciseRepository> { ExerciseRepositoryImpl(get(), get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get()) }
     single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get()) }
+    single<SettingsRepository> { SettingsRepository(get()) }
 
     // ViewModels
     viewModel { ExerciseCatalogViewModel(get()) }
@@ -55,7 +59,9 @@ val sharedModule = module {
     viewModel { CreateExerciseViewModel(get()) }
     viewModel { TemplateListViewModel(get()) }
     viewModel { TemplateEditorViewModel(get(), get()) }
-    viewModel { WorkoutSessionViewModel(get(), get()) }
+    viewModel { WorkoutSessionViewModel(get(), get(), get()) }
+    viewModel { WorkoutHistoryViewModel(get(), get()) }
+    viewModel { SettingsViewModel(get()) }
 }
 
 // Common init function
