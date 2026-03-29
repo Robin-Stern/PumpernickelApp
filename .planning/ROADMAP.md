@@ -32,7 +32,7 @@ Plans:
 **Goal:** Show the user's personal best for the current exercise during set entry.
 **Plans:** 1 plan
 Plans:
-- [ ] 06-01-PLAN.md — PB DAO query, ViewModel StateFlow, and SwiftUI display
+- [x] 06-01-PLAN.md — PB DAO query, ViewModel StateFlow, and SwiftUI display
 
 ### Phase 7: Post-Workout Recap & Edit
 **Requirements:** FLOW-01, FLOW-02
