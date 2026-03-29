@@ -19,27 +19,46 @@
 
 ### v1.1 Workout Polish & Firmware Parity
 
-- [ ] **Phase 5: Scroll Wheel Pickers & Auto-Increment** — ENTRY-01..06
-  - Replace text fields with iOS wheel pickers (reps 0-50, weight 0-1000 @ 2.5kg steps)
-  - Auto-increment: set 2+ pre-fills from previous set's actuals
-  - Input validation (0 reps blocked), kg/lbs mode
-  - Risk: Picker(.wheel) side-by-side touch area overlap — prototype first
-- [ ] **Phase 6: Personal Best Display** — ENTRY-07
-  - Room DAO query for average weight across completed sets per exercise
-  - "PB: 62.5 kg" label on set entry screen
-- [ ] **Phase 7: Post-Workout Recap & Edit** — FLOW-01, FLOW-02
-  - New `Reviewing` sealed class state between Active and Finished
-  - Recap screen lists all exercises + sets; tap to edit before saving
-- [ ] **Phase 8: Mid-Workout Exercise Reorder** — FLOW-03, FLOW-04, FLOW-07
-  - exerciseOrder indirection array (firmware pattern)
-  - Room migration 3→4 for order persistence
-  - Drag reorder pending exercises; skip exercise action
-- [ ] **Phase 9: Abandon Guards & Context Menu** — FLOW-05, FLOW-06 *(depends on 07, 08)*
-  - Exit confirmation: Save & Exit / Discard / Cancel
-  - Context menu: skip, reorder, finish workout
-- [ ] **Phase 10: Minimal Set Screen & UI Polish** — UX-01..04 *(depends on 05)*
-  - Firmware-style minimal "SET N" display while lifting
-  - Haptics on set complete, accessibility labels, visual consistency
+### Phase 5: Scroll Wheel Pickers & Auto-Increment
+**Requirements:** ENTRY-01, ENTRY-02, ENTRY-03, ENTRY-04, ENTRY-05, ENTRY-06
+**Goal:** Replace text field inputs with iOS scroll wheel pickers and add auto-increment logic so set entry feels native and fast.
+- Replace text fields with iOS wheel pickers (reps 0-50, weight 0-1000 @ 2.5kg steps)
+- Auto-increment: set 2+ pre-fills from previous set's actuals
+- Input validation (0 reps blocked), kg/lbs mode
+- Risk: Picker(.wheel) side-by-side touch area overlap — prototype first
+
+### Phase 6: Personal Best Display
+**Requirements:** ENTRY-07
+**Goal:** Show the user's personal best for the current exercise during set entry.
+- Room DAO query for average weight across completed sets per exercise
+- "PB: 62.5 kg" label on set entry screen
+
+### Phase 7: Post-Workout Recap & Edit
+**Requirements:** FLOW-01, FLOW-02
+**Goal:** Add a post-workout recap screen where users review and edit all sets before saving.
+- New `Reviewing` sealed class state between Active and Finished
+- Recap screen lists all exercises + sets; tap to edit before saving
+
+### Phase 8: Mid-Workout Exercise Reorder
+**Requirements:** FLOW-03, FLOW-04, FLOW-07
+**Goal:** Allow reordering pending exercises mid-workout using the firmware's exerciseOrder pattern.
+- exerciseOrder indirection array (firmware pattern)
+- Room migration 3→4 for order persistence
+- Drag reorder pending exercises; skip exercise action
+
+### Phase 9: Abandon Guards & Context Menu
+**Requirements:** FLOW-05, FLOW-06
+**Depends on:** Phase 7, Phase 8
+**Goal:** Add exit confirmation and a context menu with skip, reorder, and finish actions.
+- Exit confirmation: Save & Exit / Discard / Cancel
+- Context menu: skip, reorder, finish workout
+
+### Phase 10: Minimal Set Screen & UI Polish
+**Requirements:** UX-01, UX-02, UX-03, UX-04
+**Depends on:** Phase 5
+**Goal:** Add a firmware-style minimal lifting screen and polish UX across all workout views.
+- Firmware-style minimal "SET N" display while lifting
+- Haptics on set complete, accessibility labels, visual consistency
 
 ## Dependency Graph
 
