@@ -24,6 +24,7 @@ struct WorkoutSessionView: View {
     @State private var elapsedSeconds: Int64 = 0
     @State private var showExerciseOverview = false
     @State private var previousPerformance: [String: CompletedExercise] = [:]
+    @State private var personalBest: [String: KotlinInt] = [:]
     @State private var weightUnit: WeightUnit = .kg
 
     // Picker selections for current set (ENTRY-01, ENTRY-02)
@@ -99,6 +100,7 @@ struct WorkoutSessionView: View {
                 group.addTask { await observePreviousPerformance() }
                 group.addTask { await observeWeightUnit() }
                 group.addTask { await observePreFill() }
+                group.addTask { await observePersonalBest() }
             }
         }
     }
@@ -232,6 +234,14 @@ struct WorkoutSessionView: View {
                         .foregroundColor(.orange)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+            }
+
+            // Personal best (ENTRY-07)
+            if let pbKgX10 = personalBest[exercise.exerciseId] {
+                Text("PB: \(weightUnit.formatWeight(kgX10: pbKgX10.int32Value))")
+                    .font(.subheadline)
+                    .foregroundColor(.blue)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -466,6 +476,16 @@ struct WorkoutSessionView: View {
             }
         } catch {
             print("PreFill observation error: \(error)")
+        }
+    }
+
+    private func observePersonalBest() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.personalBestFlow) {
+                self.personalBest = value
+            }
+        } catch {
+            print("Personal best observation error: \(error)")
         }
     }
 
