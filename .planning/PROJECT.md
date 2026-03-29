@@ -21,9 +21,11 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - [x] Rest timer between sets with countdown — Validated in Phase 3: Workout Session
 - [x] Track workout progress (current exercise, current set) — Validated in Phase 3: Workout Session
 - [x] Save completed workouts locally — Validated in Phase 3: Workout Session
+- [x] View workout history (list of completed workouts) — Validated in Phase 4: History & Settings
+- [x] Weight unit toggle (kg/lbs) with global application — Validated in Phase 4: History & Settings
+- [x] Previous performance display during active workouts — Validated in Phase 4: History & Settings
 
 ### Active
-- [ ] View workout history (list of completed workouts)
 - [ ] Local/offline storage (Room or SQLDelight — no backend for prototype)
 
 ### Out of Scope
@@ -83,4 +85,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 3 completion*
+*Last updated: 2026-03-29 after Phase 4 completion*
