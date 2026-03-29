@@ -1,0 +1,51 @@
+# IDE - Android Studio / IntelliJ
+.idea/
+*.iml
+*.iws
+.project
+.settings
+.classpath
+bin/
+out/
+
+# Gradle
+.gradle/
+build/
+*/build/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Android spezifisch
+local.properties
+captures/
+.externalNativeBuild
+.cxx
+*.apk
+*.ap_
+*.dex
+
+# Kotlin Multiplatform / Native
+.konan/
+kotlin-js-store/
+package-lock.json
+
+# iOS (KMP spezifisch)
+*.xcworkspace
+xcuserdata/
+DerivedData/
+*.moved-aside
+podfile.lock
+Pods/
+.test_runtime
+iosApp/build/
+.swiftpm/
+
+# OS-spezifisch
+.DS_Store
+Thumbs.db
+
+# Secrets & Local Config (WICHTIG!)
+secrets.properties
+google-services.json
+*.keystore
+*.jks
