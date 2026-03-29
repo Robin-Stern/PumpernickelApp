@@ -1,0 +1,27 @@
+package com.pumpernickel.presentation.settings
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.domain.model.WeightUnit
+import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+class SettingsViewModel(
+    private val settingsRepository: SettingsRepository
+) : ViewModel() {
+
+    @NativeCoroutinesState
+    val weightUnit: StateFlow<WeightUnit> = settingsRepository
+        .weightUnit
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WeightUnit.KG)
+
+    fun setWeightUnit(unit: WeightUnit) {
+        viewModelScope.launch {
+            settingsRepository.setWeightUnit(unit)
+        }
+    }
+}
