@@ -24,6 +24,9 @@ interface WorkoutRepository {
     suspend fun updateCursor(exerciseIndex: Int, setIndex: Int)
     suspend fun clearActiveSession()
 
+    // Exercise reorder (FLOW-03, FLOW-04)
+    suspend fun updateExerciseOrder(order: String)
+
     // Completed workouts (WORK-07)
     suspend fun saveCompletedWorkout(workout: CompletedWorkout)
 
@@ -43,7 +46,8 @@ data class ActiveSessionData(
     val currentExerciseIndex: Int,
     val currentSetIndex: Int,
     val startTimeMillis: Long,
-    val completedSets: List<ActiveSessionSetData>
+    val completedSets: List<ActiveSessionSetData>,
+    val exerciseOrder: String = ""
 )
 
 data class ActiveSessionSetData(
@@ -98,7 +102,8 @@ class WorkoutRepositoryImpl(
                     actualWeightKgX10 = entity.actualWeightKgX10,
                     completedAtMillis = entity.completedAtMillis
                 )
-            }
+            },
+            exerciseOrder = session.exerciseOrder
         )
     }
 
@@ -139,6 +144,13 @@ class WorkoutRepositoryImpl(
         workoutSessionDao.updateCursor(
             exerciseIndex = exerciseIndex,
             setIndex = setIndex,
+            updatedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        )
+    }
+
+    override suspend fun updateExerciseOrder(order: String) {
+        workoutSessionDao.updateExerciseOrder(
+            order = order,
             updatedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
         )
     }

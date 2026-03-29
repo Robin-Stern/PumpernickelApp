@@ -29,6 +29,9 @@ interface WorkoutSessionDao {
     @Query("UPDATE active_sessions SET currentExerciseIndex = :exerciseIndex, currentSetIndex = :setIndex, lastUpdatedMillis = :updatedAt WHERE id = 1")
     suspend fun updateCursor(exerciseIndex: Int, setIndex: Int, updatedAt: Long)
 
+    @Query("UPDATE active_sessions SET exerciseOrder = :order, lastUpdatedMillis = :updatedAt WHERE id = 1")
+    suspend fun updateExerciseOrder(order: String, updatedAt: Long)
+
     @Query("DELETE FROM active_sessions WHERE id = 1")
     suspend fun clearActiveSession()
 }
