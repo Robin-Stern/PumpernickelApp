@@ -83,6 +83,12 @@ struct WorkoutSessionView: View {
                     onSelect: { index in
                         viewModel.jumpToExercise(exerciseIndex: index)
                         showExerciseOverview = false
+                    },
+                    onMove: { from, to in
+                        viewModel.reorderExercise(from: Int32(from), to: Int32(to))
+                    },
+                    onSkip: {
+                        viewModel.skipExercise()
                     }
                 )
             }
@@ -188,6 +194,15 @@ struct WorkoutSessionView: View {
         .navigationTitle(active.templateName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if Int(active.currentExerciseIndex) + 1 < exercises.count {
+                    Button {
+                        viewModel.skipExercise()
+                    } label: {
+                        Image(systemName: "forward.fill")
+                    }
+                }
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     showExerciseOverview = true
