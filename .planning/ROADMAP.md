@@ -25,7 +25,7 @@
 **Plans:** 2 plans
 Plans:
 - [x] 05-01-PLAN.md — ViewModel auto-increment pre-fill logic and 0-reps guard
-- [ ] 05-02-PLAN.md — SwiftUI wheel picker replacement and preFill observation
+- [x] 05-02-PLAN.md — SwiftUI wheel picker replacement and preFill observation
 
 ### Phase 6: Personal Best Display
 **Requirements:** ENTRY-07
