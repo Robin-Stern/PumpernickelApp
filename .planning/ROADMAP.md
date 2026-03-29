@@ -84,7 +84,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 04-01-PLAN.md — DAO history queries, DataStore Preferences, WeightUnit domain model, SettingsRepository, WorkoutRepository extensions
+- [x] 04-01-PLAN.md — DAO history queries, DataStore Preferences, WeightUnit domain model, SettingsRepository, WorkoutRepository extensions
 - [ ] 04-02-PLAN.md — WorkoutHistoryViewModel, SettingsViewModel, WorkoutSessionViewModel previous performance, Koin DI wiring
 - [ ] 04-03-PLAN.md — iOS SwiftUI history list, detail, settings views, previous performance display, global unit integration
 

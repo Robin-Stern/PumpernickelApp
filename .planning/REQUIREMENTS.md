@@ -35,16 +35,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### History
 
-- [ ] **HIST-01**: User can view a list of completed workouts sorted by date (newest first)
-- [ ] **HIST-02**: Each history entry shows date, workout name, exercises performed, and total volume
-- [ ] **HIST-03**: User can tap a history entry to see full workout detail (all exercises, sets, reps, weight)
-- [ ] **HIST-04**: During an active workout, user can see what they did last time for each exercise (previous performance inline)
+- [x] **HIST-01**: User can view a list of completed workouts sorted by date (newest first)
+- [x] **HIST-02**: Each history entry shows date, workout name, exercises performed, and total volume
+- [x] **HIST-03**: User can tap a history entry to see full workout detail (all exercises, sets, reps, weight)
+- [x] **HIST-04**: During an active workout, user can see what they did last time for each exercise (previous performance inline)
 
 ### Navigation & Settings
 
 - [x] **NAV-01**: App has bottom navigation with three tabs: Workout, Overview, Nutrition (only Workout functional)
-- [ ] **NAV-02**: User can toggle between kg and lbs as the weight unit
-- [ ] **NAV-03**: Selected unit applies globally to all weight displays and entries
+- [x] **NAV-02**: User can toggle between kg and lbs as the weight unit
+- [x] **NAV-03**: Selected unit applies globally to all weight displays and entries
 
 ## v2 Requirements
 
@@ -121,13 +121,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-07 | Phase 3 | Complete |
 | WORK-08 | Phase 3 | Complete |
 | WORK-09 | Phase 3 | Complete |
-| HIST-01 | Phase 4 | Pending |
-| HIST-02 | Phase 4 | Pending |
-| HIST-03 | Phase 4 | Pending |
-| HIST-04 | Phase 4 | Pending |
+| HIST-01 | Phase 4 | Complete |
+| HIST-02 | Phase 4 | Complete |
+| HIST-03 | Phase 4 | Complete |
+| HIST-04 | Phase 4 | Complete |
 | NAV-01 | Phase 1 | Complete |
-| NAV-02 | Phase 4 | Pending |
-| NAV-03 | Phase 4 | Pending |
+| NAV-02 | Phase 4 | Complete |
+| NAV-03 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 24 total
