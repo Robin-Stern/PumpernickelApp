@@ -34,6 +34,13 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - Tap any set to edit reps/weight via existing wheel picker sheet before saving
 - "Save Workout" button commits reviewed data to history; crash recovery intact during review
 
+**v1.1 Phase 8 complete** (2026-03-29): Mid-workout exercise reorder
+- In-memory list reorder for pending exercises (only exercises after current are movable)
+- Skip exercise action advances cursor, skipped exercises excluded from saved history
+- Room migration 3→4: exerciseOrder column on active_sessions for crash recovery persistence
+- Template-original index tracking ensures correct exerciseIndex after reorder
+- SwiftUI ExerciseOverviewSheet with sectioned list (Completed/Current/Up Next) and .onMove drag reorder
+
 **Tech stack in use:** Kotlin 2.3.20, Compose Multiplatform 1.10.3, Room KMP 2.8.4, Koin 4.2.0, Navigation Compose 2.9.2, DataStore Preferences 1.2.1, SwiftUI (iOS)
 
 ## Requirements
@@ -133,4 +140,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after v1.1 Phase 7 completion*
+*Last updated: 2026-03-29 after v1.1 Phase 8 completion*
