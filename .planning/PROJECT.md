@@ -28,6 +28,12 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - Volume-weighted average PB (SUM(weight×reps)/SUM(reps)) per exercise via Room DAO aggregate query
 - "PB: XX.X kg" blue label on set entry screen, unit-aware (kg/lbs), hidden when no history
 
+**v1.1 Phase 7 complete** (2026-03-29): Post-workout recap & edit
+- New `Reviewing` sealed class state between Active and Finished in workout state machine
+- Recap screen shows summary header (exercise count, set count, duration) + scrollable exercise list with per-set detail rows
+- Tap any set to edit reps/weight via existing wheel picker sheet before saving
+- "Save Workout" button commits reviewed data to history; crash recovery intact during review
+
 **Tech stack in use:** Kotlin 2.3.20, Compose Multiplatform 1.10.3, Room KMP 2.8.4, Koin 4.2.0, Navigation Compose 2.9.2, DataStore Preferences 1.2.1, SwiftUI (iOS)
 
 ## Requirements
@@ -62,6 +68,7 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - Abandon guards (save & exit vs discard)
 - Context menu (skip exercise, reorder)
 - ~~Personal best display on set entry~~ ✓ Phase 6
+- ~~Post-workout recap/edit before saving~~ ✓ Phase 7
 - General UI polish (validation, keyboard handling, accessibility)
 
 ### Out of Scope
@@ -126,4 +133,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after v1.1 Phase 6 completion*
+*Last updated: 2026-03-29 after v1.1 Phase 7 completion*
