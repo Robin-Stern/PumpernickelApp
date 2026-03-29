@@ -40,7 +40,20 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 
 ### Active
 
-(None — next milestone requirements TBD via `/gsd:new-milestone`)
+#### Current Milestone: v1.1 Workout Polish & Firmware Parity
+
+**Goal:** Elevate the workout tab from prototype to polished firmware-grade experience with iOS-native scroll wheel input, full firmware feature parity, and general UX polish.
+
+**Target features:**
+- Scroll wheel pickers for reps (0–50) and weight (0–1000, 2.5kg steps)
+- Auto-increment: next set pre-fills with previous set's actual values
+- Minimal "doing set" screen while lifting
+- Post-workout recap/edit before saving
+- Mid-workout exercise reorder
+- Abandon guards (save & exit vs discard)
+- Context menu (skip exercise, reorder)
+- Personal best display on set entry
+- General UI polish (validation, keyboard handling, accessibility)
 
 ### Out of Scope
 
@@ -70,7 +83,7 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - **Platform focus**: iOS first (user handles iOS UI in SwiftUI)
 - **Storage**: Local/offline only for prototype (Room KMP)
 - **Timeline**: University deadline ~end of May 2026
-- **Scope**: Workout feature complete; next milestone scope TBD
+- **Scope**: v1.1 — workout tab polish and firmware feature parity
 
 ## Key Decisions
 
@@ -104,4 +117,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after v1.0 milestone*
+*Last updated: 2026-03-29 after v1.1 milestone start*
