@@ -30,8 +30,9 @@ Plans:
 ### Phase 6: Personal Best Display
 **Requirements:** ENTRY-07
 **Goal:** Show the user's personal best for the current exercise during set entry.
-- Room DAO query for average weight across completed sets per exercise
-- "PB: 62.5 kg" label on set entry screen
+**Plans:** 1 plan
+Plans:
+- [ ] 06-01-PLAN.md — PB DAO query, ViewModel StateFlow, and SwiftUI display
 
 ### Phase 7: Post-Workout Recap & Edit
 **Requirements:** FLOW-01, FLOW-02
@@ -78,8 +79,8 @@ Phase 08 ──────────┘
 | 2. Template Management | v1.0 | 3/3 | Complete | 2026-03-28 |
 | 3. Workout Session | v1.0 | 3/3 | Complete | 2026-03-28 |
 | 4. History & Settings | v1.0 | 3/3 | Complete | 2026-03-29 |
-| 5. Scroll Wheel Pickers & Auto-Increment | v1.1 | 1/2 | In Progress | — |
-| 6. Personal Best Display | v1.1 | 0/? | Not started | — |
+| 5. Scroll Wheel Pickers & Auto-Increment | v1.1 | 2/2 | Complete | — |
+| 6. Personal Best Display | v1.1 | 0/1 | Not started | — |
 | 7. Post-Workout Recap & Edit | v1.1 | 0/? | Not started | — |
 | 8. Mid-Workout Exercise Reorder | v1.1 | 0/? | Not started | — |
 | 9. Abandon Guards & Context Menu | v1.1 | 0/? | Not started | — |
