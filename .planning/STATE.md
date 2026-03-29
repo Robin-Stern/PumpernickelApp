@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Workout Polish & Firmware Parity
-status: roadmap_complete
-stopped_at: null
-last_updated: "2026-03-29T12:00:00.000Z"
-last_activity: 2026-03-29
+status: executing
+stopped_at: v1.1 roadmap complete
+last_updated: "2026-03-29T13:20:42.562Z"
+last_activity: 2026-03-29 -- Phase 05 execution started
 progress:
   total_phases: 6
   completed_phases: 0
@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Users can select a workout template and execute it set-by-set -- logging reps, weight, and rest periods -- with a clean, reliable flow
-**Current focus:** v1.1 Workout Polish & Firmware Parity — ready to plan phases
+**Current focus:** Phase 05 — Scroll Wheel Pickers & Auto-Increment
 
 ## Current Position
 
