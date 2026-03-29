@@ -103,6 +103,7 @@ class WorkoutSessionViewModel(
 
     private var timerJob: Job? = null
     private var elapsedJob: Job? = null
+    private var templateOriginalIndices: MutableList<Int> = mutableListOf()
 
     // -- Public methods --
 
@@ -157,6 +158,9 @@ class WorkoutSessionViewModel(
             // Load personal bests (ENTRY-07)
             val exerciseIds = exercises.map { it.exerciseId }
             _personalBest.value = workoutRepository.getPersonalBests(exerciseIds)
+
+            // Initialize template-original index mapping (FLOW-03, FLOW-04)
+            templateOriginalIndices = exercises.indices.toMutableList()
 
             val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
             workoutRepository.createActiveSession(templateId, template.name, now)
@@ -239,19 +243,36 @@ class WorkoutSessionViewModel(
                 exercise.copy(sets = updatedSets)
             }
 
+            // Apply persisted exercise order (D-08, FLOW-04)
+            val orderString = activeSession.exerciseOrder
+            val (orderedExercises, originalIndices) = if (orderString.isNotEmpty()) {
+                val indices = orderString.split(",").mapNotNull { it.toIntOrNull() }
+                if (indices.size == updatedExercises.size) {
+                    val reordered = indices.map { idx -> updatedExercises[idx] }
+                    Pair(reordered, indices.toMutableList())
+                } else {
+                    // Malformed order string -- fall back to template order
+                    Pair(updatedExercises, updatedExercises.indices.toMutableList())
+                }
+            } else {
+                // Pre-migration session or no reorder -- use template order
+                Pair(updatedExercises, updatedExercises.indices.toMutableList())
+            }
+            templateOriginalIndices = originalIndices
+
             val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
             val elapsed = (now - activeSession.startTimeMillis) / 1000
 
             _sessionState.value = WorkoutSessionState.Active(
                 templateId = activeSession.templateId,
                 templateName = activeSession.templateName,
-                exercises = updatedExercises,
+                exercises = orderedExercises,
                 currentExerciseIndex = activeSession.currentExerciseIndex,
                 currentSetIndex = activeSession.currentSetIndex,
                 startTimeMillis = activeSession.startTimeMillis
             )
             // Emit pre-fill for resumed cursor position
-            val resumeExercise = updatedExercises[activeSession.currentExerciseIndex]
+            val resumeExercise = orderedExercises[activeSession.currentExerciseIndex]
             _preFill.value = computePreFill(resumeExercise, activeSession.currentSetIndex)
             startElapsedTicker(elapsed)
         }
@@ -287,9 +308,14 @@ class WorkoutSessionViewModel(
                 } else exercise
             }
 
-            // Persist to Room before updating state
+            // Persist to Room using template-original index (FLOW-04)
+            val templateExIdx = if (templateOriginalIndices.isNotEmpty()) {
+                templateOriginalIndices[exIdx]
+            } else {
+                exIdx
+            }
             workoutRepository.saveCompletedSet(
-                exIdx, setIdx, reps, weightKgX10,
+                templateExIdx, setIdx, reps, weightKgX10,
                 kotlin.time.Clock.System.now().toEpochMilliseconds()
             )
 
@@ -395,6 +421,62 @@ class WorkoutSessionViewModel(
     }
 
     /**
+     * Reorder a pending exercise within the exercises list (D-01, D-02, FLOW-03).
+     * from/to are relative to the pending sublist (exercises after currentExerciseIndex),
+     * using move(fromOffset, toOffset) semantics matching SwiftUI .onMove.
+     */
+    fun reorderExercise(from: Int, to: Int) {
+        val active = _sessionState.value as? WorkoutSessionState.Active ?: return
+        val pendingStart = active.currentExerciseIndex + 1
+        // Convert from/to from pending-relative to absolute indices
+        val absFrom = pendingStart + from
+        val absTo = pendingStart + to
+        if (absFrom < pendingStart || absFrom >= active.exercises.size) return
+        if (absTo < pendingStart || absTo > active.exercises.size) return  // toOffset can equal size (append)
+
+        val list = active.exercises.toMutableList()
+        val item = list.removeAt(absFrom)
+        // After removal, if absTo > absFrom, the effective insertion index is absTo - 1
+        val insertAt = if (absTo > absFrom) absTo - 1 else absTo
+        list.add(insertAt, item)
+
+        // Reorder templateOriginalIndices in parallel
+        val idxItem = templateOriginalIndices.removeAt(absFrom)
+        templateOriginalIndices.add(insertAt, idxItem)
+
+        _sessionState.value = active.copy(exercises = list)
+        persistExerciseOrder()
+    }
+
+    /**
+     * Skip the current exercise and advance to the next one (D-05, D-06, FLOW-07).
+     * Skipped exercise retains 0 completed sets and is naturally excluded from saved history.
+     * No-op on the last exercise (Pitfall 3).
+     */
+    fun skipExercise() {
+        timerJob?.cancel()
+        val active = _sessionState.value as? WorkoutSessionState.Active ?: return
+        val nextIndex = active.currentExerciseIndex + 1
+        if (nextIndex >= active.exercises.size) return  // Last exercise: no-op
+
+        val nextExercise = active.exercises[nextIndex]
+        val firstIncompleteSet = nextExercise.sets
+            .indexOfFirst { !it.isCompleted }
+            .let { if (it == -1) 0 else it }
+
+        _sessionState.value = active.copy(
+            currentExerciseIndex = nextIndex,
+            currentSetIndex = firstIncompleteSet,
+            restState = RestState.NotResting
+        )
+        _preFill.value = computePreFill(nextExercise, firstIncompleteSet)
+
+        viewModelScope.launch {
+            workoutRepository.updateCursor(nextIndex, firstIncompleteSet)
+        }
+    }
+
+    /**
      * Enter the workout review/recap screen (D-01, FLOW-01).
      * Cancels timers and transitions to Reviewing state without saving.
      * Active session in Room stays intact for crash recovery (Pitfall 2).
@@ -486,6 +568,7 @@ class WorkoutSessionViewModel(
             _sessionState.value = WorkoutSessionState.Idle
             _previousPerformance.value = emptyMap()
             _personalBest.value = emptyMap()
+            templateOriginalIndices.clear()
         }
     }
 
@@ -498,9 +581,20 @@ class WorkoutSessionViewModel(
         _previousPerformance.value = emptyMap()
         _personalBest.value = emptyMap()
         _preFill.value = SetPreFill(reps = 0, weightKgX10 = 0)
+        templateOriginalIndices.clear()
     }
 
     // -- Private helpers --
+
+    /**
+     * Persist the current exercise order to Room for crash recovery (D-07, FLOW-04).
+     */
+    private fun persistExerciseOrder() {
+        val orderString = templateOriginalIndices.joinToString(",")
+        viewModelScope.launch {
+            workoutRepository.updateExerciseOrder(orderString)
+        }
+    }
 
     /**
      * Compute pre-fill values for the given set (firmware WorkoutSetEntryState.cpp parity).
