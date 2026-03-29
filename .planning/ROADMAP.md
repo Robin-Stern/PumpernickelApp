@@ -37,14 +37,15 @@ Plans:
 ### Phase 7: Post-Workout Recap & Edit
 **Requirements:** FLOW-01, FLOW-02
 **Goal:** Add a post-workout recap screen where users review and edit all sets before saving.
-- New `Reviewing` sealed class state between Active and Finished
-- Recap screen lists all exercises + sets; tap to edit before saving
+**Plans:** 1 plan
+Plans:
+- [ ] 07-01-PLAN.md — Reviewing state, enterReview()/saveReviewedWorkout() split, and SwiftUI recap screen with tap-to-edit
 
 ### Phase 8: Mid-Workout Exercise Reorder
 **Requirements:** FLOW-03, FLOW-04, FLOW-07
 **Goal:** Allow reordering pending exercises mid-workout using the firmware's exerciseOrder pattern.
 - exerciseOrder indirection array (firmware pattern)
-- Room migration 3→4 for order persistence
+- Room migration 3->4 for order persistence
 - Drag reorder pending exercises; skip exercise action
 
 ### Phase 9: Abandon Guards & Context Menu
@@ -81,7 +82,7 @@ Phase 08 ──────────┘
 | 4. History & Settings | v1.0 | 3/3 | Complete | 2026-03-29 |
 | 5. Scroll Wheel Pickers & Auto-Increment | v1.1 | 2/2 | Complete | — |
 | 6. Personal Best Display | v1.1 | 0/1 | Not started | — |
-| 7. Post-Workout Recap & Edit | v1.1 | 0/? | Not started | — |
+| 7. Post-Workout Recap & Edit | v1.1 | 0/1 | Not started | — |
 | 8. Mid-Workout Exercise Reorder | v1.1 | 0/? | Not started | — |
 | 9. Abandon Guards & Context Menu | v1.1 | 0/? | Not started | — |
 | 10. Minimal Set Screen & UI Polish | v1.1 | 0/? | Not started | — |
