@@ -31,6 +31,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
             implementation(libs.lifecycle.viewmodel)
+            implementation(libs.datastore.preferences)
         }
         androidMain.dependencies {
             implementation(libs.koin.android)
