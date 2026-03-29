@@ -24,7 +24,7 @@
 **Goal:** Replace text field inputs with iOS scroll wheel pickers and add auto-increment logic so set entry feels native and fast.
 **Plans:** 2 plans
 Plans:
-- [ ] 05-01-PLAN.md — ViewModel auto-increment pre-fill logic and 0-reps guard
+- [x] 05-01-PLAN.md — ViewModel auto-increment pre-fill logic and 0-reps guard
 - [ ] 05-02-PLAN.md — SwiftUI wheel picker replacement and preFill observation
 
 ### Phase 6: Personal Best Display
@@ -78,7 +78,7 @@ Phase 08 ──────────┘
 | 2. Template Management | v1.0 | 3/3 | Complete | 2026-03-28 |
 | 3. Workout Session | v1.0 | 3/3 | Complete | 2026-03-28 |
 | 4. History & Settings | v1.0 | 3/3 | Complete | 2026-03-29 |
-| 5. Scroll Wheel Pickers & Auto-Increment | v1.1 | 0/2 | Planned | — |
+| 5. Scroll Wheel Pickers & Auto-Increment | v1.1 | 1/2 | In Progress | — |
 | 6. Personal Best Display | v1.1 | 0/? | Not started | — |
 | 7. Post-Workout Recap & Edit | v1.1 | 0/? | Not started | — |
 | 8. Mid-Workout Exercise Reorder | v1.1 | 0/? | Not started | — |

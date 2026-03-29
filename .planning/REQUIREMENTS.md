@@ -14,9 +14,9 @@
 | ENTRY-01 | User can select reps via iOS scroll wheel picker (0–50, step 1) | Must | Picker spins freely, value updates on selection, visual matches iOS timer picker style |
 | ENTRY-02 | User can select weight via iOS scroll wheel picker (0–1000, step 2.5kg) | Must | Picker shows values 0, 2.5, 5.0, ... 1000.0; 2.5kg increments throughout range |
 | ENTRY-03 | Scroll wheel pickers display correctly in both kg and lbs modes | Must | When unit is lbs, picker shows lbs-equivalent values; stored value remains kgX10 internally |
-| ENTRY-04 | Set 2+ auto-fills with previous set's actual reps and weight (not template targets) | Must | Complete set 1 with 10 reps @ 50kg, set 2 picker defaults to 10 reps @ 50kg |
-| ENTRY-05 | Set 1 pre-fills with template target reps and weight | Must | First set of each exercise shows template-defined targets in picker |
-| ENTRY-06 | User cannot complete a set with 0 reps | Must | "Complete Set" button disabled or validation error when reps = 0 |
+| ENTRY-04 | ~~Set 2+ auto-fills with previous set's actual reps and weight (not template targets)~~ | Must | ~~Complete set 1 with 10 reps @ 50kg, set 2 picker defaults to 10 reps @ 50kg~~ **DONE (05-01)** |
+| ENTRY-05 | ~~Set 1 pre-fills with template target reps and weight~~ | Must | ~~First set of each exercise shows template-defined targets in picker~~ **DONE (05-01)** |
+| ENTRY-06 | ~~User cannot complete a set with 0 reps~~ | Must | ~~"Complete Set" button disabled or validation error when reps = 0~~ **DONE (05-01)** |
 | ENTRY-07 | User sees personal best (running average weight) for current exercise during set entry | Should | Label shows "PB: 62.5 kg" computed from all previous completed sets for that exercise |
 
 ### Workout Flow
