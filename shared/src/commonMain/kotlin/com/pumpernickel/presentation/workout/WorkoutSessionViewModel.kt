@@ -10,6 +10,7 @@ import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
 import com.pumpernickel.domain.model.SessionExercise
 import com.pumpernickel.domain.model.SessionSet
+import com.pumpernickel.domain.model.SetPreFill
 import com.pumpernickel.domain.model.WeightUnit
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.Job
@@ -75,6 +76,11 @@ class WorkoutSessionViewModel(
     private val _previousPerformance = MutableStateFlow<Map<String, CompletedExercise>>(emptyMap())
     @NativeCoroutinesState
     val previousPerformance: StateFlow<Map<String, CompletedExercise>> = _previousPerformance.asStateFlow()
+
+    // Pre-fill values for current set (ENTRY-04, ENTRY-05)
+    private val _preFill = MutableStateFlow(SetPreFill(reps = 0, weightKgX10 = 0))
+    @NativeCoroutinesState
+    val preFill: StateFlow<SetPreFill> = _preFill.asStateFlow()
 
     // Weight unit for display (NAV-03, D-15)
     @NativeCoroutinesState
@@ -146,6 +152,8 @@ class WorkoutSessionViewModel(
                 currentSetIndex = 0,
                 startTimeMillis = now
             )
+            // Emit initial pre-fill for first set of first exercise (ENTRY-05)
+            _preFill.value = computePreFill(exercises[0], 0)
             _hasActiveSession.value = true
             startElapsedTicker()
         }
@@ -221,6 +229,9 @@ class WorkoutSessionViewModel(
                 currentSetIndex = activeSession.currentSetIndex,
                 startTimeMillis = activeSession.startTimeMillis
             )
+            // Emit pre-fill for resumed cursor position
+            val resumeExercise = updatedExercises[activeSession.currentExerciseIndex]
+            _preFill.value = computePreFill(resumeExercise, activeSession.currentSetIndex)
             startElapsedTicker(elapsed)
         }
     }
@@ -232,6 +243,8 @@ class WorkoutSessionViewModel(
      */
     fun completeSet(reps: Int, weightKgX10: Int) {
         viewModelScope.launch {
+            // ENTRY-06: Reject 0-rep sets
+            if (reps <= 0) return@launch
             val active = _sessionState.value as? WorkoutSessionState.Active ?: return@launch
             val exIdx = active.currentExerciseIndex
             val setIdx = active.currentSetIndex
@@ -276,6 +289,10 @@ class WorkoutSessionViewModel(
                 currentSetIndex = nextCursor.second,
                 restState = RestState.NotResting
             )
+
+            // Update pre-fill for the new cursor position (ENTRY-04)
+            val nextExercise = updatedExercises[nextCursor.first]
+            _preFill.value = computePreFill(nextExercise, nextCursor.second)
 
             // Start rest timer
             if (restPeriodSec > 0) {
@@ -340,6 +357,9 @@ class WorkoutSessionViewModel(
             currentSetIndex = firstIncompleteSet,
             restState = RestState.NotResting
         )
+
+        // Update pre-fill for jumped-to exercise (ENTRY-05 for first set, ENTRY-04 for subsequent)
+        _preFill.value = computePreFill(targetExercise, firstIncompleteSet)
     }
 
     /**
@@ -423,9 +443,35 @@ class WorkoutSessionViewModel(
         _sessionState.value = WorkoutSessionState.Idle
         _elapsedSeconds.value = 0L
         _previousPerformance.value = emptyMap()
+        _preFill.value = SetPreFill(reps = 0, weightKgX10 = 0)
     }
 
     // -- Private helpers --
+
+    /**
+     * Compute pre-fill values for the given set (firmware WorkoutSetEntryState.cpp parity).
+     * Set 0: template targets (ENTRY-05).
+     * Set 1+: previous set's actual reps and weight (ENTRY-04).
+     */
+    private fun computePreFill(
+        exercise: SessionExercise,
+        setIndex: Int
+    ): SetPreFill {
+        if (setIndex > 0) {
+            val prevSet = exercise.sets.getOrNull(setIndex - 1)
+            if (prevSet != null && prevSet.isCompleted && prevSet.actualReps != null && prevSet.actualWeightKgX10 != null) {
+                return SetPreFill(
+                    reps = prevSet.actualReps,
+                    weightKgX10 = prevSet.actualWeightKgX10
+                )
+            }
+        }
+        // Set 1 or fallback: use template targets
+        return SetPreFill(
+            reps = exercise.targetReps,
+            weightKgX10 = exercise.targetWeightKgX10
+        )
+    }
 
     /**
      * Compute the next cursor position after completing a set.

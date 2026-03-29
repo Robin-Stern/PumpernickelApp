@@ -18,3 +18,8 @@ data class SessionSet(
     val actualWeightKgX10: Int?, // null = not yet completed
     val isCompleted: Boolean
 )
+
+data class SetPreFill(
+    val reps: Int,
+    val weightKgX10: Int
+)
