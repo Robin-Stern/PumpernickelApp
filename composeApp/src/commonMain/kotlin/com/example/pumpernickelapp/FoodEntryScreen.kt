@@ -163,16 +163,6 @@ fun FoodEntryScreen(viewModel: FoodViewModel) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = isRecipe,
-                    onCheckedChange = { isRecipe = it }
-                )
-                Text("Ist ein Rezept")
-            }
-
             errorMessage?.let {
                 Text(
                     text = it,

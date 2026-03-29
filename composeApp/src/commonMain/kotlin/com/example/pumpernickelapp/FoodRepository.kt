@@ -3,7 +3,7 @@ package com.example.pumpernickelapp
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-
+// Datensicherungsklasse für die Food Liste, Lokale Speicherung.
 class FoodRepository {
     private val settings = Settings()
     private val json = Json { ignoreUnknownKeys = true }
