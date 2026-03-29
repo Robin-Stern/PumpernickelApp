@@ -43,10 +43,11 @@ Plans:
 
 ### Phase 8: Mid-Workout Exercise Reorder
 **Requirements:** FLOW-03, FLOW-04, FLOW-07
-**Goal:** Allow reordering pending exercises mid-workout using the firmware's exerciseOrder pattern.
-- exerciseOrder indirection array (firmware pattern)
-- Room migration 3->4 for order persistence
-- Drag reorder pending exercises; skip exercise action
+**Goal:** Allow reordering pending exercises mid-workout with in-memory list reorder, Room crash recovery, and skip exercise.
+**Plans:** 2 plans
+Plans:
+- [ ] 08-01-PLAN.md — Room migration 3-to-4, DAO/repository exerciseOrder methods, ViewModel reorder/skip/crash-recovery logic
+- [ ] 08-02-PLAN.md — SwiftUI exercise overview with completed/current/pending sections, drag reorder, and skip button
 
 ### Phase 9: Abandon Guards & Context Menu
 **Requirements:** FLOW-05, FLOW-06
@@ -83,7 +84,7 @@ Phase 08 ──────────┘
 | 5. Scroll Wheel Pickers & Auto-Increment | v1.1 | 2/2 | Complete | — |
 | 6. Personal Best Display | v1.1 | 0/1 | Not started | — |
 | 7. Post-Workout Recap & Edit | v1.1 | 0/1 | Not started | — |
-| 8. Mid-Workout Exercise Reorder | v1.1 | 0/? | Not started | — |
+| 8. Mid-Workout Exercise Reorder | v1.1 | 0/2 | Not started | — |
 | 9. Abandon Guards & Context Menu | v1.1 | 0/? | Not started | — |
 | 10. Minimal Set Screen & UI Polish | v1.1 | 0/? | Not started | — |
 
