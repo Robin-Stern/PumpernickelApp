@@ -15,7 +15,7 @@ struct WorkoutSetRow: View {
         } label: {
             HStack {
                 Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isCompleted ? Color(red: 0.4, green: 0.733, blue: 0.416) : .secondary)
+                    .foregroundColor(isCompleted ? .appAccent : .secondary)
 
                 Text("Set \(setIndex + 1)")
                     .font(.body.weight(.medium))

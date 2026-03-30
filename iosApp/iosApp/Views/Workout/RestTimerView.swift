@@ -23,7 +23,7 @@ struct RestTimerView: View {
                         .frame(height: 8)
 
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(red: 0.4, green: 0.733, blue: 0.416))
+                        .fill(Color.appAccent)
                         .frame(
                             width: totalSeconds > 0
                                 ? geo.size.width * CGFloat(remainingSeconds) / CGFloat(totalSeconds)

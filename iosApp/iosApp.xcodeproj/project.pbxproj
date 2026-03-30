@@ -36,6 +36,7 @@
 		A10070 /* WorkoutHistoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10070 /* WorkoutHistoryListView.swift */; };
 		A10071 /* WorkoutHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10071 /* WorkoutHistoryDetailView.swift */; };
 		A10072 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10072 /* SettingsView.swift */; };
+		A10080 /* Color+App.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10080 /* Color+App.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +67,7 @@
 		B10070 /* WorkoutHistoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistoryListView.swift; sourceTree = "<group>"; };
 		B10071 /* WorkoutHistoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistoryDetailView.swift; sourceTree = "<group>"; };
 		B10072 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B10080 /* Color+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+App.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,6 +99,7 @@
 				B10001 /* PumpernickelApp.swift */,
 				E10003 /* Views */,
 				E10005 /* Utilities */,
+				E10014 /* Extensions */,
 				B10006 /* Assets.xcassets */,
 				E10006 /* Preview Content */,
 			);
@@ -209,6 +212,14 @@
 				B10072 /* SettingsView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		E10014 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				B10080 /* Color+App.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -356,6 +367,7 @@
 				A10070 /* WorkoutHistoryListView.swift in Sources */,
 				A10071 /* WorkoutHistoryDetailView.swift in Sources */,
 				A10072 /* SettingsView.swift in Sources */,
+				A10080 /* Color+App.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

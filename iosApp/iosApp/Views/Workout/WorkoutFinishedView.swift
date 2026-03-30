@@ -13,7 +13,7 @@ struct WorkoutFinishedView: View {
 
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 72))
-                .foregroundColor(Color(red: 0.4, green: 0.733, blue: 0.416))
+                .foregroundColor(.appAccent)
 
             Text("Workout Complete!")
                 .font(.title.weight(.bold))
@@ -38,7 +38,7 @@ struct WorkoutFinishedView: View {
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 48)
-            .background(Color(red: 0.4, green: 0.733, blue: 0.416))
+            .background(Color.appAccent)
             .cornerRadius(12)
             .padding(.horizontal, 32)
             .padding(.bottom, 32)

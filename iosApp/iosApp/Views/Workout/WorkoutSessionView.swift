@@ -150,7 +150,7 @@ struct WorkoutSessionView: View {
                     VStack(spacing: 8) {
                         Text("Rest Complete!")
                             .font(.title3.weight(.semibold))
-                            .foregroundColor(Color(red: 0.4, green: 0.733, blue: 0.416))
+                            .foregroundColor(.appAccent)
                     }
                     .padding(.vertical, 12)
 
@@ -161,7 +161,7 @@ struct WorkoutSessionView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 48)
-                    .background(Color(red: 0.4, green: 0.733, blue: 0.416))
+                    .background(Color.appAccent)
                     .cornerRadius(12)
                     .padding(.horizontal, 32)
                 } else {
@@ -343,7 +343,7 @@ struct WorkoutSessionView: View {
             .frame(height: 48)
             .background(selectedReps == 0
                 ? Color.gray
-                : Color(red: 0.4, green: 0.733, blue: 0.416))
+                : Color.appAccent)
             .cornerRadius(12)
             .padding(.horizontal, 32)
             .disabled(selectedReps == 0)
@@ -439,7 +439,7 @@ struct WorkoutSessionView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
-                .background(Color(red: 0.4, green: 0.733, blue: 0.416))
+                .background(Color.appAccent)
                 .cornerRadius(12)
                 .padding(.horizontal, 32)
 
@@ -559,7 +559,7 @@ struct WorkoutSessionView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
-                .background(Color(red: 0.4, green: 0.733, blue: 0.416))
+                .background(Color.appAccent)
                 .cornerRadius(12)
                 .padding(.horizontal, 32)
                 .padding(.top, 8)
