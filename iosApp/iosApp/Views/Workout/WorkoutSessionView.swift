@@ -217,6 +217,27 @@ struct WorkoutSessionView: View {
                 }
             }
         }
+        .confirmationDialog(
+            "Abandon Workout?",
+            isPresented: $showAbandonDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Save & Exit") {
+                viewModel.enterReview()
+                viewModel.saveReviewedWorkout()
+                dismiss()
+            }
+            Button("Discard", role: .destructive) {
+                viewModel.discardWorkout()
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            let completedSetsCount = exercises.reduce(0) { sum, ex in
+                sum + ex.sets.filter { $0.isCompleted }.count
+            }
+            Text("Exercise \(exIdx + 1)/\(exercises.count), \(completedSetsCount) sets completed")
+        }
     }
 
     // MARK: - Header Section
