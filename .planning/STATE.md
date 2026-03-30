@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Workout Polish & Firmware Parity
-status: executing
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-03-30T12:21:01.270Z"
+status: verifying
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-03-30T18:25:16.954Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 50
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 Phase: 10 (minimal-set-screen-ui-polish) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-30
 
 Progress: [█████░░░░░] 50%
@@ -69,6 +69,7 @@ Progress: [█████░░░░░] 50%
 | Phase 08 P02 | 2min | 2 tasks | 2 files |
 | Phase 09 P01 | 1min | 2 tasks | 1 files |
 | Phase 10 P01 | 4min | 2 tasks | 6 files |
+| Phase 10 P02 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,8 @@ Recent decisions affecting current work:
 - [Phase 09]: Sequential enterReview() + saveReviewedWorkout() safe due to Main.immediate single-threaded dispatch
 - [Phase 09]: Finish Workout removed from inline scroll view, accessible only via context menu (ellipsis.circle)
 - [Phase 10]: Color.appAccent static let as design token for shared accent color; .appAccent shorthand in modifier chains, Color.appAccent in ternary expressions
+- [Phase 10]: showSetInput toggle resets via .onChange on both currentSetIndex and currentExerciseIndex for complete coverage
+- [Phase 10]: VoiceOver: WorkoutSetRow uses accessibilityElement(children: .ignore) for single-sentence reading; SummaryRow uses .combine for label+value pairing
 
 ### Pending Todos
 
@@ -122,7 +125,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T12:21:01.267Z
-Stopped at: Completed 10-01-PLAN.md
+Last session: 2026-03-30T18:25:16.951Z
+Stopped at: Completed 10-02-PLAN.md
 Resume file: None
 Next step: Execute 05-02-PLAN.md (scroll wheel picker UI)
