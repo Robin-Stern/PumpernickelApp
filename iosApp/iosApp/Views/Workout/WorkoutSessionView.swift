@@ -26,6 +26,7 @@ struct WorkoutSessionView: View {
     @State private var previousPerformance: [String: CompletedExercise] = [:]
     @State private var personalBest: [String: KotlinInt] = [:]
     @State private var weightUnit: WeightUnit = .kg
+    @State private var showAbandonDialog = false
 
     // Picker selections for current set (ENTRY-01, ENTRY-02)
     @State private var selectedReps: Int = 0
@@ -170,24 +171,6 @@ struct WorkoutSessionView: View {
 
                 // Completed sets for current exercise (D-11)
                 completedSetsSection(exercise: currentExercise, exIdx: Int32(exIdx))
-
-                // Finish workout button (D-16)
-                let hasCompletedSets = exercises.contains { ex in
-                    ex.sets.contains { $0.isCompleted }
-                }
-                if hasCompletedSets {
-                    Button("Finish Workout") {
-                        viewModel.enterReview()
-                    }
-                    .font(.body.weight(.semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Color.red.opacity(0.8))
-                    .cornerRadius(12)
-                    .padding(.horizontal, 32)
-                    .padding(.top, 16)
-                }
             }
             .padding()
         }
@@ -195,19 +178,42 @@ struct WorkoutSessionView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                if Int(active.currentExerciseIndex) + 1 < exercises.count {
-                    Button {
-                        viewModel.skipExercise()
-                    } label: {
-                        Image(systemName: "forward.fill")
+                Button {
+                    let hasCompletedSets = exercises.contains { ex in
+                        ex.sets.contains { $0.isCompleted }
                     }
+                    if hasCompletedSets {
+                        showAbandonDialog = true
+                    } else {
+                        viewModel.discardWorkout()
+                        dismiss()
+                    }
+                } label: {
+                    Image(systemName: "xmark")
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    showExerciseOverview = true
+                Menu {
+                    Button {
+                        viewModel.skipExercise()
+                    } label: {
+                        Label("Skip Exercise", systemImage: "forward.fill")
+                    }
+                    .disabled(Int(active.currentExerciseIndex) + 1 >= exercises.count)
+
+                    Button {
+                        showExerciseOverview = true
+                    } label: {
+                        Label("Exercise Overview", systemImage: "list.bullet")
+                    }
+
+                    Button {
+                        viewModel.enterReview()
+                    } label: {
+                        Label("Finish Workout", systemImage: "checkmark.circle")
+                    }
                 } label: {
-                    Image(systemName: "list.bullet")
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }
