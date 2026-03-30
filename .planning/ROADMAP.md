@@ -53,8 +53,9 @@ Plans:
 **Requirements:** FLOW-05, FLOW-06
 **Depends on:** Phase 7, Phase 8
 **Goal:** Add exit confirmation and a context menu with skip, reorder, and finish actions.
-- Exit confirmation: Save & Exit / Discard / Cancel
-- Context menu: skip, reorder, finish workout
+**Plans:** 1 plan
+Plans:
+- [ ] 09-01-PLAN.md — Toolbar reorganization (X button + ellipsis Menu) and abandon confirmation dialog
 
 ### Phase 10: Minimal Set Screen & UI Polish
 **Requirements:** UX-01, UX-02, UX-03, UX-04
@@ -85,7 +86,7 @@ Phase 08 ──────────┘
 | 6. Personal Best Display | v1.1 | 0/1 | Not started | — |
 | 7. Post-Workout Recap & Edit | v1.1 | 0/1 | Not started | — |
 | 8. Mid-Workout Exercise Reorder | v1.1 | 0/2 | Not started | — |
-| 9. Abandon Guards & Context Menu | v1.1 | 0/? | Not started | — |
+| 9. Abandon Guards & Context Menu | v1.1 | 0/1 | Not started | — |
 | 10. Minimal Set Screen & UI Polish | v1.1 | 0/? | Not started | — |
 
 ## Requirement Coverage
