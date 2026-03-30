@@ -27,7 +27,7 @@ struct WorkoutFinishedView: View {
             .padding()
             .background(Color(UIColor.secondarySystemBackground))
             .cornerRadius(16)
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 32)
 
             Spacer()
 
