@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Workout Polish & Firmware Parity
 status: verifying
-stopped_at: Phase 9 context gathered
-last_updated: "2026-03-30T11:20:07.587Z"
-last_activity: 2026-03-29
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-03-30T11:36:18.915Z"
+last_activity: 2026-03-30
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 6
-  completed_plans: 6
+  completed_phases: 5
+  total_plans: 7
+  completed_plans: 7
   percent: 50
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-29)
 
 **Core value:** Users can select a workout template and execute it set-by-set -- logging reps, weight, and rest periods -- with a clean, reliable flow
-**Current focus:** Phase 08 — mid-workout-exercise-reorder
+**Current focus:** Phase 09 — abandon-guards-context-menu
 
 ## Current Position
 
-Phase: 9
-Plan: Not started
+Phase: 09 (abandon-guards-context-menu) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
-Last activity: 2026-03-29
+Last activity: 2026-03-30
 
 Progress: [█████░░░░░] 50%
 
@@ -67,6 +67,7 @@ Progress: [█████░░░░░] 50%
 | Phase 07 P01 | 3min | 2 tasks | 2 files |
 | Phase 08 P01 | 2min | 2 tasks | 5 files |
 | Phase 08 P02 | 2min | 2 tasks | 2 files |
+| Phase 09 P01 | 1min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,8 @@ Recent decisions affecting current work:
 - [Phase 08]: exerciseOrder CSV string in active_sessions for crash recovery; resumeWorkout() falls back to template order for pre-migration sessions
 - [Phase 08]: Permanent editMode on sectioned List for drag handle visibility, .onMove restricted to Up Next section only
 - [Phase 08]: Dual skip button access: toolbar forward.fill icon + inline Skip in exercise overview sheet
+- [Phase 09]: Sequential enterReview() + saveReviewedWorkout() safe due to Main.immediate single-threaded dispatch
+- [Phase 09]: Finish Workout removed from inline scroll view, accessible only via context menu (ellipsis.circle)
 
 ### Pending Todos
 
@@ -117,7 +120,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T11:20:07.575Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-abandon-guards-context-menu/09-CONTEXT.md
+Last session: 2026-03-30T11:36:18.912Z
+Stopped at: Completed 09-01-PLAN.md
+Resume file: None
 Next step: Execute 05-02-PLAN.md (scroll wheel picker UI)

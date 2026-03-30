@@ -55,7 +55,7 @@ Plans:
 **Goal:** Add exit confirmation and a context menu with skip, reorder, and finish actions.
 **Plans:** 1 plan
 Plans:
-- [ ] 09-01-PLAN.md — Toolbar reorganization (X button + ellipsis Menu) and abandon confirmation dialog
+- [x] 09-01-PLAN.md — Toolbar reorganization (X button + ellipsis Menu) and abandon confirmation dialog
 
 ### Phase 10: Minimal Set Screen & UI Polish
 **Requirements:** UX-01, UX-02, UX-03, UX-04
