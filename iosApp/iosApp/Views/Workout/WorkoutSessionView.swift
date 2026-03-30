@@ -43,6 +43,9 @@ struct WorkoutSessionView: View {
     // Track previous rest state for haptic trigger
     @State private var previousRestWasResting = false
 
+    // Minimal set screen toggle (UX-01, D-02)
+    @State private var showSetInput: Bool = false
+
     // Picker value arrays
     private let repsRange = Array(0...50)
     private let weightValuesKgX10 = Array(stride(from: 0, through: 10000, by: 25))
@@ -165,14 +168,24 @@ struct WorkoutSessionView: View {
                     .cornerRadius(12)
                     .padding(.horizontal, 32)
                 } else {
-                    // Set input (D-09)
-                    setInputSection(exercise: currentExercise, setIdx: setIdx)
+                    // Minimal set screen or full picker input (UX-01, D-01, D-02, D-03)
+                    if showSetInput {
+                        setInputSection(exercise: currentExercise, setIdx: setIdx)
+                    } else {
+                        minimalSetScreen(exercise: currentExercise, setIdx: setIdx)
+                    }
                 }
 
                 // Completed sets for current exercise (D-11)
                 completedSetsSection(exercise: currentExercise, exIdx: Int32(exIdx))
             }
             .padding()
+            .onChange(of: active.currentSetIndex) { _, _ in
+                showSetInput = false
+            }
+            .onChange(of: active.currentExerciseIndex) { _, _ in
+                showSetInput = false
+            }
         }
         .navigationTitle(active.templateName)
         .navigationBarTitleDisplayMode(.inline)
@@ -290,6 +303,42 @@ struct WorkoutSessionView: View {
         }
     }
 
+    // MARK: - Minimal Set Screen
+
+    @ViewBuilder
+    private func minimalSetScreen(exercise: SessionExercise, setIdx: Int) -> some View {
+        VStack(spacing: 16) {
+            Spacer()
+
+            Text("SET")
+                .font(.title3.weight(.semibold))
+                .foregroundColor(.secondary)
+
+            Text("\(setIdx + 1)")
+                .font(.system(size: 72, weight: .bold, design: .rounded))
+
+            Text(exercise.exerciseName)
+                .font(.title3)
+                .foregroundColor(.secondary)
+
+            Spacer()
+
+            Text("Tap when done")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 300)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showSetInput = true
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Set \(setIdx + 1) of \(exercise.exerciseName)")
+        .accessibilityHint("Tap to show weight and reps input")
+    }
+
     // MARK: - Set Input Section
 
     private func setInputSection(exercise: SessionExercise, setIdx: Int) -> some View {
@@ -332,6 +381,8 @@ struct WorkoutSessionView: View {
 
             // Complete Set button (ENTRY-06: disabled when reps == 0)
             Button("Complete Set") {
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.success)
                 viewModel.completeSet(
                     reps: Int32(selectedReps),
                     weightKgX10: Int32(selectedWeightKgX10)
