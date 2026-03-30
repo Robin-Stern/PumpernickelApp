@@ -41,6 +41,12 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - Template-original index tracking ensures correct exerciseIndex after reorder
 - SwiftUI ExerciseOverviewSheet with sectioned list (Completed/Current/Up Next) and .onMove drag reorder
 
+**v1.1 Phase 9 complete** (2026-03-30): Abandon guards & context menu
+- X button in leading toolbar triggers .confirmationDialog with Save & Exit / Discard (.destructive) / Cancel
+- Progress summary in dialog: "Exercise X/Y, Z sets completed"; guard skips dialog when 0 sets completed
+- Trailing toolbar Menu (ellipsis.circle) with Skip Exercise (disabled on last), Exercise Overview, Finish Workout
+- All wiring uses existing ViewModel methods (discardWorkout, enterReview, saveReviewedWorkout, skipExercise)
+
 **Tech stack in use:** Kotlin 2.3.20, Compose Multiplatform 1.10.3, Room KMP 2.8.4, Koin 4.2.0, Navigation Compose 2.9.2, DataStore Preferences 1.2.1, SwiftUI (iOS)
 
 ## Requirements
@@ -72,8 +78,8 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - Minimal "doing set" screen while lifting
 - Post-workout recap/edit before saving
 - Mid-workout exercise reorder
-- Abandon guards (save & exit vs discard)
-- Context menu (skip exercise, reorder)
+- ~~Abandon guards (save & exit vs discard)~~ ✓ Phase 9
+- ~~Context menu (skip exercise, reorder)~~ ✓ Phase 9
 - ~~Personal best display on set entry~~ ✓ Phase 6
 - ~~Post-workout recap/edit before saving~~ ✓ Phase 7
 - General UI polish (validation, keyboard handling, accessibility)
