@@ -14,6 +14,7 @@ struct WorkoutFinishedView: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 72))
                 .foregroundColor(.appAccent)
+                .accessibilityHidden(true)
 
             Text("Workout Complete!")
                 .font(.title.weight(.bold))
@@ -42,6 +43,7 @@ struct WorkoutFinishedView: View {
             .cornerRadius(12)
             .padding(.horizontal, 32)
             .padding(.bottom, 32)
+            .accessibilityLabel("Close workout summary")
         }
     }
 
@@ -67,5 +69,6 @@ private struct SummaryRow: View {
             Text(value)
                 .fontWeight(.semibold)
         }
+        .accessibilityElement(children: .combine)
     }
 }

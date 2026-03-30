@@ -149,6 +149,7 @@ struct WorkoutSessionView: View {
                     }
                     .font(.body.weight(.medium))
                     .foregroundColor(.secondary)
+                    .accessibilityLabel("Skip rest timer")
                 } else if restState is RestState.RestComplete {
                     VStack(spacing: 8) {
                         Text("Rest Complete!")
@@ -167,6 +168,7 @@ struct WorkoutSessionView: View {
                     .background(Color.appAccent)
                     .cornerRadius(12)
                     .padding(.horizontal, 32)
+                    .accessibilityLabel("Continue to next set")
                 } else {
                     // Minimal set screen or full picker input (UX-01, D-01, D-02, D-03)
                     if showSetInput {
@@ -204,6 +206,7 @@ struct WorkoutSessionView: View {
                 } label: {
                     Image(systemName: "xmark")
                 }
+                .accessibilityLabel("Close workout")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
@@ -227,6 +230,7 @@ struct WorkoutSessionView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                        .accessibilityLabel("Workout actions")
                 }
             }
         }
@@ -358,6 +362,8 @@ struct WorkoutSessionView: View {
                         .pickerStyle(.wheel)
                         .frame(width: geometry.size.width / 2)
                         .clipped()
+                        .accessibilityLabel("Reps picker")
+                        .accessibilityValue("\(selectedReps) reps")
                     }
 
                     // Weight picker (ENTRY-02, ENTRY-03)
@@ -374,6 +380,8 @@ struct WorkoutSessionView: View {
                         .pickerStyle(.wheel)
                         .frame(width: geometry.size.width / 2)
                         .clipped()
+                        .accessibilityLabel("Weight picker")
+                        .accessibilityValue(weightUnit.formatWeight(kgX10: Int32(selectedWeightKgX10)))
                     }
                 }
             }
@@ -398,6 +406,8 @@ struct WorkoutSessionView: View {
             .cornerRadius(12)
             .padding(.horizontal, 32)
             .disabled(selectedReps == 0)
+            .accessibilityLabel("Complete set")
+            .accessibilityHint("Logs current reps and weight")
         }
         .padding(.vertical, 8)
     }
@@ -457,6 +467,8 @@ struct WorkoutSessionView: View {
                             .pickerStyle(.wheel)
                             .frame(width: geometry.size.width / 2)
                             .clipped()
+                            .accessibilityLabel("Edit reps picker")
+                            .accessibilityValue("\(editSelectedReps) reps")
                         }
 
                         VStack(spacing: 4) {
@@ -472,6 +484,8 @@ struct WorkoutSessionView: View {
                             .pickerStyle(.wheel)
                             .frame(width: geometry.size.width / 2)
                             .clipped()
+                            .accessibilityLabel("Edit weight picker")
+                            .accessibilityValue(weightUnit.formatWeight(kgX10: Int32(editSelectedWeightKgX10)))
                         }
                     }
                 }
@@ -493,6 +507,7 @@ struct WorkoutSessionView: View {
                 .background(Color.appAccent)
                 .cornerRadius(12)
                 .padding(.horizontal, 32)
+                .accessibilityLabel("Save edited set")
 
                 Spacer()
             }
@@ -504,6 +519,7 @@ struct WorkoutSessionView: View {
                     Button("Cancel") {
                         showEditSheet = false
                     }
+                    .accessibilityLabel("Cancel editing")
                 }
             }
         }
@@ -614,6 +630,7 @@ struct WorkoutSessionView: View {
                 .cornerRadius(12)
                 .padding(.horizontal, 32)
                 .padding(.top, 8)
+                .accessibilityLabel("Save workout to history")
             }
             .padding()
         }

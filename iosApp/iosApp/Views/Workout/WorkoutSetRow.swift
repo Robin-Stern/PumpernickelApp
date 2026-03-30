@@ -36,6 +36,9 @@ struct WorkoutSetRow: View {
         }
         .buttonStyle(.plain)
         .disabled(onTap == nil)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Set \(setIndex + 1): \(actualReps) reps at \(formatWeight(actualWeightKgX10))")
+        .accessibilityHint(onTap != nil ? "Tap to edit" : "")
     }
 
     private func formatWeight(_ kgX10: Int32) -> String {

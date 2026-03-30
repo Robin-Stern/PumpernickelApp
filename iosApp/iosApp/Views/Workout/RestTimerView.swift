@@ -14,6 +14,8 @@ struct RestTimerView: View {
                 .font(.system(size: 64, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .foregroundColor(remainingSeconds <= 3 ? .red : .primary)
+                .accessibilityLabel("Rest timer")
+                .accessibilityValue("\(remainingSeconds) seconds remaining")
 
             // Progress indicator
             GeometryReader { geo in
@@ -35,6 +37,7 @@ struct RestTimerView: View {
             }
             .frame(height: 8)
             .padding(.horizontal, 32)
+            .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 24)

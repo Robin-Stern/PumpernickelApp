@@ -39,6 +39,7 @@ struct ExerciseOverviewSheet: View {
                                     .foregroundColor(.orange)
                             }
                             .buttonStyle(.borderless)
+                            .accessibilityLabel("Skip current exercise")
                         }
                     }
                 }
@@ -54,6 +55,7 @@ struct ExerciseOverviewSheet: View {
                                 exerciseRow(exercise: exercise, style: .pending)
                             }
                             .foregroundColor(.primary)
+                            .accessibilityLabel("Jump to \(exercise.exerciseName)")
                         }
                         .onMove { source, destination in
                             if let from = source.first {
@@ -69,6 +71,7 @@ struct ExerciseOverviewSheet: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
+                        .accessibilityLabel("Close exercise overview")
                 }
             }
         }
