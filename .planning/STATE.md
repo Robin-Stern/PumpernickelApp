@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Android Material 3 UI
-status: verifying
-stopped_at: Phase 12 context gathered
-last_updated: "2026-03-31T15:22:44.656Z"
+status: executing
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-03-31T16:32:47.227Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 3
+  completed_plans: 2
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Users can select a workout template and execute it set-by-set -- logging reps, weight, and rest periods -- with a clean, reliable flow
-**Current focus:** Phase 11 — android-shell-navigation
+**Current focus:** Phase 12 — exercise-catalog-templates
 
 ## Current Position
 
-Phase: 12
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 12 (exercise-catalog-templates) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-31
 
 Progress: [██████████] 100% (v1.1)
@@ -53,6 +53,7 @@ Progress: [██████████] 100% (v1.1)
 | Phase 10 P01 | 4min | 2 tasks |
 | Phase 10 P02 | 3min | 2 tasks |
 | Phase 11-android-shell-navigation P01 | 5 | 2 tasks | 12 files |
+| Phase 12-exercise-catalog-templates P01 | 10 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ See PROJECT.md for full decision history across v1.0 and v1.1.
 - [Phase 11-android-shell-navigation]: initKoin() accepts KoinApplication lambda to enable androidContext() before module loading
 - [Phase 11-android-shell-navigation]: KMP v2 source layout: src/androidMain/ required by KMP Gradle plugin in Kotlin 2.3
 - [Phase 11-android-shell-navigation]: Compose BOM placed in top-level dependencies{} block: platform() unavailable in KMP sourceSets block
+- [Phase 12-exercise-catalog-templates]: collectAsState() used over collectAsStateWithLifecycle() - lifecycle-runtime-compose not in explicit androidApp deps
+- [Phase 12-exercise-catalog-templates]: ExerciseDetailRoute.exerciseId fixed from Long to String to match Exercise.id domain type
+- [Phase 12-exercise-catalog-templates]: Anatomy picker (Canvas body drawing) deferred to Phase 14 - muscle group uses ExposedDropdownMenuBox
 
 ### Pending Todos
 
@@ -76,7 +80,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-31T15:22:44.648Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-exercise-catalog-templates/12-CONTEXT.md
+Last session: 2026-03-31T16:32:47.225Z
+Stopped at: Completed 12-01-PLAN.md
+Resume file: None
 Next step: `/gsd:plan-phase 11` or `/gsd:new-milestone` for a different milestone

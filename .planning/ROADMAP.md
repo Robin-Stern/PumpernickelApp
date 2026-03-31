@@ -43,9 +43,9 @@ Plans:
 **Requirements:** ANDROID-03, ANDROID-04
 **Depends on:** Phase 11
 **Goal:** Port exercise catalog (search, detail, create) and template management (list, editor, exercise picker) screens to Jetpack Compose with Material 3 components.
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 12-01-PLAN.md — ExerciseCatalogScreen, ExerciseDetailScreen, CreateExerciseScreen + route fix
+- [x] 12-01-PLAN.md — ExerciseCatalogScreen, ExerciseDetailScreen, CreateExerciseScreen + route fix
 - [ ] 12-02-PLAN.md — TemplateListScreen, TemplateEditorScreen, ExercisePickerScreen, WorkoutEmptyStateScreen
 
 ### Phase 13: Workout Session Core
@@ -90,6 +90,6 @@ Phase 11 ──► Phase 14 (independent of 12/13)
 | 9. Abandon Guards & Context Menu | v1.1 | 1/1 | Complete | 2026-03-30 |
 | 10. Minimal Set Screen & UI Polish | v1.1 | 2/2 | Complete | 2026-03-30 |
 | 11. Android Shell & Navigation | v1.5 | 1/1 | Complete    | 2026-03-31 |
-| 12. Exercise Catalog & Templates | v1.5 | 0/2 | Not started | — |
+| 12. Exercise Catalog & Templates | v1.5 | 1/2 | In Progress|  |
 | 13. Workout Session Core | v1.5 | 0/4 | Not started | — |
 | 14. History, Settings & Anatomy | v1.5 | 0/2 | Not started | — |
