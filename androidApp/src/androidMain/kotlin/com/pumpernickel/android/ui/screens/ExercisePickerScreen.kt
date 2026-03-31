@@ -26,9 +26,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.filled.Accessibility
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -47,6 +51,7 @@ fun ExercisePickerScreen(
     val exercises by viewModel.exercises.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedMuscleGroup by viewModel.selectedMuscleGroup.collectAsState()
+    var showAnatomyPicker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -90,6 +95,11 @@ fun ExercisePickerScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                item {
+                    IconButton(onClick = { showAnatomyPicker = true }) {
+                        Icon(Icons.Default.Accessibility, contentDescription = "Body Map Filter")
+                    }
+                }
                 items(MuscleGroup.entries) { group ->
                     val isSelected = selectedMuscleGroup == group
                     FilterChip(
@@ -152,5 +162,15 @@ fun ExercisePickerScreen(
                 }
             }
         }
+    }
+
+    if (showAnatomyPicker) {
+        AnatomyPickerSheet(
+            selectedGroup = selectedMuscleGroup?.dbName,
+            onConfirm = { dbName ->
+                MuscleGroup.fromDbName(dbName)?.let { viewModel.onMuscleGroupSelected(it) }
+            },
+            onDismiss = { showAnatomyPicker = false }
+        )
     }
 }
