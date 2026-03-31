@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object TemplateListRoute
 @Serializable data class TemplateEditorRoute(val templateId: Long? = null)
 @Serializable data object ExerciseCatalogRoute
-@Serializable data class ExerciseDetailRoute(val exerciseId: Long)
+@Serializable data class ExerciseDetailRoute(val exerciseId: String)
 @Serializable data object CreateExerciseRoute
 @Serializable data class ExercisePickerRoute(val templateId: Long)
 @Serializable data class WorkoutSessionRoute(val templateId: Long)
