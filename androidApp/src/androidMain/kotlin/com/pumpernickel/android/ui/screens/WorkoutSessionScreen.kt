@@ -124,6 +124,8 @@ fun WorkoutSessionScreen(
                 },
                 onSkipRest = { viewModel.skipRest() },
                 onSkipExercise = { viewModel.skipExercise() },
+                onJumpToExercise = { index -> viewModel.jumpToExercise(index) },
+                onReorderExercise = { from, to -> viewModel.reorderExercise(from, to) },
                 onEnterReview = { viewModel.enterReview() },
                 onSaveReviewedWorkout = { viewModel.saveReviewedWorkout() },
                 onDiscardWorkout = {
@@ -174,6 +176,8 @@ private fun ActiveWorkoutContent(
     onCompleteSet: (Int, Int) -> Unit,
     onSkipRest: () -> Unit,
     onSkipExercise: () -> Unit,
+    onJumpToExercise: (Int) -> Unit,
+    onReorderExercise: (Int, Int) -> Unit,
     onEnterReview: () -> Unit,
     onSaveReviewedWorkout: () -> Unit,
     onDiscardWorkout: () -> Unit,
@@ -352,15 +356,25 @@ private fun ActiveWorkoutContent(
         )
     }
 
-    // Exercise overview sheet placeholder (D-09)
+    // Exercise overview sheet (D-09)
     if (showExerciseOverview) {
         ModalBottomSheet(
             onDismissRequest = { onShowExerciseOverview(false) }
         ) {
-            // Placeholder — Plan 03 creates ExerciseOverviewSheet
-            Text(
-                "Exercise Overview (coming in Plan 03)",
-                modifier = Modifier.padding(32.dp)
+            ExerciseOverviewSheetContent(
+                exercises = exercises,
+                currentExerciseIndex = exIdx,
+                onSelect = { index ->
+                    onJumpToExercise(index)
+                    onShowExerciseOverview(false)
+                },
+                onMove = { from, to ->
+                    onReorderExercise(from, to)
+                },
+                onSkip = {
+                    onSkipExercise()
+                },
+                onDismiss = { onShowExerciseOverview(false) }
             )
         }
     }
