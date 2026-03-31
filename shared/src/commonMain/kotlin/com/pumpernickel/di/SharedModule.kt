@@ -30,6 +30,7 @@ import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import org.koin.core.context.startKoin
+import org.koin.core.KoinApplication
 
 val sharedModule = module {
     // Database -- build from platform-provided Builder
@@ -65,9 +66,11 @@ val sharedModule = module {
 }
 
 // Common init function
-fun initKoin(additionalModules: List<Module> = emptyList()) {
+// appDeclaration allows platform-specific config (e.g. androidContext() on Android)
+fun initKoin(appDeclaration: KoinApplication.() -> Unit = {}) {
     startKoin {
-        modules(sharedModule + platformModule + additionalModules)
+        appDeclaration()
+        modules(sharedModule + platformModule)
     }
 }
 
