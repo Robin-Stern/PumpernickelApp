@@ -1,131 +1,76 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Workout Polish & Firmware Parity
-status: verifying
-stopped_at: Completed 10-02-PLAN.md
-last_updated: "2026-03-30T18:25:16.954Z"
-last_activity: 2026-03-30
+milestone: v1.5
+milestone_name: Android Material 3 UI
+status: planning
+stopped_at: v1.1 milestone completed
+last_updated: "2026-03-31T14:45:00.000Z"
+last_activity: 2026-03-31
 progress:
-  total_phases: 6
-  completed_phases: 6
+  total_phases: 4
+  completed_phases: 0
   total_plans: 9
-  completed_plans: 9
-  percent: 50
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-29)
+See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Users can select a workout template and execute it set-by-set -- logging reps, weight, and rest periods -- with a clean, reliable flow
-**Current focus:** Phase 10 — minimal-set-screen-ui-polish
+**Current focus:** Planning next milestone (v1.5 Android Material 3 UI)
 
 ## Current Position
 
-Phase: 10 (minimal-set-screen-ui-polish) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
-Last activity: 2026-03-30
+Phase: — (between milestones)
+Plan: —
+Status: v1.1 shipped, v1.5 planned in roadmap
+Last activity: 2026-03-31
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100% (v1.1)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 21 (12 v1.0 + 9 v1.1)
+- v1.1 execution: 6 phases, 9 plans, 18 tasks in 2 days
 
-**By Phase:**
+**By Phase (v1.1):**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| - | - | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: -
-- Trend: -
-
-*Updated after each plan completion*
-| Phase 01 P02 | 12min | 2 tasks | 15 files |
-| Phase 01 P03 | 10min | 3 tasks | 11 files |
-| Phase 02 P02 | 2min | 2 tasks | 4 files |
-| Phase 02 P03 | 5min | 2 tasks | 5 files |
-| Phase 03 P02 | 4min | 2 tasks | 3 files |
-| Phase 03 P03 | 9min | 3 tasks | 7 files |
-| Phase 04 P01 | 4min | 2 tasks | 11 files |
-| Phase 04 P02 | 2min | 2 tasks | 7 files |
-| Phase 04 P03 | 3min | 2 tasks | 6 files |
-| Phase 05 P01 | 3min | 2 tasks | 2 files |
-| Phase 05 P02 | 2min | 2 tasks | 1 files |
-| Phase 06 P01 | 5min | 2 tasks | 5 files |
-| Phase 07 P01 | 3min | 2 tasks | 2 files |
-| Phase 08 P01 | 2min | 2 tasks | 5 files |
-| Phase 08 P02 | 2min | 2 tasks | 2 files |
-| Phase 09 P01 | 1min | 2 tasks | 1 files |
-| Phase 10 P01 | 4min | 2 tasks | 6 files |
-| Phase 10 P02 | 3min | 2 tasks | 5 files |
+| Phase | Plans | Duration |
+|-------|-------|----------|
+| Phase 05 P01 | 3min | 2 tasks |
+| Phase 05 P02 | 2min | 2 tasks |
+| Phase 06 P01 | 5min | 2 tasks |
+| Phase 07 P01 | 3min | 2 tasks |
+| Phase 08 P01 | 2min | 2 tasks |
+| Phase 08 P02 | 2min | 2 tasks |
+| Phase 09 P01 | 1min | 2 tasks |
+| Phase 10 P01 | 4min | 2 tasks |
+| Phase 10 P02 | 3min | 2 tasks |
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- [Roadmap]: 4-phase coarse roadmap derived from 24 requirements across 5 categories
-- [Roadmap]: Phase ordering matches research-recommended dependency chain (data -> templates -> workout session -> history)
-- [Phase 01]: Used kotlin.time.Clock.System (stdlib) instead of deprecated kotlinx.datetime.Clock.System for timestamp generation in KMP
-- [Phase 01]: Created Xcode project from scratch with KMPNativeCoroutinesAsync SPM 1.0.2 and Gradle embedAndSignAppleFrameworkForXcode build phase
-- [Phase 01]: Added koin-compose-viewmodel to commonMain for viewModel DSL in KMP (koin-core alone insufficient)
-- [Phase 01]: Used nicklockwood/SVGPath SPM for parsing SVG d-attributes to SwiftUI Path; computed isFormValid locally in Swift instead of observing Kotlin Boolean StateFlow
-- [Phase 02]: TemplateEditorViewModel uses dual-mode pattern: create mode holds exercises in-memory, edit mode persists immediately
-- [Phase 02]: Use *Flow suffix for @NativeCoroutinesState asyncSequence observation (templatesFlow, nameFlow, etc.)
-- [Phase 03]: Single sealed class StateFlow for workout state (Idle/Active/Finished) instead of multiple separate flows
-- [Phase 03]: Wall-clock anchored rest timer using Clock.System.now() to avoid cumulative delay drift
-- [Phase 03]: hasActiveSession as separate StateFlow<Boolean> for lightweight SwiftUI crash recovery detection
-- [Phase 03]: Used WorkoutSessionState.X dot syntax for KMP sealed class Swift interop
-- [Phase 03]: Haptic feedback tracked via previousRestWasResting flag for Resting->RestComplete transition detection
-- [Phase 03]: Resume prompt wired via hasActiveSessionFlow observation, not local state
-- [Phase 04]: DataStore factory uses producePath function pattern (not expect/actual) matching KMP DataStore docs
-- [Phase 04]: WeightUnit uses integer math only (22046/10000 conversion factor) for KMP common compatibility
-- [Phase 04]: WorkoutRepository composes multiple DAO queries for detail view instead of Room @Relation
-- [Phase 04]: Previous performance stored as Map<String, CompletedExercise> keyed by exerciseId for O(1) lookup
-- [Phase 04]: History button placed as leading toolbar item (clock icon) and Settings as trailing gear icon
-- [Phase 04]: Previous performance compact format (3x10 @ 50.0 kg) when all sets identical, expanded when varied
-- [Phase 04]: SettingsView presented as sheet (modal) for clean Workout tab context
-- [Phase 05]: Pre-fill StateFlow emitted atomically with cursor updates to prevent race conditions; set 0 = template targets, set 1+ = previous set actuals (firmware parity)
-- [Phase 05]: UIPickerView intrinsicContentSize extension for side-by-side wheel picker touch fix; weight picker stores kgX10 Int, displays unit-aware text via formatWeight()
-- [Phase 06]: Volume-weighted average PB (SUM(weight*reps)/SUM(reps)) using integer division matching firmware TrendCalculator.cpp
-- [Phase 07]: Split finishWorkout() into enterReview() + saveReviewedWorkout() for two-step recap-then-save flow
-- [Phase 07]: Store full exercise list in Reviewing state, filter to completed in UI only (avoids index mismatch)
-- [Phase 08]: Template-original index tracking via parallel MutableList<Int> for correct Room set persistence after reorder
-- [Phase 08]: exerciseOrder CSV string in active_sessions for crash recovery; resumeWorkout() falls back to template order for pre-migration sessions
-- [Phase 08]: Permanent editMode on sectioned List for drag handle visibility, .onMove restricted to Up Next section only
-- [Phase 08]: Dual skip button access: toolbar forward.fill icon + inline Skip in exercise overview sheet
-- [Phase 09]: Sequential enterReview() + saveReviewedWorkout() safe due to Main.immediate single-threaded dispatch
-- [Phase 09]: Finish Workout removed from inline scroll view, accessible only via context menu (ellipsis.circle)
-- [Phase 10]: Color.appAccent static let as design token for shared accent color; .appAccent shorthand in modifier chains, Color.appAccent in ternary expressions
-- [Phase 10]: showSetInput toggle resets via .onChange on both currentSetIndex and currentExerciseIndex for complete coverage
-- [Phase 10]: VoiceOver: WorkoutSetRow uses accessibilityElement(children: .ignore) for single-sentence reading; SummaryRow uses .combine for label+value pairing
+See PROJECT.md for full decision history across v1.0 and v1.1.
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- Phase 3 benefits from a research spike on iOS local notification integration (UNUserNotificationCenter expect/actual) before planning the rest timer
-- Phase 4 may need a short research spike on iOS keyboard avoidance and swipe-back gesture behavior with CMP 1.10.3
+None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30T18:25:16.951Z
-Stopped at: Completed 10-02-PLAN.md
+Last session: 2026-03-31
+Stopped at: v1.1 milestone completed
 Resume file: None
-Next step: Execute 05-02-PLAN.md (scroll wheel picker UI)
+Next step: `/gsd:plan-phase 11` or `/gsd:new-milestone` for a different milestone

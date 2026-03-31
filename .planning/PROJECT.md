@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A fitness tracking mobile app built with Kotlin Multiplatform + SwiftUI (iOS), shipping a complete workout tracking flow — exercise catalog, template management, workout execution with set logging and rest timers, workout history with previous performance, and kg/lbs unit settings. v1.0 MVP shipped.
+A fitness tracking mobile app built with Kotlin Multiplatform + SwiftUI (iOS), shipping a complete workout tracking flow with firmware-grade UX polish — exercise catalog, template management, workout execution with scroll wheel input and auto-increment, post-workout recap/edit, mid-workout reorder/skip, abandon guards, personal best display, and a minimal lifting screen with VoiceOver accessibility.
 
 ## Core Value
 
@@ -10,44 +10,26 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 
 ## Current State
 
-**Shipped:** v1.0 MVP (2026-03-29)
+**Shipped:** v1.1 Workout Polish & Firmware Parity (2026-03-31)
 
 - 873-exercise seeded catalog with search and custom exercise creation
 - Workout templates with CRUD, drag-and-drop reorder, exercise picker
 - Full workout execution: set logging, rest timer with haptics, crash recovery
 - Workout history with detail views and previous performance inline
 - kg/lbs unit toggle with global application via DataStore Preferences
-- ~34,700 LOC Kotlin (KMP shared) + ~13,500 LOC Swift (iOS UI)
+- iOS scroll wheel pickers for reps (0-50) and weight (0-1000 @ 2.5kg steps)
+- Auto-increment: set 2+ pre-fills from previous actuals, set 1 from template targets
+- Volume-weighted PB display per exercise during set entry
+- Post-workout recap screen with tap-to-edit before saving
+- Mid-workout exercise reorder (drag) and skip with crash recovery
+- Abandon confirmation dialog (save & exit / discard / cancel)
+- Context menu (skip exercise, exercise overview, finish workout)
+- Firmware-style minimal SET N lifting screen with tap-to-reveal input
+- Haptic feedback on set completion, VoiceOver accessibility labels
+- Color.appAccent design token across workout views
+- ~43,900 LOC Kotlin (KMP shared) + ~19,400 LOC Swift (iOS UI)
 
-**v1.1 Phase 5 complete** (2026-03-29): Scroll wheel pickers and auto-increment
-- iOS wheel pickers for reps (0-50) and weight (0-1000 @ 2.5kg steps) replace text fields
-- Auto-increment: set 2+ pre-fills from previous set's actuals, set 1 from template targets
-- 0-reps validation guard, UIPickerView touch-area fix for side-by-side pickers
-
-**v1.1 Phase 6 complete** (2026-03-29): Personal best display
-- Volume-weighted average PB (SUM(weight×reps)/SUM(reps)) per exercise via Room DAO aggregate query
-- "PB: XX.X kg" blue label on set entry screen, unit-aware (kg/lbs), hidden when no history
-
-**v1.1 Phase 7 complete** (2026-03-29): Post-workout recap & edit
-- New `Reviewing` sealed class state between Active and Finished in workout state machine
-- Recap screen shows summary header (exercise count, set count, duration) + scrollable exercise list with per-set detail rows
-- Tap any set to edit reps/weight via existing wheel picker sheet before saving
-- "Save Workout" button commits reviewed data to history; crash recovery intact during review
-
-**v1.1 Phase 8 complete** (2026-03-29): Mid-workout exercise reorder
-- In-memory list reorder for pending exercises (only exercises after current are movable)
-- Skip exercise action advances cursor, skipped exercises excluded from saved history
-- Room migration 3→4: exerciseOrder column on active_sessions for crash recovery persistence
-- Template-original index tracking ensures correct exerciseIndex after reorder
-- SwiftUI ExerciseOverviewSheet with sectioned list (Completed/Current/Up Next) and .onMove drag reorder
-
-**v1.1 Phase 9 complete** (2026-03-30): Abandon guards & context menu
-- X button in leading toolbar triggers .confirmationDialog with Save & Exit / Discard (.destructive) / Cancel
-- Progress summary in dialog: "Exercise X/Y, Z sets completed"; guard skips dialog when 0 sets completed
-- Trailing toolbar Menu (ellipsis.circle) with Skip Exercise (disabled on last), Exercise Overview, Finish Workout
-- All wiring uses existing ViewModel methods (discardWorkout, enterReview, saveReviewedWorkout, skipExercise)
-
-**Tech stack in use:** Kotlin 2.3.20, Compose Multiplatform 1.10.3, Room KMP 2.8.4, Koin 4.2.0, Navigation Compose 2.9.2, DataStore Preferences 1.2.1, SwiftUI (iOS)
+**Tech stack:** Kotlin 2.3.20, Compose Multiplatform 1.10.3, Room KMP 2.8.4 (schema v4), Koin 4.2.0, Navigation Compose 2.9.2, DataStore Preferences 1.2.1, SwiftUI (iOS)
 
 ## Requirements
 
@@ -65,24 +47,36 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - ✓ View workout history (list of completed workouts) — v1.0
 - ✓ Weight unit toggle (kg/lbs) with global application — v1.0
 - ✓ Previous performance display during active workouts — v1.0
+- ✓ Scroll wheel pickers for reps and weight input — v1.1
+- ✓ Auto-increment: set 2+ pre-fills from previous actuals — v1.1
+- ✓ 0-reps validation guard — v1.1
+- ✓ Personal best display during set entry — v1.1
+- ✓ Post-workout recap screen with edit before saving — v1.1
+- ✓ Mid-workout exercise reorder with crash recovery — v1.1
+- ✓ Skip current exercise — v1.1
+- ✓ Abandon confirmation dialog — v1.1
+- ✓ Context menu (skip, overview, finish) — v1.1
+- ✓ Minimal lifting screen — v1.1
+- ✓ Haptic feedback on set completion — v1.1
+- ✓ VoiceOver accessibility labels — v1.1
+- ✓ Visual consistency (Color.appAccent, spacing standardization) — v1.1
 
 ### Active
 
-#### Current Milestone: v1.1 Workout Polish & Firmware Parity
+#### Planned Milestone: v1.5 Android Material 3 UI
 
-**Goal:** Elevate the workout tab from prototype to polished firmware-grade experience with iOS-native scroll wheel input, full firmware feature parity, and general UX polish.
+**Goal:** Port all iOS SwiftUI screens to Jetpack Compose with Material 3, achieving full feature parity on Android with platform-native design.
 
 **Target features:**
-- Scroll wheel pickers for reps (0–50) and weight (0–1000, 2.5kg steps)
-- Auto-increment: next set pre-fills with previous set's actual values
-- Minimal "doing set" screen while lifting
-- Post-workout recap/edit before saving
-- Mid-workout exercise reorder
-- ~~Abandon guards (save & exit vs discard)~~ ✓ Phase 9
-- ~~Context menu (skip exercise, reorder)~~ ✓ Phase 9
-- ~~Personal best display on set entry~~ ✓ Phase 6
-- ~~Post-workout recap/edit before saving~~ ✓ Phase 7
-- General UI polish (validation, keyboard handling, accessibility)
+- Material 3 theme with app accent color, bottom navigation, navigation graph
+- Exercise catalog, detail, create — with anatomy picker (Canvas-drawn body maps)
+- Template management — list, editor, exercise picker, drag reorder
+- Full workout session — custom drum picker for reps/weight, rest timer, auto-increment, PB display
+- Exercise overview bottom sheet with drag reorder and skip
+- Abandon guards, post-workout recap with edit, finished state
+- Workout history list/detail, settings (kg/lbs toggle)
+
+**Phases:** 11 (Shell & Nav) → 12 (Catalog & Templates) → 13 (Workout Session) → 14 (History, Settings & Anatomy)
 
 ### Out of Scope
 
@@ -94,8 +88,8 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - AI workout generation (F6) — future milestone
 - Auto macro calculation (F7) — future milestone
 - AI meal generation (F8) — future milestone
-- All Should Have (S1–S6) and Nice to Have (N1–N7) features — future milestones
-- Progress charts/graphs — requires charting library, deferred to v2
+- All Should Have (S1-S6) and Nice to Have (N1-N7) features — future milestones
+- Progress charts/graphs — requires charting library, deferred
 
 ## Context
 
@@ -104,15 +98,15 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - **Data model from gymtracker:** Workout → Exercises → Sets (with reps, weight as kg×10, rest period in seconds). Templates define target sets/reps/weight per exercise
 - **Platform:** KMP with SwiftUI iOS UI (not Compose Multiplatform for iOS UI — Compose is used for shared logic)
 - **The two projects are independent** — gymtracker is a reference for flow and logic, not a dependency
-- **Lastenheft** defines the full app vision (F1–F8 Must Haves, S1–S6 Should Haves, N1–N7 Nice to Haves)
+- **Lastenheft** defines the full app vision (F1-F8 Must Haves, S1-S6 Should Haves, N1-N7 Nice to Haves)
 
 ## Constraints
 
 - **Tech stack**: Kotlin Multiplatform + Compose Multiplatform (per Lastenheft)
-- **Platform focus**: iOS first (user handles iOS UI in SwiftUI)
+- **Platform focus**: iOS first (user handles iOS UI in SwiftUI), Android next (v1.5)
 - **Storage**: Local/offline only for prototype (Room KMP)
 - **Timeline**: University deadline ~end of May 2026
-- **Scope**: v1.1 — workout tab polish and firmware feature parity
+- **Scope**: v1.5 — Android Material 3 UI parity
 
 ## Key Decisions
 
@@ -124,9 +118,13 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 | Workout feature first | Core loop that everything else builds on; matches Lastenheft F1 priority | ✓ Good — complete workout loop shipped |
 | Weight stored as kg×10 integer | Matches gymtracker convention, avoids floating point | ✓ Good — display-only conversion for lbs |
 | SwiftUI for iOS UI (not Compose Multiplatform UI) | Compose iOS UI was experimental; SwiftUI is native and polished | ✓ Good — clean separation: KMP shared logic + SwiftUI views |
-| Room KMP over SQLDelight | Annotation-based DAOs faster to write; Google long-term backing | ✓ Good — smooth experience across 3 schema versions |
+| Room KMP over SQLDelight | Annotation-based DAOs faster to write; Google long-term backing | ✓ Good — smooth experience across 4 schema versions |
 | Koin over kotlin-inject | No KSP overhead on top of Room's KSP; simpler for prototype | ✓ Good — runtime DI worked fine at prototype scale |
 | DataStore Preferences for settings | Lighter than Room for single key-value (weight unit) | ✓ Good — simple, platform-specific file paths handled cleanly |
+| Volume-weighted PB over simple max | Matches firmware TrendCalculator.cpp; more meaningful than raw max weight | ✓ Good — consistent with gymtracker |
+| Two-step recap (enterReview + saveReviewedWorkout) | Separates review from save; enables recap editing without affecting active state | ✓ Good — clean state machine extension |
+| exerciseOrder CSV in active_sessions | Lightweight crash recovery for reorder; avoids new table | ✓ Good — single-column migration, backward-compatible |
+| Color.appAccent design token | Consistent branding; single source of truth for accent color | ✓ Good — eliminated 9 hardcoded RGB values |
 
 ## Evolution
 
@@ -146,4 +144,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after v1.1 Phase 8 completion*
+*Last updated: 2026-03-31 after v1.1 milestone completion*

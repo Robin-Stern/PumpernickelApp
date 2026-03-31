@@ -3,7 +3,8 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1-4 (shipped 2026-03-29)
-- 🔄 **v1.1 Workout Polish & Firmware Parity** — Phases 5-10
+- ✅ **v1.1 Workout Polish & Firmware Parity** — Phases 5-10 (shipped 2026-03-31)
+- 📋 **v1.5 Android Material 3 UI** — Phases 11-14
 
 ## Phases
 
@@ -17,63 +18,61 @@
 
 </details>
 
-### v1.1 Workout Polish & Firmware Parity
+<details>
+<summary>✅ v1.1 Workout Polish & Firmware Parity (Phases 5-10) — SHIPPED 2026-03-31</summary>
 
-### Phase 5: Scroll Wheel Pickers & Auto-Increment
-**Requirements:** ENTRY-01, ENTRY-02, ENTRY-03, ENTRY-04, ENTRY-05, ENTRY-06
-**Goal:** Replace text field inputs with iOS scroll wheel pickers and add auto-increment logic so set entry feels native and fast.
-**Plans:** 2 plans
+- [x] Phase 5: Scroll Wheel Pickers & Auto-Increment (2/2 plans) — completed 2026-03-29
+- [x] Phase 6: Personal Best Display (1/1 plan) — completed 2026-03-29
+- [x] Phase 7: Post-Workout Recap & Edit (1/1 plan) — completed 2026-03-29
+- [x] Phase 8: Mid-Workout Exercise Reorder (2/2 plans) — completed 2026-03-29
+- [x] Phase 9: Abandon Guards & Context Menu (1/1 plan) — completed 2026-03-30
+- [x] Phase 10: Minimal Set Screen & UI Polish (2/2 plans) — completed 2026-03-30
+
+</details>
+
+### v1.5 Android Material 3 UI
+
+### Phase 11: Android Shell & Navigation
+**Requirements:** ANDROID-01, ANDROID-02
+**Goal:** Bootstrap the Android app with Material 3 theme, bottom navigation, navigation graph with type-safe routes, and Koin DI wiring — making the app runnable with placeholder screens.
+**Plans:** 0 plans
 Plans:
-- [x] 05-01-PLAN.md — ViewModel auto-increment pre-fill logic and 0-reps guard
-- [x] 05-02-PLAN.md — SwiftUI wheel picker replacement and preFill observation
+- [ ] 11-01-PLAN.md — MainActivity, Compose theme, Material 3 NavigationBar, NavHost with routes, placeholder tabs
 
-### Phase 6: Personal Best Display
-**Requirements:** ENTRY-07
-**Goal:** Show the user's personal best for the current exercise during set entry.
-**Plans:** 1 plan
+### Phase 12: Exercise Catalog & Templates
+**Requirements:** ANDROID-03, ANDROID-04
+**Depends on:** Phase 11
+**Goal:** Port exercise catalog (search, detail, create) and template management (list, editor, exercise picker) screens to Jetpack Compose with Material 3 components.
+**Plans:** 0 plans
 Plans:
-- [x] 06-01-PLAN.md — PB DAO query, ViewModel StateFlow, and SwiftUI display
+- [ ] 12-01-PLAN.md — ExerciseCatalogScreen, ExerciseDetailScreen, CreateExerciseScreen
+- [ ] 12-02-PLAN.md — TemplateListScreen, TemplateEditorScreen, ExercisePickerScreen, WorkoutEmptyStateScreen
 
-### Phase 7: Post-Workout Recap & Edit
-**Requirements:** FLOW-01, FLOW-02
-**Goal:** Add a post-workout recap screen where users review and edit all sets before saving.
-**Plans:** 1 plan
+### Phase 13: Workout Session Core
+**Requirements:** ANDROID-05, ANDROID-06, ANDROID-07
+**Depends on:** Phase 12
+**Goal:** Port the complete workout execution flow — active session with custom drum picker set entry, rest timer, exercise overview bottom sheet, abandon guards, post-workout recap with edit, and finished state.
+**Plans:** 0 plans
 Plans:
-- [x] 07-01-PLAN.md — Reviewing state, enterReview()/saveReviewedWorkout() split, and SwiftUI recap screen with tap-to-edit
+- [ ] 13-01-PLAN.md — Custom drum/wheel picker composable (Android equivalent of iOS scroll wheel pickers)
+- [ ] 13-02-PLAN.md — WorkoutSessionScreen (Active state: set entry, rest timer, toolbar menu, abandon dialog)
+- [ ] 13-03-PLAN.md — ExerciseOverviewSheet (bottom sheet with sections, drag reorder, skip)
+- [ ] 13-04-PLAN.md — Reviewing state (recap screen with tap-to-edit) and Finished state
 
-### Phase 8: Mid-Workout Exercise Reorder
-**Requirements:** FLOW-03, FLOW-04, FLOW-07
-**Goal:** Allow reordering pending exercises mid-workout with in-memory list reorder, Room crash recovery, and skip exercise.
-**Plans:** 2 plans
+### Phase 14: History, Settings & Anatomy
+**Requirements:** ANDROID-08, ANDROID-09
+**Depends on:** Phase 11
+**Goal:** Port workout history, settings, and anatomy picker with Canvas-drawn body maps to Jetpack Compose.
+**Plans:** 0 plans
 Plans:
-- [x] 08-01-PLAN.md — Room migration 3-to-4, DAO/repository exerciseOrder methods, ViewModel reorder/skip/crash-recovery logic
-- [x] 08-02-PLAN.md — SwiftUI exercise overview with completed/current/pending sections, drag reorder, and skip button
+- [ ] 14-01-PLAN.md — WorkoutHistoryListScreen, WorkoutHistoryDetailScreen, SettingsScreen
+- [ ] 14-02-PLAN.md — AnatomyPickerScreen with Compose Canvas front/back body drawings and touch region detection
 
-### Phase 9: Abandon Guards & Context Menu
-**Requirements:** FLOW-05, FLOW-06
-**Depends on:** Phase 7, Phase 8
-**Goal:** Add exit confirmation and a context menu with skip, reorder, and finish actions.
-**Plans:** 1 plan
-Plans:
-- [x] 09-01-PLAN.md — Toolbar reorganization (X button + ellipsis Menu) and abandon confirmation dialog
-
-### Phase 10: Minimal Set Screen & UI Polish
-**Requirements:** UX-01, UX-02, UX-03, UX-04
-**Depends on:** Phase 5
-**Goal:** Add a firmware-style minimal lifting screen and polish UX across all workout views.
-**Plans:** 2/2 plans complete
-Plans:
-- [x] 10-01-PLAN.md — Color.appAccent extraction, padding standardization, typography verification
-- [x] 10-02-PLAN.md — Firmware-style minimal set screen, haptic on set complete, accessibility labels
-
-## Dependency Graph
+## v1.5 Dependency Graph
 
 ```
-Phase 05 ──────────────────────────► Phase 10
-Phase 06 (independent)
-Phase 07 ──────────┐
-                    ├──────────────► Phase 09
-Phase 08 ──────────┘
+Phase 11 ──► Phase 12 ──► Phase 13
+Phase 11 ──► Phase 14 (independent of 12/13)
 ```
 
 ## Progress
@@ -84,34 +83,13 @@ Phase 08 ──────────┘
 | 2. Template Management | v1.0 | 3/3 | Complete | 2026-03-28 |
 | 3. Workout Session | v1.0 | 3/3 | Complete | 2026-03-28 |
 | 4. History & Settings | v1.0 | 3/3 | Complete | 2026-03-29 |
-| 5. Scroll Wheel Pickers & Auto-Increment | v1.1 | 2/2 | Complete | — |
-| 6. Personal Best Display | v1.1 | 0/1 | Not started | — |
-| 7. Post-Workout Recap & Edit | v1.1 | 0/1 | Not started | — |
-| 8. Mid-Workout Exercise Reorder | v1.1 | 0/2 | Not started | — |
-| 9. Abandon Guards & Context Menu | v1.1 | 0/1 | Not started | — |
-| 10. Minimal Set Screen & UI Polish | v1.1 | 2/2 | Complete   | 2026-03-30 |
-
-## Requirement Coverage
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| ENTRY-01 | 05 | Planned |
-| ENTRY-02 | 05 | Planned |
-| ENTRY-03 | 05 | Planned |
-| ENTRY-04 | 05 | Planned |
-| ENTRY-05 | 05 | Planned |
-| ENTRY-06 | 05 | Planned |
-| ENTRY-07 | 06 | Planned |
-| FLOW-01 | 07 | Planned |
-| FLOW-02 | 07 | Planned |
-| FLOW-03 | 08 | Planned |
-| FLOW-04 | 08 | Planned |
-| FLOW-05 | 09 | Planned |
-| FLOW-06 | 09 | Planned |
-| FLOW-07 | 08 | Planned |
-| UX-01 | 10 | Planned |
-| UX-02 | 10 | Planned |
-| UX-03 | 10 | Planned |
-| UX-04 | 10 | Planned |
-
-**Coverage:** 18/18 requirements mapped (100%)
+| 5. Scroll Wheel Pickers & Auto-Increment | v1.1 | 2/2 | Complete | 2026-03-29 |
+| 6. Personal Best Display | v1.1 | 1/1 | Complete | 2026-03-29 |
+| 7. Post-Workout Recap & Edit | v1.1 | 1/1 | Complete | 2026-03-29 |
+| 8. Mid-Workout Exercise Reorder | v1.1 | 2/2 | Complete | 2026-03-29 |
+| 9. Abandon Guards & Context Menu | v1.1 | 1/1 | Complete | 2026-03-30 |
+| 10. Minimal Set Screen & UI Polish | v1.1 | 2/2 | Complete | 2026-03-30 |
+| 11. Android Shell & Navigation | v1.5 | 0/1 | Not started | — |
+| 12. Exercise Catalog & Templates | v1.5 | 0/2 | Not started | — |
+| 13. Workout Session Core | v1.5 | 0/4 | Not started | — |
+| 14. History, Settings & Anatomy | v1.5 | 0/2 | Not started | — |

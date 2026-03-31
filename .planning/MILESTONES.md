@@ -1,5 +1,23 @@
 # Milestones
 
+## v1.1 Workout Polish & Firmware Parity (Shipped: 2026-03-31)
+
+**Phases completed:** 6 phases, 9 plans, 18 tasks
+
+**Key accomplishments:**
+
+- Firmware-parity auto-increment pre-fill logic in WorkoutSessionViewModel with SetPreFill StateFlow and 0-reps guard
+- Native iOS scroll wheel pickers replacing TextFields for reps/weight input with preFill StateFlow binding, 0-reps guard, and edit sheet picker consistency
+- Volume-weighted average PB displayed as blue "PB: XX.X kg" label in workout header via Room aggregate SQL query and StateFlow observation
+- Reviewing sealed class state with recap screen showing all exercises/sets before save, tap-to-edit via existing wheel pickers
+- Room schema v4 migration with exerciseOrder persistence, ViewModel reorderExercise/skipExercise methods, and crash-recovery-safe exercise order restoration
+- Sectioned exercise overview sheet with drag-reorder on pending exercises and dual skip-exercise buttons (toolbar + sheet)
+- X button with abandon confirmation dialog (save/discard/cancel) and ellipsis context menu replacing scattered toolbar actions
+- Shared Color.appAccent constant replacing 9 hardcoded RGB values across 4 workout views, plus 32pt padding standardization on WorkoutFinishedView summary card
+- Firmware-style minimal SET N lifting screen with tap-to-reveal input, haptic on set complete, and VoiceOver labels on all workout views
+
+---
+
 ## v1.0 MVP (Shipped: 2026-03-29)
 
 **Phases completed:** 4 phases, 12 plans, 26 tasks
