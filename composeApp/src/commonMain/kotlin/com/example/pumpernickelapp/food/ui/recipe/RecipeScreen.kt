@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalUuidApi::class)
 
-package com.example.pumpernickelapp
+package com.example.pumpernickelapp.food.ui.recipe
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,62 +27,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.pumpernickelapp.food.domain.Food
 import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipeScreen(viewModel: FoodViewModel, modifier: Modifier = Modifier) {
-    val recipes by viewModel.recipes.collectAsState()
-
-    // Formular-State
-    var recipeName by remember { mutableStateOf("") }
-    var searchQuery by remember { mutableStateOf("") }
-    var searchResults by remember { mutableStateOf(emptyList<Food>()) }
-
-    // Zutaten: (Food, Gramm-String)
-    val ingredients = remember { mutableStateListOf<Pair<Food, String>>() }
-
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var successMessage by remember { mutableStateOf<String?>(null) }
-
-    val totalCalories = ingredients.sumOf { (food, amountStr) ->
-        val amount = amountStr.toDoubleOrNull() ?: 0.0
-        food.calories * amount / 100.0
-    }
-
-    fun saveRecipe() {
-        errorMessage = null
-        successMessage = null
-        when {
-            recipeName.isBlank() -> errorMessage = "Rezeptname darf nicht leer sein."
-            ingredients.isEmpty() -> errorMessage = "Mindestens eine Zutat hinzufügen."
-            ingredients.any { (_, g) -> g.toDoubleOrNull() == null || g.toDoubleOrNull()!! <= 0 } ->
-                errorMessage = "Alle Mengenangaben müssen eine Zahl > 0 sein."
-            else -> {
-                val recipeIngredients = ingredients.map { (food, amountStr) ->
-                    RecipeIngredient(foodId = food.id, amountGrams = amountStr.toDouble())
-                }
-                viewModel.addRecipe(Food.Recipe(name = recipeName.trim(), ingredients = recipeIngredients))
-                recipeName = ""
-                searchQuery = ""
-                searchResults = emptyList()
-                ingredients.clear()
-                successMessage = "Rezept gespeichert!"
-            }
-        }
-    }
+fun RecipeScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) {
+    val recipes by viewModel.recipes.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier,
@@ -95,37 +55,31 @@ fun RecipeScreen(viewModel: FoodViewModel, modifier: Modifier = Modifier) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // --- Neues Rezept ---
             item {
                 Spacer(Modifier.height(4.dp))
                 Text("Neues Rezept erstellen", style = MaterialTheme.typography.titleMedium)
             }
             item {
                 OutlinedTextField(
-                    value = recipeName,
-                    onValueChange = { recipeName = it },
+                    value = uiState.recipeName,
+                    onValueChange = { viewModel.onEvent(RecipeEvent.OnRecipeNameChanged(it)) },
                     label = { Text("Rezeptname *") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
             }
 
-            // Suchleiste
             item {
                 OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = {
-                        searchQuery = it
-                        searchResults = viewModel.searchFoods(it)
-                    },
+                    value = uiState.searchQuery,
+                    onValueChange = { viewModel.onEvent(RecipeEvent.OnSearchQueryChanged(it)) },
                     label = { Text("Lebensmittel suchen…") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
             }
 
-            // Suchergebnisse
-            if (searchResults.isNotEmpty()) {
+            if (uiState.searchResults.isNotEmpty()) {
                 item {
                     Card(
                         colors = CardDefaults.cardColors(
@@ -133,17 +87,11 @@ fun RecipeScreen(viewModel: FoodViewModel, modifier: Modifier = Modifier) {
                         )
                     ) {
                         Column {
-                            searchResults.forEach { food ->
+                            uiState.searchResults.forEach { food ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
-                                            if (ingredients.none { it.first.id == food.id }) {
-                                                ingredients.add(food to "100")
-                                            }
-                                            searchQuery = ""
-                                            searchResults = emptyList()
-                                        }
+                                        .clickable { viewModel.onEvent(RecipeEvent.OnFoodSelected(food)) }
                                         .padding(12.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
@@ -161,41 +109,43 @@ fun RecipeScreen(viewModel: FoodViewModel, modifier: Modifier = Modifier) {
                 }
             }
 
-            // Zutaten-Liste mit Mengenangabe
-            if (ingredients.isNotEmpty()) {
+            if (uiState.ingredients.isNotEmpty()) {
                 item {
                     Text("Zutaten:", style = MaterialTheme.typography.labelLarge)
                 }
-                items(ingredients.size) { index ->
-                    val (food, amount) = ingredients[index]
-                    val kcal = (food.calories * (amount.toDoubleOrNull() ?: 0.0) / 100.0).roundToInt()
+                items(uiState.ingredients.size) { index ->
+                    val entry = uiState.ingredients[index]
+                    val kcal = (entry.food.calories * (entry.amountGrams.toDoubleOrNull() ?: 0.0) / 100.0).roundToInt()
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(Modifier.weight(1f)) {
-                            Text(food.name, fontWeight = FontWeight.Medium)
-                            Text("$kcal kcal", style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(entry.food.name, fontWeight = FontWeight.Medium)
+                            Text(
+                                "$kcal kcal",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         Spacer(Modifier.width(8.dp))
                         OutlinedTextField(
-                            value = amount,
-                            onValueChange = { ingredients[index] = food to it },
+                            value = entry.amountGrams,
+                            onValueChange = { viewModel.onEvent(RecipeEvent.OnIngredientAmountChanged(index, it)) },
                             label = { Text("g") },
                             modifier = Modifier.width(90.dp),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                         )
                         Spacer(Modifier.width(4.dp))
-                        TextButton(onClick = { ingredients.removeAt(index) }) {
+                        TextButton(onClick = { viewModel.onEvent(RecipeEvent.OnIngredientRemoved(index)) }) {
                             Text("✕")
                         }
                     }
                 }
                 item {
                     Text(
-                        "Gesamt: ${totalCalories.roundToInt()} kcal",
+                        "Gesamt: ${uiState.totalCalories.roundToInt()} kcal",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -204,20 +154,22 @@ fun RecipeScreen(viewModel: FoodViewModel, modifier: Modifier = Modifier) {
             }
 
             item {
-                errorMessage?.let {
+                uiState.errorMessage?.let {
                     Text(it, color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall)
                 }
-                successMessage?.let {
+                uiState.successMessage?.let {
                     Text(it, color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodySmall)
                 }
-                Button(onClick = { saveRecipe() }, modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = { viewModel.onEvent(RecipeEvent.OnSaveClicked) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text("Rezept speichern")
                 }
             }
 
-            // --- Gespeicherte Rezepte ---
             item {
                 Spacer(Modifier.height(8.dp))
                 HorizontalDivider()
@@ -239,9 +191,9 @@ fun RecipeScreen(viewModel: FoodViewModel, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun RecipeCard(recipe: Food.Recipe, viewModel: FoodViewModel) {
+private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
     val totalKcal = viewModel.calculateRecipeCalories(recipe).roundToInt()
-    val foodMap = viewModel.foods.collectAsState().value.associateBy { it.id }
+    val foodMap = viewModel.foods.collectAsStateWithLifecycle().value.associateBy { it.id }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -271,10 +223,7 @@ private fun RecipeCard(recipe: Food.Recipe, viewModel: FoodViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        food?.name ?: "Unbekannt",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(food?.name ?: "Unbekannt", style = MaterialTheme.typography.bodySmall)
                     Text(
                         "${ingredient.amountGrams.roundToInt()} g  •  $kcal kcal",
                         style = MaterialTheme.typography.bodySmall,

@@ -1,17 +1,16 @@
 @file:OptIn(ExperimentalUuidApi::class)
 
-package com.example.pumpernickelapp
+package com.example.pumpernickelapp.food.domain
 
+import com.example.pumpernickelapp.core.UuidSerializer
 import kotlinx.serialization.Serializable
-import kotlin.uuid.Uuid
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-
-// Optin für neue Features (Uuid für gleiche UUID auf Android und iOS) notwendig. Kotlin Updates können hier breaking Changes einführen!
 @Serializable
 data class Food constructor(
     @Serializable(with = UuidSerializer::class)
-    val id: Uuid = Uuid.random(), // Nutze Uuid (Kotlin-Native) statt UUID (Java)
+    val id: Uuid = Uuid.random(),
     val name: String,
     val calories: Double,
     val protein: Double,

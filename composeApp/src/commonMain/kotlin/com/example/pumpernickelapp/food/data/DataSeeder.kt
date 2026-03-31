@@ -1,18 +1,15 @@
 @file:OptIn(ExperimentalUuidApi::class)
 
-package com.example.pumpernickelapp
+package com.example.pumpernickelapp.food.data
 
+import com.example.pumpernickelapp.food.domain.Food
+import com.example.pumpernickelapp.food.domain.RecipeIngredient
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-/**
- * Befüllt Repository beim ersten Start mit Beispieldaten.
- * Wird nur ausgeführt wenn noch keine Foods gespeichert sind.
- */
 fun seedDemoDataIfEmpty(repository: FoodRepository) {
     if (repository.loadFoods().isNotEmpty()) return
 
-    // --- Demo-Lebensmittel (Nährwerte pro 100g) ---
     val ei = Food(
         id = Uuid.parse("00000000-0000-0000-0000-000000000001"),
         name = "Ei (gekocht)",
@@ -65,7 +62,6 @@ fun seedDemoDataIfEmpty(repository: FoodRepository) {
     listOf(ei, haferflocken, milch, banane, haehnchenBrust, reis, brokkoli, honig)
         .forEach { repository.saveFood(it) }
 
-    // --- Demo-Rezepte ---
     val porridge = Food.Recipe(
         id = Uuid.parse("10000000-0000-0000-0000-000000000001"),
         name = "Porridge mit Banane",
@@ -76,7 +72,6 @@ fun seedDemoDataIfEmpty(repository: FoodRepository) {
             RecipeIngredient(foodId = honig.id, amountGrams = 10.0)
         )
     )
-
     val fitnessTeller = Food.Recipe(
         id = Uuid.parse("10000000-0000-0000-0000-000000000002"),
         name = "Fitness-Teller",

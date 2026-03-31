@@ -14,12 +14,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.pumpernickelapp.food.ui.entry.FoodEntryScreen
+import com.example.pumpernickelapp.food.ui.entry.FoodEntryViewModel
+import com.example.pumpernickelapp.food.ui.recipe.RecipeScreen
+import com.example.pumpernickelapp.food.ui.recipe.RecipeViewModel
 
 @Composable
 @Preview
 fun App() {
     MaterialTheme {
-        val foodViewModel: FoodViewModel = viewModel { FoodViewModel() }
+        val foodEntryViewModel: FoodEntryViewModel = viewModel { FoodEntryViewModel() }
+        val recipeViewModel: RecipeViewModel = viewModel { RecipeViewModel() }
         var selectedTab by remember { mutableIntStateOf(0) }
 
         Scaffold(
@@ -42,11 +47,11 @@ fun App() {
         ) { innerPadding ->
             when (selectedTab) {
                 0 -> FoodEntryScreen(
-                    viewModel = foodViewModel,
+                    viewModel = foodEntryViewModel,
                     modifier = Modifier.padding(innerPadding)
                 )
                 1 -> RecipeScreen(
-                    viewModel = foodViewModel,
+                    viewModel = recipeViewModel,
                     modifier = Modifier.padding(innerPadding)
                 )
             }
