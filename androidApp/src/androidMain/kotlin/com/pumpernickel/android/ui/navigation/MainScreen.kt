@@ -25,6 +25,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.pumpernickel.android.ui.screens.CreateExerciseScreen
+import com.pumpernickel.android.ui.screens.ExerciseCatalogScreen
+import com.pumpernickel.android.ui.screens.ExerciseDetailScreen
 import com.pumpernickel.android.ui.screens.PlaceholderScreen
 import com.pumpernickel.android.ui.screens.WorkoutPlaceholderScreen
 
@@ -77,6 +81,19 @@ fun MainScreen() {
                 ) {
                     composable<TemplateListRoute> {
                         WorkoutPlaceholderScreen()
+                    }
+                    composable<ExerciseCatalogRoute> {
+                        ExerciseCatalogScreen(navController = workoutNavController)
+                    }
+                    composable<ExerciseDetailRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ExerciseDetailRoute>()
+                        ExerciseDetailScreen(
+                            exerciseId = route.exerciseId,
+                            navController = workoutNavController
+                        )
+                    }
+                    composable<CreateExerciseRoute> {
+                        CreateExerciseScreen(navController = workoutNavController)
                     }
                 }
             }
