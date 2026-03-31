@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavHostController
 import com.pumpernickel.android.ui.navigation.TemplateEditorRoute
+import com.pumpernickel.android.ui.navigation.WorkoutHistoryListRoute
 import com.pumpernickel.android.ui.navigation.WorkoutSessionRoute
 import com.pumpernickel.domain.model.WorkoutTemplate
 import com.pumpernickel.presentation.templates.TemplateListViewModel
@@ -54,13 +55,14 @@ fun TemplateListScreen(navController: NavHostController) {
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var templateToDelete by remember { mutableStateOf<WorkoutTemplate?>(null) }
+    var showSettingsSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Workout") },
                 navigationIcon = {
-                    IconButton(onClick = { /* TODO: Workout history — Phase 14 */ }) {
+                    IconButton(onClick = { navController.navigate(WorkoutHistoryListRoute) }) {
                         Icon(
                             imageVector = Icons.Default.History,
                             contentDescription = "Workout History"
@@ -68,7 +70,7 @@ fun TemplateListScreen(navController: NavHostController) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Settings — Phase 14 */ }) {
+                    IconButton(onClick = { showSettingsSheet = true }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Settings"
@@ -210,5 +212,9 @@ fun TemplateListScreen(navController: NavHostController) {
                 }
             }
         )
+    }
+
+    if (showSettingsSheet) {
+        SettingsSheet(onDismiss = { showSettingsSheet = false })
     }
 }

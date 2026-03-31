@@ -34,6 +34,8 @@ import com.pumpernickel.android.ui.screens.ExercisePickerScreen
 import com.pumpernickel.android.ui.screens.PlaceholderScreen
 import com.pumpernickel.android.ui.screens.TemplateEditorScreen
 import com.pumpernickel.android.ui.screens.TemplateListScreen
+import com.pumpernickel.android.ui.screens.WorkoutHistoryDetailScreen
+import com.pumpernickel.android.ui.screens.WorkoutHistoryListScreen
 import com.pumpernickel.android.ui.screens.WorkoutSessionScreen
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -129,6 +131,16 @@ fun MainScreen() {
                     }
                     composable<CreateExerciseRoute> {
                         CreateExerciseScreen(navController = workoutNavController)
+                    }
+                    composable<WorkoutHistoryListRoute> {
+                        WorkoutHistoryListScreen(navController = workoutNavController)
+                    }
+                    composable<WorkoutHistoryDetailRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<WorkoutHistoryDetailRoute>()
+                        WorkoutHistoryDetailScreen(
+                            workoutId = route.workoutId,
+                            navController = workoutNavController
+                        )
                     }
                 }
             }
