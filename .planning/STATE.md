@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Android Material 3 UI
 status: executing
-stopped_at: Completed 13-02-PLAN.md (WorkoutSessionScreen)
-last_updated: "2026-03-31T17:01:12.549Z"
+stopped_at: Completed 13-03-PLAN.md (ExerciseOverviewSheet)
+last_updated: "2026-03-31T17:05:00.144Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 ## Current Position
 
 Phase: 13 (workout-session-core) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-03-31
 
@@ -57,6 +57,7 @@ Progress: [██████████] 100% (v1.1)
 | Phase 12-exercise-catalog-templates P02 | 4 | 2 tasks | 5 files |
 | Phase 13-workout-session-core P01 | 2 | 1 tasks | 1 files |
 | Phase 13-workout-session-core P02 | 3 | 2 tasks | 2 files |
+| Phase 13-workout-session-core P03 | 105 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ See PROJECT.md for full decision history across v1.0 and v1.1.
 - [Phase 12-exercise-catalog-templates]: koinViewModel(viewModelStoreOwner = parentEntry) in ExercisePickerRoute: shares same TemplateEditorViewModel instance for direct addExercise() call across screens
 - [Phase 13-workout-session-core]: LazyColumn + SnapFlingBehavior for drum picker: gives iOS-equivalent fling physics without Canvas draw complexity
 - [Phase 13-workout-session-core]: ActiveWorkoutContent extracted as private composable with all state as parameters to keep sub-composables pure and avoid ViewModel re-injection
+- [Phase 13-workout-session-core]: ExerciseOverviewSheetContent is pure content composable without ModalBottomSheet wrapper — caller owns sheet lifecycle for testability
+- [Phase 13-workout-session-core]: onJumpToExercise and onReorderExercise threaded through ActiveWorkoutContent parameter list from WorkoutSessionScreen
 
 ### Pending Todos
 
@@ -87,7 +90,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-31T17:01:12.547Z
-Stopped at: Completed 13-02-PLAN.md (WorkoutSessionScreen)
+Last session: 2026-03-31T17:05:00.142Z
+Stopped at: Completed 13-03-PLAN.md (ExerciseOverviewSheet)
 Resume file: None
 Next step: `/gsd:plan-phase 11` or `/gsd:new-milestone` for a different milestone
