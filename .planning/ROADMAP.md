@@ -91,5 +91,5 @@ Phase 11 ──► Phase 14 (independent of 12/13)
 | 10. Minimal Set Screen & UI Polish | v1.1 | 2/2 | Complete | 2026-03-30 |
 | 11. Android Shell & Navigation | v1.5 | 1/1 | Complete    | 2026-03-31 |
 | 12. Exercise Catalog & Templates | v1.5 | 2/2 | Complete    | 2026-03-31 |
-| 13. Workout Session Core | v1.5 | 4/4 | Complete   | 2026-03-31 |
+| 13. Workout Session Core | v1.5 | 4/4 | Complete    | 2026-03-31 |
 | 14. History, Settings & Anatomy | v1.5 | 0/2 | Not started | — |
