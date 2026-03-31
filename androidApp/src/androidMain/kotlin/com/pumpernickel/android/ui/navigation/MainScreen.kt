@@ -34,6 +34,7 @@ import com.pumpernickel.android.ui.screens.ExercisePickerScreen
 import com.pumpernickel.android.ui.screens.PlaceholderScreen
 import com.pumpernickel.android.ui.screens.TemplateEditorScreen
 import com.pumpernickel.android.ui.screens.TemplateListScreen
+import com.pumpernickel.android.ui.screens.WorkoutSessionScreen
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -111,10 +112,9 @@ fun MainScreen() {
                     }
                     composable<WorkoutSessionRoute> { backStackEntry ->
                         val route = backStackEntry.toRoute<WorkoutSessionRoute>()
-                        PlaceholderScreen(
-                            icon = Icons.Filled.FitnessCenter,
-                            title = "Workout Session",
-                            message = "Template: ${route.templateId}. Session screen coming in Phase 13."
+                        WorkoutSessionScreen(
+                            templateId = route.templateId,
+                            navController = workoutNavController
                         )
                     }
                     composable<ExerciseCatalogRoute> {
