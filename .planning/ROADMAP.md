@@ -35,9 +35,9 @@
 ### Phase 11: Android Shell & Navigation
 **Requirements:** ANDROID-01, ANDROID-02
 **Goal:** Bootstrap the Android app with Material 3 theme, bottom navigation, navigation graph with type-safe routes, and Koin DI wiring — making the app runnable with placeholder screens.
-**Plans:** 0 plans
+**Plans:** 1 plan
 Plans:
-- [ ] 11-01-PLAN.md — MainActivity, Compose theme, Material 3 NavigationBar, NavHost with routes, placeholder tabs
+- [ ] 11-01-PLAN.md — Build config, Koin init, Material 3 theme, NavigationBar with 3 tabs, type-safe routes, placeholder screens
 
 ### Phase 12: Exercise Catalog & Templates
 **Requirements:** ANDROID-03, ANDROID-04
