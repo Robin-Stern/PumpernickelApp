@@ -52,9 +52,9 @@ Plans:
 **Requirements:** ANDROID-05, ANDROID-06, ANDROID-07
 **Depends on:** Phase 12
 **Goal:** Port the complete workout execution flow — active session with custom drum picker set entry, rest timer, exercise overview bottom sheet, abandon guards, post-workout recap with edit, and finished state.
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 Plans:
-- [ ] 13-01-PLAN.md — Custom drum/wheel picker composable with snap fling behavior (Wave 1)
+- [x] 13-01-PLAN.md — Custom drum/wheel picker composable with snap fling behavior (Wave 1)
 - [ ] 13-02-PLAN.md — WorkoutSessionScreen Active state: set entry, rest timer, toolbar menu, abandon dialog, nav wiring (Wave 2)
 - [ ] 13-03-PLAN.md — ExerciseOverviewSheet with Completed/Current/Up Next sections, move reorder, skip (Wave 3)
 - [ ] 13-04-PLAN.md — Reviewing state (recap with tap-to-edit) and Finished state (summary + Done) (Wave 4)
@@ -91,5 +91,5 @@ Phase 11 ──► Phase 14 (independent of 12/13)
 | 10. Minimal Set Screen & UI Polish | v1.1 | 2/2 | Complete | 2026-03-30 |
 | 11. Android Shell & Navigation | v1.5 | 1/1 | Complete    | 2026-03-31 |
 | 12. Exercise Catalog & Templates | v1.5 | 2/2 | Complete    | 2026-03-31 |
-| 13. Workout Session Core | v1.5 | 0/4 | Planned | — |
+| 13. Workout Session Core | v1.5 | 1/4 | In Progress|  |
 | 14. History, Settings & Anatomy | v1.5 | 0/2 | Not started | — |
