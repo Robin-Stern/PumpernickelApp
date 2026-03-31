@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Android Material 3 UI
-status: executing
-stopped_at: Completed 13-03-PLAN.md (ExerciseOverviewSheet)
-last_updated: "2026-03-31T17:05:00.144Z"
+status: verifying
+stopped_at: Completed 13-04-PLAN.md (Reviewing and Finished states)
+last_updated: "2026-03-31T17:10:09.391Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 
 Phase: 13 (workout-session-core) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-31
 
 Progress: [██████████] 100% (v1.1)
@@ -58,6 +58,7 @@ Progress: [██████████] 100% (v1.1)
 | Phase 13-workout-session-core P01 | 2 | 1 tasks | 1 files |
 | Phase 13-workout-session-core P02 | 3 | 2 tasks | 2 files |
 | Phase 13-workout-session-core P03 | 105 | 2 tasks | 2 files |
+| Phase 13-workout-session-core P04 | 3 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,8 @@ See PROJECT.md for full decision history across v1.0 and v1.1.
 - [Phase 13-workout-session-core]: ActiveWorkoutContent extracted as private composable with all state as parameters to keep sub-composables pure and avoid ViewModel re-injection
 - [Phase 13-workout-session-core]: ExerciseOverviewSheetContent is pure content composable without ModalBottomSheet wrapper — caller owns sheet lifecycle for testability
 - [Phase 13-workout-session-core]: onJumpToExercise and onReorderExercise threaded through ActiveWorkoutContent parameter list from WorkoutSessionScreen
+- [Phase 13-workout-session-core]: Edit sheet state hoisted to WorkoutSessionScreen level: both Active and Reviewing branches share EditSetSheetContent without duplication
+- [Phase 13-workout-session-core]: CompletedSetsSection extended with exerciseIndex + onEditSet callback (default no-op): backward-compatible tap-to-edit wiring
 
 ### Pending Todos
 
@@ -90,7 +93,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-31T17:05:00.142Z
-Stopped at: Completed 13-03-PLAN.md (ExerciseOverviewSheet)
+Last session: 2026-03-31T17:10:09.389Z
+Stopped at: Completed 13-04-PLAN.md (Reviewing and Finished states)
 Resume file: None
 Next step: `/gsd:plan-phase 11` or `/gsd:new-milestone` for a different milestone
