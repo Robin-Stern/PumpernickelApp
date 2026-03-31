@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -29,8 +30,12 @@ import androidx.navigation.toRoute
 import com.pumpernickel.android.ui.screens.CreateExerciseScreen
 import com.pumpernickel.android.ui.screens.ExerciseCatalogScreen
 import com.pumpernickel.android.ui.screens.ExerciseDetailScreen
+import com.pumpernickel.android.ui.screens.ExercisePickerScreen
 import com.pumpernickel.android.ui.screens.PlaceholderScreen
-import com.pumpernickel.android.ui.screens.WorkoutPlaceholderScreen
+import com.pumpernickel.android.ui.screens.TemplateEditorScreen
+import com.pumpernickel.android.ui.screens.TemplateListScreen
+import com.pumpernickel.presentation.templates.TemplateEditorViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 enum class TopLevelTab(
     val label: String,
@@ -80,7 +85,37 @@ fun MainScreen() {
                     startDestination = TemplateListRoute
                 ) {
                     composable<TemplateListRoute> {
-                        WorkoutPlaceholderScreen()
+                        TemplateListScreen(navController = workoutNavController)
+                    }
+                    composable<TemplateEditorRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<TemplateEditorRoute>()
+                        TemplateEditorScreen(
+                            templateId = route.templateId,
+                            navController = workoutNavController
+                        )
+                    }
+                    composable<ExercisePickerRoute> { backStackEntry ->
+                        val parentEntry = remember(backStackEntry) {
+                            workoutNavController.getBackStackEntry<TemplateEditorRoute>()
+                        }
+                        val editorViewModel: TemplateEditorViewModel = koinViewModel(
+                            viewModelStoreOwner = parentEntry
+                        )
+                        ExercisePickerScreen(
+                            onExerciseSelected = { id, name, muscles ->
+                                editorViewModel.addExercise(id, name, muscles)
+                                workoutNavController.popBackStack()
+                            },
+                            navController = workoutNavController
+                        )
+                    }
+                    composable<WorkoutSessionRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<WorkoutSessionRoute>()
+                        PlaceholderScreen(
+                            icon = Icons.Filled.FitnessCenter,
+                            title = "Workout Session",
+                            message = "Template: ${route.templateId}. Session screen coming in Phase 13."
+                        )
                     }
                     composable<ExerciseCatalogRoute> {
                         ExerciseCatalogScreen(navController = workoutNavController)
