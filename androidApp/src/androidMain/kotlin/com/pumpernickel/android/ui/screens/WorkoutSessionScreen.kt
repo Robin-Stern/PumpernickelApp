@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
@@ -36,6 +37,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -53,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.pumpernickel.android.ui.components.RepsPicker
@@ -84,6 +87,13 @@ fun WorkoutSessionScreen(
     var showAbandonDialog by remember { mutableStateOf(false) }
     var showExerciseOverview by remember { mutableStateOf(false) }
     var showSetInput by remember { mutableStateOf(false) }
+
+    // Edit sheet state (used in Active completed sets and Reviewing recap)
+    var showEditSheet by remember { mutableStateOf(false) }
+    var editExerciseIndex by remember { mutableIntStateOf(0) }
+    var editSetIndex by remember { mutableIntStateOf(0) }
+    var editSelectedReps by remember { mutableIntStateOf(0) }
+    var editSelectedWeightKgX10 by remember { mutableIntStateOf(0) }
 
     // Sync pre-fill values into local picker state (D-05)
     LaunchedEffect(preFill) {
@@ -132,20 +142,83 @@ fun WorkoutSessionScreen(
                     viewModel.discardWorkout()
                     navController.popBackStack()
                 },
-                onPopBackStack = { navController.popBackStack() }
+                onPopBackStack = { navController.popBackStack() },
+                onEditCompletedSet = { exIdx, setIdx, reps, weightKgX10 ->
+                    editExerciseIndex = exIdx
+                    editSetIndex = setIdx
+                    editSelectedReps = reps
+                    editSelectedWeightKgX10 = snapToWeightStep(weightKgX10)
+                    showEditSheet = true
+                }
             )
+            // Edit sheet for Active state completed sets
+            if (showEditSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showEditSheet = false }
+                ) {
+                    EditSetSheetContent(
+                        setIndex = editSetIndex,
+                        selectedReps = editSelectedReps,
+                        selectedWeightKgX10 = editSelectedWeightKgX10,
+                        weightUnit = weightUnit,
+                        onRepsChanged = { editSelectedReps = it },
+                        onWeightChanged = { editSelectedWeightKgX10 = it },
+                        onSave = {
+                            viewModel.editCompletedSet(
+                                editExerciseIndex, editSetIndex,
+                                editSelectedReps, editSelectedWeightKgX10
+                            )
+                            showEditSheet = false
+                        },
+                        onCancel = { showEditSheet = false }
+                    )
+                }
+            }
         }
         is WorkoutSessionState.Reviewing -> {
-            // Placeholder — Plan 04 implements recap
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Reviewing... (coming soon)")
+            RecapContent(
+                reviewing = state,
+                weightUnit = weightUnit,
+                onSaveWorkout = { viewModel.saveReviewedWorkout() },
+                onEditSet = { exIdx, setIdx, reps, weightKgX10 ->
+                    editExerciseIndex = exIdx
+                    editSetIndex = setIdx
+                    editSelectedReps = reps
+                    editSelectedWeightKgX10 = snapToWeightStep(weightKgX10)
+                    showEditSheet = true
+                }
+            )
+            if (showEditSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showEditSheet = false }
+                ) {
+                    EditSetSheetContent(
+                        setIndex = editSetIndex,
+                        selectedReps = editSelectedReps,
+                        selectedWeightKgX10 = editSelectedWeightKgX10,
+                        weightUnit = weightUnit,
+                        onRepsChanged = { editSelectedReps = it },
+                        onWeightChanged = { editSelectedWeightKgX10 = it },
+                        onSave = {
+                            viewModel.editCompletedSet(
+                                editExerciseIndex, editSetIndex,
+                                editSelectedReps, editSelectedWeightKgX10
+                            )
+                            showEditSheet = false
+                        },
+                        onCancel = { showEditSheet = false }
+                    )
+                }
             }
         }
         is WorkoutSessionState.Finished -> {
-            // Placeholder — Plan 04 implements finished screen
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Finished! (coming soon)")
-            }
+            FinishedContent(
+                finished = state,
+                onDone = {
+                    viewModel.resetToIdle()
+                    navController.popBackStack()
+                }
+            )
         }
         is WorkoutSessionState.Idle -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -181,7 +254,8 @@ private fun ActiveWorkoutContent(
     onEnterReview: () -> Unit,
     onSaveReviewedWorkout: () -> Unit,
     onDiscardWorkout: () -> Unit,
-    onPopBackStack: () -> Unit
+    onPopBackStack: () -> Unit,
+    onEditCompletedSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int) -> Unit = { _, _, _, _ -> }
 ) {
     val exercises = active.exercises
     val exIdx = active.currentExerciseIndex
@@ -316,7 +390,9 @@ private fun ActiveWorkoutContent(
             // 3. Completed sets section
             CompletedSetsSection(
                 exercise = exercise,
-                weightUnit = weightUnit
+                exerciseIndex = exIdx,
+                weightUnit = weightUnit,
+                onEditSet = onEditCompletedSet
             )
         }
     }
@@ -626,7 +702,9 @@ private fun SetInputSection(
 @Composable
 private fun CompletedSetsSection(
     exercise: SessionExercise,
-    weightUnit: WeightUnit
+    exerciseIndex: Int,
+    weightUnit: WeightUnit,
+    onEditSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int) -> Unit = { _, _, _, _ -> }
 ) {
     val completedSets = exercise.sets.filter { it.isCompleted }
     if (completedSets.isEmpty()) return
@@ -642,6 +720,8 @@ private fun CompletedSetsSection(
         )
 
         completedSets.forEach { set ->
+            val reps = set.actualReps ?: 0
+            val weight = set.actualWeightKgX10 ?: 0
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -649,7 +729,9 @@ private fun CompletedSetsSection(
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         shape = RoundedCornerShape(8.dp)
                     )
-                    .clickable { /* tap-to-edit wired in Plan 04 */ }
+                    .clickable {
+                        onEditSet(exerciseIndex, set.setIndex, reps, weight)
+                    }
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -666,8 +748,6 @@ private fun CompletedSetsSection(
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.weight(1f))
-                val reps = set.actualReps ?: 0
-                val weight = set.actualWeightKgX10 ?: 0
                 Text(
                     text = "$reps reps",
                     style = MaterialTheme.typography.bodyMedium
@@ -682,9 +762,342 @@ private fun CompletedSetsSection(
     }
 }
 
+// MARK: - Reviewing State
+
+@Composable
+private fun RecapContent(
+    reviewing: WorkoutSessionState.Reviewing,
+    weightUnit: WeightUnit,
+    onSaveWorkout: () -> Unit,
+    onEditSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int) -> Unit
+) {
+    val completedExercises = reviewing.exercises.filter { ex -> ex.sets.any { it.isCompleted } }
+    val totalSets = completedExercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Summary header card (D-19)
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Workout Recap",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = reviewing.templateName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = completedExercises.size.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Exercises",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = totalSets.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Sets",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = formatDuration(reviewing.durationMillis),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Duration",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        // Exercise sections (D-20)
+        reviewing.exercises.forEachIndexed { originalIndex, exercise ->
+            val completedSets = exercise.sets.filter { it.isCompleted }
+            if (completedSets.isNotEmpty()) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = exercise.exerciseName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "${completedSets.size} sets",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        // Set rows — tappable for edit (D-21)
+                        completedSets.forEach { set ->
+                            val reps = set.actualReps ?: 0
+                            val weight = set.actualWeightKgX10 ?: 0
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surface,
+                                        shape = RoundedCornerShape(10.dp)
+                                    )
+                                    .clickable {
+                                        onEditSet(originalIndex, set.setIndex, reps, weight)
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Completed",
+                                    tint = Color(0xFF4CAF50),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Set ${set.setIndex + 1}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(Modifier.weight(1f))
+                                Text(
+                                    text = "$reps reps",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = weightUnit.formatWeight(weight),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(Modifier.height(4.dp))
+                        }
+                    }
+                }
+            }
+        }
+
+        // Save Workout button (D-22)
+        Button(
+            onClick = onSaveWorkout,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("Save Workout", fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun EditSetSheetContent(
+    setIndex: Int,
+    selectedReps: Int,
+    selectedWeightKgX10: Int,
+    weightUnit: WeightUnit,
+    onRepsChanged: (Int) -> Unit,
+    onWeightChanged: (Int) -> Unit,
+    onSave: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(
+            text = "Edit Set ${setIndex + 1}",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
+        Spacer(Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            RepsPicker(
+                selectedReps = selectedReps,
+                onRepsSelected = onRepsChanged,
+                modifier = Modifier.weight(1f)
+            )
+            WeightPicker(
+                selectedWeightKgX10 = selectedWeightKgX10,
+                onWeightSelected = onWeightChanged,
+                weightUnit = weightUnit,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        Button(
+            onClick = onSave,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("Save", fontWeight = FontWeight.SemiBold)
+        }
+        Spacer(Modifier.height(8.dp))
+        TextButton(
+            onClick = onCancel,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        ) {
+            Text("Cancel")
+        }
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+// MARK: - Finished State
+
+@Composable
+private fun FinishedContent(
+    finished: WorkoutSessionState.Finished,
+    onDone: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Spacer(Modifier.weight(1f))
+
+        Icon(
+            imageVector = Icons.Default.CheckCircle,
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            text = "Workout Complete!",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                SummaryRow("Workout", finished.workoutName)
+                SummaryRow("Duration", formatDuration(finished.durationMillis))
+                SummaryRow("Exercises", finished.totalExercises.toString())
+                SummaryRow("Sets", finished.totalSets.toString())
+            }
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        Button(
+            onClick = onDone,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("Done", fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun SummaryRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
 // MARK: - Helpers
 
 private fun snapToWeightStep(kgX10: Int): Int = ((kgX10 + 12) / 25) * 25
+
+private fun formatDuration(millis: Long): String {
+    val totalSeconds = millis / 1000
+    val h = totalSeconds / 3600
+    val m = (totalSeconds % 3600) / 60
+    val s = totalSeconds % 60
+    return if (h > 0) String.format("%dh %02dm", h, m)
+    else String.format("%dm %02ds", m, s)
+}
 
 private fun formatElapsed(seconds: Long): String {
     val h = seconds / 3600
