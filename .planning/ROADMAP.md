@@ -63,9 +63,9 @@ Plans:
 **Requirements:** ANDROID-08, ANDROID-09
 **Depends on:** Phase 11
 **Goal:** Port workout history, settings, and anatomy picker with Canvas-drawn body maps to Jetpack Compose.
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 14-01-PLAN.md — WorkoutHistoryListScreen, WorkoutHistoryDetailScreen, SettingsSheet with kg/lbs toggle
+- [x] 14-01-PLAN.md — WorkoutHistoryListScreen, WorkoutHistoryDetailScreen, SettingsSheet with kg/lbs toggle
 - [ ] 14-02-PLAN.md — AnatomyPickerSheet with Compose Canvas front/back body drawings, shared MuscleRegionPaths, touch region detection
 
 ## v1.5 Dependency Graph
@@ -92,4 +92,4 @@ Phase 11 ──► Phase 14 (independent of 12/13)
 | 11. Android Shell & Navigation | v1.5 | 1/1 | Complete    | 2026-03-31 |
 | 12. Exercise Catalog & Templates | v1.5 | 2/2 | Complete    | 2026-03-31 |
 | 13. Workout Session Core | v1.5 | 4/4 | Complete    | 2026-03-31 |
-| 14. History, Settings & Anatomy | v1.5 | 0/2 | Planned | — |
+| 14. History, Settings & Anatomy | v1.5 | 1/2 | In Progress|  |

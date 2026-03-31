@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Android Material 3 UI
-status: verifying
-stopped_at: Phase 14 context gathered
-last_updated: "2026-03-31T17:16:47.888Z"
+status: executing
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-03-31T17:28:07.544Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 9
+  completed_plans: 8
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** Users can select a workout template and execute it set-by-set -- logging reps, weight, and rest periods -- with a clean, reliable flow
-**Current focus:** Phase 13 — workout-session-core
+**Current focus:** Phase 14 — history-settings-anatomy
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 14 (history-settings-anatomy) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-31
 
 Progress: [██████████] 100% (v1.1)
@@ -59,6 +59,7 @@ Progress: [██████████] 100% (v1.1)
 | Phase 13-workout-session-core P02 | 3 | 2 tasks | 2 files |
 | Phase 13-workout-session-core P03 | 105 | 2 tasks | 2 files |
 | Phase 13-workout-session-core P04 | 3 | 2 tasks | 1 files |
+| Phase 14-history-settings-anatomy P01 | 5 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,7 @@ See PROJECT.md for full decision history across v1.0 and v1.1.
 - [Phase 13-workout-session-core]: onJumpToExercise and onReorderExercise threaded through ActiveWorkoutContent parameter list from WorkoutSessionScreen
 - [Phase 13-workout-session-core]: Edit sheet state hoisted to WorkoutSessionScreen level: both Active and Reviewing branches share EditSetSheetContent without duplication
 - [Phase 13-workout-session-core]: CompletedSetsSection extended with exerciseIndex + onEditSet callback (default no-op): backward-compatible tap-to-edit wiring
+- [Phase 14-history-settings-anatomy]: WorkoutHistoryDetailScreen uses DisposableEffect onDispose to call clearDetail() — ensures stale detail is not shown on re-navigation
 
 ### Pending Todos
 
@@ -93,7 +95,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-31T17:16:47.880Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-history-settings-anatomy/14-CONTEXT.md
+Last session: 2026-03-31T17:28:07.542Z
+Stopped at: Completed 14-01-PLAN.md
+Resume file: None
 Next step: `/gsd:plan-phase 11` or `/gsd:new-milestone` for a different milestone
