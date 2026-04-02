@@ -2,8 +2,9 @@
 
 package com.example.pumpernickelapp.food.ui.recipe
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,9 +24,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -68,7 +72,6 @@ fun RecipeScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) {
                     singleLine = true
                 )
             }
-
             item {
                 OutlinedTextField(
                     value = uiState.searchQuery,
@@ -81,36 +84,24 @@ fun RecipeScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) {
 
             if (uiState.searchResults.isNotEmpty()) {
                 item {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column {
-                            uiState.searchResults.forEach { food ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { viewModel.onEvent(RecipeEvent.OnFoodSelected(food)) }
-                                        .padding(12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(food.name)
-                                    Text(
-                                        "${food.calories.roundToInt()} kcal/100g",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                HorizontalDivider()
-                            }
-                        }
-                    }
+                    Text(
+                        text = if (uiState.searchQuery.isBlank()) "Zuletzt hinzugefügt"
+                               else "Suchergebnisse",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                items(uiState.searchResults, key = { it.id }) { food ->
+                    FoodSwipeItem(
+                        food = food,
+                        onSelected = { viewModel.onEvent(RecipeEvent.OnFoodSelected(food)) }
+                    )
                 }
             }
 
             if (uiState.ingredients.isNotEmpty()) {
                 item {
+                    Spacer(Modifier.height(4.dp))
                     Text("Zutaten:", style = MaterialTheme.typography.labelLarge)
                 }
                 items(uiState.ingredients.size) { index ->
@@ -190,6 +181,56 @@ fun RecipeScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FoodSwipeItem(food: Food, onSelected: () -> Unit) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.StartToEnd) {
+                onSelected()
+            }
+            false
+        }
+    )
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromEndToStart = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    "+ Hinzufügen",
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = 4.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(food.name)
+            Text(
+                "${food.calories.roundToInt()} kcal/100g",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        HorizontalDivider()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
     val totalKcal = viewModel.calculateRecipeCalories(recipe).roundToInt()

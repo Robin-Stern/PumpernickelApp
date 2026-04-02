@@ -1,31 +1,32 @@
 package com.example.pumpernickelapp.food.data
 
 import com.example.pumpernickelapp.food.domain.Food
+import com.example.pumpernickelapp.food.domain.FoodRepository
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.json.Json
 
-class FoodRepository {
+class FoodRepositoryImpl : FoodRepository {
     private val settings = Settings()
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun saveFood(food: Food) {
+    override fun saveFood(food: Food) {
         val current = loadFoods().toMutableList()
         current.add(food)
         settings.putString(KEY_FOODS, json.encodeToString(current))
     }
 
-    fun loadFoods(): List<Food> {
+    override fun loadFoods(): List<Food> {
         val raw = settings.getStringOrNull(KEY_FOODS) ?: return emptyList()
         return json.decodeFromString(raw)
     }
 
-    fun saveRecipe(recipe: Food.Recipe) {
+    override fun saveRecipe(recipe: Food.Recipe) {
         val current = loadRecipes().toMutableList()
         current.add(recipe)
         settings.putString(KEY_RECIPES, json.encodeToString(current))
     }
 
-    fun loadRecipes(): List<Food.Recipe> {
+    override fun loadRecipes(): List<Food.Recipe> {
         val raw = settings.getStringOrNull(KEY_RECIPES) ?: return emptyList()
         return json.decodeFromString(raw)
     }

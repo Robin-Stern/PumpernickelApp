@@ -3,8 +3,8 @@
 package com.example.pumpernickelapp.food.ui.recipe
 
 import androidx.lifecycle.ViewModel
-import com.example.pumpernickelapp.food.data.FoodRepository
 import com.example.pumpernickelapp.food.domain.Food
+import com.example.pumpernickelapp.food.domain.FoodRepository
 import com.example.pumpernickelapp.food.domain.RecipeIngredient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,8 +34,9 @@ sealed interface RecipeEvent {
     data object ClearMessages : RecipeEvent
 }
 
-class RecipeViewModel : ViewModel() {
-    private val repository = FoodRepository()
+class RecipeViewModel(
+    private val repository: FoodRepository
+) : ViewModel() {
 
     private val _foods = MutableStateFlow(repository.loadFoods())
     val foods: StateFlow<List<Food>> = _foods.asStateFlow()
@@ -43,8 +44,10 @@ class RecipeViewModel : ViewModel() {
     private val _recipes = MutableStateFlow(repository.loadRecipes())
     val recipes: StateFlow<List<Food.Recipe>> = _recipes.asStateFlow()
 
-    private val _uiState = MutableStateFlow(RecipeUiState())
+    private val _uiState = MutableStateFlow(RecipeUiState(searchResults = recentFoods()))
     val uiState: StateFlow<RecipeUiState> = _uiState.asStateFlow()
+
+    private fun recentFoods() = _foods.value.takeLast(5).reversed()
 
     fun onEvent(event: RecipeEvent) {
         when (event) {
@@ -52,22 +55,21 @@ class RecipeViewModel : ViewModel() {
             is RecipeEvent.OnSearchQueryChanged -> {
                 val freshFoods = repository.loadFoods()
                 _foods.value = freshFoods
-                val results = if (event.value.isBlank()) emptyList()
+                val results = if (event.value.isBlank()) recentFoods()
                     else freshFoods.filter { it.name.contains(event.value.trim(), ignoreCase = true) }
                 _uiState.update { it.copy(searchQuery = event.value, searchResults = results) }
             }
             is RecipeEvent.OnFoodSelected -> _uiState.update { state ->
-                if (state.ingredients.none { it.food.id == event.food.id }) {
-                    val newIngredients = state.ingredients + IngredientEntry(event.food, "100")
-                    state.copy(
-                        searchQuery = "",
-                        searchResults = emptyList(),
-                        ingredients = newIngredients,
-                        totalCalories = calcTotalCalories(newIngredients)
-                    )
+                val newIngredients = if (state.ingredients.none { it.food.id == event.food.id }) {
+                    state.ingredients + IngredientEntry(event.food, "100")
                 } else {
-                    state.copy(searchQuery = "", searchResults = emptyList())
+                    state.ingredients
                 }
+                state.copy(
+                    searchResults = state.searchResults.filter { it.id != event.food.id },
+                    ingredients = newIngredients,
+                    totalCalories = calcTotalCalories(newIngredients)
+                )
             }
             is RecipeEvent.OnIngredientAmountChanged -> _uiState.update { state ->
                 val newIngredients = state.ingredients.toMutableList()
@@ -112,6 +114,6 @@ class RecipeViewModel : ViewModel() {
         }
         repository.saveRecipe(Food.Recipe(name = state.recipeName.trim(), ingredients = recipeIngredients))
         _recipes.value = repository.loadRecipes()
-        _uiState.value = RecipeUiState(successMessage = "Rezept gespeichert!")
+        _uiState.value = RecipeUiState(searchResults = recentFoods(), successMessage = "Rezept gespeichert!")
     }
 }

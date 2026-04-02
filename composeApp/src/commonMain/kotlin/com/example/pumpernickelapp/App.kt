@@ -14,6 +14,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.pumpernickelapp.food.data.FoodRepositoryImpl
+import com.example.pumpernickelapp.food.data.seedDemoDataIfEmpty
+import com.example.pumpernickelapp.food.domain.ValidateFoodInputUseCase
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryScreen
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeScreen
@@ -23,8 +26,11 @@ import com.example.pumpernickelapp.food.ui.recipe.RecipeViewModel
 @Preview
 fun App() {
     MaterialTheme {
-        val foodEntryViewModel: FoodEntryViewModel = viewModel { FoodEntryViewModel() }
-        val recipeViewModel: RecipeViewModel = viewModel { RecipeViewModel() }
+        val repository = FoodRepositoryImpl().also { seedDemoDataIfEmpty(it) }
+        val foodEntryViewModel: FoodEntryViewModel = viewModel {
+            FoodEntryViewModel(repository, ValidateFoodInputUseCase())
+        }
+        val recipeViewModel: RecipeViewModel = viewModel { RecipeViewModel(repository) }
         var selectedTab by remember { mutableIntStateOf(0) }
 
         Scaffold(

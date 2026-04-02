@@ -3,6 +3,7 @@
 package com.example.pumpernickelapp.food.data
 
 import com.example.pumpernickelapp.food.domain.Food
+import com.example.pumpernickelapp.food.domain.FoodRepository
 import com.example.pumpernickelapp.food.domain.RecipeIngredient
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

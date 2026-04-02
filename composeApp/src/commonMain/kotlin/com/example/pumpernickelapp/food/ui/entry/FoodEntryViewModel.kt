@@ -3,9 +3,9 @@
 package com.example.pumpernickelapp.food.ui.entry
 
 import androidx.lifecycle.ViewModel
-import com.example.pumpernickelapp.food.data.FoodRepository
-import com.example.pumpernickelapp.food.data.seedDemoDataIfEmpty
 import com.example.pumpernickelapp.food.domain.Food
+import com.example.pumpernickelapp.food.domain.FoodRepository
+import com.example.pumpernickelapp.food.domain.ValidateFoodInputUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,12 +38,10 @@ sealed interface FoodEntryEvent {
     data object ClearMessages : FoodEntryEvent
 }
 
-class FoodEntryViewModel : ViewModel() {
-    private val repository = FoodRepository()
-
-    init {
-        seedDemoDataIfEmpty(repository)
-    }
+class FoodEntryViewModel(
+    private val repository: FoodRepository,
+    private val validateFood: ValidateFoodInputUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FoodEntryUiState())
     val uiState: StateFlow<FoodEntryUiState> = _uiState.asStateFlow()
@@ -62,44 +60,29 @@ class FoodEntryViewModel : ViewModel() {
             FoodEntryEvent.ClearMessages -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
         }
     }
+    private fun updateError(message: String) {
+        _uiState.update { it.copy(errorMessage = message, successMessage = null) }
+    }
 
-    private fun validateAndSave() {//Empfängt Werte von ViewModel. Ersetzt eingegebene , durch . Wirft passende Fehler.
-        // Wenn keine Fehler, wird das Food Objekt erstellt und repository aufgerufen, sonst der UI State mit Fehler geupdatet
+    private fun validateAndSave() {
         val state = _uiState.value
-        val caloriesVal = state.calories.replace(',', '.').toDoubleOrNull()
-        val proteinVal = state.protein.replace(',', '.').toDoubleOrNull()
-        val fatVal = state.fat.replace(',', '.').toDoubleOrNull()
-        val carbsVal = state.carbs.replace(',', '.').toDoubleOrNull()
-        val sugarVal = state.sugar.replace(',', '.').toDoubleOrNull()
-
-        val error = when {
-            state.name.isBlank() -> "Name darf nicht leer sein."
-            caloriesVal == null || caloriesVal < 0 -> "Kalorien: gültige Zahl >= 0 eingeben."
-            proteinVal == null || proteinVal < 0 -> "Protein: gültige Zahl >= 0 eingeben."
-            fatVal == null || fatVal < 0 -> "Fett: gültige Zahl >= 0 eingeben."
-            carbsVal == null || carbsVal < 0 -> "Kohlenhydrate: gültige Zahl >= 0 eingeben."
-            sugarVal == null || sugarVal < 0 -> "Zucker: gültige Zahl >= 0 eingeben."
-            sugarVal > carbsVal!! -> "Zucker darf nicht größer als Kohlenhydrate sein."
-            else -> null
+        when (val result = validateFood(state.name, state.calories, state.protein, state.fat, state.carbs, state.sugar)) {
+            is ValidateFoodInputUseCase.Result.Error -> updateError(result.message)
+            is ValidateFoodInputUseCase.Result.Valid -> {
+                repository.saveFood(
+                    Food(
+                        name          = state.name.trim(),
+                        calories      = result.calories,
+                        protein       = result.protein,
+                        fat           = result.fat,
+                        carbohydrates = result.carbs,
+                        sugar         = result.sugar,
+                        isRecipe      = state.isRecipe,
+                        barcode       = state.barcode.trim().ifBlank { null }
+                    )
+                )
+                _uiState.value = FoodEntryUiState(successMessage = "Lebensmittel gespeichert!")
+            }
         }
-
-        if (error != null) {
-            _uiState.update { it.copy(errorMessage = error, successMessage = null) }
-            return
-        }
-
-        repository.saveFood(
-            Food(
-                name = state.name.trim(),
-                calories = caloriesVal!!,
-                protein = proteinVal!!,
-                fat = fatVal!!,
-                carbohydrates = carbsVal!!,
-                sugar = sugarVal!!,
-                isRecipe = state.isRecipe,
-                barcode = state.barcode.trim().ifBlank { null }
-            )
-        )
-        _uiState.value = FoodEntryUiState(successMessage = "Lebensmittel gespeichert!")
     }
 }
