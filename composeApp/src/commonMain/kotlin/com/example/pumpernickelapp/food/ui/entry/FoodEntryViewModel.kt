@@ -1,16 +1,14 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package com.example.pumpernickelapp.food.ui.entry
 
 import androidx.lifecycle.ViewModel
+import com.example.pumpernickelapp.food.domain.AddFoodUseCase
+import com.example.pumpernickelapp.food.domain.DeleteFoodUseCase
 import com.example.pumpernickelapp.food.domain.Food
-import com.example.pumpernickelapp.food.domain.FoodRepository
-import com.example.pumpernickelapp.food.domain.ValidateFoodInputUseCase
+import com.example.pumpernickelapp.food.domain.LoadFoodsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlin.uuid.ExperimentalUuidApi
 
 data class FoodEntryUiState(
     val name: String = "",
@@ -20,7 +18,6 @@ data class FoodEntryUiState(
     val carbs: String = "",
     val sugar: String = "",
     val barcode: String = "",
-    val isRecipe: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null
 )
@@ -33,54 +30,48 @@ sealed interface FoodEntryEvent {
     data class OnCarbsChanged(val value: String) : FoodEntryEvent
     data class OnSugarChanged(val value: String) : FoodEntryEvent
     data class OnBarcodeChanged(val value: String) : FoodEntryEvent
-    data class OnIsRecipeChanged(val value: Boolean) : FoodEntryEvent
+    data class OnFoodDeleted(val food: Food) : FoodEntryEvent
     data object OnSaveClicked : FoodEntryEvent
     data object ClearMessages : FoodEntryEvent
 }
 
 class FoodEntryViewModel(
-    private val repository: FoodRepository,
-    private val validateFood: ValidateFoodInputUseCase
+    private val loadFoods: LoadFoodsUseCase,
+    private val addFood: AddFoodUseCase,
+    private val deleteFood: DeleteFoodUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FoodEntryUiState())
     val uiState: StateFlow<FoodEntryUiState> = _uiState.asStateFlow()
 
+    private val _foods = MutableStateFlow(loadFoods())
+    val foods: StateFlow<List<Food>> = _foods.asStateFlow()
+
     fun onEvent(event: FoodEntryEvent) {
         when (event) {
-            is FoodEntryEvent.OnNameChanged -> _uiState.update { it.copy(name = event.value) }
+            is FoodEntryEvent.OnNameChanged     -> _uiState.update { it.copy(name = event.value) }
             is FoodEntryEvent.OnCaloriesChanged -> _uiState.update { it.copy(calories = event.value) }
-            is FoodEntryEvent.OnProteinChanged -> _uiState.update { it.copy(protein = event.value) }
-            is FoodEntryEvent.OnFatChanged -> _uiState.update { it.copy(fat = event.value) }
-            is FoodEntryEvent.OnCarbsChanged -> _uiState.update { it.copy(carbs = event.value) }
-            is FoodEntryEvent.OnSugarChanged -> _uiState.update { it.copy(sugar = event.value) }
-            is FoodEntryEvent.OnBarcodeChanged -> _uiState.update { it.copy(barcode = event.value) }
-            is FoodEntryEvent.OnIsRecipeChanged -> _uiState.update { it.copy(isRecipe = event.value) }
-            FoodEntryEvent.OnSaveClicked -> validateAndSave()
-            FoodEntryEvent.ClearMessages -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
+            is FoodEntryEvent.OnProteinChanged  -> _uiState.update { it.copy(protein = event.value) }
+            is FoodEntryEvent.OnFatChanged      -> _uiState.update { it.copy(fat = event.value) }
+            is FoodEntryEvent.OnCarbsChanged    -> _uiState.update { it.copy(carbs = event.value) }
+            is FoodEntryEvent.OnSugarChanged    -> _uiState.update { it.copy(sugar = event.value) }
+            is FoodEntryEvent.OnBarcodeChanged  -> _uiState.update { it.copy(barcode = event.value) }
+            is FoodEntryEvent.OnFoodDeleted     -> {
+                deleteFood(event.food)
+                _foods.value = loadFoods()
+            }
+            FoodEntryEvent.OnSaveClicked  -> save()
+            FoodEntryEvent.ClearMessages  -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
         }
     }
-    private fun updateError(message: String) {
-        _uiState.update { it.copy(errorMessage = message, successMessage = null) }
-    }
 
-    private fun validateAndSave() {
-        val state = _uiState.value
-        when (val result = validateFood(state.name, state.calories, state.protein, state.fat, state.carbs, state.sugar)) {
-            is ValidateFoodInputUseCase.Result.Error -> updateError(result.message)
-            is ValidateFoodInputUseCase.Result.Valid -> {
-                repository.saveFood(
-                    Food(
-                        name          = state.name.trim(),
-                        calories      = result.calories,
-                        protein       = result.protein,
-                        fat           = result.fat,
-                        carbohydrates = result.carbs,
-                        sugar         = result.sugar,
-                        isRecipe      = state.isRecipe,
-                        barcode       = state.barcode.trim().ifBlank { null }
-                    )
-                )
+    private fun save() {
+        val s = _uiState.value
+        when (val result = addFood(s.name, s.calories, s.protein, s.fat, s.carbs, s.sugar, s.barcode)) {
+            is AddFoodUseCase.Result.Error   ->
+                _uiState.update { it.copy(errorMessage = result.message, successMessage = null) }
+            is AddFoodUseCase.Result.Success -> {
+                _foods.value = loadFoods()
                 _uiState.value = FoodEntryUiState(successMessage = "Lebensmittel gespeichert!")
             }
         }

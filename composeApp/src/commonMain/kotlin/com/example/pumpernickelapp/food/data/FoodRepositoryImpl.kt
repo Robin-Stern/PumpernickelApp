@@ -1,18 +1,21 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package com.example.pumpernickelapp.food.data
 
 import com.example.pumpernickelapp.food.domain.Food
 import com.example.pumpernickelapp.food.domain.FoodRepository
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.json.Json
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class FoodRepositoryImpl : FoodRepository {
     private val settings = Settings()
     private val json = Json { ignoreUnknownKeys = true }
 
     override fun saveFood(food: Food) {
-        val current = loadFoods().toMutableList()
-        current.add(food)
-        settings.putString(KEY_FOODS, json.encodeToString(current))
+        val updated = loadFoods() + food
+        settings.putString(KEY_FOODS, json.encodeToString(updated))
     }
 
     override fun loadFoods(): List<Food> {
@@ -21,14 +24,28 @@ class FoodRepositoryImpl : FoodRepository {
     }
 
     override fun saveRecipe(recipe: Food.Recipe) {
-        val current = loadRecipes().toMutableList()
-        current.add(recipe)
-        settings.putString(KEY_RECIPES, json.encodeToString(current))
+        val updated = loadRecipes() + recipe
+        settings.putString(KEY_RECIPES, json.encodeToString(updated))
     }
 
     override fun loadRecipes(): List<Food.Recipe> {
         val raw = settings.getStringOrNull(KEY_RECIPES) ?: return emptyList()
         return json.decodeFromString(raw)
+    }
+
+    override fun deleteFood(id: Uuid) {
+        val updated = loadFoods().filter { it.id != id }
+        settings.putString(KEY_FOODS, json.encodeToString(updated))
+    }
+
+    override fun deleteRecipe(id: Uuid) {
+        val updated = loadRecipes().filter { it.id != id }
+        settings.putString(KEY_RECIPES, json.encodeToString(updated))
+    }
+
+    override fun updateRecipe(recipe: Food.Recipe) {
+        val updated = loadRecipes().map { if (it.id == recipe.id) recipe else it }
+        settings.putString(KEY_RECIPES, json.encodeToString(updated))
     }
 
     private companion object {

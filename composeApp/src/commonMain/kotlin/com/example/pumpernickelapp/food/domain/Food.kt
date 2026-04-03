@@ -35,7 +35,8 @@ data class Food constructor(
         @Serializable(with = UuidSerializer::class)
         val id: Uuid = Uuid.random(),
         val name: String,
-        val ingredients: List<RecipeIngredient>
+        val ingredients: List<RecipeIngredient>,
+        val isFavorite: Boolean = false
     ) {
         init {
             require(name.isNotBlank()) { "Name darf nicht leer sein" }
