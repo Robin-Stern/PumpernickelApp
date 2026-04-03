@@ -34,7 +34,7 @@ class ValidateFoodInputUseCase {
             fatVal      == null || fatVal      < 0 -> Result.Error("Fett: gültige Zahl >= 0 eingeben.")
             carbsVal    == null || carbsVal    < 0 -> Result.Error("Kohlenhydrate: gültige Zahl >= 0 eingeben.")
             sugarVal    == null || sugarVal    < 0 -> Result.Error("Zucker: gültige Zahl >= 0 eingeben.")
-            sugarVal!!  > carbsVal!!               -> Result.Error("Zucker darf nicht größer als Kohlenhydrate sein.")
+            sugarVal  > carbsVal               -> Result.Error("Zucker darf nicht größer als Kohlenhydrate sein.")
             else -> Result.Valid(caloriesVal, proteinVal, fatVal, carbsVal, sugarVal)
         }
     }
