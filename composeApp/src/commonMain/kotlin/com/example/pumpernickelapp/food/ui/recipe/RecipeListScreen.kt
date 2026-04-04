@@ -135,9 +135,8 @@ private fun RecipeSwipeCard(
     val currentOnDelete by rememberUpdatedState(onDelete)
 
     val dismissState = rememberSwipeToDismissBoxState(
-        positionalThreshold = { totalDistance -> totalDistance * 0.3f },
-        velocityThreshold = { 100f },
-        confirmValueChange = { value ->
+        positionalThreshold = { totalDistance: Float -> totalDistance * 0.3f },
+        confirmValueChange = { value: SwipeToDismissBoxValue ->
             when (value) {
                 SwipeToDismissBoxValue.StartToEnd -> {
                     viewModel.onEvent(RecipeEvent.OnRecipeFavoriteToggled(currentRecipe))
@@ -155,10 +154,10 @@ private fun RecipeSwipeCard(
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
-            val offset = runCatching { dismissState.requireOffset() }.getOrDefault(0f)
-            val (backgroundColor, label, alignment) = when {
-                offset > 0f -> Triple(Color(0xFFFFF9C4), "★ Favorit", Alignment.CenterStart)
-                offset < 0f -> Triple(MaterialTheme.colorScheme.errorContainer, "🗑 Löschen", Alignment.CenterEnd)
+            val direction = dismissState.targetValue
+            val (backgroundColor, label, alignment) = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> Triple(Color(0xFFFFF9C4), "★ Favorit", Alignment.CenterStart)
+                SwipeToDismissBoxValue.EndToStart -> Triple(MaterialTheme.colorScheme.errorContainer, "🗑 Löschen", Alignment.CenterEnd)
                 else -> Triple(Color.Transparent, "", Alignment.Center)
             }
             Card(
