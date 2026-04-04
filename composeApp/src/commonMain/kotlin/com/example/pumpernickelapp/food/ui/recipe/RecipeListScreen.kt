@@ -135,6 +135,8 @@ private fun RecipeSwipeCard(
     val currentOnDelete by rememberUpdatedState(onDelete)
 
     val dismissState = rememberSwipeToDismissBoxState(
+        positionalThreshold = { totalDistance -> totalDistance * 0.3f },
+        velocityThreshold = { 100f },
         confirmValueChange = { value ->
             when (value) {
                 SwipeToDismissBoxValue.StartToEnd -> {
@@ -232,7 +234,7 @@ private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
                 ) {
                     Text(food?.name ?: "Unbekannt", style = MaterialTheme.typography.bodySmall)
                     Text(
-                        "${ingredient.amountGrams.roundToInt()} g  •  $kcal kcal",
+                        "${ingredient.amountGrams.roundToInt()} ${food?.unit?.label ?: "g"}  •  $kcal kcal",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -17,6 +17,7 @@ data class Food constructor(
     val fat: Double,
     val carbohydrates: Double,
     val sugar: Double,
+    val unit: FoodUnit = FoodUnit.GRAM,
     val isRecipe: Boolean = false,
     val barcode: String? = null
 ) {

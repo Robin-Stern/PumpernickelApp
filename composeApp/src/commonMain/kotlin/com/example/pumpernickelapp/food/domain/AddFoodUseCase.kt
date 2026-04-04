@@ -19,7 +19,8 @@ class AddFoodUseCase(
         fat: String,
         carbs: String,
         sugar: String,
-        barcode: String
+        barcode: String,
+        unit: FoodUnit = FoodUnit.GRAM
     ): Result {
         return when (val validation = validate(name, calories, protein, fat, carbs, sugar)) {
             is ValidateFoodInputUseCase.Result.Error -> Result.Error(validation.message)
@@ -32,6 +33,7 @@ class AddFoodUseCase(
                         fat           = validation.fat,
                         carbohydrates = validation.carbs,
                         sugar         = validation.sugar,
+                        unit          = unit,
                         barcode       = barcode.trim().ifBlank { null }
                     )
                 )

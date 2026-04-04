@@ -135,7 +135,7 @@ fun RecipeCreationScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifi
                         OutlinedTextField(
                             value = entry.amountGrams,
                             onValueChange = { viewModel.onEvent(RecipeEvent.OnIngredientAmountChanged(index, it)) },
-                            label = { Text("g") },
+                            label = { Text(entry.food.unit.label) },
                             modifier = Modifier.width(90.dp),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -224,7 +224,7 @@ private fun FoodSwipeToAddItem(food: Food, onSelected: () -> Unit) {
             ) {
                 Text(food.name, fontWeight = FontWeight.Medium)
                 Text(
-                    "${food.calories.roundToInt()} kcal/100g",
+                    "${food.calories.roundToInt()} kcal/100${food.unit.label}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

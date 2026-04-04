@@ -20,6 +20,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -34,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.pumpernickelapp.food.domain.Food
+import com.example.pumpernickelapp.food.domain.FoodUnit
 import com.example.pumpernickelapp.food.ui.components.MacroRow
 import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
@@ -120,6 +124,19 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
+            }
+
+            item {
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    FoodUnit.entries.forEachIndexed { index, unit ->
+                        SegmentedButton(
+                            selected = uiState.unit == unit,
+                            onClick = { viewModel.onEvent(FoodEntryEvent.OnUnitChanged(unit)) },
+                            shape = SegmentedButtonDefaults.itemShape(index, FoodUnit.entries.size),
+                            label = { Text(if (unit == FoodUnit.GRAM) "Gramm (g)" else "Milliliter (ml)") }
+                        )
+                    }
+                }
             }
 
             item {
@@ -224,7 +241,7 @@ private fun FoodSwipeCard(food: Food, onDelete: () -> Unit) {
                 ) {
                     Text(food.name, fontWeight = FontWeight.SemiBold)
                     Text(
-                        "${food.calories.roundToInt()} kcal/100g",
+                        "${food.calories.roundToInt()} kcal/100${food.unit.label}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold

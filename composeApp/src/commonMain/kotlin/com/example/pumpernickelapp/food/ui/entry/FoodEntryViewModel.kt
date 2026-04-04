@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.pumpernickelapp.food.domain.AddFoodUseCase
 import com.example.pumpernickelapp.food.domain.DeleteFoodUseCase
 import com.example.pumpernickelapp.food.domain.Food
+import com.example.pumpernickelapp.food.domain.FoodUnit
 import com.example.pumpernickelapp.food.domain.LoadFoodsUseCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ data class FoodEntryUiState(
     val carbs: String = "",
     val sugar: String = "",
     val barcode: String = "",
+    val unit: FoodUnit = FoodUnit.GRAM,
     val errorMessage: String? = null,
     val successMessage: String? = null
 )
@@ -33,6 +35,7 @@ sealed interface FoodEntryEvent {
     data class OnCarbsChanged(val value: String) : FoodEntryEvent
     data class OnSugarChanged(val value: String) : FoodEntryEvent
     data class OnBarcodeChanged(val value: String) : FoodEntryEvent
+    data class OnUnitChanged(val unit: FoodUnit) : FoodEntryEvent
     data class OnFoodDeleted(val food: Food) : FoodEntryEvent
     data object OnSaveClicked : FoodEntryEvent
     data object ClearMessages : FoodEntryEvent
@@ -59,6 +62,7 @@ class FoodEntryViewModel(
             is FoodEntryEvent.OnCarbsChanged    -> _uiState.update { it.copy(carbs = event.value) }
             is FoodEntryEvent.OnSugarChanged    -> _uiState.update { it.copy(sugar = event.value) }
             is FoodEntryEvent.OnBarcodeChanged  -> _uiState.update { it.copy(barcode = event.value) }
+            is FoodEntryEvent.OnUnitChanged     -> _uiState.update { it.copy(unit = event.unit) }
             is FoodEntryEvent.OnFoodDeleted     -> {
                 deleteFood(event.food)
                 _foods.value = loadFoods()
@@ -70,12 +74,12 @@ class FoodEntryViewModel(
 
     private fun save() {
         val s = _uiState.value
-        when (val result = addFood(s.name, s.calories, s.protein, s.fat, s.carbs, s.sugar, s.barcode)) {
+        when (val result = addFood(s.name, s.calories, s.protein, s.fat, s.carbs, s.sugar, s.barcode, s.unit)) {
             is AddFoodUseCase.Result.Error   ->
                 _uiState.update { it.copy(errorMessage = result.message, successMessage = null) }
             is AddFoodUseCase.Result.Success -> {
                 _foods.value = loadFoods()
-                _uiState.value = FoodEntryUiState(successMessage = "Lebensmittel gespeichert!")
+                _uiState.value = FoodEntryUiState(successMessage = "Lebensmittel gespeichert!"  )
                 viewModelScope.launch {
                     delay(3000)
                     _uiState.update { it.copy(successMessage = null) }
