@@ -1,14 +1,17 @@
 package com.example.pumpernickelapp.food.ui.entry
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.pumpernickelapp.food.domain.AddFoodUseCase
 import com.example.pumpernickelapp.food.domain.DeleteFoodUseCase
 import com.example.pumpernickelapp.food.domain.Food
 import com.example.pumpernickelapp.food.domain.LoadFoodsUseCase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class FoodEntryUiState(
     val name: String = "",
@@ -73,6 +76,10 @@ class FoodEntryViewModel(
             is AddFoodUseCase.Result.Success -> {
                 _foods.value = loadFoods()
                 _uiState.value = FoodEntryUiState(successMessage = "Lebensmittel gespeichert!")
+                viewModelScope.launch {
+                    delay(3000)
+                    _uiState.update { it.copy(successMessage = null) }
+                }
             }
         }
     }

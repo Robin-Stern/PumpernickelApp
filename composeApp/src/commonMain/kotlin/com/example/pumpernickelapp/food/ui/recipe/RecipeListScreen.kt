@@ -108,7 +108,7 @@ fun RecipeListScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) 
                     RecipeSwipeCard(
                         recipe = recipe,
                         viewModel = viewModel,
-                        onRightSwipe = {
+                        onDelete = {
                             if (recipe.isFavorite) {
                                 favoriteDeleteCandidate = recipe
                             } else {
@@ -129,21 +129,21 @@ fun RecipeListScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) 
 private fun RecipeSwipeCard(
     recipe: Food.Recipe,
     viewModel: RecipeViewModel,
-    onRightSwipe: () -> Unit
+    onDelete: () -> Unit
 ) {
     val currentRecipe by rememberUpdatedState(recipe)
-    val currentOnRightSwipe by rememberUpdatedState(onRightSwipe)
+    val currentOnDelete by rememberUpdatedState(onDelete)
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             when (value) {
                 SwipeToDismissBoxValue.StartToEnd -> {
-                    currentOnRightSwipe()
-                    !currentRecipe.isFavorite
+                    viewModel.onEvent(RecipeEvent.OnRecipeFavoriteToggled(currentRecipe))
+                    false  // Karte bleibt, nur Favorit-Status ändert sich
                 }
                 SwipeToDismissBoxValue.EndToStart -> {
-                    viewModel.onEvent(RecipeEvent.OnRecipeFavoriteToggled(currentRecipe))
-                    false
+                    currentOnDelete()
+                    !currentRecipe.isFavorite  // Bei Favorit: Dialog zeigen, Karte bleibt
                 }
                 else -> false
             }
@@ -153,13 +153,11 @@ private fun RecipeSwipeCard(
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
-            val (backgroundColor, label, alignment) = when (dismissState.targetValue) {
-                SwipeToDismissBoxValue.StartToEnd ->
-                    Triple(MaterialTheme.colorScheme.errorContainer, "🗑 Löschen", Alignment.CenterStart)
-                SwipeToDismissBoxValue.EndToStart ->
-                    Triple(Color(0xFFFFF9C4), if (currentRecipe.isFavorite) "★ Entfernen" else "★ Favorit", Alignment.CenterEnd)
-                else ->
-                    Triple(Color.Transparent, "", Alignment.Center)
+            val offset = runCatching { dismissState.requireOffset() }.getOrDefault(0f)
+            val (backgroundColor, label, alignment) = when {
+                offset > 0f -> Triple(Color(0xFFFFF9C4), "★ Favorit", Alignment.CenterStart)
+                offset < 0f -> Triple(MaterialTheme.colorScheme.errorContainer, "🗑 Löschen", Alignment.CenterEnd)
+                else -> Triple(Color.Transparent, "", Alignment.Center)
             }
             Card(
                 modifier = Modifier.fillMaxSize(),
