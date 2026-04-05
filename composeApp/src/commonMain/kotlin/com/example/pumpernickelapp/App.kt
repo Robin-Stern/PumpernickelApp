@@ -15,8 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryScreen
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryViewModel
+import com.example.pumpernickelapp.food.ui.recipe.RecipeCreationViewModel
+import com.example.pumpernickelapp.food.ui.recipe.RecipeListViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeScreen
-import com.example.pumpernickelapp.food.ui.recipe.RecipeViewModel
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -28,7 +29,8 @@ fun App() {
     }) {
         MaterialTheme {
             val foodEntryViewModel: FoodEntryViewModel = koinViewModel()
-            val recipeViewModel: RecipeViewModel = koinViewModel()
+            val recipeListViewModel: RecipeListViewModel = koinViewModel()
+            val recipeCreationViewModel: RecipeCreationViewModel = koinViewModel()
             var selectedTab by remember { mutableIntStateOf(0) }
 
             Scaffold(
@@ -55,7 +57,8 @@ fun App() {
                         modifier = Modifier.padding(innerPadding)
                     )
                     1 -> RecipeScreen(
-                        viewModel = recipeViewModel,
+                        listViewModel = recipeListViewModel,
+                        creationViewModel = recipeCreationViewModel,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

@@ -43,7 +43,11 @@ import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipeCreationScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) {
+fun RecipeCreationScreen(
+    viewModel: RecipeCreationViewModel,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val state by viewModel.creationState.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -52,7 +56,7 @@ fun RecipeCreationScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifi
             TopAppBar(
                 title = { Text("Neues Rezept") },
                 navigationIcon = {
-                    TextButton(onClick = { viewModel.onEvent(RecipeEvent.OnNavigateToList) }) {
+                    TextButton(onClick = onNavigateBack) {
                         Text("← Zurück")
                     }
                 }
@@ -71,7 +75,7 @@ fun RecipeCreationScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifi
             item {
                 OutlinedTextField(
                     value = state.recipeName,
-                    onValueChange = { viewModel.onEvent(RecipeEvent.OnRecipeNameChanged(it)) },
+                    onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnRecipeNameChanged(it)) },
                     label = { Text("Rezeptname *") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -81,7 +85,7 @@ fun RecipeCreationScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifi
             item {
                 OutlinedTextField(
                     value = state.searchQuery,
-                    onValueChange = { viewModel.onEvent(RecipeEvent.OnSearchQueryChanged(it)) },
+                    onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnSearchQueryChanged(it)) },
                     label = { Text("Lebensmittel suchen…") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -99,7 +103,7 @@ fun RecipeCreationScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifi
                 items(state.searchResults, key = { it.id }) { food ->
                     FoodSwipeToAddItem(
                         food = food,
-                        onSelected = { viewModel.onEvent(RecipeEvent.OnFoodSelected(food)) }
+                        onSelected = { viewModel.onEvent(RecipeCreationEvent.OnFoodSelected(food)) }
                     )
                 }
             }
@@ -134,14 +138,14 @@ fun RecipeCreationScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifi
                         Spacer(Modifier.width(8.dp))
                         OutlinedTextField(
                             value = entry.amountGrams,
-                            onValueChange = { viewModel.onEvent(RecipeEvent.OnIngredientAmountChanged(index, it)) },
+                            onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnIngredientAmountChanged(index, it)) },
                             label = { Text(entry.food.unit.label) },
                             modifier = Modifier.width(90.dp),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                         )
                         Spacer(Modifier.width(4.dp))
-                        TextButton(onClick = { viewModel.onEvent(RecipeEvent.OnIngredientRemoved(index)) }) {
+                        TextButton(onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientRemoved(index)) }) {
                             Text("✕")
                         }
                     }
@@ -170,7 +174,7 @@ fun RecipeCreationScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifi
                 }
                 Spacer(Modifier.height(4.dp))
                 Button(
-                    onClick = { viewModel.onEvent(RecipeEvent.OnSaveClicked) },
+                    onClick = { viewModel.onEvent(RecipeCreationEvent.OnSaveClicked) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Rezept speichern")
@@ -230,12 +234,7 @@ private fun FoodSwipeToAddItem(food: Food, onSelected: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            MacroRow(
-                protein = food.protein,
-                fat     = food.fat,
-                carbs   = food.carbohydrates,
-                sugar   = food.sugar
-            )
+            MacroRow(protein = food.protein, fat = food.fat, carbs = food.carbohydrates, sugar = food.sugar)
         }
         HorizontalDivider()
     }

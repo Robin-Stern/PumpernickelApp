@@ -9,7 +9,8 @@ import com.example.pumpernickelapp.food.domain.LoadFoodsUseCase
 import com.example.pumpernickelapp.food.domain.UpdateFoodUseCase
 import com.example.pumpernickelapp.food.domain.ValidateFoodInputUseCase
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryViewModel
-import com.example.pumpernickelapp.food.ui.recipe.RecipeViewModel
+import com.example.pumpernickelapp.food.ui.recipe.RecipeCreationViewModel
+import com.example.pumpernickelapp.food.ui.recipe.RecipeListViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -21,5 +22,6 @@ val appModule = module {
     single { DeleteFoodUseCase(get()) }
     single { UpdateFoodUseCase(get(), get()) }
     viewModel { FoodEntryViewModel(get(), get(), get(), get()) }
-    viewModel { RecipeViewModel(get()) }
+    viewModel { RecipeListViewModel(get()) }
+    viewModel { RecipeCreationViewModel(get()) }
 }

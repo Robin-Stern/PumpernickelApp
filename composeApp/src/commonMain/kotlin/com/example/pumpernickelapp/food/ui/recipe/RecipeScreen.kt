@@ -1,16 +1,42 @@
 package com.example.pumpernickelapp.food.ui.recipe
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
-fun RecipeScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) {
-    val showCreation by viewModel.showCreation.collectAsStateWithLifecycle()
+fun RecipeScreen(
+    listViewModel: RecipeListViewModel,
+    creationViewModel: RecipeCreationViewModel,
+    modifier: Modifier = Modifier
+) {
+    var showCreation by remember { mutableStateOf(false) }
+
+    LaunchedEffect(creationViewModel) {
+        creationViewModel.savedEvent.collect {
+            listViewModel.refresh()
+            showCreation = false
+        }
+    }
+
     if (showCreation) {
-        RecipeCreationScreen(viewModel = viewModel, modifier = modifier)
+        RecipeCreationScreen(
+            viewModel = creationViewModel,
+            onNavigateBack = { showCreation = false },
+            modifier = modifier
+        )
     } else {
-        RecipeListScreen(viewModel = viewModel, modifier = modifier)
+        RecipeListScreen(
+            viewModel = listViewModel,
+            onCreateRecipe = {
+                creationViewModel.reset()
+                showCreation = true
+            },
+            modifier = modifier
+        )
     }
 }

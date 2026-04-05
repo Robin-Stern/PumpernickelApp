@@ -1,4 +1,4 @@
-package com.example.pumpernickelapp.food.ui
+package com.example.pumpernickelapp.ui
 
 import androidx.compose.ui.graphics.Color
 

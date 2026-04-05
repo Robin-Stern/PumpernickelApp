@@ -42,13 +42,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.pumpernickelapp.food.domain.Food
 import com.example.pumpernickelapp.food.ui.components.MacroRow
-import com.example.pumpernickelapp.food.ui.AppColors
+import com.example.pumpernickelapp.ui.AppColors
 import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipeListScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) {
+fun RecipeListScreen(
+    viewModel: RecipeListViewModel,
+    onCreateRecipe: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
     var favoriteDeleteCandidate by remember { mutableStateOf<Food.Recipe?>(null) }
 
@@ -60,7 +64,7 @@ fun RecipeListScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) 
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.onEvent(RecipeEvent.OnRecipeDeleted(recipe))
+                        viewModel.onEvent(RecipeListEvent.OnRecipeDeleted(recipe))
                         favoriteDeleteCandidate = null
                     }
                 ) {
@@ -70,7 +74,7 @@ fun RecipeListScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) 
             dismissButton = {
                 TextButton(
                     onClick = {
-                        viewModel.onEvent(RecipeEvent.OnRecipeFavoriteToggled(recipe))
+                        viewModel.onEvent(RecipeListEvent.OnRecipeFavoriteToggled(recipe))
                         favoriteDeleteCandidate = null
                     }
                 ) {
@@ -84,7 +88,7 @@ fun RecipeListScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) 
         modifier = modifier,
         topBar = { TopAppBar(title = { Text("Rezepte") }) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { viewModel.onEvent(RecipeEvent.OnShowCreation) }) {
+            FloatingActionButton(onClick = onCreateRecipe) {
                 Text("+", style = MaterialTheme.typography.titleLarge)
             }
         }
@@ -114,7 +118,7 @@ fun RecipeListScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) 
                             if (recipe.isFavorite) {
                                 favoriteDeleteCandidate = recipe
                             } else {
-                                viewModel.onEvent(RecipeEvent.OnRecipeDeleted(recipe))
+                                viewModel.onEvent(RecipeListEvent.OnRecipeDeleted(recipe))
                             }
                         }
                     )
@@ -130,7 +134,7 @@ fun RecipeListScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifier) 
 @Composable
 private fun RecipeSwipeCard(
     recipe: Food.Recipe,
-    viewModel: RecipeViewModel,
+    viewModel: RecipeListViewModel,
     onDelete: () -> Unit
 ) {
     val currentRecipe by rememberUpdatedState(recipe)
@@ -141,12 +145,12 @@ private fun RecipeSwipeCard(
         confirmValueChange = { value: SwipeToDismissBoxValue ->
             when (value) {
                 SwipeToDismissBoxValue.StartToEnd -> {
-                    viewModel.onEvent(RecipeEvent.OnRecipeFavoriteToggled(currentRecipe))
-                    false  // Karte bleibt, nur Favorit-Status ändert sich
+                    viewModel.onEvent(RecipeListEvent.OnRecipeFavoriteToggled(currentRecipe))
+                    false
                 }
                 SwipeToDismissBoxValue.EndToStart -> {
                     currentOnDelete()
-                    !currentRecipe.isFavorite  // Bei Favorit: Dialog zeigen, Karte bleibt
+                    !currentRecipe.isFavorite
                 }
                 else -> false
             }
@@ -184,7 +188,7 @@ private fun RecipeSwipeCard(
 }
 
 @Composable
-private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
+private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeListViewModel) {
     val macros = viewModel.calculateRecipeMacros(recipe)
     val foodMap = viewModel.foods.collectAsStateWithLifecycle().value.associateBy { it.id }
     var expanded by remember { mutableStateOf(false) }
@@ -201,8 +205,6 @@ private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
         )
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-
-            // Kopfzeile: Stern + Name / kcal + Gesamtmenge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -216,11 +218,7 @@ private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
                     if (recipe.isFavorite) {
                         Text("★", color = AppColors.favoriteStar, style = MaterialTheme.typography.titleMedium)
                     }
-                    Text(
-                        recipe.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(recipe.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
@@ -237,10 +235,8 @@ private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
                 }
             }
 
-            // Gesamt-Makros immer sichtbar
             MacroRow(protein = macros.protein, fat = macros.fat, carbs = macros.carbs, sugar = macros.sugar)
 
-            // Aufklappbare Zutatenliste
             AnimatedVisibility(visible = expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     HorizontalDivider()
@@ -269,7 +265,6 @@ private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
                 }
             }
 
-            // Hinweis aufklappen/zuklappen
             Text(
                 if (expanded) "▲ Zutaten ausblenden" else "▼ ${recipe.ingredients.size} Zutaten",
                 style = MaterialTheme.typography.labelSmall,
