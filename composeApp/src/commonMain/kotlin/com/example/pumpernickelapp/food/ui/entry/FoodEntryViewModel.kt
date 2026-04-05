@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package com.example.pumpernickelapp.food.ui.entry
 
 import androidx.lifecycle.ViewModel
@@ -7,12 +9,18 @@ import com.example.pumpernickelapp.food.domain.DeleteFoodUseCase
 import com.example.pumpernickelapp.food.domain.Food
 import com.example.pumpernickelapp.food.domain.FoodUnit
 import com.example.pumpernickelapp.food.domain.LoadFoodsUseCase
+import com.example.pumpernickelapp.food.domain.UpdateFoodUseCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 data class FoodEntryUiState(
     val name: String = "",
@@ -24,7 +32,9 @@ data class FoodEntryUiState(
     val barcode: String = "",
     val unit: FoodUnit = FoodUnit.GRAM,
     val errorMessage: String? = null,
-    val successMessage: String? = null
+    val successMessage: String? = null,
+    val editingFoodId: Uuid? = null,
+    val searchQuery: String = ""
 )
 
 sealed interface FoodEntryEvent {
@@ -37,6 +47,9 @@ sealed interface FoodEntryEvent {
     data class OnBarcodeChanged(val value: String) : FoodEntryEvent
     data class OnUnitChanged(val unit: FoodUnit) : FoodEntryEvent
     data class OnFoodDeleted(val food: Food) : FoodEntryEvent
+    data class OnFoodSelected(val food: Food) : FoodEntryEvent
+    data class OnSearchQueryChanged(val value: String) : FoodEntryEvent
+    data object OnCancelEdit : FoodEntryEvent
     data object OnSaveClicked : FoodEntryEvent
     data object ClearMessages : FoodEntryEvent
 }
@@ -44,7 +57,8 @@ sealed interface FoodEntryEvent {
 class FoodEntryViewModel(
     private val loadFoods: LoadFoodsUseCase,
     private val addFood: AddFoodUseCase,
-    private val deleteFood: DeleteFoodUseCase
+    private val deleteFood: DeleteFoodUseCase,
+    private val updateFood: UpdateFoodUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FoodEntryUiState())
@@ -52,6 +66,11 @@ class FoodEntryViewModel(
 
     private val _foods = MutableStateFlow(loadFoods())
     val foods: StateFlow<List<Food>> = _foods.asStateFlow()
+
+    val filteredFoods: StateFlow<List<Food>> = combine(_foods, _uiState) { foods, state ->
+        if (state.searchQuery.isBlank()) foods
+        else foods.filter { it.name.contains(state.searchQuery.trim(), ignoreCase = true) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), _foods.value)
 
     fun onEvent(event: FoodEntryEvent) {
         when (event) {
@@ -67,22 +86,57 @@ class FoodEntryViewModel(
                 deleteFood(event.food)
                 _foods.value = loadFoods()
             }
-            FoodEntryEvent.OnSaveClicked  -> save()
-            FoodEntryEvent.ClearMessages  -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
+            is FoodEntryEvent.OnFoodSelected    -> loadFoodForEdit(event.food)
+            is FoodEntryEvent.OnSearchQueryChanged -> _uiState.update { it.copy(searchQuery = event.value) }
+            FoodEntryEvent.OnCancelEdit         -> _uiState.value = FoodEntryUiState()
+            FoodEntryEvent.OnSaveClicked        -> save()
+            FoodEntryEvent.ClearMessages        -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
         }
     }
 
+    private fun loadFoodForEdit(food: Food) {
+        _uiState.value = FoodEntryUiState(
+            editingFoodId = food.id,
+            name          = food.name,
+            calories      = formatNumber(food.calories),
+            protein       = formatNumber(food.protein),
+            fat           = formatNumber(food.fat),
+            carbs         = formatNumber(food.carbohydrates),
+            sugar         = formatNumber(food.sugar),
+            barcode       = food.barcode ?: "",
+            unit          = food.unit
+        )
+    }
+
+    private fun formatNumber(d: Double): String =
+        if (d == d.toLong().toDouble()) d.toLong().toString() else d.toString()
+
     private fun save() {
         val s = _uiState.value
-        when (val result = addFood(s.name, s.calories, s.protein, s.fat, s.carbs, s.sugar, s.barcode, s.unit)) {
-            is AddFoodUseCase.Result.Error   ->
-                _uiState.update { it.copy(errorMessage = result.message, successMessage = null) }
-            is AddFoodUseCase.Result.Success -> {
-                _foods.value = loadFoods()
-                _uiState.value = FoodEntryUiState(successMessage = "Lebensmittel gespeichert!"  )
-                viewModelScope.launch {
-                    delay(3000)
-                    _uiState.update { it.copy(successMessage = null) }
+        if (s.editingFoodId != null) {
+            when (val result = updateFood(s.editingFoodId, s.name, s.calories, s.protein, s.fat, s.carbs, s.sugar, s.barcode, s.unit)) {
+                is UpdateFoodUseCase.Result.Error   ->
+                    _uiState.update { it.copy(errorMessage = result.message, successMessage = null) }
+                is UpdateFoodUseCase.Result.Success -> {
+                    _foods.value = loadFoods()
+                    _uiState.value = FoodEntryUiState(successMessage = "Lebensmittel aktualisiert!")
+                    viewModelScope.launch {
+                        delay(3000)
+                        _uiState.update { it.copy(successMessage = null) }
+                    }
+                }
+            }
+        } else {
+            when (val result = addFood(s.name, s.calories, s.protein, s.fat, s.carbs, s.sugar, s.barcode, s.unit)) {
+                is AddFoodUseCase.Result.Error   ->
+                    _uiState.update { it.copy(errorMessage = result.message, successMessage = null) }
+                is AddFoodUseCase.Result.Success -> {
+                    _foods.value = loadFoods()
+                    _uiState.value = FoodEntryUiState(successMessage = "Lebensmittel gespeichert!")
+                    viewModelScope.launch {
+                        delay(3000)
+                        _uiState.update { it.copy(successMessage = null) }
+                    }
                 }
             }
         }

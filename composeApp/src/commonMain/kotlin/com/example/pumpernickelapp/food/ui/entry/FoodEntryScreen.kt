@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package com.example.pumpernickelapp.food.ui.entry
 
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +20,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -42,15 +45,20 @@ import com.example.pumpernickelapp.food.ui.components.MacroRow
 import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val foods by viewModel.foods.collectAsStateWithLifecycle()
+    val filteredFoods by viewModel.filteredFoods.collectAsStateWithLifecycle()
+    val isEditing = uiState.editingFoodId != null
 
     Scaffold(
         modifier = modifier,
-        topBar = { TopAppBar(title = { Text("Lebensmittel erfassen") }) }
+        topBar = {
+            TopAppBar(title = {
+                Text(if (isEditing) "Lebensmittel bearbeiten" else "Lebensmittel erfassen")
+            })
+        }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -83,47 +91,45 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
             }
 
             item {
-                OutlinedTextField(
-                    value = uiState.protein,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnProteinChanged(it)) },
-                    label = { Text("Protein (g) *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = uiState.protein,
+                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnProteinChanged(it)) },
+                        label = { Text("Protein (g) *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                    OutlinedTextField(
+                        value = uiState.fat,
+                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnFatChanged(it)) },
+                        label = { Text("Fett (g) *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                }
             }
 
             item {
-                OutlinedTextField(
-                    value = uiState.fat,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnFatChanged(it)) },
-                    label = { Text("Fett (g) *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
-            }
-
-            item {
-                OutlinedTextField(
-                    value = uiState.carbs,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCarbsChanged(it)) },
-                    label = { Text("Kohlenhydrate (g) *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
-            }
-
-            item {
-                OutlinedTextField(
-                    value = uiState.sugar,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSugarChanged(it)) },
-                    label = { Text("davon Zucker (g) *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = uiState.carbs,
+                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCarbsChanged(it)) },
+                        label = { Text("Kohlenhydrate (g) *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                    OutlinedTextField(
+                        value = uiState.sugar,
+                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSugarChanged(it)) },
+                        label = { Text("davon Zucker (g) *") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                }
             }
 
             item {
@@ -165,11 +171,28 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-                Button(
-                    onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Speichern")
+                if (isEditing) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { viewModel.onEvent(FoodEntryEvent.OnCancelEdit) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Abbrechen")
+                        }
+                        Button(
+                            onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Aktualisieren")
+                        }
+                    }
+                } else {
+                    Button(
+                        onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Speichern")
+                    }
                 }
             }
 
@@ -180,18 +203,31 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                 Text("Gespeicherte Lebensmittel", style = MaterialTheme.typography.titleMedium)
             }
 
-            if (foods.isEmpty()) {
+            item {
+                OutlinedTextField(
+                    value = uiState.searchQuery,
+                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSearchQueryChanged(it)) },
+                    label = { Text("Suchen…") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
+
+            if (filteredFoods.isEmpty()) {
                 item {
                     Text(
-                        "Noch keine Lebensmittel gespeichert.",
+                        if (uiState.searchQuery.isBlank()) "Noch keine Lebensmittel gespeichert."
+                        else "Keine Lebensmittel gefunden.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
-                items(foods.reversed(), key = { it.id }) { food ->
-                    FoodSwipeCard(food = food, onDelete = {
-                        viewModel.onEvent(FoodEntryEvent.OnFoodDeleted(food))
-                    })
+                items(filteredFoods.reversed(), key = { it.id }) { food ->
+                    FoodSwipeCard(
+                        food = food,
+                        onDelete = { viewModel.onEvent(FoodEntryEvent.OnFoodDeleted(food)) },
+                        onEdit = { viewModel.onEvent(FoodEntryEvent.OnFoodSelected(food)) }
+                    )
                 }
             }
 
@@ -202,7 +238,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FoodSwipeCard(food: Food, onDelete: () -> Unit) {
+private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.StartToEnd) {
@@ -231,6 +267,7 @@ private fun FoodSwipeCard(food: Food, onDelete: () -> Unit) {
         }
     ) {
         Card(
+            onClick = onEdit,
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {

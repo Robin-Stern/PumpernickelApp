@@ -13,61 +13,52 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.pumpernickelapp.food.data.FoodRepositoryImpl
-import com.example.pumpernickelapp.food.data.seedDemoDataIfEmpty
-import com.example.pumpernickelapp.food.domain.AddFoodUseCase
-import com.example.pumpernickelapp.food.domain.DeleteFoodUseCase
-import com.example.pumpernickelapp.food.domain.LoadFoodsUseCase
-import com.example.pumpernickelapp.food.domain.ValidateFoodInputUseCase
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryScreen
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeScreen
 import com.example.pumpernickelapp.food.ui.recipe.RecipeViewModel
+import org.koin.compose.KoinApplication
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
-        val repository = FoodRepositoryImpl().also { seedDemoDataIfEmpty(it) }
-        val validate = ValidateFoodInputUseCase()
-        val foodEntryViewModel: FoodEntryViewModel = viewModel {
-            FoodEntryViewModel(
-                loadFoods  = LoadFoodsUseCase(repository),
-                addFood    = AddFoodUseCase(repository, validate),
-                deleteFood = DeleteFoodUseCase(repository)
-            )
-        }
-        val recipeViewModel: RecipeViewModel = viewModel { RecipeViewModel(repository) }
-        var selectedTab by remember { mutableIntStateOf(0) }
+    KoinApplication(application = {
+        modules(appModule)
+    }) {
+        MaterialTheme {
+            val foodEntryViewModel: FoodEntryViewModel = koinViewModel()
+            val recipeViewModel: RecipeViewModel = koinViewModel()
+            var selectedTab by remember { mutableIntStateOf(0) }
 
-        Scaffold(
-            bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        label = { Text("Lebensmittel") },
-                        icon = {}
+            Scaffold(
+                bottomBar = {
+                    NavigationBar {
+                        NavigationBarItem(
+                            selected = selectedTab == 0,
+                            onClick = { selectedTab = 0 },
+                            label = { Text("Lebensmittel") },
+                            icon = {}
+                        )
+                        NavigationBarItem(
+                            selected = selectedTab == 1,
+                            onClick = { selectedTab = 1 },
+                            label = { Text("Rezepte") },
+                            icon = {}
+                        )
+                    }
+                }
+            ) { innerPadding ->
+                when (selectedTab) {
+                    0 -> FoodEntryScreen(
+                        viewModel = foodEntryViewModel,
+                        modifier = Modifier.padding(innerPadding)
                     )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        label = { Text("Rezepte") },
-                        icon = {}
+                    1 -> RecipeScreen(
+                        viewModel = recipeViewModel,
+                        modifier = Modifier.padding(innerPadding)
                     )
                 }
-            }
-        ) { innerPadding ->
-            when (selectedTab) {
-                0 -> FoodEntryScreen(
-                    viewModel = foodEntryViewModel,
-                    modifier = Modifier.padding(innerPadding)
-                )
-                1 -> RecipeScreen(
-                    viewModel = recipeViewModel,
-                    modifier = Modifier.padding(innerPadding)
-                )
             }
         }
     }

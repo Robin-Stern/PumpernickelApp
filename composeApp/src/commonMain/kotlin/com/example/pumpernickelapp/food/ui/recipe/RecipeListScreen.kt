@@ -209,12 +209,20 @@ private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
                         fontWeight = FontWeight.Bold
                     )
                 }
-                Text(
-                    "${macros.calories.roundToInt()} kcal",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        "${macros.calories.roundToInt()} kcal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    val totalGrams = recipe.ingredients.sumOf { it.amountGrams }.roundToInt()
+                    Text(
+                        "ergibt $totalGrams g",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             MacroRow(
                 protein = macros.protein,

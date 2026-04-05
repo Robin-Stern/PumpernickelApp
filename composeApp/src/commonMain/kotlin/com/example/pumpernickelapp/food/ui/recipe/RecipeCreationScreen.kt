@@ -186,7 +186,8 @@ fun RecipeCreationScreen(viewModel: RecipeViewModel, modifier: Modifier = Modifi
 @Composable
 private fun FoodSwipeToAddItem(food: Food, onSelected: () -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
+        positionalThreshold = { totalDistance: Float -> totalDistance * 0.3f },
+        confirmValueChange = { value: SwipeToDismissBoxValue ->
             if (value == SwipeToDismissBoxValue.StartToEnd) onSelected()
             false
         }

@@ -38,6 +38,11 @@ class FoodRepositoryImpl : FoodRepository {
         settings.putString(KEY_FOODS, json.encodeToString(updated))
     }
 
+    override fun updateFood(food: Food) {
+        val updated = loadFoods().map { if (it.id == food.id) food else it }
+        settings.putString(KEY_FOODS, json.encodeToString(updated))
+    }
+
     override fun deleteRecipe(id: Uuid) {
         val updated = loadRecipes().filter { it.id != id }
         settings.putString(KEY_RECIPES, json.encodeToString(updated))
