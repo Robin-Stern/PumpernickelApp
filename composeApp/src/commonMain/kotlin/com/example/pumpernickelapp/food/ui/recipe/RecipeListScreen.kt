@@ -2,6 +2,7 @@
 
 package com.example.pumpernickelapp.food.ui.recipe
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.pumpernickelapp.food.domain.Food
 import com.example.pumpernickelapp.food.ui.components.MacroRow
+import com.example.pumpernickelapp.food.ui.AppColors
 import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -156,7 +158,7 @@ private fun RecipeSwipeCard(
         backgroundContent = {
             val direction = dismissState.targetValue
             val (backgroundColor, label, alignment) = when (direction) {
-                SwipeToDismissBoxValue.StartToEnd -> Triple(Color(0xFFFFF9C4), "★ Favorit", Alignment.CenterStart)
+                SwipeToDismissBoxValue.StartToEnd -> Triple(AppColors.favoriteBackground, "★ Favorit", Alignment.CenterStart)
                 SwipeToDismissBoxValue.EndToStart -> Triple(MaterialTheme.colorScheme.errorContainer, "🗑 Löschen", Alignment.CenterEnd)
                 else -> Triple(Color.Transparent, "", Alignment.Center)
             }
@@ -185,12 +187,22 @@ private fun RecipeSwipeCard(
 private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
     val macros = viewModel.calculateRecipeMacros(recipe)
     val foodMap = viewModel.foods.collectAsStateWithLifecycle().value.associateBy { it.id }
+    var expanded by remember { mutableStateOf(false) }
+    val totalGrams = recipe.ingredients.sumOf { it.amountGrams }.roundToInt()
 
     Card(
+        onClick = { expanded = !expanded },
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = if (recipe.isFavorite)
+                MaterialTheme.colorScheme.secondaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+
+            // Kopfzeile: Stern + Name / kcal + Gesamtmenge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -198,14 +210,15 @@ private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
                 ) {
                     if (recipe.isFavorite) {
-                        Text("★", color = Color(0xFFFBC02D), style = MaterialTheme.typography.titleSmall)
+                        Text("★", color = AppColors.favoriteStar, style = MaterialTheme.typography.titleMedium)
                     }
                     Text(
                         recipe.name,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -216,7 +229,6 @@ private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
-                    val totalGrams = recipe.ingredients.sumOf { it.amountGrams }.roundToInt()
                     Text(
                         "ergibt $totalGrams g",
                         style = MaterialTheme.typography.bodySmall,
@@ -224,37 +236,45 @@ private fun RecipeCard(recipe: Food.Recipe, viewModel: RecipeViewModel) {
                     )
                 }
             }
-            MacroRow(
-                protein = macros.protein,
-                fat     = macros.fat,
-                carbs   = macros.carbs,
-                sugar   = macros.sugar
-            )
-            HorizontalDivider()
-            recipe.ingredients.forEach { ingredient ->
-                val food = foodMap[ingredient.foodId]
-                val factor = ingredient.amountGrams / 100.0
-                val kcal = if (food != null) (food.calories * factor).roundToInt() else 0
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(food?.name ?: "Unbekannt", style = MaterialTheme.typography.bodySmall)
-                    Text(
-                        "${ingredient.amountGrams.roundToInt()} ${food?.unit?.label ?: "g"}  •  $kcal kcal",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (food != null) {
-                    MacroRow(
-                        protein = food.protein * factor,
-                        fat     = food.fat * factor,
-                        carbs   = food.carbohydrates * factor,
-                        sugar   = food.sugar * factor
-                    )
+
+            // Gesamt-Makros immer sichtbar
+            MacroRow(protein = macros.protein, fat = macros.fat, carbs = macros.carbs, sugar = macros.sugar)
+
+            // Aufklappbare Zutatenliste
+            AnimatedVisibility(visible = expanded) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    HorizontalDivider()
+                    recipe.ingredients.forEach { ingredient ->
+                        val food = foodMap[ingredient.foodId]
+                        val factor = ingredient.amountGrams / 100.0
+                        val kcal = if (food != null) (food.calories * factor).roundToInt() else 0
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                food?.name ?: "Unbekannt",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                "${ingredient.amountGrams.roundToInt()} ${food?.unit?.label ?: "g"}  •  $kcal kcal",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
+
+            // Hinweis aufklappen/zuklappen
+            Text(
+                if (expanded) "▲ Zutaten ausblenden" else "▼ ${recipe.ingredients.size} Zutaten",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
