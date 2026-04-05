@@ -18,8 +18,12 @@ import com.example.pumpernickelapp.food.ui.entry.FoodEntryViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeCreationViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeListViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeScreen
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
+import pumpernickelapp.composeapp.generated.resources.Res
+import pumpernickelapp.composeapp.generated.resources.tab_food
+import pumpernickelapp.composeapp.generated.resources.tab_recipes
 
 @Composable
 @Preview
@@ -39,13 +43,13 @@ fun App() {
                         NavigationBarItem(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
-                            label = { Text("Lebensmittel") },
+                            label = { Text(stringResource(Res.string.tab_food)) },
                             icon = {}
                         )
                         NavigationBarItem(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
-                            label = { Text("Rezepte") },
+                            label = { Text(stringResource(Res.string.tab_recipes)) },
                             icon = {}
                         )
                     }

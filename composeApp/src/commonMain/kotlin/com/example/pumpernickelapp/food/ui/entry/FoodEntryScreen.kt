@@ -42,6 +42,27 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.pumpernickelapp.food.domain.Food
 import com.example.pumpernickelapp.food.domain.FoodUnit
 import com.example.pumpernickelapp.food.ui.components.MacroRow
+import org.jetbrains.compose.resources.stringResource
+import pumpernickelapp.composeapp.generated.resources.Res
+import pumpernickelapp.composeapp.generated.resources.action_cancel
+import pumpernickelapp.composeapp.generated.resources.action_delete
+import pumpernickelapp.composeapp.generated.resources.action_save
+import pumpernickelapp.composeapp.generated.resources.action_update
+import pumpernickelapp.composeapp.generated.resources.heading_saved_foods
+import pumpernickelapp.composeapp.generated.resources.hint_search
+import pumpernickelapp.composeapp.generated.resources.label_barcode
+import pumpernickelapp.composeapp.generated.resources.label_calories
+import pumpernickelapp.composeapp.generated.resources.label_carbs
+import pumpernickelapp.composeapp.generated.resources.label_fat
+import pumpernickelapp.composeapp.generated.resources.label_name
+import pumpernickelapp.composeapp.generated.resources.label_protein
+import pumpernickelapp.composeapp.generated.resources.label_sugar
+import pumpernickelapp.composeapp.generated.resources.msg_no_foods
+import pumpernickelapp.composeapp.generated.resources.msg_no_foods_found
+import pumpernickelapp.composeapp.generated.resources.title_food_edit
+import pumpernickelapp.composeapp.generated.resources.title_food_entry
+import pumpernickelapp.composeapp.generated.resources.unit_gram
+import pumpernickelapp.composeapp.generated.resources.unit_ml
 import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -56,7 +77,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
         modifier = modifier,
         topBar = {
             TopAppBar(title = {
-                Text(if (isEditing) "Lebensmittel bearbeiten" else "Lebensmittel erfassen")
+                Text(stringResource(if (isEditing) Res.string.title_food_edit else Res.string.title_food_entry))
             })
         }
     ) { innerPadding ->
@@ -73,7 +94,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                 OutlinedTextField(
                     value = uiState.name,
                     onValueChange = { viewModel.onEvent(FoodEntryEvent.OnNameChanged(it)) },
-                    label = { Text("Name *") },
+                    label = { Text(stringResource(Res.string.label_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -83,7 +104,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                 OutlinedTextField(
                     value = uiState.calories,
                     onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCaloriesChanged(it)) },
-                    label = { Text("Kalorien (kcal) *") },
+                    label = { Text(stringResource(Res.string.label_calories)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -95,7 +116,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                     OutlinedTextField(
                         value = uiState.protein,
                         onValueChange = { viewModel.onEvent(FoodEntryEvent.OnProteinChanged(it)) },
-                        label = { Text("Protein (g) *") },
+                        label = { Text(stringResource(Res.string.label_protein)) },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -103,7 +124,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                     OutlinedTextField(
                         value = uiState.fat,
                         onValueChange = { viewModel.onEvent(FoodEntryEvent.OnFatChanged(it)) },
-                        label = { Text("Fett (g) *") },
+                        label = { Text(stringResource(Res.string.label_fat)) },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -116,7 +137,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                     OutlinedTextField(
                         value = uiState.carbs,
                         onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCarbsChanged(it)) },
-                        label = { Text("Kohlenhydrate (g) *") },
+                        label = { Text(stringResource(Res.string.label_carbs)) },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -124,7 +145,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                     OutlinedTextField(
                         value = uiState.sugar,
                         onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSugarChanged(it)) },
-                        label = { Text("davon Zucker (g) *") },
+                        label = { Text(stringResource(Res.string.label_sugar)) },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -139,7 +160,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                             selected = uiState.unit == unit,
                             onClick = { viewModel.onEvent(FoodEntryEvent.OnUnitChanged(unit)) },
                             shape = SegmentedButtonDefaults.itemShape(index, FoodUnit.entries.size),
-                            label = { Text(if (unit == FoodUnit.GRAM) "Gramm (g)" else "Milliliter (ml)") }
+                            label = { Text(stringResource(if (unit == FoodUnit.GRAM) Res.string.unit_gram else Res.string.unit_ml)) }
                         )
                     }
                 }
@@ -149,7 +170,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                 OutlinedTextField(
                     value = uiState.barcode,
                     onValueChange = { viewModel.onEvent(FoodEntryEvent.OnBarcodeChanged(it)) },
-                    label = { Text("Barcode (optional)") },
+                    label = { Text(stringResource(Res.string.label_barcode)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -158,18 +179,10 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
 
             item {
                 uiState.errorMessage?.let {
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(text = it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
                 uiState.successMessage?.let {
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(text = it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
                 }
                 if (isEditing) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -177,13 +190,13 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                             onClick = { viewModel.onEvent(FoodEntryEvent.OnCancelEdit) },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Abbrechen")
+                            Text(stringResource(Res.string.action_cancel))
                         }
                         Button(
                             onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Aktualisieren")
+                            Text(stringResource(Res.string.action_update))
                         }
                     }
                 } else {
@@ -191,7 +204,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                         onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Speichern")
+                        Text(stringResource(Res.string.action_save))
                     }
                 }
             }
@@ -200,14 +213,14 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
                 Spacer(Modifier.height(8.dp))
                 HorizontalDivider()
                 Spacer(Modifier.height(8.dp))
-                Text("Gespeicherte Lebensmittel", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(Res.string.heading_saved_foods), style = MaterialTheme.typography.titleMedium)
             }
 
             item {
                 OutlinedTextField(
                     value = uiState.searchQuery,
                     onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSearchQueryChanged(it)) },
-                    label = { Text("Suchen…") },
+                    label = { Text(stringResource(Res.string.hint_search)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -216,8 +229,7 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
             if (filteredFoods.isEmpty()) {
                 item {
                     Text(
-                        if (uiState.searchQuery.isBlank()) "Noch keine Lebensmittel gespeichert."
-                        else "Keine Lebensmittel gefunden.",
+                        stringResource(if (uiState.searchQuery.isBlank()) Res.string.msg_no_foods else Res.string.msg_no_foods_found),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -261,7 +273,7 @@ private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) 
                         .padding(horizontal = 20.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    Text("🗑 Löschen", fontWeight = FontWeight.Bold)
+                    Text(stringResource(Res.string.action_delete), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -284,12 +296,7 @@ private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) 
                         fontWeight = FontWeight.Bold
                     )
                 }
-                MacroRow(
-                    protein = food.protein,
-                    fat = food.fat,
-                    carbs = food.carbohydrates,
-                    sugar = food.sugar
-                )
+                MacroRow(protein = food.protein, fat = food.fat, carbs = food.carbohydrates, sugar = food.sugar)
             }
         }
     }

@@ -3,9 +3,12 @@
 package com.example.pumpernickelapp.food.ui.recipe
 
 import androidx.lifecycle.ViewModel
+import com.example.pumpernickelapp.food.domain.CalculateRecipeMacrosUseCase
 import com.example.pumpernickelapp.food.domain.Food
 import com.example.pumpernickelapp.food.domain.FoodRepository
+import com.example.pumpernickelapp.food.domain.RecipeMacros
 import com.example.pumpernickelapp.food.domain.RecipeIngredient
+import com.example.pumpernickelapp.food.domain.calculateMacros
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -35,7 +38,10 @@ sealed interface RecipeCreationEvent {
     data object OnSaveClicked : RecipeCreationEvent
 }
 
-class RecipeCreationViewModel(private val repository: FoodRepository) : ViewModel() {
+class RecipeCreationViewModel(
+    private val repository: FoodRepository,
+    private val calculateRecipeMacros: CalculateRecipeMacrosUseCase
+) : ViewModel() {
 
     private val _foods = MutableStateFlow(repository.loadFoods())
 
@@ -95,14 +101,11 @@ class RecipeCreationViewModel(private val repository: FoodRepository) : ViewMode
     )
 
     private fun calcTotals(ingredients: List<IngredientEntry>): RecipeMacros {
-        val factor = { entry: IngredientEntry -> (entry.amountGrams.toDoubleOrNull() ?: 0.0) / 100.0 }
-        return RecipeMacros(
-            calories = ingredients.sumOf { it.food.calories * factor(it) },
-            protein  = ingredients.sumOf { it.food.protein * factor(it) },
-            fat      = ingredients.sumOf { it.food.fat * factor(it) },
-            carbs    = ingredients.sumOf { it.food.carbohydrates * factor(it) },
-            sugar    = ingredients.sumOf { it.food.sugar * factor(it) }
-        )
+        val pairs = ingredients.mapNotNull { entry ->
+            val factor = entry.amountGrams.toDoubleOrNull() ?: return@mapNotNull null
+            entry.food to (factor / 100.0)
+        }
+        return calculateMacros(pairs)
     }
 
     private fun saveRecipe() {

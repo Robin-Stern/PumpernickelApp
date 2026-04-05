@@ -38,6 +38,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.pumpernickelapp.food.domain.Food
 import com.example.pumpernickelapp.food.ui.components.MacroRow
+import org.jetbrains.compose.resources.stringResource
+import pumpernickelapp.composeapp.generated.resources.Res
+import pumpernickelapp.composeapp.generated.resources.action_add_food
+import pumpernickelapp.composeapp.generated.resources.action_back
+import pumpernickelapp.composeapp.generated.resources.action_save_recipe
+import pumpernickelapp.composeapp.generated.resources.hint_search_food
+import pumpernickelapp.composeapp.generated.resources.label_ingredients
+import pumpernickelapp.composeapp.generated.resources.label_recipe_name
+import pumpernickelapp.composeapp.generated.resources.label_recently_added
+import pumpernickelapp.composeapp.generated.resources.label_search_results
+import pumpernickelapp.composeapp.generated.resources.recipe_total_calories
+import pumpernickelapp.composeapp.generated.resources.title_new_recipe
 import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -54,10 +66,10 @@ fun RecipeCreationScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Neues Rezept") },
+                title = { Text(stringResource(Res.string.title_new_recipe)) },
                 navigationIcon = {
                     TextButton(onClick = onNavigateBack) {
-                        Text("← Zurück")
+                        Text(stringResource(Res.string.action_back))
                     }
                 }
             )
@@ -76,7 +88,7 @@ fun RecipeCreationScreen(
                 OutlinedTextField(
                     value = state.recipeName,
                     onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnRecipeNameChanged(it)) },
-                    label = { Text("Rezeptname *") },
+                    label = { Text(stringResource(Res.string.label_recipe_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -86,7 +98,7 @@ fun RecipeCreationScreen(
                 OutlinedTextField(
                     value = state.searchQuery,
                     onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnSearchQueryChanged(it)) },
-                    label = { Text("Lebensmittel suchen…") },
+                    label = { Text(stringResource(Res.string.hint_search_food)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -95,7 +107,7 @@ fun RecipeCreationScreen(
             if (state.searchResults.isNotEmpty()) {
                 item {
                     Text(
-                        text = if (state.searchQuery.isBlank()) "Zuletzt hinzugefügt" else "Suchergebnisse",
+                        stringResource(if (state.searchQuery.isBlank()) Res.string.label_recently_added else Res.string.label_search_results),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -111,16 +123,13 @@ fun RecipeCreationScreen(
             if (state.ingredients.isNotEmpty()) {
                 item {
                     Spacer(Modifier.height(4.dp))
-                    Text("Zutaten:", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.label_ingredients), style = MaterialTheme.typography.labelLarge)
                 }
                 items(state.ingredients.size) { index ->
                     val entry = state.ingredients[index]
                     val amount = entry.amountGrams.toDoubleOrNull() ?: 0.0
                     val factor = amount / 100.0
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(entry.food.name, fontWeight = FontWeight.Medium)
                             Text(
@@ -153,7 +162,7 @@ fun RecipeCreationScreen(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
-                            "Gesamt: ${state.totals.calories.roundToInt()} kcal",
+                            stringResource(Res.string.recipe_total_calories, state.totals.calories.roundToInt()),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -177,7 +186,7 @@ fun RecipeCreationScreen(
                     onClick = { viewModel.onEvent(RecipeCreationEvent.OnSaveClicked) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Rezept speichern")
+                    Text(stringResource(Res.string.action_save_recipe))
                 }
             }
 
@@ -208,7 +217,7 @@ private fun FoodSwipeToAddItem(food: Food, onSelected: () -> Unit) {
                 contentAlignment = Alignment.CenterStart
             ) {
                 Text(
-                    "+ Hinzufügen",
+                    stringResource(Res.string.action_add_food),
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     fontWeight = FontWeight.Bold
                 )

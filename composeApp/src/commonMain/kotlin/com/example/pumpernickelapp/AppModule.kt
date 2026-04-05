@@ -6,6 +6,7 @@ import com.example.pumpernickelapp.food.domain.AddFoodUseCase
 import com.example.pumpernickelapp.food.domain.DeleteFoodUseCase
 import com.example.pumpernickelapp.food.domain.FoodRepository
 import com.example.pumpernickelapp.food.domain.LoadFoodsUseCase
+import com.example.pumpernickelapp.food.domain.CalculateRecipeMacrosUseCase
 import com.example.pumpernickelapp.food.domain.UpdateFoodUseCase
 import com.example.pumpernickelapp.food.domain.ValidateFoodInputUseCase
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryViewModel
@@ -21,7 +22,8 @@ val appModule = module {
     single { AddFoodUseCase(get(), get()) }
     single { DeleteFoodUseCase(get()) }
     single { UpdateFoodUseCase(get(), get()) }
+    single { CalculateRecipeMacrosUseCase() }
     viewModel { FoodEntryViewModel(get(), get(), get(), get()) }
-    viewModel { RecipeListViewModel(get()) }
-    viewModel { RecipeCreationViewModel(get()) }
+    viewModel { RecipeListViewModel(get(), get()) }
+    viewModel { RecipeCreationViewModel(get(), get()) }
 }
