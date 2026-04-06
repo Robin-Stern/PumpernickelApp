@@ -298,14 +298,21 @@ private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) 
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Text(food.name, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        food.name,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f)
+                    )
                     Text(
                         "${food.calories.roundToInt()} kcal/100${food.unit.label}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        softWrap = false,
+                        maxLines = 1
                     )
                 }
                 MacroRow(protein = food.protein, fat = food.fat, carbs = food.carbohydrates, sugar = food.sugar)
