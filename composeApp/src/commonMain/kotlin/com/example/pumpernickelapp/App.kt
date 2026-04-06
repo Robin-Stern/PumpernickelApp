@@ -15,26 +15,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryScreen
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryViewModel
+import com.example.pumpernickelapp.food.ui.log.DailyLogScreen
+import com.example.pumpernickelapp.food.ui.log.DailyLogViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeCreationViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeListViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeScreen
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplication
+import org.koin.dsl.koinConfiguration
 import org.koin.compose.viewmodel.koinViewModel
 import pumpernickelapp.composeapp.generated.resources.Res
+import pumpernickelapp.composeapp.generated.resources.tab_daily_log
 import pumpernickelapp.composeapp.generated.resources.tab_food
 import pumpernickelapp.composeapp.generated.resources.tab_recipes
 
 @Composable
 @Preview
 fun App() {
-    KoinApplication(application = {
-        modules(appModule)
-    }) {
+    KoinApplication(configuration = koinConfiguration { modules(appModule) }) {
         MaterialTheme {
             val foodEntryViewModel: FoodEntryViewModel = koinViewModel()
             val recipeListViewModel: RecipeListViewModel = koinViewModel()
             val recipeCreationViewModel: RecipeCreationViewModel = koinViewModel()
+            val dailyLogViewModel: DailyLogViewModel = koinViewModel()
             var selectedTab by remember { mutableIntStateOf(0) }
 
             Scaffold(
@@ -43,12 +46,18 @@ fun App() {
                         NavigationBarItem(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
-                            label = { Text(stringResource(Res.string.tab_food)) },
+                            label = { Text(stringResource(Res.string.tab_daily_log)) },
                             icon = {}
                         )
                         NavigationBarItem(
                             selected = selectedTab == 1,
                             onClick = { selectedTab = 1 },
+                            label = { Text(stringResource(Res.string.tab_food)) },
+                            icon = {}
+                        )
+                        NavigationBarItem(
+                            selected = selectedTab == 2,
+                            onClick = { selectedTab = 2 },
                             label = { Text(stringResource(Res.string.tab_recipes)) },
                             icon = {}
                         )
@@ -56,11 +65,15 @@ fun App() {
                 }
             ) { innerPadding ->
                 when (selectedTab) {
-                    0 -> FoodEntryScreen(
+                    0 -> DailyLogScreen(
+                        viewModel = dailyLogViewModel,
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                    1 -> FoodEntryScreen(
                         viewModel = foodEntryViewModel,
                         modifier = Modifier.padding(innerPadding)
                     )
-                    1 -> RecipeScreen(
+                    2 -> RecipeScreen(
                         listViewModel = recipeListViewModel,
                         creationViewModel = recipeCreationViewModel,
                         modifier = Modifier.padding(innerPadding)

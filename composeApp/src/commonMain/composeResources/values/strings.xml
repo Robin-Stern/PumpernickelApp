@@ -2,6 +2,19 @@
     <!-- Navigation -->
     <string name="tab_food">Lebensmittel</string>
     <string name="tab_recipes">Rezepte</string>
+    <string name="tab_daily_log">Tagebuch</string>
+
+    <!-- Daily Log -->
+    <string name="title_daily_log">Tagebuch</string>
+    <string name="label_today">Heute</string>
+    <string name="label_amount">Menge</string>
+    <string name="label_daily_total">Gesamt heute</string>
+    <string name="action_log_entry">Eintragen</string>
+    <string name="action_add_entry">Eintrag hinzufügen</string>
+    <string name="action_ad_hoc_entry">Freier Eintrag</string>
+    <string name="label_per_100_hint">Werte pro 100 g/ml</string>
+    <string name="msg_no_entries_today">Noch keine Einträge an diesem Tag.</string>
+    <string name="label_time">Uhrzeit</string>
 
     <!-- Food Entry -->
     <string name="title_food_entry">Lebensmittel erfassen</string>

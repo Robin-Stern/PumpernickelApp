@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,6 +37,9 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +53,9 @@ import org.jetbrains.compose.resources.stringResource
 import pumpernickelapp.composeapp.generated.resources.Res
 import pumpernickelapp.composeapp.generated.resources.action_cancel
 import pumpernickelapp.composeapp.generated.resources.action_delete
+import pumpernickelapp.composeapp.generated.resources.action_log_entry
 import pumpernickelapp.composeapp.generated.resources.action_save
+import pumpernickelapp.composeapp.generated.resources.label_amount
 import pumpernickelapp.composeapp.generated.resources.action_update
 import pumpernickelapp.composeapp.generated.resources.heading_saved_foods
 import pumpernickelapp.composeapp.generated.resources.hint_search
@@ -260,6 +266,50 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
             item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
+
+    uiState.pendingLogFood?.let { food ->
+        LogAmountDialog(
+            food = food,
+            onConfirm = { amount -> viewModel.onEvent(FoodEntryEvent.OnConfirmLogAmount(food, amount)) },
+            onDismiss = { viewModel.onEvent(FoodEntryEvent.OnDismissLogDialog) }
+        )
+    }
+}
+
+@Composable
+private fun LogAmountDialog(
+    food: Food,
+    onConfirm: (Double) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var amount by remember { mutableStateOf("100") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            Button(onClick = {
+                amount.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }?.let(onConfirm)
+            }) { Text(stringResource(Res.string.action_log_entry)) }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) { Text(stringResource(Res.string.action_cancel)) }
+        },
+        title = { Text(food.name) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
+                    label = { Text(stringResource(Res.string.label_amount) + " (${food.unit.label})") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                )
+                Text(
+                    "${food.calories.roundToInt()} kcal / 100 ${food.unit.label}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

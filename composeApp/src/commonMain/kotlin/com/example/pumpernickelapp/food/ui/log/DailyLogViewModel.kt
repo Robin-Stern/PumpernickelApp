@@ -1,0 +1,164 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
+package com.example.pumpernickelapp.food.ui.log
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.pumpernickelapp.food.domain.CalculateDailyMacrosUseCase
+import com.example.pumpernickelapp.food.domain.ConsumptionEntry
+import com.example.pumpernickelapp.food.domain.DeleteConsumptionUseCase
+import com.example.pumpernickelapp.food.domain.Food
+import com.example.pumpernickelapp.food.domain.FoodRepository
+import com.example.pumpernickelapp.food.domain.LoadConsumptionsForDateUseCase
+import com.example.pumpernickelapp.food.domain.LoadFoodsUseCase
+import com.example.pumpernickelapp.food.domain.LogConsumptionUseCase
+import com.example.pumpernickelapp.food.domain.LookupBarcodeUseCase
+import com.example.pumpernickelapp.food.domain.RecipeMacros
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlin.time.Clock
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+data class DailyLogUiState(
+    val selectedDate: LocalDate,
+    val entries: List<ConsumptionEntry> = emptyList(),
+    val foods: List<Food> = emptyList(),
+    val totals: RecipeMacros = RecipeMacros(),
+    val showAddPicker: Boolean = false,
+    val pendingFood: Food? = null,
+    val showAdHocDialog: Boolean = false,
+    val isLookingUp: Boolean = false,
+    val errorMessage: String? = null
+)
+
+class DailyLogViewModel(
+    private val loadFoods: LoadFoodsUseCase,
+    private val loadForDate: LoadConsumptionsForDateUseCase,
+    private val logConsumption: LogConsumptionUseCase,
+    private val deleteConsumption: DeleteConsumptionUseCase,
+    private val calculateDaily: CalculateDailyMacrosUseCase,
+    private val lookupBarcode: LookupBarcodeUseCase,
+    private val repository: FoodRepository
+) : ViewModel() {
+
+    private fun today(): LocalDate =
+        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+    private val _uiState = MutableStateFlow(DailyLogUiState(selectedDate = today()))
+    val uiState: StateFlow<DailyLogUiState> = _uiState.asStateFlow()
+
+    init {
+        refresh()
+    }
+
+    fun refresh() {
+        val date = _uiState.value.selectedDate
+        val foods = loadFoods()
+        val entries = loadForDate(date)
+        val totals = calculateDaily(entries)
+        _uiState.update {
+            it.copy(foods = foods, entries = entries, totals = totals)
+        }
+    }
+
+    fun selectDate(date: LocalDate) {
+        _uiState.update { it.copy(selectedDate = date) }
+        refresh()
+    }
+
+    fun goPreviousDay() = selectDate(_uiState.value.selectedDate.minus(DatePeriod(days = 1)))
+    fun goNextDay()     = selectDate(_uiState.value.selectedDate.plus(DatePeriod(days = 1)))
+    fun goToday()       = selectDate(today())
+
+    fun openAddPicker()                 = _uiState.update { it.copy(showAddPicker = true) }
+    fun dismissAddPicker()              = _uiState.update { it.copy(showAddPicker = false, pendingFood = null) }
+    fun selectFoodForEntry(food: Food)  = _uiState.update { it.copy(pendingFood = food, showAddPicker = false) }
+    fun clearPendingFood()              = _uiState.update { it.copy(pendingFood = null) }
+
+    fun openAdHocDialog()               = _uiState.update { it.copy(showAdHocDialog = true, showAddPicker = false) }
+    fun dismissAdHocDialog()            = _uiState.update { it.copy(showAdHocDialog = false) }
+
+    fun confirmLog(food: Food, amount: Double) {
+        when (val r = logConsumption(food, amount)) {
+            is LogConsumptionUseCase.Result.Error -> _uiState.update { it.copy(errorMessage = r.message) }
+            is LogConsumptionUseCase.Result.Success -> {
+                _uiState.update { it.copy(pendingFood = null, errorMessage = null) }
+                refresh()
+            }
+        }
+    }
+
+    fun confirmAdHocLog(
+        name: String,
+        caloriesPer100: Double,
+        proteinPer100: Double,
+        fatPer100: Double,
+        carbsPer100: Double,
+        sugarPer100: Double,
+        unit: com.example.pumpernickelapp.food.domain.FoodUnit,
+        amount: Double
+    ) {
+        when (val r = logConsumption.logAdHoc(
+            name, caloriesPer100, proteinPer100, fatPer100, carbsPer100, sugarPer100, unit, amount
+        )) {
+            is LogConsumptionUseCase.Result.Error -> _uiState.update { it.copy(errorMessage = r.message) }
+            is LogConsumptionUseCase.Result.Success -> {
+                _uiState.update { it.copy(showAdHocDialog = false, errorMessage = null) }
+                refresh()
+            }
+        }
+    }
+
+    fun delete(id: Uuid) {
+        deleteConsumption(id)
+        refresh()
+    }
+
+    fun clearError() = _uiState.update { it.copy(errorMessage = null) }
+
+    fun onBarcodeScanned(barcode: String) {
+        _uiState.update { it.copy(showAddPicker = false, isLookingUp = true, errorMessage = null) }
+        viewModelScope.launch {
+            when (val result = lookupBarcode(barcode)) {
+                is LookupBarcodeUseCase.Result.FoundLocally -> {
+                    _uiState.update { it.copy(isLookingUp = false, pendingFood = result.food) }
+                }
+                is LookupBarcodeUseCase.Result.FoundRemote -> {
+                    val newFood = Food(
+                        name          = result.name,
+                        calories      = result.calories,
+                        protein       = result.protein,
+                        fat           = result.fat,
+                        carbohydrates = result.carbs,
+                        sugar         = result.sugar,
+                        barcode       = barcode
+                    )
+                    repository.saveFood(newFood)
+                    _uiState.update {
+                        it.copy(
+                            isLookingUp = false,
+                            foods = loadFoods(),
+                            pendingFood = newFood
+                        )
+                    }
+                }
+                is LookupBarcodeUseCase.Result.NotFound -> {
+                    _uiState.update { it.copy(isLookingUp = false, errorMessage = "Produkt nicht gefunden.") }
+                }
+                is LookupBarcodeUseCase.Result.Error -> {
+                    _uiState.update { it.copy(isLookingUp = false, errorMessage = "Fehler: ${result.message}") }
+                }
+            }
+        }
+    }
+}

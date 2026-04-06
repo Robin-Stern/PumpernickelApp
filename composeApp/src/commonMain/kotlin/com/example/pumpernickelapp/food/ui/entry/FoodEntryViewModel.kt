@@ -9,6 +9,7 @@ import com.example.pumpernickelapp.food.domain.DeleteFoodUseCase
 import com.example.pumpernickelapp.food.domain.Food
 import com.example.pumpernickelapp.food.domain.FoodUnit
 import com.example.pumpernickelapp.food.domain.LoadFoodsUseCase
+import com.example.pumpernickelapp.food.domain.LogConsumptionUseCase
 import com.example.pumpernickelapp.food.domain.LookupBarcodeUseCase
 import com.example.pumpernickelapp.food.domain.UpdateFoodUseCase
 import kotlinx.coroutines.delay
@@ -36,7 +37,8 @@ data class FoodEntryUiState(
     val successMessage: String? = null,
     val editingFoodId: Uuid? = null,
     val searchQuery: String = "",
-    val isLookingUp: Boolean = false
+    val isLookingUp: Boolean = false,
+    val pendingLogFood: Food? = null
 )
 
 sealed interface FoodEntryEvent {
@@ -51,6 +53,8 @@ sealed interface FoodEntryEvent {
     data class OnFoodSelected(val food: Food) : FoodEntryEvent
     data class OnSearchQueryChanged(val value: String) : FoodEntryEvent
     data class OnBarcodeScanned(val barcode: String) : FoodEntryEvent
+    data class OnConfirmLogAmount(val food: Food, val amount: Double) : FoodEntryEvent
+    data object OnDismissLogDialog : FoodEntryEvent
     data object OnCancelEdit : FoodEntryEvent
     data object OnSaveClicked : FoodEntryEvent
     data object ClearMessages : FoodEntryEvent
@@ -61,7 +65,8 @@ class FoodEntryViewModel(
     private val addFood: AddFoodUseCase,
     private val deleteFood: DeleteFoodUseCase,
     private val updateFood: UpdateFoodUseCase,
-    private val lookupBarcode: LookupBarcodeUseCase
+    private val lookupBarcode: LookupBarcodeUseCase,
+    private val logConsumption: LogConsumptionUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FoodEntryUiState())
@@ -91,6 +96,12 @@ class FoodEntryViewModel(
             is FoodEntryEvent.OnFoodSelected    -> loadFoodForEdit(event.food)
             is FoodEntryEvent.OnSearchQueryChanged -> _uiState.update { it.copy(searchQuery = event.value) }
             is FoodEntryEvent.OnBarcodeScanned  -> onBarcodeScanned(event.barcode)
+            is FoodEntryEvent.OnConfirmLogAmount -> {
+                logConsumption(event.food, event.amount)
+                _uiState.update { it.copy(pendingLogFood = null, successMessage = "Eintrag gespeichert!") }
+                autoClearSuccess()
+            }
+            FoodEntryEvent.OnDismissLogDialog    -> _uiState.update { it.copy(pendingLogFood = null) }
             FoodEntryEvent.OnCancelEdit         -> _uiState.value = FoodEntryUiState()
             FoodEntryEvent.OnSaveClicked        -> save()
             FoodEntryEvent.ClearMessages        -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
@@ -102,8 +113,13 @@ class FoodEntryViewModel(
         viewModelScope.launch {
             when (val result = lookupBarcode(barcode)) {
                 is LookupBarcodeUseCase.Result.FoundLocally -> {
-                    loadFoodForEdit(result.food)
-                    _uiState.update { it.copy(isLookingUp = false, successMessage = "Lokales Lebensmittel geladen.") }
+                    _uiState.update {
+                        it.copy(
+                            isLookingUp = false,
+                            pendingLogFood = result.food,
+                            successMessage = "Lokales Lebensmittel geladen."
+                        )
+                    }
                     autoClearSuccess()
                 }
                 is LookupBarcodeUseCase.Result.FoundRemote -> {

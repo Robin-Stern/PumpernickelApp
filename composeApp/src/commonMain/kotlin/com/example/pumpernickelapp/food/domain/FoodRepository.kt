@@ -14,4 +14,8 @@ interface FoodRepository {
     fun updateFood(food: Food)
     fun deleteRecipe(id: Uuid)
     fun updateRecipe(recipe: Food.Recipe)
+
+    fun saveConsumption(entry: ConsumptionEntry)
+    fun loadConsumptions(): List<ConsumptionEntry>
+    fun deleteConsumption(id: Uuid)
 }

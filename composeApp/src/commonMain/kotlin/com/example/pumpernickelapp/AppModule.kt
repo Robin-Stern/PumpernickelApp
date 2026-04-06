@@ -5,14 +5,19 @@ import com.example.pumpernickelapp.food.data.api.OpenFoodFactsApi
 import com.example.pumpernickelapp.food.data.api.createHttpClient
 import com.example.pumpernickelapp.food.data.seedDemoDataIfEmpty
 import com.example.pumpernickelapp.food.domain.AddFoodUseCase
+import com.example.pumpernickelapp.food.domain.CalculateDailyMacrosUseCase
+import com.example.pumpernickelapp.food.domain.CalculateRecipeMacrosUseCase
+import com.example.pumpernickelapp.food.domain.DeleteConsumptionUseCase
 import com.example.pumpernickelapp.food.domain.DeleteFoodUseCase
 import com.example.pumpernickelapp.food.domain.FoodRepository
+import com.example.pumpernickelapp.food.domain.LoadConsumptionsForDateUseCase
 import com.example.pumpernickelapp.food.domain.LoadFoodsUseCase
+import com.example.pumpernickelapp.food.domain.LogConsumptionUseCase
 import com.example.pumpernickelapp.food.domain.LookupBarcodeUseCase
-import com.example.pumpernickelapp.food.domain.CalculateRecipeMacrosUseCase
 import com.example.pumpernickelapp.food.domain.UpdateFoodUseCase
 import com.example.pumpernickelapp.food.domain.ValidateFoodInputUseCase
 import com.example.pumpernickelapp.food.ui.entry.FoodEntryViewModel
+import com.example.pumpernickelapp.food.ui.log.DailyLogViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeCreationViewModel
 import com.example.pumpernickelapp.food.ui.recipe.RecipeListViewModel
 import org.koin.core.module.dsl.viewModel
@@ -29,7 +34,12 @@ val appModule = module {
     single { createHttpClient() }
     single { OpenFoodFactsApi(get()) }
     single { LookupBarcodeUseCase(get(), get()) }
-    viewModel { FoodEntryViewModel(get(), get(), get(), get(), get()) }
+    single { LogConsumptionUseCase(get()) }
+    single { LoadConsumptionsForDateUseCase(get()) }
+    single { DeleteConsumptionUseCase(get()) }
+    single { CalculateDailyMacrosUseCase() }
+    viewModel { FoodEntryViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { RecipeListViewModel(get(), get()) }
     viewModel { RecipeCreationViewModel(get(), get()) }
+    viewModel { DailyLogViewModel(get(), get(), get(), get(), get(), get(), get()) }
 }
