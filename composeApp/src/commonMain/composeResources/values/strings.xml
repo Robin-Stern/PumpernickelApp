@@ -14,7 +14,9 @@
     <string name="label_sugar">davon Zucker (g) *</string>
     <string name="unit_gram">Gramm (g)</string>
     <string name="unit_ml">Milliliter (ml)</string>
-    <string name="label_barcode">Barcode (optional)</string>
+    <string name="action_scan_barcode">Barcode scannen</string>
+    <string name="title_barcode_scanner">Barcode scannen</string>
+    <string name="msg_camera_permission_denied">Kamera-Berechtigung wurde verweigert.</string>
     <string name="action_cancel">Abbrechen</string>
     <string name="action_update">Aktualisieren</string>
     <string name="action_save">Speichern</string>

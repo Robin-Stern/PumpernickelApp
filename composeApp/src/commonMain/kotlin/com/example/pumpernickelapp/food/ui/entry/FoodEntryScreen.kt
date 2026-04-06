@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -47,10 +49,10 @@ import pumpernickelapp.composeapp.generated.resources.Res
 import pumpernickelapp.composeapp.generated.resources.action_cancel
 import pumpernickelapp.composeapp.generated.resources.action_delete
 import pumpernickelapp.composeapp.generated.resources.action_save
+import pumpernickelapp.composeapp.generated.resources.action_scan_barcode
 import pumpernickelapp.composeapp.generated.resources.action_update
 import pumpernickelapp.composeapp.generated.resources.heading_saved_foods
 import pumpernickelapp.composeapp.generated.resources.hint_search
-import pumpernickelapp.composeapp.generated.resources.label_barcode
 import pumpernickelapp.composeapp.generated.resources.label_calories
 import pumpernickelapp.composeapp.generated.resources.label_carbs
 import pumpernickelapp.composeapp.generated.resources.label_fat
@@ -167,14 +169,26 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
             }
 
             item {
-                OutlinedTextField(
-                    value = uiState.barcode,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnBarcodeChanged(it)) },
-                    label = { Text(stringResource(Res.string.label_barcode)) },
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    BarcodeScannerButton(
+                        onBarcodeScanned = { viewModel.onEvent(FoodEntryEvent.OnBarcodeScanned(it)) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (uiState.isLookingUp) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
+                }
+                if (uiState.barcode.isNotEmpty()) {
+                    Text(
+                        text = "Barcode: ${uiState.barcode}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             item {

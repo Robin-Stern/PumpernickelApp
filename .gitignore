@@ -25,6 +25,7 @@ captures/
 *.dex
 
 # Kotlin Multiplatform / Native
+.kotlin/
 .konan/
 kotlin-js-store/
 package-lock.json

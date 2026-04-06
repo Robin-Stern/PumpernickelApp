@@ -7,10 +7,11 @@ plugins {
 }
 
 kotlin {
-    android {
+    androidLibrary {
         namespace = "com.example.pumpernickelapp.shared"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
+        androidResources.enable = true
     }
 
     listOf(
@@ -38,6 +39,20 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.viewmodel)
+            implementation(libs.ktor.client.core)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.camerax.camera2)
+            implementation(libs.camerax.lifecycle)
+            implementation(libs.camerax.view)
+            implementation(libs.mlkit.barcode)
+            implementation(libs.androidx.activity.compose)
+        }
+
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
 
         commonTest.dependencies {
