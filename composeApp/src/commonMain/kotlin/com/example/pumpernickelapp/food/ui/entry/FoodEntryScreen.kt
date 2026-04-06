@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +50,6 @@ import pumpernickelapp.composeapp.generated.resources.Res
 import pumpernickelapp.composeapp.generated.resources.action_cancel
 import pumpernickelapp.composeapp.generated.resources.action_delete
 import pumpernickelapp.composeapp.generated.resources.action_save
-import pumpernickelapp.composeapp.generated.resources.action_scan_barcode
 import pumpernickelapp.composeapp.generated.resources.action_update
 import pumpernickelapp.composeapp.generated.resources.heading_saved_foods
 import pumpernickelapp.composeapp.generated.resources.hint_search
@@ -265,14 +265,12 @@ fun FoodEntryScreen(viewModel: FoodEntryViewModel, modifier: Modifier = Modifier
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.StartToEnd) {
-                onDelete()
-                true
-            } else false
+    val dismissState = rememberSwipeToDismissBoxState()
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) {
+            onDelete()
         }
-    )
+    }
     SwipeToDismissBox(
         state = dismissState,
         enableDismissFromEndToStart = false,
