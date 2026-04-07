@@ -16,7 +16,7 @@ struct WorkoutSessionView: View {
     var templateName: String = ""
     var isResume: Bool = false
 
-    private let viewModel = KoinHelper.shared.getWorkoutSessionViewModel()
+    @State private var viewModel = KoinHelper.shared.getWorkoutSessionViewModel()
 
     @Environment(\.dismiss) private var dismiss
 
@@ -170,8 +170,20 @@ struct WorkoutSessionView: View {
                     .padding(.horizontal, 32)
                     .accessibilityLabel("Continue to next set")
                 } else {
-                    // Minimal set screen or full picker input (UX-01, D-01, D-02, D-03)
-                    if showSetInput {
+                    // Check if all sets for this exercise are already completed
+                    let allSetsCompleted = currentExercise.sets.allSatisfy { $0.isCompleted }
+                    if allSetsCompleted {
+                        // Jumped back to a completed exercise — show edit prompt
+                        VStack(spacing: 8) {
+                            Text("All sets completed")
+                                .font(.title3.weight(.semibold))
+                                .foregroundColor(.secondary)
+                            Text("Tap a set below to edit")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 24)
+                    } else if showSetInput {
                         setInputSection(exercise: currentExercise, setIdx: setIdx)
                     } else {
                         minimalSetScreen(exercise: currentExercise, setIdx: setIdx)
@@ -266,7 +278,7 @@ struct WorkoutSessionView: View {
         setIdx: Int,
         totalExercises: Int
     ) -> some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 4) {
             HStack {
                 Text("Exercise \(exIdx + 1) of \(totalExercises)")
                     .font(.subheadline)
@@ -277,32 +289,44 @@ struct WorkoutSessionView: View {
                     .foregroundColor(.secondary)
             }
 
-            Text(exercise.exerciseName)
-                .font(.title2.weight(.bold))
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            Text("Set \(setIdx + 1) of \(exercise.targetSets)")
-                .font(.headline)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            // Previous performance (HIST-04, D-08, D-09)
-            if let prevExercise = previousPerformance[exercise.exerciseId] {
-                let prevText = formatPreviousPerformance(prevExercise)
-                if !prevText.isEmpty {
-                    Text("Last: \(prevText)")
-                        .font(.subheadline)
-                        .foregroundColor(.orange)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
+            HStack(alignment: .firstTextBaseline) {
+                Text(exercise.exerciseName)
+                    .font(.title2.weight(.bold))
+                Spacer()
+                Text("Set \(setIdx + 1)/\(exercise.targetSets)")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
             }
 
-            // Personal best (ENTRY-07)
-            if let pbKgX10 = personalBest[exercise.exerciseId] {
-                Text("PB: \(weightUnit.formatWeight(kgX10: pbKgX10.int32Value))")
-                    .font(.subheadline)
-                    .foregroundColor(.blue)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            // Previous performance & personal best inline (HIST-04, D-08, D-09, ENTRY-07)
+            let prevText: String? = {
+                if let prevExercise = previousPerformance[exercise.exerciseId] {
+                    let text = formatPreviousPerformance(prevExercise)
+                    return text.isEmpty ? nil : text
+                }
+                return nil
+            }()
+            let pbText: String? = {
+                if let pbKgX10 = personalBest[exercise.exerciseId] {
+                    return weightUnit.formatWeight(kgX10: pbKgX10.int32Value)
+                }
+                return nil
+            }()
+
+            if prevText != nil || pbText != nil {
+                HStack(spacing: 16) {
+                    if let prevText {
+                        Label(prevText, systemImage: "clock")
+                            .font(.subheadline)
+                            .foregroundColor(.orange)
+                    }
+                    if let pbText {
+                        Label(pbText, systemImage: "trophy")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                    }
+                    Spacer()
+                }
             }
         }
     }

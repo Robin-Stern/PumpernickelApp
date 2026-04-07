@@ -13,11 +13,20 @@ struct ExerciseOverviewSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                // Completed exercises section (non-movable, greyed)
-                if currentExerciseIndex > 0 {
+                // Completed exercises: those before current index that have at least one completed set
+                let completedIndices = (0..<Int(currentExerciseIndex)).filter { idx in
+                    exercises[idx].sets.contains { $0.isCompleted }
+                }
+                if !completedIndices.isEmpty {
                     Section("Completed") {
-                        ForEach(0..<Int(currentExerciseIndex), id: \.self) { index in
-                            exerciseRow(exercise: exercises[index], style: .completed)
+                        ForEach(completedIndices, id: \.self) { index in
+                            Button {
+                                onSelect(Int32(index))
+                            } label: {
+                                exerciseRow(exercise: exercises[index], style: .completed)
+                            }
+                            .foregroundColor(.primary)
+                            .accessibilityLabel("Jump to \(exercises[index].exerciseName)")
                         }
                     }
                 }
@@ -44,22 +53,39 @@ struct ExerciseOverviewSheet: View {
                     }
                 }
 
-                // Pending exercises section (movable via drag handles)
+                // Up Next section: skipped exercises (before current, no completed sets) + pending exercises
+                let skippedIndices = (0..<Int(currentExerciseIndex)).filter { idx in
+                    !exercises[idx].sets.contains { $0.isCompleted }
+                }
                 let pendingStart = Int(currentExerciseIndex) + 1
-                if pendingStart < exercises.count {
+                if !skippedIndices.isEmpty || pendingStart < exercises.count {
                     Section("Up Next") {
-                        ForEach(Array(exercises[pendingStart...].enumerated()), id: \.offset) { relIdx, exercise in
+                        // Skipped exercises (tappable to jump back, not movable)
+                        ForEach(skippedIndices, id: \.self) { index in
                             Button {
-                                onSelect(Int32(pendingStart + relIdx))
+                                onSelect(Int32(index))
                             } label: {
-                                exerciseRow(exercise: exercise, style: .pending)
+                                exerciseRow(exercise: exercises[index], style: .pending)
                             }
                             .foregroundColor(.primary)
-                            .accessibilityLabel("Jump to \(exercise.exerciseName)")
+                            .accessibilityLabel("Jump to \(exercises[index].exerciseName)")
                         }
-                        .onMove { source, destination in
-                            if let from = source.first {
-                                onMove(from, destination)
+
+                        // Pending exercises (movable via drag handles)
+                        if pendingStart < exercises.count {
+                            ForEach(Array(exercises[pendingStart...].enumerated()), id: \.element.exerciseId) { relIdx, exercise in
+                                Button {
+                                    onSelect(Int32(pendingStart + relIdx))
+                                } label: {
+                                    exerciseRow(exercise: exercise, style: .pending)
+                                }
+                                .foregroundColor(.primary)
+                                .accessibilityLabel("Jump to \(exercise.exerciseName)")
+                            }
+                            .onMove { source, destination in
+                                if let from = source.first {
+                                    onMove(from, destination)
+                                }
                             }
                         }
                     }

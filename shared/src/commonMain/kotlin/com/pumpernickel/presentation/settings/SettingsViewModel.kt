@@ -19,9 +19,31 @@ class SettingsViewModel(
         .weightUnit
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WeightUnit.KG)
 
+    @NativeCoroutinesState
+    val appTheme: StateFlow<String> = settingsRepository
+        .appTheme
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "system")
+
+    @NativeCoroutinesState
+    val accentColor: StateFlow<String> = settingsRepository
+        .accentColor
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "green")
+
     fun setWeightUnit(unit: WeightUnit) {
         viewModelScope.launch {
             settingsRepository.setWeightUnit(unit)
+        }
+    }
+
+    fun setAppTheme(theme: String) {
+        viewModelScope.launch {
+            settingsRepository.setAppTheme(theme)
+        }
+    }
+
+    fun setAccentColor(color: String) {
+        viewModelScope.launch {
+            settingsRepository.setAccentColor(color)
         }
     }
 }

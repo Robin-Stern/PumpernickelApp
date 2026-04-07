@@ -11,7 +11,7 @@ struct PlaceholderTabView: View {
 
             Image(systemName: iconName)
                 .font(.system(size: 64))
-                .foregroundColor(Color(white: 0.62))
+                .foregroundColor(.secondary)
 
             Text(title)
                 .font(.title3.weight(.semibold))

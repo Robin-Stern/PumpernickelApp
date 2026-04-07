@@ -80,8 +80,8 @@ struct ExerciseDetailView: View {
                     .font(.subheadline)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Color(red: 0.4, green: 0.733, blue: 0.416).opacity(0.15))
-                    .foregroundColor(Color(red: 0.4, green: 0.733, blue: 0.416))
+                    .background(Color.appAccent.opacity(0.15))
+                    .foregroundColor(.appAccent)
                     .cornerRadius(12)
             }
         }
@@ -130,7 +130,7 @@ struct ExerciseDetailView: View {
                     HStack(alignment: .top, spacing: 12) {
                         Text("\(index + 1).")
                             .font(.body.weight(.semibold))
-                            .foregroundColor(Color(red: 0.4, green: 0.733, blue: 0.416))
+                            .foregroundColor(.appAccent)
                             .frame(width: 28, alignment: .trailing)
 
                         Text(step)

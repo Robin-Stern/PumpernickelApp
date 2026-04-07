@@ -8,7 +8,7 @@ struct WorkoutEmptyStateView: View {
             VStack(spacing: 16) {
                 Image(systemName: "dumbbell.fill")
                     .font(.system(size: 64))
-                    .foregroundColor(Color(white: 0.62))
+                    .foregroundColor(.secondary)
 
                 Text("No Workouts Yet")
                     .font(.title3.weight(.semibold))
@@ -18,22 +18,23 @@ struct WorkoutEmptyStateView: View {
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
-            }
 
-            Spacer()
 
-            NavigationLink(destination: ExerciseCatalogView()) {
-                Text("Browse Exercises")
-                    .font(.body.weight(.semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(Color(red: 0.4, green: 0.733, blue: 0.416))
-                    .cornerRadius(12)
+                Spacer()
+
+                NavigationLink(destination: ExerciseCatalogView()) {
+                    Text("Browse Exercises")
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(Color.appAccent)
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 32)
             }
-            .padding(.horizontal, 32)
-            .padding(.bottom, 32)
+            .navigationTitle("Workout")
         }
-        .navigationTitle("Workout")
     }
 }

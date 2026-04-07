@@ -34,9 +34,12 @@ interface WorkoutTemplateDao {
     @Query("DELETE FROM template_exercises WHERE id = :id")
     suspend fun deleteTemplateExercise(id: Long)
 
-    @Query("UPDATE template_exercises SET targetSets = :sets, targetReps = :reps, targetWeightKgX10 = :weight, restPeriodSec = :rest WHERE id = :id")
-    suspend fun updateExerciseTargets(id: Long, sets: Int, reps: Int, weight: Int, rest: Int)
+    @Query("UPDATE template_exercises SET targetSets = :sets, targetReps = :reps, restPeriodSec = :rest WHERE id = :id")
+    suspend fun updateExerciseTargets(id: Long, sets: Int, reps: Int, rest: Int)
 
     @Query("UPDATE template_exercises SET exerciseOrder = :order WHERE id = :id")
     suspend fun updateExerciseOrder(id: Long, order: Int)
+
+    @Query("UPDATE template_exercises SET perSetReps = :perSetReps WHERE id = :id")
+    suspend fun updatePerSetReps(id: Long, perSetReps: String?)
 }

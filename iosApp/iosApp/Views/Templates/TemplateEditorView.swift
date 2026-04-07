@@ -5,7 +5,7 @@ import KMPNativeCoroutinesAsync
 struct TemplateEditorView: View {
     let templateId: Int64?
 
-    private let viewModel = KoinHelper.shared.getTemplateEditorViewModel()
+    @State private var viewModel = KoinHelper.shared.getTemplateEditorViewModel()
 
     @Environment(\.dismiss) private var dismiss
 
@@ -40,17 +40,25 @@ struct TemplateEditorView: View {
                             .foregroundColor(.secondary)
                             .font(.subheadline)
                     } else {
-                        ForEach(Array(exercises.enumerated()), id: \.element.id) { index, exercise in
+                        ForEach(exercises, id: \.id) { exercise in
                             ExerciseTargetRow(
                                 exercise: exercise,
-                                onUpdateTargets: { sets, reps, weightKgX10, restSec in
+                                onUpdateSetCount: { sets in
+                                    viewModel.updateExerciseSetCount(id: exercise.id, sets: sets)
+                                },
+                                onUpdateReps: { reps in
                                     viewModel.updateExerciseTargets(
                                         id: exercise.id,
-                                        sets: sets,
+                                        sets: exercise.targetSets,
                                         reps: reps,
-                                        weightKgX10: weightKgX10,
-                                        restSec: restSec
+                                        restSec: exercise.restPeriodSec
                                     )
+                                },
+                                onUpdateRest: { restSec in
+                                    viewModel.updateExerciseRest(id: exercise.id, restSec: restSec)
+                                },
+                                onUpdateSetReps: { setIdx, reps in
+                                    viewModel.updateSetTarget(id: exercise.id, setIndex: setIdx, reps: reps)
                                 }
                             )
                         }
@@ -86,6 +94,15 @@ struct TemplateEditorView: View {
                     viewModel.save()
                 }
                 .disabled(!isFormValid || isSaving)
+            }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    UIApplication.shared.sendAction(
+                        #selector(UIResponder.resignFirstResponder),
+                        to: nil, from: nil, for: nil
+                    )
+                }
             }
         }
         .sheet(isPresented: $showExercisePicker) {
@@ -179,16 +196,19 @@ struct TemplateEditorView: View {
     }
 }
 
-// MARK: - Exercise Row with Inline Targets (D-05)
-// Extracted as a separate view so each row has its own @State for editable text fields.
+// MARK: - Exercise Row with Collapsible Per-Set Reps
 private struct ExerciseTargetRow: View {
     let exercise: TemplateExercise
-    let onUpdateTargets: (Int32, Int32, Int32, Int32) -> Void
+    let onUpdateSetCount: (Int32) -> Void
+    let onUpdateReps: (Int32) -> Void
+    let onUpdateRest: (Int32) -> Void
+    let onUpdateSetReps: (Int32, Int32) -> Void // setIndex, reps
 
     @State private var setsText: String = ""
     @State private var repsText: String = ""
-    @State private var weightText: String = ""
     @State private var restText: String = ""
+    @State private var perSetRepsTexts: [String] = []
+    @State private var isExpanded: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -205,62 +225,121 @@ private struct ExerciseTargetRow: View {
                     .foregroundColor(.secondary)
             }
 
-            // Inline target configuration (D-05)
+            // Default simple view: Sets, Reps, Rest
             HStack(spacing: 12) {
-                targetField(label: "Sets", text: $setsText)
-                targetField(label: "Reps", text: $repsText)
-                weightField
+                targetField(label: "Sets", text: $setsText, width: 50, keyboard: .numberPad) {
+                    let sets = Int32(setsText) ?? exercise.targetSets
+                    if sets > 0 { onUpdateSetCount(sets) }
+                }
+                targetField(label: "Reps", text: $repsText, width: 50, keyboard: .numberPad) {
+                    let reps = Int32(repsText) ?? exercise.targetReps
+                    if reps > 0 { onUpdateReps(reps) }
+                }
                 restField
+                Spacer()
+
+                // Expand/collapse button for per-set reps (drop sets)
+                Button(action: { withAnimation { isExpanded.toggle() } }) {
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .frame(width: 32, height: 32)
+                        .background(Color(white: 0.12))
+                        .cornerRadius(8)
+                }
+            }
+
+            // Collapsible per-set reps (for drop sets)
+            if isExpanded {
+                let setCount = Int(exercise.targetSets)
+                if setCount > 0 {
+                    VStack(spacing: 6) {
+                        ForEach(0..<setCount, id: \.self) { idx in
+                            HStack(spacing: 8) {
+                                Text("Set \(idx + 1)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 44, alignment: .leading)
+
+                                targetField(
+                                    label: "Reps",
+                                    text: bindingForPerSetReps(at: idx),
+                                    width: 50,
+                                    keyboard: .numberPad
+                                ) { commitSetReps(idx) }
+                            }
+                        }
+                    }
+                }
             }
         }
         .padding(.vertical, 4)
-        .onAppear {
-            setsText = "\(exercise.targetSets)"
-            repsText = "\(exercise.targetReps)"
-            weightText = formatWeightDisplay(kgX10: Int(exercise.targetWeightKgX10))
-            restText = "\(exercise.restPeriodSec)"
-        }
-        .onChange(of: exercise) { _, newExercise in
-            setsText = "\(newExercise.targetSets)"
-            repsText = "\(newExercise.targetReps)"
-            weightText = formatWeightDisplay(kgX10: Int(newExercise.targetWeightKgX10))
-            restText = "\(newExercise.restPeriodSec)"
+        .onAppear { syncFromExercise(exercise) }
+        .onChange(of: exercise) { _, newExercise in syncFromExercise(newExercise) }
+        .onReceive(NotificationCenter.default.publisher(for: UITextField.textDidBeginEditingNotification)) { notification in
+            if let textField = notification.object as? UITextField {
+                textField.selectAll(nil)
+            }
         }
     }
 
+    // MARK: - Sync state from exercise model
+
+    private func syncFromExercise(_ ex: TemplateExercise) {
+        setsText = "\(ex.targetSets)"
+        repsText = "\(ex.targetReps)"
+        restText = "\(ex.restPeriodSec)"
+
+        let setCount = Int(ex.targetSets)
+        var newPerSetReps: [String] = []
+        for i in 0..<setCount {
+            if let perSet = ex.perSetReps, i < perSet.count {
+                newPerSetReps.append("\(perSet[i].int32Value)")
+            } else {
+                newPerSetReps.append("\(ex.targetReps)")
+            }
+        }
+        perSetRepsTexts = newPerSetReps
+
+        // Auto-expand if per-set reps differ (drop set already configured)
+        if ex.perSetReps != nil {
+            isExpanded = true
+        }
+    }
+
+    // MARK: - Bindings for per-set reps
+
+    private func bindingForPerSetReps(at idx: Int) -> Binding<String> {
+        Binding(
+            get: { perSetRepsTexts.indices.contains(idx) ? perSetRepsTexts[idx] : "0" },
+            set: { newValue in
+                if perSetRepsTexts.indices.contains(idx) { perSetRepsTexts[idx] = newValue }
+            }
+        )
+    }
+
     // MARK: - Target Input Fields
-    private func targetField(label: String, text: Binding<String>) -> some View {
+
+    private func targetField(
+        label: String,
+        text: Binding<String>,
+        width: CGFloat,
+        keyboard: UIKeyboardType,
+        onCommit: @escaping () -> Void
+    ) -> some View {
         VStack(spacing: 2) {
             Text(label)
                 .font(.caption2)
                 .foregroundColor(.secondary)
             TextField("0", text: text)
-                .keyboardType(.numberPad)
+                .keyboardType(keyboard)
                 .multilineTextAlignment(.center)
-                .frame(width: 50)
+                .frame(width: width)
                 .padding(.vertical, 6)
                 .background(Color(white: 0.12))
                 .cornerRadius(8)
-                .onSubmit { commitChanges() }
-                .onChange(of: text.wrappedValue) { _, _ in commitChanges() }
-        }
-    }
-
-    // Weight field: display as kg with one decimal (D-06)
-    private var weightField: some View {
-        VStack(spacing: 2) {
-            Text("kg")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-            TextField("0", text: $weightText)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.center)
-                .frame(width: 60)
-                .padding(.vertical, 6)
-                .background(Color(white: 0.12))
-                .cornerRadius(8)
-                .onSubmit { commitChanges() }
-                .onChange(of: weightText) { _, _ in commitChanges() }
+                .onSubmit { onCommit() }
+                .onChange(of: text.wrappedValue) { _, _ in onCommit() }
         }
     }
 
@@ -277,33 +356,21 @@ private struct ExerciseTargetRow: View {
                 .padding(.vertical, 6)
                 .background(Color(white: 0.12))
                 .cornerRadius(8)
-                .onSubmit { commitChanges() }
-                .onChange(of: restText) { _, _ in commitChanges() }
+                .onSubmit { commitRest() }
+                .onChange(of: restText) { _, _ in commitRest() }
         }
     }
 
-    // MARK: - Helpers
-    private func formatWeightDisplay(kgX10: Int) -> String {
-        let whole = kgX10 / 10
-        let decimal = kgX10 % 10
-        if decimal == 0 {
-            return "\(whole)"
-        } else {
-            return "\(whole).\(decimal)"
-        }
+    // MARK: - Commit Helpers
+
+    private func commitSetReps(_ idx: Int) {
+        guard idx < perSetRepsTexts.count else { return }
+        let reps = Int32(perSetRepsTexts[idx]) ?? 0
+        onUpdateSetReps(Int32(idx), reps)
     }
 
-    private func parseWeightKgX10(_ input: String) -> Int32 {
-        guard let value = Double(input), value >= 0 else { return 0 }
-        return Int32(value * 10)
-    }
-
-    private func commitChanges() {
-        let sets = Int32(setsText) ?? exercise.targetSets
-        let reps = Int32(repsText) ?? exercise.targetReps
-        let weightKgX10 = parseWeightKgX10(weightText)
+    private func commitRest() {
         let rest = Int32(restText) ?? exercise.restPeriodSec
-
-        onUpdateTargets(sets, reps, weightKgX10, rest)
+        onUpdateRest(rest)
     }
 }

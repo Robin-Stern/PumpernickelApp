@@ -9,6 +9,7 @@ import com.pumpernickel.domain.model.WorkoutTemplate
 import com.pumpernickel.domain.model.toDomain
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -29,7 +30,8 @@ interface TemplateRepository {
         order: Int
     ): Long
     suspend fun removeExercise(templateExerciseId: Long)
-    suspend fun updateExerciseTargets(id: Long, sets: Int, reps: Int, weightKgX10: Int, restSec: Int)
+    suspend fun updateExerciseTargets(id: Long, sets: Int, reps: Int, restSec: Int)
+    suspend fun updatePerSetReps(id: Long, perSetReps: List<Int>?)
     suspend fun reorderExercises(exerciseIdsInOrder: List<Long>)
 }
 
@@ -40,8 +42,16 @@ class TemplateRepositoryImpl(
 ) : TemplateRepository {
 
     override fun getAllTemplates(): Flow<List<WorkoutTemplate>> {
-        return templateDao.getAllTemplates().map { templates ->
-            templates.map { it.toDomain() }
+        return templateDao.getAllTemplates().flatMapLatest { templates ->
+            if (templates.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                combine(templates.map { template ->
+                    getTemplateExercises(template.id).map { exercises ->
+                        template.toDomain(exercises)
+                    }
+                }) { it.toList() }
+            }
         }
     }
 
@@ -118,9 +128,18 @@ class TemplateRepositoryImpl(
     }
 
     override suspend fun updateExerciseTargets(
-        id: Long, sets: Int, reps: Int, weightKgX10: Int, restSec: Int
+        id: Long, sets: Int, reps: Int, restSec: Int
     ) {
-        templateDao.updateExerciseTargets(id, sets, reps, weightKgX10, restSec)
+        templateDao.updateExerciseTargets(id, sets, reps, restSec)
+    }
+
+    override suspend fun updatePerSetReps(
+        id: Long, perSetReps: List<Int>?
+    ) {
+        templateDao.updatePerSetReps(
+            id,
+            perSetReps?.joinToString(",")
+        )
     }
 
     override suspend fun reorderExercises(exerciseIdsInOrder: List<Long>) {

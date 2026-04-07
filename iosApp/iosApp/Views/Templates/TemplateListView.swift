@@ -95,7 +95,7 @@ struct TemplateListView: View {
             VStack(spacing: 16) {
                 Image(systemName: "list.bullet.clipboard")
                     .font(.system(size: 64))
-                    .foregroundColor(Color(white: 0.62))
+                    .foregroundColor(.secondary)
                 Text("No Templates Yet")
                     .font(.title3.weight(.semibold))
                 Text("Create a workout template to get started.")
@@ -111,7 +111,7 @@ struct TemplateListView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 48)
-                    .background(Color(red: 0.4, green: 0.733, blue: 0.416))
+                    .background(Color.appAccent)
                     .cornerRadius(12)
             }
             .padding(.horizontal, 32)
@@ -143,7 +143,7 @@ struct TemplateListView: View {
                     } label: {
                         Image(systemName: "play.circle.fill")
                             .font(.title2)
-                            .foregroundColor(Color(red: 0.4, green: 0.733, blue: 0.416))
+                            .foregroundColor(.appAccent)
                     }
                     .accessibilityLabel("Start Workout")
                     .buttonStyle(.plain)

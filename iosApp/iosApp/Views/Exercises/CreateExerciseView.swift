@@ -31,7 +31,7 @@ struct CreateExerciseView: View {
             TextField("Exercise name", text: $name)
                 .font(.body)
                 .padding(16)
-                .background(Color(white: 0.12))
+                .background(Color(UIColor.tertiarySystemBackground))
                 .cornerRadius(8)
                 .onChange(of: name) { _, newValue in
                     viewModel.onNameChanged(name: newValue)
@@ -50,7 +50,7 @@ struct CreateExerciseView: View {
                 }
                 .font(.body)
                 .padding(16)
-                .background(Color(white: 0.12))
+                .background(Color(UIColor.tertiarySystemBackground))
                 .cornerRadius(8)
             }
 
@@ -74,7 +74,7 @@ struct CreateExerciseView: View {
                 }
             }
             .padding(16)
-            .background(Color(white: 0.12))
+            .background(Color(UIColor.tertiarySystemBackground))
             .cornerRadius(8)
 
             // Category picker
@@ -97,7 +97,7 @@ struct CreateExerciseView: View {
                 }
             }
             .padding(16)
-            .background(Color(white: 0.12))
+            .background(Color(UIColor.tertiarySystemBackground))
             .cornerRadius(8)
 
             Spacer()
@@ -113,8 +113,8 @@ struct CreateExerciseView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 48)
                     .background(isFormValid
-                        ? Color(red: 0.4, green: 0.733, blue: 0.416)
-                        : Color(red: 0.4, green: 0.733, blue: 0.416).opacity(0.5))
+                        ? Color.appAccent
+                        : Color.appAccent.opacity(0.5))
                     .cornerRadius(12)
             }
             .disabled(!isFormValid || isSaving)

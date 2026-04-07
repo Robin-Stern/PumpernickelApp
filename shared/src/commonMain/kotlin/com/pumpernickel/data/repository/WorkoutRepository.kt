@@ -244,6 +244,6 @@ class WorkoutRepositoryImpl(
 
     override suspend fun getPersonalBests(exerciseIds: List<String>): Map<String, Int> {
         return completedWorkoutDao.getPersonalBests(exerciseIds)
-            .associate { it.exerciseId to it.avgWeightKgX10 }
+            .associate { it.exerciseId to it.maxWeightKgX10 }
     }
 }

@@ -45,7 +45,7 @@ interface CompletedWorkoutDao {
 
     @Query("""
         SELECT e.exerciseId,
-               SUM(CAST(s.actualWeightKgX10 AS INTEGER) * CAST(s.actualReps AS INTEGER)) / SUM(s.actualReps) AS avgWeightKgX10
+               MAX(CAST(s.actualWeightKgX10 AS INTEGER)) AS maxWeightKgX10
         FROM completed_workout_exercises e
         INNER JOIN completed_workout_sets s ON s.workoutExerciseId = e.id
         WHERE e.exerciseId IN (:exerciseIds)

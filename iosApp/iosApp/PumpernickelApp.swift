@@ -1,5 +1,6 @@
 import SwiftUI
 import Shared
+import KMPNativeCoroutinesAsync
 
 @main
 struct PumpernickelApp: App {
@@ -9,8 +10,44 @@ struct PumpernickelApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
-                .preferredColorScheme(.dark)
+            AppRootView()
+        }
+    }
+}
+
+private struct AppRootView: View {
+    private var theme = ThemeManager.shared
+    private let viewModel = KoinHelper.shared.getSettingsViewModel()
+
+    var body: some View {
+        MainTabView()
+            .preferredColorScheme(theme.colorScheme)
+            .tint(.appAccent)
+            .task {
+                await withTaskGroup(of: Void.self) { group in
+                    group.addTask { await observeTheme() }
+                    group.addTask { await observeAccentColor() }
+                }
+            }
+    }
+
+    private func observeTheme() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.appThemeFlow) {
+                theme.applyTheme(value)
+            }
+        } catch {
+            print("Theme observation error: \(error)")
+        }
+    }
+
+    private func observeAccentColor() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.accentColorFlow) {
+                theme.applyAccentColor(value)
+            }
+        } catch {
+            print("Accent color observation error: \(error)")
         }
     }
 }

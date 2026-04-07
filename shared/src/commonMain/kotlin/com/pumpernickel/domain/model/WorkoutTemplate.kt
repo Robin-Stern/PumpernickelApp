@@ -18,9 +18,9 @@ data class TemplateExercise(
     val primaryMuscles: List<MuscleGroup>,
     val targetSets: Int,
     val targetReps: Int,
-    val targetWeightKgX10: Int,
     val restPeriodSec: Int,
-    val exerciseOrder: Int
+    val exerciseOrder: Int,
+    val perSetReps: List<Int>? = null
 )
 
 fun WorkoutTemplateEntity.toDomain(
@@ -43,9 +43,9 @@ fun TemplateExerciseEntity.toDomain(
     primaryMuscles = primaryMuscles,
     targetSets = targetSets,
     targetReps = targetReps,
-    targetWeightKgX10 = targetWeightKgX10,
     restPeriodSec = restPeriodSec,
-    exerciseOrder = exerciseOrder
+    exerciseOrder = exerciseOrder,
+    perSetReps = perSetReps?.split(",")?.mapNotNull { it.trim().toIntOrNull() }?.takeIf { it.isNotEmpty() }
 )
 
 fun formatWeightKg(kgX10: Int): String {

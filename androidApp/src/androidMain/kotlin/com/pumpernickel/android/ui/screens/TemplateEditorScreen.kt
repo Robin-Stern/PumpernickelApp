@@ -180,8 +180,8 @@ fun TemplateEditorScreen(templateId: Long?, navController: NavHostController) {
                     exercise = exercise,
                     index = index,
                     totalCount = exercises.size,
-                    onUpdateTargets = { sets, reps, weightKgX10, restSec ->
-                        viewModel.updateExerciseTargets(exercise.id, sets, reps, weightKgX10, restSec)
+                    onUpdateTargets = { sets, reps, restSec ->
+                        viewModel.updateExerciseTargets(exercise.id, sets, reps, restSec)
                     },
                     onRemove = { viewModel.removeExercise(exercise.id) },
                     onMoveUp = {
@@ -204,25 +204,20 @@ private fun ExerciseTargetRow(
     exercise: TemplateExercise,
     index: Int,
     totalCount: Int,
-    onUpdateTargets: (sets: Int, reps: Int, weightKgX10: Int, restSec: Int) -> Unit,
+    onUpdateTargets: (sets: Int, reps: Int, restSec: Int) -> Unit,
     onRemove: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit
 ) {
     var setsText by remember(exercise.id) { mutableStateOf("${exercise.targetSets}") }
     var repsText by remember(exercise.id) { mutableStateOf("${exercise.targetReps}") }
-    var weightText by remember(exercise.id) {
-        mutableStateOf(formatWeightDisplay(exercise.targetWeightKgX10))
-    }
     var restText by remember(exercise.id) { mutableStateOf("${exercise.restPeriodSec}") }
 
     fun commitChanges() {
         val sets = setsText.toIntOrNull() ?: exercise.targetSets
         val reps = repsText.toIntOrNull() ?: exercise.targetReps
-        val weightKgX10 = weightText.toDoubleOrNull()?.let { (it * 10).toInt() }
-            ?: exercise.targetWeightKgX10
         val restSec = restText.toIntOrNull() ?: exercise.restPeriodSec
-        onUpdateTargets(sets, reps, weightKgX10, restSec)
+        onUpdateTargets(sets, reps, restSec)
     }
 
     Column(
@@ -304,14 +299,6 @@ private fun ExerciseTargetRow(
                 modifier = Modifier.width(60.dp),
                 keyboardType = KeyboardType.Number
             )
-            // Weight field
-            CompactTargetField(
-                label = "kg",
-                value = weightText,
-                onValueChange = { weightText = it; commitChanges() },
-                modifier = Modifier.width(70.dp),
-                keyboardType = KeyboardType.Decimal
-            )
             // Rest field
             CompactTargetField(
                 label = "Rest (s)",
@@ -349,8 +336,3 @@ private fun CompactTargetField(
     }
 }
 
-private fun formatWeightDisplay(kgX10: Int): String {
-    val whole = kgX10 / 10
-    val decimal = kgX10 % 10
-    return if (decimal == 0) "$whole" else "$whole.$decimal"
-}

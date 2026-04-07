@@ -34,7 +34,7 @@ Port exercise catalog (search, detail, create) and template management (list, ed
 
 ### Exercise Picker
 - **D-12:** Exercise picker is a full-screen dialog or navigation destination (not a bottom sheet) — maps to iOS NavigationStack presentation.
-- **D-13:** Multi-select with checkmarks, "Add Selected" button at bottom.
+- **D-13:** Single-select: tap exercise → callback fires → auto-dismiss. Matches iOS ExercisePickerView behavior (onSelect callback with immediate dismiss).
 
 ### Empty State
 - **D-14:** Centered column: icon (FitnessCenter) + title + description + "Create Template" button. Maps to iOS WorkoutEmptyStateView.

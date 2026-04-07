@@ -55,7 +55,7 @@ struct ExerciseCatalogView: View {
                     Image(systemName: "figure.stand")
                         .font(.system(size: 20))
                         .frame(width: 44, height: 36)
-                        .background(Color(white: 0.12))
+                        .background(Color(UIColor.tertiarySystemBackground))
                         .cornerRadius(20)
                 }
 
@@ -74,12 +74,12 @@ struct ExerciseCatalogView: View {
                             .font(.subheadline)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
-                            .background(isSelected ? Color(red: 0.4, green: 0.733, blue: 0.416) : Color(white: 0.12))
+                            .background(isSelected ? Color.appAccent : Color(UIColor.tertiarySystemBackground))
                             .foregroundColor(isSelected ? .white : .primary)
                             .cornerRadius(20)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 20)
-                                    .stroke(isSelected ? Color.clear : Color(white: 0.2), lineWidth: 1)
+                                    .stroke(isSelected ? Color.clear : Color(UIColor.separator), lineWidth: 1)
                             )
                     }
                 }
@@ -91,16 +91,24 @@ struct ExerciseCatalogView: View {
 
     // MARK: - Exercise List
 
+    private var filteredExercises: [Exercise] {
+        guard let group = selectedMuscleGroup else { return exercises }
+        return exercises.filter { exercise in
+            exercise.primaryMuscles.contains { $0.dbName == group.dbName }
+        }
+    }
+
     private var exerciseList: some View {
-        List {
-            if exercises.isEmpty {
+        let displayed = filteredExercises
+        return List {
+            if displayed.isEmpty {
                 Text("No exercises found")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .listRowBackground(Color.clear)
             } else {
-                ForEach(exercises, id: \.id) { exercise in
+                ForEach(displayed, id: \.id) { exercise in
                     NavigationLink(destination: ExerciseDetailView(exerciseId: exercise.id)) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(exercise.name)
@@ -125,7 +133,7 @@ struct ExerciseCatalogView: View {
                 .font(.system(size: 24, weight: .medium))
                 .foregroundColor(.white)
                 .frame(width: 56, height: 56)
-                .background(Color(red: 0.4, green: 0.733, blue: 0.416))
+                .background(Color.appAccent)
                 .clipShape(Circle())
                 .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
         }

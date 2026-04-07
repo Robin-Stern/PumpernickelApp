@@ -132,13 +132,13 @@ class WorkoutSessionViewModel(
                     exerciseName = te.exerciseName,
                     targetSets = te.targetSets,
                     targetReps = te.targetReps,
-                    targetWeightKgX10 = te.targetWeightKgX10,
+                    targetWeightKgX10 = 0,
                     restPeriodSec = te.restPeriodSec,
                     sets = (0 until te.targetSets).map { idx ->
                         SessionSet(
                             setIndex = idx,
-                            targetReps = te.targetReps,
-                            targetWeightKgX10 = te.targetWeightKgX10,
+                            targetReps = te.perSetReps?.getOrNull(idx) ?: te.targetReps,
+                            targetWeightKgX10 = 0,
                             actualReps = null,
                             actualWeightKgX10 = null,
                             isCompleted = false
@@ -205,13 +205,13 @@ class WorkoutSessionViewModel(
                     exerciseName = te.exerciseName,
                     targetSets = te.targetSets,
                     targetReps = te.targetReps,
-                    targetWeightKgX10 = te.targetWeightKgX10,
+                    targetWeightKgX10 = 0,
                     restPeriodSec = te.restPeriodSec,
                     sets = (0 until te.targetSets).map { idx ->
                         SessionSet(
                             setIndex = idx,
-                            targetReps = te.targetReps,
-                            targetWeightKgX10 = te.targetWeightKgX10,
+                            targetReps = te.perSetReps?.getOrNull(idx) ?: te.targetReps,
+                            targetWeightKgX10 = 0,
                             actualReps = null,
                             actualWeightKgX10 = null,
                             isCompleted = false
@@ -322,6 +322,15 @@ class WorkoutSessionViewModel(
             // Compute next cursor position
             val currentExercise = active.exercises[exIdx]
             val nextCursor = computeNextCursor(exIdx, setIdx, active.exercises)
+
+            // Last set of last exercise -- auto-transition to review
+            if (nextCursor.first == exIdx && nextCursor.second == setIdx) {
+                workoutRepository.updateCursor(nextCursor.first, nextCursor.second)
+                // Update exercises with the completed set before entering review
+                _sessionState.value = active.copy(exercises = updatedExercises)
+                enterReview()
+                return@launch
+            }
 
             // Update cursor in Room
             workoutRepository.updateCursor(nextCursor.first, nextCursor.second)
@@ -449,31 +458,45 @@ class WorkoutSessionViewModel(
     }
 
     /**
-     * Skip the current exercise and advance to the next one (D-05, D-06, FLOW-07).
-     * Skipped exercise retains 0 completed sets and is naturally excluded from saved history.
+     * Skip the current exercise and place it after the next exercise (FLOW-07).
+     * Example: [A, B, C] skip A → [B, A, C] (cursor stays at index 0, now on B).
      * No-op on the last exercise (Pitfall 3).
      */
     fun skipExercise() {
         timerJob?.cancel()
         val active = _sessionState.value as? WorkoutSessionState.Active ?: return
-        val nextIndex = active.currentExerciseIndex + 1
-        if (nextIndex >= active.exercises.size) return  // Last exercise: no-op
+        val currentIdx = active.currentExerciseIndex
+        if (currentIdx + 1 >= active.exercises.size) return  // Last exercise: no-op
 
-        val nextExercise = active.exercises[nextIndex]
+        // Move skipped exercise to after the next exercise in the queue
+        val list = active.exercises.toMutableList()
+        val skipped = list.removeAt(currentIdx)
+        list.add(currentIdx + 1, skipped)
+
+        // Mirror the same reorder in templateOriginalIndices
+        if (templateOriginalIndices.size > currentIdx) {
+            val origIdx = templateOriginalIndices.removeAt(currentIdx)
+            templateOriginalIndices.add(currentIdx + 1, origIdx)
+        }
+
+        // currentIdx now points to what was the next exercise
+        val nextExercise = list[currentIdx]
         val firstIncompleteSet = nextExercise.sets
             .indexOfFirst { !it.isCompleted }
             .let { if (it == -1) 0 else it }
 
         _sessionState.value = active.copy(
-            currentExerciseIndex = nextIndex,
+            exercises = list,
+            currentExerciseIndex = currentIdx,
             currentSetIndex = firstIncompleteSet,
             restState = RestState.NotResting
         )
         _preFill.value = computePreFill(nextExercise, firstIncompleteSet)
 
         viewModelScope.launch {
-            workoutRepository.updateCursor(nextIndex, firstIncompleteSet)
+            workoutRepository.updateCursor(currentIdx, firstIncompleteSet)
         }
+        persistExerciseOrder()
     }
 
     /**
@@ -597,9 +620,9 @@ class WorkoutSessionViewModel(
     }
 
     /**
-     * Compute pre-fill values for the given set (firmware WorkoutSetEntryState.cpp parity).
-     * Set 0: template targets (ENTRY-05).
+     * Compute pre-fill values for the given set.
      * Set 1+: previous set's actual reps and weight (ENTRY-04).
+     * Set 0: previous workout performance if available, then template targets (ENTRY-05).
      */
     private fun computePreFill(
         exercise: SessionExercise,
@@ -614,10 +637,21 @@ class WorkoutSessionViewModel(
                 )
             }
         }
-        // Set 1 or fallback: use template targets
+        // Check previous workout performance for this exercise
+        val prevPerf = _previousPerformance.value[exercise.exerciseId]
+        if (prevPerf != null && prevPerf.sets.isNotEmpty()) {
+            val matchingSet = prevPerf.sets.firstOrNull { it.setIndex == setIndex }
+                ?: prevPerf.sets.last()
+            return SetPreFill(
+                reps = matchingSet.actualReps,
+                weightKgX10 = matchingSet.actualWeightKgX10
+            )
+        }
+        // Final fallback: use per-set targets if available, else exercise-level targets
+        val targetSet = exercise.sets.getOrNull(setIndex)
         return SetPreFill(
-            reps = exercise.targetReps,
-            weightKgX10 = exercise.targetWeightKgX10
+            reps = targetSet?.targetReps ?: exercise.targetReps,
+            weightKgX10 = targetSet?.targetWeightKgX10 ?: exercise.targetWeightKgX10
         )
     }
 

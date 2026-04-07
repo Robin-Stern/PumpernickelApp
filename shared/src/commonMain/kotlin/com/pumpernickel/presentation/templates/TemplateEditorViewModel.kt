@@ -75,7 +75,7 @@ class TemplateEditorViewModel(
         _name.value = name
     }
 
-    // Add an exercise with D-08 defaults: 3 sets, 10 reps, 0 weight, 90s rest
+    // Add an exercise with D-08 defaults: 3 sets, 10 reps, 90s rest
     fun addExercise(exerciseId: String, exerciseName: String, primaryMuscles: List<MuscleGroup>) {
         val currentList = _exercises.value
         val newOrder = currentList.size
@@ -87,7 +87,6 @@ class TemplateEditorViewModel(
             primaryMuscles = primaryMuscles,
             targetSets = 3,
             targetReps = 10,
-            targetWeightKgX10 = 0,
             restPeriodSec = 90,
             exerciseOrder = newOrder
         )
@@ -124,30 +123,94 @@ class TemplateEditorViewModel(
         }
     }
 
-    fun updateExerciseTargets(id: Long, sets: Int, reps: Int, weightKgX10: Int, restSec: Int) {
+    fun updateExerciseTargets(id: Long, sets: Int, reps: Int, restSec: Int) {
         _exercises.value = _exercises.value.map { ex ->
             if (ex.id == id) ex.copy(
                 targetSets = sets,
                 targetReps = reps,
-                targetWeightKgX10 = weightKgX10,
-                restPeriodSec = restSec
+                restPeriodSec = restSec,
+                perSetReps = null
             ) else ex
         }
 
         if (_templateId.value != null && id > 0) {
-            // Edit mode: persist immediately
             viewModelScope.launch {
-                repository.updateExerciseTargets(id, sets, reps, weightKgX10, restSec)
+                repository.updateExerciseTargets(id, sets, reps, restSec)
+                repository.updatePerSetReps(id, null)
+            }
+        }
+    }
+
+    fun updateExerciseSetCount(id: Long, sets: Int) {
+        if (sets <= 0) return
+        _exercises.value = _exercises.value.map { ex ->
+            if (ex.id == id) {
+                val curReps = ex.perSetReps ?: List(ex.targetSets) { ex.targetReps }
+                val newReps = resizeList(curReps, sets, ex.targetReps)
+                val uniformReps = newReps.distinct().size <= 1
+                ex.copy(
+                    targetSets = sets,
+                    targetReps = if (uniformReps) (newReps.firstOrNull() ?: ex.targetReps) else ex.targetReps,
+                    perSetReps = if (uniformReps) null else newReps
+                )
+            } else ex
+        }
+        persistExercise(id)
+    }
+
+    fun updateExerciseRest(id: Long, restSec: Int) {
+        _exercises.value = _exercises.value.map { ex ->
+            if (ex.id == id) ex.copy(restPeriodSec = restSec) else ex
+        }
+        persistExercise(id)
+    }
+
+    fun updateSetTarget(id: Long, setIndex: Int, reps: Int) {
+        _exercises.value = _exercises.value.map { ex ->
+            if (ex.id == id) {
+                val curReps = (ex.perSetReps ?: List(ex.targetSets) { ex.targetReps }).toMutableList()
+                if (setIndex in curReps.indices) {
+                    curReps[setIndex] = reps
+                }
+                val uniformReps = curReps.distinct().size <= 1
+                ex.copy(
+                    targetReps = if (uniformReps) (curReps.firstOrNull() ?: ex.targetReps) else ex.targetReps,
+                    perSetReps = if (uniformReps) null else curReps.toList()
+                )
+            } else ex
+        }
+        persistExercise(id)
+    }
+
+    private fun resizeList(list: List<Int>, newSize: Int, default: Int): List<Int> {
+        return when {
+            newSize <= list.size -> list.take(newSize)
+            else -> list + List(newSize - list.size) { list.lastOrNull() ?: default }
+        }
+    }
+
+    private fun persistExercise(id: Long) {
+        if (_templateId.value != null && id > 0) {
+            val exercise = _exercises.value.find { it.id == id } ?: return
+            viewModelScope.launch {
+                repository.updateExerciseTargets(
+                    id, exercise.targetSets, exercise.targetReps,
+                    exercise.restPeriodSec
+                )
+                repository.updatePerSetReps(id, exercise.perSetReps)
             }
         }
     }
 
     // Reorder: move exercise from fromIndex to toIndex (D-12)
+    // Uses SwiftUI .onMove toOffset semantics: to can equal list.size (append),
+    // and when moving down (to > from) the effective insert index is to - 1 after removal.
     fun moveExercise(from: Int, to: Int) {
         val list = _exercises.value.toMutableList()
-        if (from < 0 || from >= list.size || to < 0 || to >= list.size) return
+        if (from < 0 || from >= list.size || to < 0 || to > list.size) return
         val item = list.removeAt(from)
-        list.add(to, item)
+        val insertAt = if (to > from) to - 1 else to
+        list.add(insertAt, item)
         // Normalize order indices to be contiguous 0, 1, 2, ...
         _exercises.value = list.mapIndexed { index, ex ->
             ex.copy(exerciseOrder = index)
@@ -187,11 +250,15 @@ class TemplateEditorViewModel(
                         )
                         // Update targets if user changed from D-08 defaults
                         if (exercise.targetSets != 3 || exercise.targetReps != 10 ||
-                            exercise.targetWeightKgX10 != 0 || exercise.restPeriodSec != 90) {
+                            exercise.restPeriodSec != 90) {
                             repository.updateExerciseTargets(
                                 insertedId, exercise.targetSets, exercise.targetReps,
-                                exercise.targetWeightKgX10, exercise.restPeriodSec
+                                exercise.restPeriodSec
                             )
+                        }
+                        // Persist per-set reps if set (drop sets)
+                        if (exercise.perSetReps != null) {
+                            repository.updatePerSetReps(insertedId, exercise.perSetReps)
                         }
                     }
                     _saveResult.value = SaveResult.Success(newId)
