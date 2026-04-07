@@ -14,7 +14,7 @@ struct AnatomyBackView: View {
                 // Body outline (non-interactive)
                 ForEach(MuscleRegionPaths.backOutline.indices, id: \.self) { i in
                     svgPath(MuscleRegionPaths.backOutline[i])
-                        .fill(Color(white: 0.165))
+                        .fill(Color(UIColor.systemGray5))
                         .scaleEffect(x: scale, y: scale, anchor: .topLeading)
                 }
 
@@ -24,8 +24,8 @@ struct AnatomyBackView: View {
 
                     svgPath(region.pathData)
                         .fill(isSelected
-                            ? Color(red: 0.4, green: 0.733, blue: 0.416).opacity(0.8)
-                            : Color(white: 0.227))
+                            ? Color.appAccent.opacity(0.8)
+                            : Color(UIColor.systemGray4))
                         .scaleEffect(x: scale, y: scale, anchor: .topLeading)
                         .contentShape(svgPath(region.pathData).scale(x: scale, y: scale, anchor: .topLeading))
                         .onTapGesture {

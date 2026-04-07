@@ -244,7 +244,7 @@ private struct ExerciseTargetRow: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .frame(width: 32, height: 32)
-                        .background(Color(white: 0.12))
+                        .background(Color(UIColor.tertiarySystemBackground))
                         .cornerRadius(8)
                 }
             }
@@ -336,7 +336,7 @@ private struct ExerciseTargetRow: View {
                 .multilineTextAlignment(.center)
                 .frame(width: width)
                 .padding(.vertical, 6)
-                .background(Color(white: 0.12))
+                .background(Color(UIColor.tertiarySystemBackground))
                 .cornerRadius(8)
                 .onSubmit { onCommit() }
                 .onChange(of: text.wrappedValue) { _, _ in onCommit() }
@@ -354,7 +354,7 @@ private struct ExerciseTargetRow: View {
                 .multilineTextAlignment(.center)
                 .frame(width: 50)
                 .padding(.vertical, 6)
-                .background(Color(white: 0.12))
+                .background(Color(UIColor.tertiarySystemBackground))
                 .cornerRadius(8)
                 .onSubmit { commitRest() }
                 .onChange(of: restText) { _, _ in commitRest() }

@@ -46,7 +46,7 @@ struct AnatomyPickerView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
                         .background(localSelection != nil
-                            ? Color(red: 0.4, green: 0.733, blue: 0.416)
+                            ? Color.appAccent
                             : Color.gray)
                         .cornerRadius(12)
                 }

@@ -37,6 +37,7 @@
 		A10071 /* WorkoutHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10071 /* WorkoutHistoryDetailView.swift */; };
 		A10072 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10072 /* SettingsView.swift */; };
 		A10080 /* Color+App.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10080 /* Color+App.swift */; };
+		A10090 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10090 /* ThemeManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +69,7 @@
 		B10071 /* WorkoutHistoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistoryDetailView.swift; sourceTree = "<group>"; };
 		B10072 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B10080 /* Color+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+App.swift"; sourceTree = "<group>"; };
+		B10090 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +102,7 @@
 				E10003 /* Views */,
 				E10005 /* Utilities */,
 				E10014 /* Extensions */,
+				E10015 /* Theme */,
 				B10006 /* Assets.xcassets */,
 				E10006 /* Preview Content */,
 			);
@@ -220,6 +223,14 @@
 				B10080 /* Color+App.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		E10015 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				B10090 /* ThemeManager.swift */,
+			);
+			path = Theme;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -368,6 +379,7 @@
 				A10071 /* WorkoutHistoryDetailView.swift in Sources */,
 				A10072 /* SettingsView.swift in Sources */,
 				A10080 /* Color+App.swift in Sources */,
+				A10090 /* ThemeManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

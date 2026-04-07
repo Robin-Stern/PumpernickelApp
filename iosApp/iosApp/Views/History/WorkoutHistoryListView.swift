@@ -15,7 +15,7 @@ struct WorkoutHistoryListView: View {
                     Spacer()
                     Image(systemName: "clock.arrow.circlepath")
                         .font(.system(size: 64))
-                        .foregroundColor(Color(white: 0.62))
+                        .foregroundColor(.secondary)
                     Text("No Workouts Yet")
                         .font(.title3.weight(.semibold))
                     Text("Complete a workout to see your history here.")
