@@ -32,9 +32,16 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.lifecycle.viewmodel)
             implementation(libs.datastore.preferences)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.json)
         }
         androidMain.dependencies {
             implementation(libs.koin.android)
+            implementation(libs.ktor.client.okhttp)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
     }
 }
