@@ -38,6 +38,12 @@
 		A10072 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10072 /* SettingsView.swift */; };
 		A10080 /* Color+App.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10080 /* Color+App.swift */; };
 		A10090 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10090 /* ThemeManager.swift */; };
+		A10100 /* MacroRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10100 /* MacroRowView.swift */; };
+		A10101 /* NutritionDailyLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10101 /* NutritionDailyLogView.swift */; };
+		A10102 /* NutritionFoodEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10102 /* NutritionFoodEntryView.swift */; };
+		A10103 /* NutritionRecipeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10103 /* NutritionRecipeListView.swift */; };
+		A10104 /* NutritionRecipeCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10104 /* NutritionRecipeCreationView.swift */; };
+		A10105 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10105 /* BarcodeScannerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -70,6 +76,12 @@
 		B10072 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B10080 /* Color+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+App.swift"; sourceTree = "<group>"; };
 		B10090 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
+		B10100 /* MacroRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroRowView.swift; sourceTree = "<group>"; };
+		B10101 /* NutritionDailyLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionDailyLogView.swift; sourceTree = "<group>"; };
+		B10102 /* NutritionFoodEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionFoodEntryView.swift; sourceTree = "<group>"; };
+		B10103 /* NutritionRecipeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionRecipeListView.swift; sourceTree = "<group>"; };
+		B10104 /* NutritionRecipeCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionRecipeCreationView.swift; sourceTree = "<group>"; };
+		B10105 /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -120,6 +132,7 @@
 				E10011 /* Workout */,
 				E10012 /* History */,
 				E10013 /* Settings */,
+				E10016 /* Nutrition */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -231,6 +244,19 @@
 				B10090 /* ThemeManager.swift */,
 			);
 			path = Theme;
+			sourceTree = "<group>";
+		};
+		E10016 /* Nutrition */ = {
+			isa = PBXGroup;
+			children = (
+				B10100 /* MacroRowView.swift */,
+				B10101 /* NutritionDailyLogView.swift */,
+				B10102 /* NutritionFoodEntryView.swift */,
+				B10103 /* NutritionRecipeListView.swift */,
+				B10104 /* NutritionRecipeCreationView.swift */,
+				B10105 /* BarcodeScannerView.swift */,
+			);
+			path = Nutrition;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -380,6 +406,12 @@
 				A10072 /* SettingsView.swift in Sources */,
 				A10080 /* Color+App.swift in Sources */,
 				A10090 /* ThemeManager.swift in Sources */,
+				A10100 /* MacroRowView.swift in Sources */,
+				A10101 /* NutritionDailyLogView.swift in Sources */,
+				A10102 /* NutritionFoodEntryView.swift in Sources */,
+				A10103 /* NutritionRecipeListView.swift in Sources */,
+				A10104 /* NutritionRecipeCreationView.swift in Sources */,
+				A10105 /* BarcodeScannerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -510,6 +542,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
@@ -534,6 +567,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pumpernickel.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -545,6 +579,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
@@ -569,6 +604,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.pumpernickel.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

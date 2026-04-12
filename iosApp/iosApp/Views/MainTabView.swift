@@ -25,11 +25,9 @@ struct MainTabView: View {
             }
             .tag(1)
 
-            PlaceholderTabView(
-                iconName: "fork.knife",
-                title: "Nutrition",
-                message: "Log meals and track your macros. Coming soon."
-            )
+            NavigationStack {
+                NutritionDailyLogView()
+            }
             .tabItem {
                 Image(systemName: "fork.knife")
                 Text("Nutrition")
