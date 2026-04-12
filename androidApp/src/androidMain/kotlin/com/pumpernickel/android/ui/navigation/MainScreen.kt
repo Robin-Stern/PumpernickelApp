@@ -37,6 +37,14 @@ import com.pumpernickel.android.ui.screens.TemplateListScreen
 import com.pumpernickel.android.ui.screens.WorkoutHistoryDetailScreen
 import com.pumpernickel.android.ui.screens.WorkoutHistoryListScreen
 import com.pumpernickel.android.ui.screens.WorkoutSessionScreen
+import com.pumpernickel.android.ui.screens.NutritionFoodEntryScreen
+import com.pumpernickel.android.ui.screens.NutritionRecipeListScreen
+import com.pumpernickel.android.ui.screens.NutritionRecipeCreationScreen
+import com.pumpernickel.android.ui.screens.NutritionDailyLogScreen
+import com.pumpernickel.presentation.nutrition.FoodEntryViewModel
+import com.pumpernickel.presentation.nutrition.RecipeListViewModel
+import com.pumpernickel.presentation.nutrition.RecipeCreationViewModel
+import com.pumpernickel.presentation.nutrition.DailyLogViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -54,6 +62,7 @@ fun MainScreen() {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
     val workoutNavController: NavHostController = rememberNavController()
+    val nutritionNavController: NavHostController = rememberNavController()
 
     Scaffold(
         bottomBar = {
@@ -156,11 +165,32 @@ fun MainScreen() {
 
             // Nutrition tab
             AnimatedVisibility(visible = selectedTab == 2) {
-                PlaceholderScreen(
-                    icon = Icons.Filled.Restaurant,
-                    title = "Nutrition",
-                    message = "Log meals and track your macros. Coming soon."
-                )
+                NavHost(
+                    navController = nutritionNavController,
+                    startDestination = NutritionDailyLogRoute
+                ) {
+                    composable<NutritionDailyLogRoute> {
+                        NutritionDailyLogScreen(navController = nutritionNavController)
+                    }
+                    composable<NutritionFoodEntryRoute> {
+                        NutritionFoodEntryScreen(navController = nutritionNavController)
+                    }
+                    composable<NutritionRecipeListRoute> {
+                        NutritionRecipeListScreen(navController = nutritionNavController)
+                    }
+                    composable<NutritionRecipeCreationRoute> {
+                        val parentEntry = remember(it) {
+                            nutritionNavController.getBackStackEntry<NutritionRecipeListRoute>()
+                        }
+                        val listViewModel: RecipeListViewModel = koinViewModel(
+                            viewModelStoreOwner = parentEntry
+                        )
+                        NutritionRecipeCreationScreen(
+                            listViewModel = listViewModel,
+                            navController = nutritionNavController
+                        )
+                    }
+                }
             }
         }
     }

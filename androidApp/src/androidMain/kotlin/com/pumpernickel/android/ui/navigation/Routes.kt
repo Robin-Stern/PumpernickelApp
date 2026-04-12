@@ -17,3 +17,9 @@ import kotlinx.serialization.Serializable
 @Serializable data class WorkoutSessionRoute(val templateId: Long)
 @Serializable data object WorkoutHistoryListRoute
 @Serializable data class WorkoutHistoryDetailRoute(val workoutId: Long)
+
+// Nutrition tab screens
+@Serializable data object NutritionFoodEntryRoute
+@Serializable data object NutritionRecipeListRoute
+@Serializable data object NutritionRecipeCreationRoute
+@Serializable data object NutritionDailyLogRoute
