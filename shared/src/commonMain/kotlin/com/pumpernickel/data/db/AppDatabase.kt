@@ -15,13 +15,18 @@ import androidx.room.RoomDatabaseConstructor
         ActiveSessionSetEntity::class,
         CompletedWorkoutEntity::class,
         CompletedWorkoutExerciseEntity::class,
-        CompletedWorkoutSetEntity::class
+        CompletedWorkoutSetEntity::class,
+        FoodEntity::class,
+        RecipeEntity::class,
+        RecipeIngredientEntity::class,
+        ConsumptionEntryEntity::class
     ],
-    version = 5,
+    version = 6,
     autoMigrations = [
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
-        AutoMigration(from = 4, to = 5)
+        AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6)
     ]
 )
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -30,6 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutTemplateDao(): WorkoutTemplateDao
     abstract fun workoutSessionDao(): WorkoutSessionDao
     abstract fun completedWorkoutDao(): CompletedWorkoutDao
+    abstract fun nutritionDao(): NutritionDao
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")

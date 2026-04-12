@@ -4,6 +4,10 @@ import com.pumpernickel.presentation.exercises.CreateExerciseViewModel
 import com.pumpernickel.presentation.exercises.ExerciseCatalogViewModel
 import com.pumpernickel.presentation.exercises.ExerciseDetailViewModel
 import com.pumpernickel.presentation.history.WorkoutHistoryViewModel
+import com.pumpernickel.presentation.nutrition.DailyLogViewModel
+import com.pumpernickel.presentation.nutrition.FoodEntryViewModel
+import com.pumpernickel.presentation.nutrition.RecipeCreationViewModel
+import com.pumpernickel.presentation.nutrition.RecipeListViewModel
 import com.pumpernickel.presentation.settings.SettingsViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import com.pumpernickel.presentation.templates.TemplateListViewModel
@@ -33,5 +37,17 @@ object KoinHelper {
         KoinPlatform.getKoin().get()
 
     fun getSettingsViewModel(): SettingsViewModel =
+        KoinPlatform.getKoin().get()
+
+    fun getDailyLogViewModel(): DailyLogViewModel =
+        KoinPlatform.getKoin().get()
+
+    fun getFoodEntryViewModel(): FoodEntryViewModel =
+        KoinPlatform.getKoin().get()
+
+    fun getRecipeListViewModel(): RecipeListViewModel =
+        KoinPlatform.getKoin().get()
+
+    fun getRecipeCreationViewModel(): RecipeCreationViewModel =
         KoinPlatform.getKoin().get()
 }
