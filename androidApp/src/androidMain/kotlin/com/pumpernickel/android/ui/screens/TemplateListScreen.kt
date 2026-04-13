@@ -38,8 +38,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.pumpernickel.android.R
 import com.pumpernickel.android.ui.navigation.TemplateEditorRoute
 import com.pumpernickel.android.ui.navigation.WorkoutHistoryListRoute
 import com.pumpernickel.android.ui.navigation.WorkoutSessionRoute
@@ -60,7 +63,7 @@ fun TemplateListScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Workout") },
+                title = { Text(stringResource(R.string.tab_workout)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigate(WorkoutHistoryListRoute) }) {
                         Icon(
@@ -134,14 +137,14 @@ fun TemplateListScreen(navController: NavHostController) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(Color(0xFFD32F2F))
-                                    .padding(end = androidx.compose.ui.unit.Dp(16f)),
+                                    .background(MaterialTheme.colorScheme.error)
+                                    .padding(end = 16.dp),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = "Delete Template",
-                                    tint = Color.White
+                                    tint = MaterialTheme.colorScheme.onError
                                 )
                             }
                         }
@@ -188,8 +191,8 @@ fun TemplateListScreen(navController: NavHostController) {
                 showDeleteDialog = false
                 templateToDelete = null
             },
-            title = { Text("Delete Template?") },
-            text = { Text("This cannot be undone.") },
+            title = { Text(stringResource(R.string.dialog_delete_template_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_template_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -198,7 +201,7 @@ fun TemplateListScreen(navController: NavHostController) {
                         templateToDelete = null
                     }
                 ) {
-                    Text("Delete")
+                    Text(stringResource(R.string.action_delete))
                 }
             },
             dismissButton = {
@@ -208,7 +211,7 @@ fun TemplateListScreen(navController: NavHostController) {
                         templateToDelete = null
                     }
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )

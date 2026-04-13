@@ -61,7 +61,7 @@ class DailyLogViewModel(
     fun refresh() {
         viewModelScope.launch {
             val date = _uiState.value.selectedDate
-            val foods = loadFoods()
+            val foods = repository.loadFoodsAndRecipes()
             val entries = loadForDate(date)
             val totals = calculateDaily(entries)
             _uiState.update { it.copy(foods = foods, entries = entries, totals = totals) }
@@ -139,7 +139,7 @@ class DailyLogViewModel(
                     )
                     repository.saveFood(newFood)
                     _uiState.update { it.copy(
-                        isLookingUp = false, foods = loadFoods(), pendingFood = newFood
+                        isLookingUp = false, foods = repository.loadFoodsAndRecipes(), pendingFood = newFood
                     )}
                 }
                 is LookupBarcodeUseCase.Result.NotFound -> {

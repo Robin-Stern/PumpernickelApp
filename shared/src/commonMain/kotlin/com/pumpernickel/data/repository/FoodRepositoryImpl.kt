@@ -42,6 +42,31 @@ class FoodRepositoryImpl(
         return dao.getAllFoods().map { it.toDomain() }
     }
 
+    override suspend fun loadFoodsAndRecipes(): List<Food> {
+        ensureSeeded()
+        val foods = dao.getAllFoods().map { it.toDomain() }
+        val foodsById = foods.associateBy { it.id }
+        val recipes = loadRecipes()
+        val recipeFoods = recipes.mapNotNull { recipe ->
+            val resolved = recipe.ingredients.mapNotNull { ing ->
+                foodsById[ing.foodId]?.let { it to (ing.amountGrams / 100.0) }
+            }
+            if (resolved.isEmpty()) return@mapNotNull null
+            val macros = com.pumpernickel.domain.model.calculateMacros(resolved)
+            val totalGrams = recipe.ingredients.sumOf { it.amountGrams }
+            val factor = if (totalGrams > 0) 100.0 / totalGrams else 1.0
+            Food(
+                id = recipe.id, name = recipe.name, isRecipe = true,
+                calories = macros.calories * factor,
+                protein = macros.protein * factor,
+                fat = macros.fat * factor,
+                carbohydrates = macros.carbs * factor,
+                sugar = macros.sugar * factor
+            )
+        }
+        return foods + recipeFoods
+    }
+
     override suspend fun deleteFood(id: String) {
         dao.deleteFood(id)
     }

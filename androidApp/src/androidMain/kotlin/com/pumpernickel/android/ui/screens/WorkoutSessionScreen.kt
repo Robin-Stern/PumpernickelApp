@@ -425,7 +425,7 @@ private fun ActiveWorkoutContent(
                         onDiscardWorkout()
                         onShowAbandonDialog(false)
                     }) {
-                        Text("Discard", color = Color(0xFFD32F2F))
+                        Text("Discard", color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -508,7 +508,7 @@ private fun HeaderSection(
                 Text(
                     text = "Last: $prevText",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFFF9800),
+                    color = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -520,7 +520,7 @@ private fun HeaderSection(
             Text(
                 text = "PB: ${weightUnit.formatWeight(pbKgX10)}",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF2196F3),
+                color = Color(0xFF2196F3), // semantic "info blue" — no M3 equivalent
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -548,7 +548,7 @@ private fun RestTimerSection(
         Text(
             text = restState.remainingSeconds.toString(),
             style = MaterialTheme.typography.displayLarge.copy(fontFamily = FontFamily.Monospace),
-            color = if (isAlmostDone) Color(0xFFD32F2F) else MaterialTheme.colorScheme.onSurface
+            color = if (isAlmostDone) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
         )
 
         val progress = if (restState.totalSeconds > 0) {
@@ -739,7 +739,7 @@ private fun CompletedSetsSection(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = "Completed",
-                    tint = Color(0xFF4CAF50),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
@@ -895,7 +895,7 @@ private fun RecapContent(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "Completed",
-                                    tint = Color(0xFF4CAF50),
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Text(

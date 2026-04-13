@@ -14,7 +14,9 @@ import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -372,10 +374,84 @@ private fun BarcodeScannerDialog(onBarcodeDetected: (String) -> Unit, onDismiss:
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(modifier = Modifier.fillMaxSize()) {
             CameraPreview(onBarcodeDetected = onBarcodeDetected)
-            FilledTonalButton(onClick = onDismiss, modifier = Modifier.align(Alignment.BottomCenter).padding(32.dp)) {
-                Text(stringResource(R.string.action_cancel))
+            ScannerOverlay()
+            Column(
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.scanner_hint),
+                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                FilledTonalButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun ScannerOverlay(modifier: Modifier = Modifier) {
+    val viewfinderWidth = 280.dp
+    val viewfinderHeight = 180.dp
+    val cornerRadiusDp = 12.dp
+    val cornerLength = 24.dp
+    val cornerStrokeWidth = 4.dp
+    val dimColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f)
+    val borderColor = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f)
+    val markerColor = androidx.compose.ui.graphics.Color.White
+
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val vfW = viewfinderWidth.toPx()
+        val vfH = viewfinderHeight.toPx()
+        val l = (size.width - vfW) / 2f
+        val t = (size.height - vfH) / 2f
+        val cr = cornerRadiusDp.toPx()
+
+        // Dim overlay with cutout
+        val cutoutPath = androidx.compose.ui.graphics.Path().apply {
+            addRoundRect(
+                androidx.compose.ui.geometry.RoundRect(
+                    left = l, top = t,
+                    right = l + vfW, bottom = t + vfH,
+                    radiusX = cr, radiusY = cr
+                )
+            )
+        }
+        clipPath(cutoutPath, clipOp = androidx.compose.ui.graphics.ClipOp.Difference) {
+            drawRect(dimColor)
+        }
+
+        // White border around viewfinder
+        drawRoundRect(
+            color = borderColor,
+            topLeft = androidx.compose.ui.geometry.Offset(l, t),
+            size = androidx.compose.ui.geometry.Size(vfW, vfH),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(cr, cr),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx())
+        )
+
+        // L-shaped corner markers
+        val cLen = cornerLength.toPx()
+        val cStroke = cornerStrokeWidth.toPx()
+        val cap = androidx.compose.ui.graphics.StrokeCap.Round
+        fun o(x: Float, y: Float) = androidx.compose.ui.geometry.Offset(x, y)
+
+        // Top-left
+        drawLine(markerColor, o(l, t + cLen), o(l, t), strokeWidth = cStroke, cap = cap)
+        drawLine(markerColor, o(l, t), o(l + cLen, t), strokeWidth = cStroke, cap = cap)
+        // Top-right
+        drawLine(markerColor, o(l + vfW - cLen, t), o(l + vfW, t), strokeWidth = cStroke, cap = cap)
+        drawLine(markerColor, o(l + vfW, t), o(l + vfW, t + cLen), strokeWidth = cStroke, cap = cap)
+        // Bottom-left
+        drawLine(markerColor, o(l, t + vfH - cLen), o(l, t + vfH), strokeWidth = cStroke, cap = cap)
+        drawLine(markerColor, o(l, t + vfH), o(l + cLen, t + vfH), strokeWidth = cStroke, cap = cap)
+        // Bottom-right
+        drawLine(markerColor, o(l + vfW - cLen, t + vfH), o(l + vfW, t + vfH), strokeWidth = cStroke, cap = cap)
+        drawLine(markerColor, o(l + vfW, t + vfH - cLen), o(l + vfW, t + vfH), strokeWidth = cStroke, cap = cap)
     }
 }
 

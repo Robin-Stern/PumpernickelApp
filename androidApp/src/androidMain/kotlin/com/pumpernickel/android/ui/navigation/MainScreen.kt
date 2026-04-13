@@ -1,6 +1,6 @@
 package com.pumpernickel.android.ui.navigation
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -21,12 +20,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.pumpernickel.android.R
 import com.pumpernickel.android.ui.screens.CreateExerciseScreen
 import com.pumpernickel.android.ui.screens.ExerciseCatalogScreen
 import com.pumpernickel.android.ui.screens.ExerciseDetailScreen
@@ -41,20 +43,17 @@ import com.pumpernickel.android.ui.screens.NutritionFoodEntryScreen
 import com.pumpernickel.android.ui.screens.NutritionRecipeListScreen
 import com.pumpernickel.android.ui.screens.NutritionRecipeCreationScreen
 import com.pumpernickel.android.ui.screens.NutritionDailyLogScreen
-import com.pumpernickel.presentation.nutrition.FoodEntryViewModel
 import com.pumpernickel.presentation.nutrition.RecipeListViewModel
-import com.pumpernickel.presentation.nutrition.RecipeCreationViewModel
-import com.pumpernickel.presentation.nutrition.DailyLogViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 enum class TopLevelTab(
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector,
 ) {
-    WORKOUT("Workout", Icons.Filled.FitnessCenter),
-    OVERVIEW("Overview", Icons.Filled.BarChart),
-    NUTRITION("Nutrition", Icons.Filled.Restaurant)
+    WORKOUT(R.string.tab_workout, Icons.Filled.FitnessCenter),
+    OVERVIEW(R.string.tab_overview, Icons.Filled.BarChart),
+    NUTRITION(R.string.tab_nutrition, Icons.Filled.Restaurant)
 }
 
 @Composable
@@ -66,9 +65,7 @@ fun MainScreen() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-            ) {
+            NavigationBar {
                 TopLevelTab.entries.forEachIndexed { index, tab ->
                     NavigationBarItem(
                         selected = index == selectedTab,
@@ -76,10 +73,10 @@ fun MainScreen() {
                         icon = {
                             Icon(
                                 imageVector = tab.icon,
-                                contentDescription = tab.label
+                                contentDescription = stringResource(tab.labelRes)
                             )
                         },
-                        label = { Text(tab.label) }
+                        label = { Text(stringResource(tab.labelRes)) }
                     )
                 }
             }
@@ -91,7 +88,7 @@ fun MainScreen() {
                 .padding(innerPadding)
         ) {
             // Workout tab — always composed to preserve back stack
-            AnimatedVisibility(visible = selectedTab == 0) {
+            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 0) 1f else 0f)) {
                 NavHost(
                     navController = workoutNavController,
                     startDestination = TemplateListRoute
@@ -155,16 +152,16 @@ fun MainScreen() {
             }
 
             // Overview tab
-            AnimatedVisibility(visible = selectedTab == 1) {
+            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 1) 1f else 0f)) {
                 PlaceholderScreen(
                     icon = Icons.Filled.BarChart,
-                    title = "Overview",
+                    title = stringResource(R.string.tab_overview),
                     message = "Track your training progress and stats. Coming soon."
                 )
             }
 
-            // Nutrition tab
-            AnimatedVisibility(visible = selectedTab == 2) {
+            // Nutrition tab — always composed to preserve back stack
+            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 2) 1f else 0f)) {
                 NavHost(
                     navController = nutritionNavController,
                     startDestination = NutritionDailyLogRoute
