@@ -141,7 +141,10 @@ class BarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObj
         hasDetected = true
         captureSession.stopRunning()
         AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
-        onBarcodeScanned?(barcode)
-        onCancel?()
+
+        // Small delay ensures the session is fully stopped before dismissing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            self?.onBarcodeScanned?(barcode)
+        }
     }
 }

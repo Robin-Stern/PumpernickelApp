@@ -22,3 +22,13 @@ iosApp/Flutter/
 
 # Room schemas (generated)
 shared/schemas/
+
+# Agent/CLI
+.claude/
+.kotlin/
+*.db
+*.db-shm
+*.db-wal
+
+# Xcode
+xcuserdata/
