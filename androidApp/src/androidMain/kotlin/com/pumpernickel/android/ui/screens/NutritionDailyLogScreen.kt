@@ -1,5 +1,7 @@
 package com.pumpernickel.android.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,28 +13,29 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -47,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -74,70 +78,127 @@ fun NutritionDailyLogScreen(
     viewModel: DailyLogViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.title_daily_log)) }) },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { viewModel.openAddPicker() }) {
-                Icon(Icons.Filled.Add, contentDescription = "Add")
-            }
-        },
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { navController.navigate(NutritionFoodEntryRoute) },
-                    icon = { Icon(Icons.Filled.Restaurant, contentDescription = null) },
-                    label = { Text(stringResource(R.string.tab_food)) }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { navController.navigate(NutritionRecipeListRoute) },
-                    icon = { Icon(Icons.Filled.Book, contentDescription = null) },
-                    label = { Text(stringResource(R.string.tab_recipes)) }
-                )
-            }
-        }
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { inner ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(inner).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(inner)
         ) {
             // Date navigator
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(onClick = { viewModel.goPreviousDay() }) { Text("\u25C0") }
+                IconButton(onClick = { viewModel.goPreviousDay() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Previous day")
+                }
                 TextButton(onClick = { viewModel.goToday() }) {
                     Text(state.selectedDate.toString(), fontWeight = FontWeight.SemiBold)
                 }
-                IconButton(onClick = { viewModel.goNextDay() }) { Text("\u25B6") }
+                IconButton(onClick = { viewModel.goNextDay() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next day")
+                }
             }
 
             // Summary card
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(stringResource(R.string.label_daily_total), fontWeight = FontWeight.SemiBold)
-                        Text("${state.totals.calories.roundToInt()} kcal", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text(
+                            "${state.totals.calories.roundToInt()} kcal",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
-                    MacroRow(protein = state.totals.protein, fat = state.totals.fat, carbs = state.totals.carbs, sugar = state.totals.sugar)
+                    MacroRow(
+                        protein = state.totals.protein,
+                        fat = state.totals.fat,
+                        carbs = state.totals.carbs,
+                        sugar = state.totals.sugar
+                    )
                 }
             }
 
             // Entries
             if (state.entries.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                    Text(stringResource(R.string.msg_no_entries_today))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(stringResource(R.string.msg_no_entries_today), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(state.entries, key = { it.id }) { entry ->
                         EntrySwipeCard(entry = entry, onDelete = { viewModel.delete(entry.id) })
                     }
-                    item { Spacer(Modifier.height(80.dp)) }
+                    item { Spacer(Modifier.height(16.dp)) }
+                }
+            }
+
+            // Bottom action bar (matches iOS pattern: primary + secondary inline buttons)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Button(
+                    onClick = { viewModel.openAddPicker() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                    Text(stringResource(R.string.action_add_entry_short), fontWeight = FontWeight.SemiBold)
+                }
+                OutlinedButton(
+                    onClick = { navController.navigate(NutritionRecipeListRoute) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(stringResource(R.string.tab_recipes), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -172,13 +233,6 @@ fun NutritionDailyLogScreen(
             onDismiss = { viewModel.dismissAdHocDialog() }
         )
     }
-
-    // Error
-    state.errorMessage?.let { msg ->
-        Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Snackbar(action = { TextButton(onClick = { viewModel.clearError() }) { Text("OK") } }) { Text(msg) }
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -192,23 +246,51 @@ private fun EntrySwipeCard(entry: ConsumptionEntry, onDelete: () -> Unit) {
     SwipeToDismissBox(
         state = dismissState, enableDismissFromEndToStart = false,
         backgroundContent = {
-            Card(modifier = Modifier.fillMaxSize(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
-                Box(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.CenterStart) { Text("\uD83D\uDDD1") }
+            Card(
+                modifier = Modifier.fillMaxSize(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Text(stringResource(R.string.action_delete), fontWeight = FontWeight.Bold)
+                }
             }
         }
     ) {
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            shape = RoundedCornerShape(10.dp)
+        ) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
                     Text(entry.name, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                     Text(
                         text = formatTime(entry),
-                        style = MaterialTheme.typography.bodySmall, softWrap = false, maxLines = 1
+                        style = MaterialTheme.typography.bodySmall,
+                        softWrap = false,
+                        maxLines = 1
                     )
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("${entry.amount.roundToInt()} ${entry.unit.label}", style = MaterialTheme.typography.bodySmall)
-                    Text("${m.calories.roundToInt()} kcal", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(
+                        "${entry.amount.roundToInt()} ${entry.unit.label}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        "${m.calories.roundToInt()} kcal",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
                 MacroRow(protein = m.protein, fat = m.fat, carbs = m.carbs, sugar = m.sugar)
             }
@@ -217,12 +299,19 @@ private fun EntrySwipeCard(entry: ConsumptionEntry, onDelete: () -> Unit) {
 }
 
 private fun formatTime(entry: ConsumptionEntry): String {
-    val ldt = Instant.fromEpochMilliseconds(entry.timestampMillis).toLocalDateTime(TimeZone.currentSystemDefault())
+    val ldt = Instant.fromEpochMilliseconds(entry.timestampMillis)
+        .toLocalDateTime(TimeZone.currentSystemDefault())
     return "${ldt.hour.toString().padStart(2, '0')}:${ldt.minute.toString().padStart(2, '0')}"
 }
 
 @Composable
-private fun FoodPickerDialog(foods: List<Food>, onPick: (Food) -> Unit, onAdHoc: () -> Unit, onBarcode: (String) -> Unit, onDismiss: () -> Unit) {
+private fun FoodPickerDialog(
+    foods: List<Food>,
+    onPick: (Food) -> Unit,
+    onAdHoc: () -> Unit,
+    onBarcode: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
     var query by remember { mutableStateOf("") }
     val filtered = remember(foods, query) {
         if (query.isBlank()) foods else foods.filter { it.name.contains(query.trim(), ignoreCase = true) }
@@ -234,13 +323,29 @@ private fun FoodPickerDialog(foods: List<Food>, onPick: (Food) -> Unit, onAdHoc:
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 BarcodeScannerButton(onBarcodeScanned = onBarcode, modifier = Modifier.fillMaxWidth())
-                Button(onClick = onAdHoc, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_ad_hoc_entry)) }
-                OutlinedTextField(value = query, onValueChange = { query = it }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                LazyColumn(modifier = Modifier.fillMaxWidth().height(280.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Button(onClick = onAdHoc, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.action_ad_hoc_entry))
+                }
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(280.dp)
+                ) {
                     items(filtered, key = { it.id }) { food ->
-                        TextButton(onClick = { onPick(food) }, modifier = Modifier.fillMaxWidth()) {
-                            Text(food.name, modifier = Modifier.fillMaxWidth())
-                        }
+                        Text(
+                            text = food.name,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onPick(food) }
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }
@@ -314,7 +419,9 @@ private fun AmountDialog(food: Food, onConfirm: (Double) -> Unit, onDismiss: () 
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            Button(onClick = { amount.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }?.let(onConfirm) }) { Text(stringResource(R.string.action_log_entry)) }
+            Button(onClick = { amount.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 }?.let(onConfirm) }) {
+                Text(stringResource(R.string.action_log_entry))
+            }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
         title = { Text(food.name) },
@@ -323,10 +430,27 @@ private fun AmountDialog(food: Food, onConfirm: (Double) -> Unit, onDismiss: () 
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
-                    label = { Text(stringResource(R.string.label_amount)) },
-                    singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    label = { Text(stringResource(R.string.label_amount) + " (${food.unit.label})") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
-                Text("${food.calories.roundToInt()} kcal / 100 ${food.unit.label}", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    "pro 100 ${food.unit.label}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                MacroRow(
+                    protein = food.protein,
+                    fat = food.fat,
+                    carbs = food.carbohydrates,
+                    sugar = food.sugar
+                )
+                Text(
+                    "${food.calories.roundToInt()} kcal",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     )

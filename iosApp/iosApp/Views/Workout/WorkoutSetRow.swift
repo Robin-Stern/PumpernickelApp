@@ -5,6 +5,7 @@ struct WorkoutSetRow: View {
     let setIndex: Int32
     let actualReps: Int32
     let actualWeightKgX10: Int32
+    var rir: Int32 = 2
     let isCompleted: Bool
     var weightUnit: WeightUnit = .kg
     var onTap: (() -> Void)? = nil
@@ -22,6 +23,15 @@ struct WorkoutSetRow: View {
 
                 Spacer()
 
+                // RIR badge
+                Text(rir >= 4 ? "RIR 4+" : "RIR \(rir)")
+                    .font(.caption2.weight(.semibold))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.appAccent.opacity(0.15))
+                    .foregroundColor(.appAccent)
+                    .cornerRadius(6)
+
                 Text("\(actualReps) reps")
                     .font(.body)
                     .foregroundColor(.secondary)
@@ -37,7 +47,7 @@ struct WorkoutSetRow: View {
         .buttonStyle(.plain)
         .disabled(onTap == nil)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Set \(setIndex + 1): \(actualReps) reps at \(formatWeight(actualWeightKgX10))")
+        .accessibilityLabel("Set \(setIndex + 1): \(actualReps) reps at \(formatWeight(actualWeightKgX10)), RIR \(rir)")
         .accessibilityHint(onTap != nil ? "Tap to edit" : "")
     }
 

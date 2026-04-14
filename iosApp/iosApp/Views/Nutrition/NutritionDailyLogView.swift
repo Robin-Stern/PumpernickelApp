@@ -59,7 +59,10 @@ struct NutritionDailyLogView: View {
             }
         }
         .sheet(isPresented: $showFoodPicker, onDismiss: {
-            viewModel.dismissAddPicker()
+            // Only dismiss picker state if no food was selected (user cancelled)
+            if uiState?.pendingFood == nil {
+                viewModel.dismissAddPicker()
+            }
             if pendingBarcodeScanner {
                 pendingBarcodeScanner = false
                 showBarcodeScanner = true
@@ -222,28 +225,62 @@ struct NutritionDailyLogView: View {
     private var foodPickerSheet: some View {
         NavigationStack {
             List {
+                // Foods section
                 if let foods = uiState?.foods, !foods.isEmpty {
-                    ForEach(foods, id: \.id) { food in
-                        Button {
-                            viewModel.selectFoodForEntry(food: food)
-                            showFoodPicker = false
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(food.name)
-                                    .font(.body)
-                                    .foregroundColor(.primary)
-                                Text("\(Int(food.calories.rounded())) kcal/100\(food.unit == .milliliter ? "ml" : "g")")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                    Section("Lebensmittel") {
+                        ForEach(foods.filter { !$0.isRecipe }, id: \.id) { food in
+                            Button {
+                                viewModel.selectFoodForEntry(food: food)
+                                showFoodPicker = false
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(food.name)
+                                        .font(.body)
+                                        .foregroundColor(.primary)
+                                    Text("\(Int(food.calories.rounded())) kcal/100\(food.unit == .milliliter ? "ml" : "g")")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                             }
                         }
                     }
-                } else {
+                }
+
+                // Recipes section
+                if let recipes = uiState?.recipes, !recipes.isEmpty {
+                    Section("Rezepte") {
+                        ForEach(recipes, id: \.id) { recipe in
+                            Button {
+                                viewModel.selectRecipeForEntry(recipe: recipe)
+                                showFoodPicker = false
+                            } label: {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "book.closed.fill")
+                                                .font(.caption)
+                                                .foregroundColor(.appAccent)
+                                            Text(recipe.name)
+                                                .font(.body)
+                                                .foregroundColor(.primary)
+                                        }
+                                        Text("\(recipe.ingredients.count) Zutaten")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (uiState?.foods ?? []).isEmpty && (uiState?.recipes ?? []).isEmpty {
                     Text("Keine Lebensmittel vorhanden.")
                         .foregroundColor(.secondary)
                 }
             }
-            .navigationTitle("Lebensmittel wählen")
+            .navigationTitle("Eintragen")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar) {
@@ -280,14 +317,31 @@ struct NutritionDailyLogView: View {
                     Text(food.name)
                         .font(.headline)
 
-                    Text("\(Int(food.calories.rounded())) kcal / 100\(food.unit == .milliliter ? "ml" : "g")")
-                        .foregroundColor(.secondary)
+                    VStack(spacing: 6) {
+                        Text("pro 100 \(food.unit == .milliliter ? "ml" : "g")")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("\(Int(food.calories.rounded())) kcal")
+                            .font(.body.weight(.bold))
+                            .foregroundColor(.appAccent)
+                        MacroRowView(
+                            protein: food.protein,
+                            fat: food.fat,
+                            carbs: food.carbohydrates,
+                            sugar: food.sugar
+                        )
+                    }
 
-                    TextField("Menge (\(food.unit == .milliliter ? "ml" : "g"))", text: $amountText)
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 200)
-                        .focused($focusedField)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Menge (\(food.unit == .milliliter ? "ml" : "g"))")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        TextField("", text: $amountText)
+                            .keyboardType(.decimalPad)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 200)
+                            .focused($focusedField)
+                    }
 
                     Button("Eintragen") {
                         if let amount = Double(amountText) {
@@ -325,20 +379,27 @@ struct NutritionDailyLogView: View {
             Form {
                 Section("Lebensmittel (pro 100g)") {
                     TextField("Name", text: $adHocName)
+                        .focused($focusedField)
                     TextField("Kalorien (kcal)", text: $adHocCalories)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField)
                     TextField("Protein (g)", text: $adHocProtein)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField)
                     TextField("Fett (g)", text: $adHocFat)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField)
                     TextField("Kohlenhydrate (g)", text: $adHocCarbs)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField)
                     TextField("Zucker (g)", text: $adHocSugar)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField)
                 }
                 Section("Menge") {
                     TextField("Menge (g)", text: $adHocAmount)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField)
                 }
                 Section {
                     Button("Eintragen") {

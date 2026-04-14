@@ -44,6 +44,7 @@
 		A10103 /* NutritionRecipeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10103 /* NutritionRecipeListView.swift */; };
 		A10104 /* NutritionRecipeCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10104 /* NutritionRecipeCreationView.swift */; };
 		A10105 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10105 /* BarcodeScannerView.swift */; };
+		A10110 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10110 /* OverviewView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -82,6 +83,7 @@
 		B10103 /* NutritionRecipeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionRecipeListView.swift; sourceTree = "<group>"; };
 		B10104 /* NutritionRecipeCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionRecipeCreationView.swift; sourceTree = "<group>"; };
 		B10105 /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
+		B10110 /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,6 +135,7 @@
 				E10012 /* History */,
 				E10013 /* Settings */,
 				E10016 /* Nutrition */,
+				E10017 /* Overview */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -244,6 +247,14 @@
 				B10090 /* ThemeManager.swift */,
 			);
 			path = Theme;
+			sourceTree = "<group>";
+		};
+		E10017 /* Overview */ = {
+			isa = PBXGroup;
+			children = (
+				B10110 /* OverviewView.swift */,
+			);
+			path = Overview;
 			sourceTree = "<group>";
 		};
 		E10016 /* Nutrition */ = {
@@ -412,6 +423,7 @@
 				A10103 /* NutritionRecipeListView.swift in Sources */,
 				A10104 /* NutritionRecipeCreationView.swift in Sources */,
 				A10105 /* BarcodeScannerView.swift in Sources */,
+				A10110 /* OverviewView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

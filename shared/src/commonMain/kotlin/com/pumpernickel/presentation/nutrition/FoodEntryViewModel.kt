@@ -117,7 +117,14 @@ class FoodEntryViewModel(
         viewModelScope.launch {
             when (val result = lookupBarcode(barcode)) {
                 is LookupBarcodeUseCase.Result.FoundLocally -> {
-                    _uiState.update { it.copy(isLookingUp = false, pendingLogFood = result.food, successMessage = "Lokales Lebensmittel geladen.") }
+                    val food = result.food
+                    _uiState.value = FoodEntryUiState(
+                        editingFoodId = food.id, name = food.name,
+                        calories = formatNumber(food.calories), protein = formatNumber(food.protein),
+                        fat = formatNumber(food.fat), carbs = formatNumber(food.carbohydrates),
+                        sugar = formatNumber(food.sugar), barcode = food.barcode ?: "", unit = food.unit,
+                        isLookingUp = false, successMessage = "Lokales Lebensmittel geladen."
+                    )
                     autoClearSuccess()
                 }
                 is LookupBarcodeUseCase.Result.FoundRemote -> {

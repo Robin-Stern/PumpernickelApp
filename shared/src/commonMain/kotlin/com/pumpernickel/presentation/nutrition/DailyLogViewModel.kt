@@ -6,8 +6,10 @@ import com.pumpernickel.data.repository.FoodRepository
 import com.pumpernickel.domain.model.ConsumptionEntry
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
+import com.pumpernickel.domain.model.Recipe
 import com.pumpernickel.domain.model.RecipeMacros
 import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
+import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
 import com.pumpernickel.domain.nutrition.DeleteConsumptionUseCase
 import com.pumpernickel.domain.nutrition.LoadConsumptionsForDateUseCase
 import com.pumpernickel.domain.nutrition.LoadFoodsUseCase
@@ -31,6 +33,7 @@ data class DailyLogUiState(
     val selectedDate: LocalDate,
     val entries: List<ConsumptionEntry> = emptyList(),
     val foods: List<Food> = emptyList(),
+    val recipes: List<Recipe> = emptyList(),
     val totals: RecipeMacros = RecipeMacros(),
     val showAddPicker: Boolean = false,
     val pendingFood: Food? = null,
@@ -46,7 +49,8 @@ class DailyLogViewModel(
     private val deleteConsumption: DeleteConsumptionUseCase,
     private val calculateDaily: CalculateDailyMacrosUseCase,
     private val lookupBarcode: LookupBarcodeUseCase,
-    private val repository: FoodRepository
+    private val repository: FoodRepository,
+    private val calculateRecipeMacros: CalculateRecipeMacrosUseCase
 ) : ViewModel() {
 
     private fun today(): LocalDate =
@@ -61,10 +65,11 @@ class DailyLogViewModel(
     fun refresh() {
         viewModelScope.launch {
             val date = _uiState.value.selectedDate
-            val foods = loadFoods()
+            val foods = repository.loadFoodsAndRecipes()
+            val recipes = repository.loadRecipes()
             val entries = loadForDate(date)
             val totals = calculateDaily(entries)
-            _uiState.update { it.copy(foods = foods, entries = entries, totals = totals) }
+            _uiState.update { it.copy(foods = foods, recipes = recipes, entries = entries, totals = totals) }
         }
     }
 
@@ -121,6 +126,34 @@ class DailyLogViewModel(
         }
     }
 
+    fun selectRecipeForEntry(recipe: Recipe) {
+        val foods = _uiState.value.foods
+        val macros = calculateRecipeMacros(recipe, foods)
+        val totalWeight = recipe.ingredients.sumOf { it.amountGrams }
+        if (totalWeight <= 0) return
+        val virtualFood = Food(
+            name = recipe.name,
+            calories = macros.calories / totalWeight * 100,
+            protein = macros.protein / totalWeight * 100,
+            fat = macros.fat / totalWeight * 100,
+            carbohydrates = macros.carbs / totalWeight * 100,
+            sugar = macros.sugar / totalWeight * 100,
+            unit = FoodUnit.GRAM,
+            isRecipe = true
+        )
+        // Log recipe directly with its full weight — no amount dialog needed
+        _uiState.update { it.copy(showAddPicker = false) }
+        viewModelScope.launch {
+            when (val r = logConsumption(virtualFood, totalWeight)) {
+                is LogConsumptionUseCase.Result.Error -> _uiState.update { it.copy(errorMessage = r.message) }
+                is LogConsumptionUseCase.Result.Success -> {
+                    _uiState.update { it.copy(errorMessage = null) }
+                    refresh()
+                }
+            }
+        }
+    }
+
     fun clearError() = _uiState.update { it.copy(errorMessage = null) }
 
     fun onBarcodeScanned(barcode: String) {
@@ -139,7 +172,7 @@ class DailyLogViewModel(
                     )
                     repository.saveFood(newFood)
                     _uiState.update { it.copy(
-                        isLookingUp = false, foods = loadFoods(), pendingFood = newFood
+                        isLookingUp = false, foods = repository.loadFoodsAndRecipes(), pendingFood = newFood
                     )}
                 }
                 is LookupBarcodeUseCase.Result.NotFound -> {

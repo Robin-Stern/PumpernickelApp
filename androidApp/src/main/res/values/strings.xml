@@ -28,6 +28,7 @@
     <string name="label_sugar">davon Zucker (g) *</string>
     <string name="unit_gram">Gramm (g)</string>
     <string name="unit_ml">Milliliter (ml)</string>
+    <string name="label_unit_designation">Einheit der Nährwertangabe</string>
     <string name="action_scan_barcode">Barcode scannen</string>
     <string name="msg_camera_permission_denied">Kamera-Berechtigung wurde verweigert.</string>
     <string name="action_cancel">Abbrechen</string>
@@ -62,4 +63,28 @@
     <string name="recipe_total_calories">Gesamt: %1$d kcal</string>
     <string name="action_save_recipe">Rezept speichern</string>
     <string name="action_add_food">+ Hinzufügen</string>
+
+    <!-- Main Tabs -->
+    <string name="tab_workout">Training</string>
+    <string name="tab_overview">Übersicht</string>
+    <string name="tab_nutrition">Ernährung</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_appearance">Darstellung</string>
+    <string name="settings_accent_color">Akzentfarbe</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Hell</string>
+    <string name="settings_theme_dark">Dunkel</string>
+    <string name="settings_weight_unit">Gewichtseinheit</string>
+
+    <!-- Template List -->
+    <string name="dialog_delete_template_title">Vorlage löschen?</string>
+    <string name="dialog_delete_template_message">Dies kann nicht rückgängig gemacht werden.</string>
+
+    <!-- Barcode Scanner -->
+    <string name="scanner_hint">Barcode in den Rahmen halten</string>
+
+    <!-- Daily Log Actions -->
+    <string name="action_add_entry_short">Eintragen</string>
 </resources>

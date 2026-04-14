@@ -42,6 +42,7 @@ import com.pumpernickel.presentation.nutrition.RecipeListViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import com.pumpernickel.presentation.templates.TemplateListViewModel
 import com.pumpernickel.presentation.history.WorkoutHistoryViewModel
+import com.pumpernickel.presentation.overview.OverviewViewModel
 import com.pumpernickel.presentation.settings.SettingsViewModel
 import com.pumpernickel.presentation.workout.WorkoutSessionViewModel
 import com.pumpernickel.readResourceFile
@@ -104,12 +105,13 @@ val sharedModule = module {
     viewModel { WorkoutSessionViewModel(get(), get(), get()) }
     viewModel { WorkoutHistoryViewModel(get(), get()) }
     viewModel { SettingsViewModel(get()) }
+    viewModel { OverviewViewModel(get(), get(), get(), get(), get()) }
 
     // ViewModels -- Nutrition
     viewModel { FoodEntryViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { RecipeListViewModel(get(), get()) }
     viewModel { RecipeCreationViewModel(get(), get()) }
-    viewModel { DailyLogViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { DailyLogViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
 }
 
 // Common init function

@@ -8,6 +8,7 @@ import com.pumpernickel.domain.model.RecipeIngredient
 interface FoodRepository {
     suspend fun saveFood(food: Food)
     suspend fun loadFoods(): List<Food>
+    suspend fun loadFoodsAndRecipes(): List<Food>
     suspend fun deleteFood(id: String)
     suspend fun updateFood(food: Food)
 

@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -92,7 +93,7 @@ fun NutritionRecipeListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { navController.navigate(NutritionRecipeCreationRoute) }) {
-                Text("+", style = MaterialTheme.typography.titleLarge)
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.title_new_recipe))
             }
         }
     ) { innerPadding ->
@@ -114,7 +115,7 @@ fun NutritionRecipeListScreen(
                     )
                 }
             }
-            item { Spacer(Modifier.height(80.dp)) }
+            item { Spacer(Modifier.height(16.dp)) }
         }
     }
 }

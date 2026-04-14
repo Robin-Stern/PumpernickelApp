@@ -1,0 +1,164 @@
+package com.pumpernickel.presentation.overview
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.pumpernickel.data.repository.ExerciseRepository
+import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.data.repository.WorkoutRepository
+import com.pumpernickel.domain.model.MuscleGroup
+import com.pumpernickel.domain.model.NutritionGoals
+import com.pumpernickel.domain.model.RecipeMacros
+import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
+import com.pumpernickel.domain.nutrition.LoadConsumptionsForDateUseCase
+import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+
+/**
+ * Training intensity level for a muscle group, derived from
+ * RIR-weighted scoring of completed sets in the last 7 days.
+ *
+ * Scoring: each set contributes a base score based on its RIR value,
+ * multiplied by a muscle-role factor (primary = 1.0, secondary = 0.5).
+ *
+ * RIR multipliers:
+ *   RIR 4+ → 0.5×
+ *   RIR 2-3 → 1.0×
+ *   RIR 1   → 1.5×
+ *   RIR 0   → 2.0×
+ *
+ * Weekly score thresholds:
+ *   <5   → LOW   (under-trained)
+ *   5-12 → MODERATE (maintenance)
+ *   13+  → HIGH  (growth stimulus)
+ */
+enum class TrainingIntensity {
+    /** No sets recorded */
+    NONE,
+    /** Weighted score < 5 */
+    LOW,
+    /** Weighted score 5-12 */
+    MODERATE,
+    /** Weighted score 13+ */
+    HIGH;
+
+    companion object {
+        fun fromWeightedScore(score: Double): TrainingIntensity = when {
+            score <= 0.0 -> NONE
+            score < 5.0  -> LOW
+            score <= 12.0 -> MODERATE
+            else -> HIGH
+        }
+
+        /** RIR-based multiplier for a single set. */
+        fun rirMultiplier(rir: Int): Double = when {
+            rir >= 4 -> 0.5
+            rir >= 2 -> 1.0
+            rir == 1 -> 1.5
+            else     -> 2.0  // RIR 0
+        }
+    }
+}
+
+data class OverviewUiState(
+    val muscleLoad: Map<MuscleGroup, TrainingIntensity> = emptyMap(),
+    val todayMacros: RecipeMacros = RecipeMacros(),
+    val nutritionGoals: NutritionGoals = NutritionGoals(),
+    val isLoading: Boolean = true
+)
+
+class OverviewViewModel(
+    private val workoutRepository: WorkoutRepository,
+    private val exerciseRepository: ExerciseRepository,
+    private val settingsRepository: SettingsRepository,
+    private val loadConsumptionsForDate: LoadConsumptionsForDateUseCase,
+    private val calculateDailyMacros: CalculateDailyMacrosUseCase
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(OverviewUiState())
+
+    @NativeCoroutinesState
+    val uiState: StateFlow<OverviewUiState> = _uiState.asStateFlow()
+
+    @NativeCoroutinesState
+    val nutritionGoals: StateFlow<NutritionGoals> = settingsRepository
+        .nutritionGoals
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), NutritionGoals())
+
+    init {
+        refresh()
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            // Load goals
+            val goals = settingsRepository.nutritionGoals.first()
+
+            // Load today's nutrition
+            val today = today()
+            val entries = loadConsumptionsForDate(today)
+            val macros = calculateDailyMacros(entries)
+
+            // Load 7-day muscle training load (RIR-weighted scoring)
+            val sevenDaysAgoMillis = Clock.System.now().toEpochMilliseconds() - 7 * 24 * 60 * 60 * 1000L
+            val exerciseSetRirs = workoutRepository.getExerciseSetRirSince(sevenDaysAgoMillis)
+
+            // Group per-set RIR data by exerciseId
+            val rirsByExercise = exerciseSetRirs.groupBy { it.exerciseId }
+
+            // Compute weighted muscle scores
+            val muscleScores = mutableMapOf<MuscleGroup, Double>()
+            for ((exerciseId, setRows) in rirsByExercise) {
+                val exercise = exerciseRepository.getExerciseById(exerciseId).first()
+                    ?: continue
+
+                // Sum up weighted contributions for this exercise
+                val exerciseScore = setRows.sumOf { row ->
+                    TrainingIntensity.rirMultiplier(row.rir)
+                }
+
+                // Primary muscles: full weight (1.0×)
+                for (group in exercise.primaryMuscles) {
+                    muscleScores[group] = (muscleScores[group] ?: 0.0) + exerciseScore
+                }
+                // Secondary muscles: half weight (0.5×)
+                for (group in exercise.secondaryMuscles) {
+                    muscleScores[group] = (muscleScores[group] ?: 0.0) + exerciseScore * 0.5
+                }
+            }
+
+            val muscleLoad = muscleScores.mapValues { (_, score) ->
+                TrainingIntensity.fromWeightedScore(score)
+            }
+
+            _uiState.value = OverviewUiState(
+                muscleLoad = muscleLoad,
+                todayMacros = macros,
+                nutritionGoals = goals,
+                isLoading = false
+            )
+        }
+    }
+
+    fun updateNutritionGoals(goals: NutritionGoals) {
+        viewModelScope.launch {
+            settingsRepository.setNutritionGoals(goals)
+            _uiState.update { it.copy(nutritionGoals = goals) }
+        }
+    }
+
+    private fun today(): LocalDate =
+        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+}
