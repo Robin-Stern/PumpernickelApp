@@ -1,5 +1,6 @@
 package com.pumpernickel.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -20,5 +21,6 @@ data class CompletedWorkoutSetEntity(
     val workoutExerciseId: Long,
     val setIndex: Int,
     val actualReps: Int,
-    val actualWeightKgX10: Int
+    val actualWeightKgX10: Int,
+    @ColumnInfo(defaultValue = "2") val rir: Int = 2
 )

@@ -6,6 +6,7 @@ import com.pumpernickel.data.db.CompletedWorkoutDao
 import com.pumpernickel.data.db.CompletedWorkoutEntity
 import com.pumpernickel.data.db.CompletedWorkoutExerciseEntity
 import com.pumpernickel.data.db.CompletedWorkoutSetEntity
+import com.pumpernickel.data.db.ExerciseSetRirDto
 import com.pumpernickel.data.db.WorkoutSessionDao
 import com.pumpernickel.domain.model.CompletedExercise
 import com.pumpernickel.domain.model.CompletedSet
@@ -19,8 +20,8 @@ interface WorkoutRepository {
     suspend fun hasActiveSession(): Boolean
     suspend fun createActiveSession(templateId: Long, templateName: String, startTimeMillis: Long)
     suspend fun getActiveSession(): ActiveSessionData?
-    suspend fun saveCompletedSet(exerciseIndex: Int, setIndex: Int, actualReps: Int, actualWeightKgX10: Int, completedAtMillis: Long)
-    suspend fun updateSetValues(exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int)
+    suspend fun saveCompletedSet(exerciseIndex: Int, setIndex: Int, actualReps: Int, actualWeightKgX10: Int, completedAtMillis: Long, rir: Int = 2)
+    suspend fun updateSetValues(exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int)
     suspend fun updateCursor(exerciseIndex: Int, setIndex: Int)
     suspend fun clearActiveSession()
 
@@ -37,6 +38,9 @@ interface WorkoutRepository {
 
     // Personal best (ENTRY-07)
     suspend fun getPersonalBests(exerciseIds: List<String>): Map<String, Int>
+
+    // Overview: exercise set RIR data since a given timestamp
+    suspend fun getExerciseSetRirSince(sinceMillis: Long): List<ExerciseSetRirDto>
 }
 
 // Domain-level representation of active session data (no Room entity leakage)
@@ -55,7 +59,8 @@ data class ActiveSessionSetData(
     val setIndex: Int,
     val actualReps: Int,
     val actualWeightKgX10: Int,
-    val completedAtMillis: Long
+    val completedAtMillis: Long,
+    val rir: Int = 2
 )
 
 class WorkoutRepositoryImpl(
@@ -100,7 +105,8 @@ class WorkoutRepositoryImpl(
                     setIndex = entity.setIndex,
                     actualReps = entity.actualReps,
                     actualWeightKgX10 = entity.actualWeightKgX10,
-                    completedAtMillis = entity.completedAtMillis
+                    completedAtMillis = entity.completedAtMillis,
+                    rir = entity.rir
                 )
             },
             exerciseOrder = session.exerciseOrder
@@ -112,7 +118,8 @@ class WorkoutRepositoryImpl(
         setIndex: Int,
         actualReps: Int,
         actualWeightKgX10: Int,
-        completedAtMillis: Long
+        completedAtMillis: Long,
+        rir: Int
     ) {
         workoutSessionDao.insertSet(
             ActiveSessionSetEntity(
@@ -121,7 +128,8 @@ class WorkoutRepositoryImpl(
                 setIndex = setIndex,
                 actualReps = actualReps,
                 actualWeightKgX10 = actualWeightKgX10,
-                completedAtMillis = completedAtMillis
+                completedAtMillis = completedAtMillis,
+                rir = rir
             )
         )
         workoutSessionDao.updateCursor(
@@ -135,9 +143,10 @@ class WorkoutRepositoryImpl(
         exerciseIndex: Int,
         setIndex: Int,
         reps: Int,
-        weightKgX10: Int
+        weightKgX10: Int,
+        rir: Int
     ) {
-        workoutSessionDao.updateSet(exerciseIndex, setIndex, reps, weightKgX10)
+        workoutSessionDao.updateSet(exerciseIndex, setIndex, reps, weightKgX10, rir)
     }
 
     override suspend fun updateCursor(exerciseIndex: Int, setIndex: Int) {
@@ -183,7 +192,8 @@ class WorkoutRepositoryImpl(
                     workoutExerciseId = exerciseId,
                     setIndex = set.setIndex,
                     actualReps = set.actualReps,
-                    actualWeightKgX10 = set.actualWeightKgX10
+                    actualWeightKgX10 = set.actualWeightKgX10,
+                    rir = set.rir
                 )
             }
             if (setEntities.isNotEmpty()) {
@@ -221,7 +231,8 @@ class WorkoutRepositoryImpl(
                     CompletedSet(
                         setIndex = setEntity.setIndex,
                         actualReps = setEntity.actualReps,
-                        actualWeightKgX10 = setEntity.actualWeightKgX10
+                        actualWeightKgX10 = setEntity.actualWeightKgX10,
+                        rir = setEntity.rir
                     )
                 }
             )
@@ -245,5 +256,9 @@ class WorkoutRepositoryImpl(
     override suspend fun getPersonalBests(exerciseIds: List<String>): Map<String, Int> {
         return completedWorkoutDao.getPersonalBests(exerciseIds)
             .associate { it.exerciseId to it.maxWeightKgX10 }
+    }
+
+    override suspend fun getExerciseSetRirSince(sinceMillis: Long): List<ExerciseSetRirDto> {
+        return completedWorkoutDao.getExerciseSetRirSince(sinceMillis)
     }
 }

@@ -16,7 +16,8 @@ data class SessionSet(
     val targetWeightKgX10: Int,
     val actualReps: Int?,      // null = not yet completed
     val actualWeightKgX10: Int?, // null = not yet completed
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    val rir: Int? = null        // Reps In Reserve (0-4, null = not yet logged)
 )
 
 data class SetPreFill(

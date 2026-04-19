@@ -430,13 +430,26 @@ private fun AmountDialog(food: Food, onConfirm: (Double) -> Unit, onDismiss: () 
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' || c == ',' } },
-                    label = { Text(stringResource(R.string.label_amount)) },
+                    label = { Text(stringResource(R.string.label_amount) + " (${food.unit.label})") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
                 Text(
-                    "${food.calories.roundToInt()} kcal / 100 ${food.unit.label}",
-                    style = MaterialTheme.typography.bodySmall
+                    "pro 100 ${food.unit.label}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                MacroRow(
+                    protein = food.protein,
+                    fat = food.fat,
+                    carbs = food.carbohydrates,
+                    sugar = food.sugar
+                )
+                Text(
+                    "${food.calories.roundToInt()} kcal",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

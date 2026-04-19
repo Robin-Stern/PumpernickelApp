@@ -23,8 +23,8 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM active_session_sets WHERE sessionId = 1 ORDER BY exerciseIndex ASC, setIndex ASC")
     suspend fun getSessionSets(): List<ActiveSessionSetEntity>
 
-    @Query("UPDATE active_session_sets SET actualReps = :reps, actualWeightKgX10 = :weightKgX10 WHERE exerciseIndex = :exerciseIndex AND setIndex = :setIndex AND sessionId = 1")
-    suspend fun updateSet(exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int)
+    @Query("UPDATE active_session_sets SET actualReps = :reps, actualWeightKgX10 = :weightKgX10, rir = :rir WHERE exerciseIndex = :exerciseIndex AND setIndex = :setIndex AND sessionId = 1")
+    suspend fun updateSet(exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int)
 
     @Query("UPDATE active_sessions SET currentExerciseIndex = :exerciseIndex, currentSetIndex = :setIndex, lastUpdatedMillis = :updatedAt WHERE id = 1")
     suspend fun updateCursor(exerciseIndex: Int, setIndex: Int, updatedAt: Long)

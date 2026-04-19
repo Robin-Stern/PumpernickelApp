@@ -125,6 +125,14 @@ fun NutritionFoodEntryScreen(
             }
 
             item {
+                Text(
+                    stringResource(R.string.label_per_100_hint),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            item {
                 OutlinedTextField(
                     value = uiState.calories,
                     onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCaloriesChanged(it)) },
@@ -173,6 +181,11 @@ fun NutritionFoodEntryScreen(
             }
 
             item {
+                Text(
+                    stringResource(R.string.label_unit_designation),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     FoodUnit.entries.forEachIndexed { index, unit ->
                         SegmentedButton(
@@ -301,7 +314,23 @@ private fun LogAmountDialog(food: Food, onConfirm: (Double) -> Unit, onDismiss: 
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
-                Text("${food.calories.roundToInt()} kcal / 100 ${food.unit.label}", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    "pro 100 ${food.unit.label}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                MacroRow(
+                    protein = food.protein,
+                    fat = food.fat,
+                    carbs = food.carbohydrates,
+                    sugar = food.sugar
+                )
+                Text(
+                    "${food.calories.roundToInt()} kcal",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     )

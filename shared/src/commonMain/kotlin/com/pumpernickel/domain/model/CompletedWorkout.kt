@@ -20,5 +20,6 @@ data class CompletedExercise(
 data class CompletedSet(
     val setIndex: Int,
     val actualReps: Int,
-    val actualWeightKgX10: Int
+    val actualWeightKgX10: Int,
+    val rir: Int = 2
 )

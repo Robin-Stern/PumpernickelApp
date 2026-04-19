@@ -21,7 +21,10 @@ import androidx.room.RoomDatabaseConstructor
         RecipeIngredientEntity::class,
         ConsumptionEntryEntity::class
     ],
-    version = 6
+    version = 7,
+    autoMigrations = [
+        AutoMigration(from = 6, to = 7)
+    ]
 )
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {

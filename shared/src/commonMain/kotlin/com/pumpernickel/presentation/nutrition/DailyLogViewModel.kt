@@ -141,7 +141,17 @@ class DailyLogViewModel(
             unit = FoodUnit.GRAM,
             isRecipe = true
         )
-        _uiState.update { it.copy(pendingFood = virtualFood, showAddPicker = false) }
+        // Log recipe directly with its full weight — no amount dialog needed
+        _uiState.update { it.copy(showAddPicker = false) }
+        viewModelScope.launch {
+            when (val r = logConsumption(virtualFood, totalWeight)) {
+                is LogConsumptionUseCase.Result.Error -> _uiState.update { it.copy(errorMessage = r.message) }
+                is LogConsumptionUseCase.Result.Success -> {
+                    _uiState.update { it.copy(errorMessage = null) }
+                    refresh()
+                }
+            }
+        }
     }
 
     fun clearError() = _uiState.update { it.copy(errorMessage = null) }

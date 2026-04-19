@@ -317,14 +317,31 @@ struct NutritionDailyLogView: View {
                     Text(food.name)
                         .font(.headline)
 
-                    Text("\(Int(food.calories.rounded())) kcal / 100\(food.unit == .milliliter ? "ml" : "g")")
-                        .foregroundColor(.secondary)
+                    VStack(spacing: 6) {
+                        Text("pro 100 \(food.unit == .milliliter ? "ml" : "g")")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("\(Int(food.calories.rounded())) kcal")
+                            .font(.body.weight(.bold))
+                            .foregroundColor(.appAccent)
+                        MacroRowView(
+                            protein: food.protein,
+                            fat: food.fat,
+                            carbs: food.carbohydrates,
+                            sugar: food.sugar
+                        )
+                    }
 
-                    TextField("Menge (\(food.unit == .milliliter ? "ml" : "g"))", text: $amountText)
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 200)
-                        .focused($focusedField)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Menge (\(food.unit == .milliliter ? "ml" : "g"))")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        TextField("", text: $amountText)
+                            .keyboardType(.decimalPad)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 200)
+                            .focused($focusedField)
+                    }
 
                     Button("Eintragen") {
                         if let amount = Double(amountText) {

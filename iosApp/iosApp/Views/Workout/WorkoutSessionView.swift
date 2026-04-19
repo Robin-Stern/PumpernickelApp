@@ -31,6 +31,7 @@ struct WorkoutSessionView: View {
     // Picker selections for current set (ENTRY-01, ENTRY-02)
     @State private var selectedReps: Int = 0
     @State private var selectedWeightKgX10: Int = 0
+    @State private var selectedRir: Int = 2
 
     // Edit set sheet
     @State private var showEditSheet = false
@@ -39,6 +40,7 @@ struct WorkoutSessionView: View {
     // Picker selections for edit sheet
     @State private var editSelectedReps: Int = 0
     @State private var editSelectedWeightKgX10: Int = 0
+    @State private var editSelectedRir: Int = 2
 
     // Track previous rest state for haptic trigger
     @State private var previousRestWasResting = false
@@ -411,13 +413,17 @@ struct WorkoutSessionView: View {
             }
             .frame(height: 170)
 
+            // RIR tap selector
+            rirSelector(selectedRir: $selectedRir)
+
             // Complete Set button (ENTRY-06: disabled when reps == 0)
             Button("Complete Set") {
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.success)
                 viewModel.completeSet(
                     reps: Int32(selectedReps),
-                    weightKgX10: Int32(selectedWeightKgX10)
+                    weightKgX10: Int32(selectedWeightKgX10),
+                    rir: Int32(selectedRir)
                 )
             }
             .font(.body.weight(.semibold))
@@ -452,6 +458,7 @@ struct WorkoutSessionView: View {
                             setIndex: set.setIndex,
                             actualReps: set.actualReps?.int32Value ?? 0,
                             actualWeightKgX10: set.actualWeightKgX10?.int32Value ?? 0,
+                            rir: set.rir?.int32Value ?? 2,
                             isCompleted: set.isCompleted,
                             weightUnit: weightUnit,
                             onTap: {
@@ -459,6 +466,7 @@ struct WorkoutSessionView: View {
                                 editSetIndex = set.setIndex
                                 editSelectedReps = Int(set.actualReps?.int32Value ?? 0)
                                 editSelectedWeightKgX10 = snapToWeightStep(Int(set.actualWeightKgX10?.int32Value ?? 0))
+                                editSelectedRir = Int(set.rir?.int32Value ?? 2)
                                 showEditSheet = true
                             }
                         )
@@ -515,12 +523,16 @@ struct WorkoutSessionView: View {
                 }
                 .frame(height: 170)
 
+                // RIR selector
+                rirSelector(selectedRir: $editSelectedRir)
+
                 Button("Save") {
                     viewModel.editCompletedSet(
                         exerciseIndex: editExerciseIndex,
                         setIndex: editSetIndex,
                         reps: Int32(editSelectedReps),
-                        weightKgX10: Int32(editSelectedWeightKgX10)
+                        weightKgX10: Int32(editSelectedWeightKgX10),
+                        rir: Int32(editSelectedRir)
                     )
                     showEditSheet = false
                 }
@@ -624,6 +636,7 @@ struct WorkoutSessionView: View {
                                     setIndex: set.setIndex,
                                     actualReps: set.actualReps?.int32Value ?? 0,
                                     actualWeightKgX10: set.actualWeightKgX10?.int32Value ?? 0,
+                                    rir: set.rir?.int32Value ?? 2,
                                     isCompleted: true,
                                     weightUnit: weightUnit,
                                     onTap: {
@@ -631,6 +644,7 @@ struct WorkoutSessionView: View {
                                         editSetIndex = set.setIndex
                                         editSelectedReps = Int(set.actualReps?.int32Value ?? 0)
                                         editSelectedWeightKgX10 = snapToWeightStep(Int(set.actualWeightKgX10?.int32Value ?? 0))
+                                        editSelectedRir = Int(set.rir?.int32Value ?? 2)
                                         showEditSheet = true
                                     }
                                 )
@@ -769,6 +783,40 @@ struct WorkoutSessionView: View {
         return sets.map { set in
             "\(set.actualReps)x\(weightUnit.formatWeight(kgX10: set.actualWeightKgX10))"
         }.joined(separator: ", ")
+    }
+
+    // MARK: - RIR Selector
+
+    private func rirSelector(selectedRir: Binding<Int>) -> some View {
+        VStack(spacing: 6) {
+            Text("RIR (Reps in Reserve)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            HStack(spacing: 10) {
+                ForEach([0, 1, 2, 3, 4], id: \.self) { value in
+                    let label = value >= 4 ? "4+" : "\(value)"
+                    let isSelected = selectedRir.wrappedValue == value
+
+                    Button(action: {
+                        selectedRir.wrappedValue = value
+                    }) {
+                        Text(label)
+                            .font(.body.weight(.bold))
+                            .frame(width: 44, height: 44)
+                            .background(
+                                isSelected ? Color.appAccent : Color(.systemGray5)
+                            )
+                            .foregroundColor(
+                                isSelected ? .white : .primary
+                            )
+                            .cornerRadius(10)
+                    }
+                    .accessibilityLabel("RIR \(label)")
+                    .accessibilityAddTraits(isSelected ? .isSelected : [])
+                }
+            }
+        }
     }
 
     // MARK: - Helpers
