@@ -3,6 +3,7 @@ package com.pumpernickel.android.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -150,6 +151,21 @@ fun SettingsSheet(onDismiss: () -> Unit) {
                     shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                     label = { Text("lbs") }
                 )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── Tutorial ──
+            Text(
+                text = "Tutorial",
+                style = MaterialTheme.typography.labelLarge
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { viewModel.setHasSeenTutorial(false); onDismiss() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Tutorial erneut anzeigen")
             }
 
             Spacer(modifier = Modifier.height(32.dp))

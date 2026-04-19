@@ -341,13 +341,13 @@ private fun LogAmountDialog(food: Food, onConfirm: (Double) -> Unit, onDismiss: 
 private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState()
     LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) onDelete()
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) onDelete()
     }
     SwipeToDismissBox(
-        state = dismissState, enableDismissFromEndToStart = false,
+        state = dismissState, enableDismissFromStartToEnd = false,
         backgroundContent = {
             Card(modifier = Modifier.fillMaxSize(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
-                Box(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.CenterStart) {
+                Box(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.CenterEnd) {
                     Text(stringResource(R.string.action_delete), fontWeight = FontWeight.Bold)
                 }
             }

@@ -15,6 +15,17 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     @NativeCoroutinesState
+    val hasSeenTutorial: StateFlow<Boolean> = settingsRepository
+        .hasSeenTutorial
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    fun setHasSeenTutorial(value: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setHasSeenTutorial(value)
+        }
+    }
+
+    @NativeCoroutinesState
     val weightUnit: StateFlow<WeightUnit> = settingsRepository
         .weightUnit
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WeightUnit.KG)

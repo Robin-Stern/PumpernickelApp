@@ -240,11 +240,11 @@ fun NutritionDailyLogScreen(
 private fun EntrySwipeCard(entry: ConsumptionEntry, onDelete: () -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState()
     LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) onDelete()
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) onDelete()
     }
     val m = entry.macros()
     SwipeToDismissBox(
-        state = dismissState, enableDismissFromEndToStart = false,
+        state = dismissState, enableDismissFromStartToEnd = false,
         backgroundContent = {
             Card(
                 modifier = Modifier.fillMaxSize(),
@@ -254,7 +254,7 @@ private fun EntrySwipeCard(entry: ConsumptionEntry, onDelete: () -> Unit) {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 20.dp),
-                    contentAlignment = Alignment.CenterStart
+                    contentAlignment = Alignment.CenterEnd
                 ) {
                     Text(stringResource(R.string.action_delete), fontWeight = FontWeight.Bold)
                 }

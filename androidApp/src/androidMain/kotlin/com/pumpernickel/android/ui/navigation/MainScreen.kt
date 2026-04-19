@@ -21,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
@@ -89,7 +90,7 @@ fun MainScreen() {
                 .padding(innerPadding)
         ) {
             // Workout tab — always composed to preserve back stack
-            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 0) 1f else 0f)) {
+            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 0) 1f else 0f).zIndex(if (selectedTab == 0) 1f else 0f)) {
                 NavHost(
                     navController = workoutNavController,
                     startDestination = TemplateListRoute
@@ -153,12 +154,12 @@ fun MainScreen() {
             }
 
             // Overview tab
-            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 1) 1f else 0f)) {
+            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 1) 1f else 0f).zIndex(if (selectedTab == 1) 1f else 0f)) {
                 OverviewScreen()
             }
 
             // Nutrition tab — always composed to preserve back stack
-            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 2) 1f else 0f)) {
+            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 2) 1f else 0f).zIndex(if (selectedTab == 2) 1f else 0f)) {
                 NavHost(
                     navController = nutritionNavController,
                     startDestination = NutritionDailyLogRoute

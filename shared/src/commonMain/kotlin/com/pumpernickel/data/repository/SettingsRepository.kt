@@ -3,6 +3,7 @@ package com.pumpernickel.data.repository
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.pumpernickel.domain.model.NutritionGoals
 import com.pumpernickel.domain.model.WeightUnit
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.map
 class SettingsRepository(
     private val dataStore: DataStore<Preferences>
 ) {
+    private val hasSeenTutorialKey = booleanPreferencesKey("has_seen_tutorial")
     private val weightUnitKey = stringPreferencesKey("weight_unit")
     private val appThemeKey = stringPreferencesKey("app_theme")
     private val accentColorKey = stringPreferencesKey("accent_color")
@@ -21,6 +23,16 @@ class SettingsRepository(
     private val fatGoalKey = stringPreferencesKey("fat_goal")
     private val carbGoalKey = stringPreferencesKey("carb_goal")
     private val sugarGoalKey = stringPreferencesKey("sugar_goal")
+
+    val hasSeenTutorial: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[hasSeenTutorialKey] ?: false
+    }
+
+    suspend fun setHasSeenTutorial(value: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[hasSeenTutorialKey] = value
+        }
+    }
 
     val weightUnit: Flow<WeightUnit> = dataStore.data.map { preferences ->
         when (preferences[weightUnitKey]) {
