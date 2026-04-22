@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.TemplateRepository
+import com.pumpernickel.domain.gamification.GamificationEngine
 import com.pumpernickel.domain.model.CompletedExercise
 import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
@@ -65,7 +66,8 @@ sealed class RestState {
 class WorkoutSessionViewModel(
     private val workoutRepository: WorkoutRepository,
     private val templateRepository: TemplateRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val gamificationEngine: GamificationEngine
 ) : ViewModel() {
 
     private val _sessionState = MutableStateFlow<WorkoutSessionState>(WorkoutSessionState.Idle)
@@ -569,7 +571,20 @@ class WorkoutSessionViewModel(
                 exercises = completedExercises
             )
 
-            workoutRepository.saveCompletedWorkout(completedWorkout)
+            val workoutId = workoutRepository.saveCompletedWorkout(completedWorkout)
+            // D-20: compute XP + streak + achievement + rank unlocks after save, before
+            // clearing the session. If the engine throws, the active session is left
+            // intact on disk — user can re-save from the Reviewing screen without
+            // double-inserting (save is idempotent at the ledger layer via
+            // EventKeys.workout(id) dedupe, but clearActiveSession is NOT idempotent).
+            try {
+                gamificationEngine.onWorkoutSaved(workoutId)
+            } catch (t: Throwable) {
+                // Log but do not block the save flow — gamification is an enhancement,
+                // not a requirement. The next workout save will catch up via the
+                // dedupe-IGNORE ledger on missed events that didn't get processed.
+                println("GamificationEngine.onWorkoutSaved failed: ${t.message}")
+            }
             workoutRepository.clearActiveSession()
 
             _hasActiveSession.value = false

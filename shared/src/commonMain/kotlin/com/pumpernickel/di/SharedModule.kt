@@ -111,7 +111,7 @@ val sharedModule = module {
     viewModel { CreateExerciseViewModel(get()) }
     viewModel { TemplateListViewModel(get()) }
     viewModel { TemplateEditorViewModel(get(), get()) }
-    viewModel { WorkoutSessionViewModel(get(), get(), get()) }
+    viewModel { WorkoutSessionViewModel(get(), get(), get(), get()) }
     viewModel { WorkoutHistoryViewModel(get(), get()) }
     viewModel { SettingsViewModel(get()) }
     viewModel { OverviewViewModel(get(), get(), get(), get(), get()) }
