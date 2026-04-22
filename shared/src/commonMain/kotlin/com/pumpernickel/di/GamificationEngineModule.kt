@@ -1,5 +1,6 @@
 package com.pumpernickel.di
 
+import com.pumpernickel.domain.gamification.GamificationEngine
 import org.koin.dsl.module
 
 /**
@@ -14,5 +15,15 @@ import org.koin.dsl.module
  * modules (Blocker 1 fix -- no wave-level SharedModule.kt conflicts).
  */
 val gamificationEngineModule = module {
-    // Bindings populated by plans 04, 05, 07.
+    single {
+        GamificationEngine(
+            gamificationRepo = get(),
+            completedWorkoutDao = get(),
+            nutritionDao = get(),
+            exerciseDao = get(),
+            settingsRepo = get()
+        )
+    }
+    // RetroactiveWalker, GamificationStartup bindings added by plan 05.
+    // GoalDayTrigger binding added by plan 07.
 }
