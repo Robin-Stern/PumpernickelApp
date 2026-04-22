@@ -2,6 +2,7 @@ package com.pumpernickel.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.pumpernickel.domain.model.NutritionGoals
@@ -21,6 +22,7 @@ class SettingsRepository(
     private val fatGoalKey = stringPreferencesKey("fat_goal")
     private val carbGoalKey = stringPreferencesKey("carb_goal")
     private val sugarGoalKey = stringPreferencesKey("sugar_goal")
+    private val retroactiveAppliedKey = booleanPreferencesKey("gamification_retroactive_applied")
 
     val weightUnit: Flow<WeightUnit> = dataStore.data.map { preferences ->
         when (preferences[weightUnitKey]) {
@@ -72,6 +74,21 @@ class SettingsRepository(
             prefs[fatGoalKey] = goals.fatGoal.toString()
             prefs[carbGoalKey] = goals.carbGoal.toString()
             prefs[sugarGoalKey] = goals.sugarGoal.toString()
+        }
+    }
+
+    /**
+     * D-13: Gamification retroactive-walker sentinel. True once the one-shot
+     * first-launch XP replay has completed successfully. If false or missing,
+     * the RetroactiveWalker runs on next app resume and writes true on success.
+     */
+    val retroactiveApplied: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[retroactiveAppliedKey] ?: false
+    }
+
+    suspend fun setRetroactiveApplied(applied: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[retroactiveAppliedKey] = applied
         }
     }
 }
