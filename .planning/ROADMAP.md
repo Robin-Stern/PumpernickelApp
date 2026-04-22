@@ -136,8 +136,8 @@ Work landed on `feature/workouts` at `fe297ad` **without GSD planning artifacts*
 - Wave 8: 09 (AchievementGalleryScreen + Settings entry — AchievementGalleryModule.kt + AchievementGalleryKoinHelper.kt; adds composable<AchievementGalleryRoute> to Android MainScreen.kt, serialized after 08 to avoid same-file overlap)
 
 Plans:
-- [ ] 15-01-PLAN.md — Room schema v7 → v8: XpLedgerEntity + AchievementStateEntity + RankStateEntity + GamificationDao + AutoMigration(7, 8)
-- [ ] 15-02-PLAN.md — Pure domain: Rank + RankLadder + RankState + XpFormula + GamificationEvent + UnlockEvent + AchievementCatalog + EventKeys
+- [x] 15-01-PLAN.md — Room schema v7 → v8: XpLedgerEntity + AchievementStateEntity + RankStateEntity + GamificationDao + AutoMigration(7, 8)
+- [x] 15-02-PLAN.md — Pure domain: Rank + RankLadder + RankState + XpFormula + GamificationEvent + UnlockEvent + AchievementCatalog + EventKeys
 - [ ] 15-03-PLAN.md — GamificationRepository + AchievementStateSeeder + SettingsRepository sentinel flag + Koin wiring
 - [ ] 15-04-PLAN.md — GamificationEngine + StreakCalculator + AchievementRules (with unit tests)
 - [ ] 15-05-PLAN.md — RetroactiveWalker (D-12/D-13) + GamificationStartup first-launch orchestrator
