@@ -66,6 +66,15 @@ struct SettingsView: View {
                         viewModel.setWeightUnit(unit: newValue)
                     }
                 }
+
+                // D-21: achievement gallery reached from Settings only (NOT from Overview rank strip per D-18).
+                Section("Gamification") {
+                    NavigationLink {
+                        AchievementGalleryView()
+                    } label: {
+                        Label("Achievements", systemImage: "trophy.fill")
+                    }
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
