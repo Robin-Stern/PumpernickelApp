@@ -125,11 +125,15 @@ Work landed on `feature/workouts` at `fe297ad` **without GSD planning artifacts*
 
 **Plans:** 9 plans
 
-**Wave structure:**
-- Wave 1 (foundation, parallel): 01 (Room schema + entities + DAO), 02 (pure domain — Rank/XpFormula/AchievementCatalog/UnlockEvent)
-- Wave 2 (data wiring, parallel): 03 (repository + seeder + Koin + DataStore sentinel), 04 (GamificationEngine + StreakCalculator + AchievementRules)
-- Wave 3 (integration, parallel): 05 (retroactive walker), 06 (workout-save hook D-20), 07 (Overview VM + goal-day trigger D-22)
-- Wave 4 (UI, parallel): 08 (Overview rank strip + unlock modal host — D-18/D-19/D-20), 09 (achievement gallery + Settings entry — D-21)
+**Wave structure** (serialized where plans touch the same file — revision-iter-1 BLOCKER-1 fix):
+- Wave 1 (foundation, parallel): 01 (Room schema + entities + DAO), 02 (pure domain — Rank/XpFormula/AchievementCatalog/UnlockEvent/NutritionGoalDayPolicy)
+- Wave 2: 03 (repository + seeder + DataStore sentinel + 4 Koin sub-modules via `includes(...)` in SharedModule.kt)
+- Wave 3: 04 (GamificationEngine + StreakCalculator + AchievementRules + nutrition-streak + PR-hunter snapshot fill — registers in GamificationEngineModule.kt)
+- Wave 4: 05 (retroactive walker + GamificationStartup — registers in GamificationEngineModule.kt)
+- Wave 5: 06 (workout-save hook D-20 — edits SharedModule.kt for WorkoutSessionVM binding)
+- Wave 6: 07 (OverviewVM rankState + GoalDayTrigger D-22 — edits SharedModule.kt for OverviewVM binding + GamificationEngineModule.kt for GoalDayTrigger)
+- Wave 7: 08 (OverviewRankStrip + UnlockModalHost — GamificationUiModule.kt + GamificationUiKoinHelper.kt; wraps Android MainScreen.kt in Box + UnlockModalHost())
+- Wave 8: 09 (AchievementGalleryScreen + Settings entry — AchievementGalleryModule.kt + AchievementGalleryKoinHelper.kt; adds composable<AchievementGalleryRoute> to Android MainScreen.kt, serialized after 08 to avoid same-file overlap)
 
 Plans:
 - [ ] 15-01-PLAN.md — Room schema v7 → v8: XpLedgerEntity + AchievementStateEntity + RankStateEntity + GamificationDao + AutoMigration(7, 8)
