@@ -2,6 +2,7 @@ package com.pumpernickel.di
 
 import com.pumpernickel.data.repository.RetroactiveWalker
 import com.pumpernickel.domain.gamification.GamificationEngine
+import com.pumpernickel.domain.gamification.GoalDayTrigger
 import org.koin.dsl.module
 
 /**
@@ -28,5 +29,6 @@ val gamificationEngineModule = module {
     // Plan 05: retroactive XP replay + ordered first-launch startup helper.
     single { RetroactiveWalker(get(), get(), get(), get()) }
     single { GamificationStartup(get(), get()) }
-    // GoalDayTrigger binding added by plan 07.
+    // Plan 07: D-22 nutrition goal-day trigger on Overview tab appearance.
+    single { GoalDayTrigger(get()) }
 }
