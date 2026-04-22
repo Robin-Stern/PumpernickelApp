@@ -139,7 +139,7 @@ Plans:
 - [x] 15-01-PLAN.md — Room schema v7 → v8: XpLedgerEntity + AchievementStateEntity + RankStateEntity + GamificationDao + AutoMigration(7, 8)
 - [x] 15-02-PLAN.md — Pure domain: Rank + RankLadder + RankState + XpFormula + GamificationEvent + UnlockEvent + AchievementCatalog + EventKeys
 - [x] 15-03-PLAN.md — GamificationRepository + AchievementStateSeeder + SettingsRepository sentinel flag + Koin wiring
-- [ ] 15-04-PLAN.md — GamificationEngine + StreakCalculator + AchievementRules (with unit tests)
+- [x] 15-04-PLAN.md — GamificationEngine + StreakCalculator + AchievementRules (with unit tests)
 - [ ] 15-05-PLAN.md — RetroactiveWalker (D-12/D-13) + GamificationStartup first-launch orchestrator
 - [ ] 15-06-PLAN.md — Workout-save integration: WorkoutSessionViewModel.saveReviewedWorkout() + WorkoutRepository.saveCompletedWorkout returning Long (D-20)
 - [ ] 15-07-PLAN.md — OverviewViewModel rankState StateFlow + GoalDayTrigger (D-22)
