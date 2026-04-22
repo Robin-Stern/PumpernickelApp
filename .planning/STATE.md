@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: phase-complete
-stopped_at: Phase 15 all plans complete
-last_updated: "2026-04-22T18:30:00.000Z"
-last_activity: 2026-04-22 -- Phase 15 execution complete (9/9 plans)
+status: verifying
+stopped_at: Completed 15-10-PLAN.md — iOS gamification views created and registered
+last_updated: "2026-04-22T19:09:57.076Z"
+last_activity: 2026-04-22
 progress:
   total_phases: 1
-  completed_phases: 1
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  completed_phases: 0
+  total_plans: 11
+  completed_plans: 10
+  percent: 91
 ---
 
 # Project State
@@ -29,8 +29,8 @@ Milestone: v1.5 (shipped 2026-03-31)
 Phase: 15 (gamifikation-lokal-xp-achievements-meilensteine-csgo-style-r) — COMPLETE (9/9 plans)
 Plan: 9 of 9
 Branch: `feature/workouts` @ `985884c`
-Status: Phase 15 complete — ready for /gsd-verify-work or /gsd-ship
-Last activity: 2026-04-22 -- Phase 15 execution complete
+Status: Phase complete — ready for verification
+Last activity: 2026-04-22
 
 Progress: [██████████] 100% (v1.5 shipped)
 
@@ -74,6 +74,7 @@ See `MILESTONES.md` → "Post-v1.5 (Untracked)" for the full summary. No per-pha
 | Phase 13-workout-session-core P03 | 105 | 2 tasks | 2 files |
 | Phase 13-workout-session-core P04 | 3 | 2 tasks | 1 files |
 | Phase 14-history-settings-anatomy P01 | 5 | 2 tasks | 6 files |
+| Phase 15 P10 | 2 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,8 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - [Post-v1.5 (untracked)]: iOS theming uses `ThemeManager.shared` (@Observable) + `Color.appAccent` computed extension; observed from `AppRootView` via `withTaskGroup` on two flows
 - [Post-v1.5 (untracked)]: NutritionGoals defaults chosen as 2500 kcal / 150g protein / 80g fat / 300g carbs / 50g sugar; persisted as string-encoded ints in DataStore
 - [Post-v1.5 (untracked)]: OpenFoodFacts barcode lookup via Ktor CIO client; no local caching (network required per scan)
+- [Phase 15]: OverviewRankStrip is passive (let rankState) — OverviewView remains single subscription owner per existing pattern
+- [Phase 15]: UnlockModalView typealias uses flat Shared.UnlockEventRankPromotion — matches KMP-NativeCoroutines 1.0.2 flat export convention
 
 ### Roadmap Evolution
 
@@ -118,7 +121,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-22 (Phase 15 context gathered)
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-gamifikation-lokal-xp-achievements-meilensteine-csgo-style-r/15-CONTEXT.md
+Last session: 2026-04-22T19:09:57.073Z
+Stopped at: Completed 15-10-PLAN.md — iOS gamification views created and registered
+Resume file: None
 Next step: `/gsd-plan-phase 15` to break Phase 15 into plans
