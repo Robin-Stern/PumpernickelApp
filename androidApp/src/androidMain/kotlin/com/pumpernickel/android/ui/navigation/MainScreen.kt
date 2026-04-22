@@ -44,6 +44,7 @@ import com.pumpernickel.android.ui.screens.NutritionFoodEntryScreen
 import com.pumpernickel.android.ui.screens.NutritionRecipeListScreen
 import com.pumpernickel.android.ui.screens.NutritionRecipeCreationScreen
 import com.pumpernickel.android.ui.screens.NutritionDailyLogScreen
+import com.pumpernickel.android.ui.screens.UnlockModalHost
 import com.pumpernickel.presentation.nutrition.RecipeListViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -64,6 +65,7 @@ fun MainScreen() {
     val workoutNavController: NavHostController = rememberNavController()
     val nutritionNavController: NavHostController = rememberNavController()
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -187,5 +189,10 @@ fun MainScreen() {
                 }
             }
         }
+    }
+
+        // D-19 + D-20: root-level unlock modal host. Must sit at the composition
+        // root so AlertDialog overlays the current tab regardless of selection.
+        UnlockModalHost()
     }
 }
