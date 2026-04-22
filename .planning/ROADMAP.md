@@ -123,7 +123,7 @@ Work landed on `feature/workouts` at `fe297ad` **without GSD planning artifacts*
 - Catalog: static code-defined 10–15 achievements × 3 tiers in `AchievementCatalog.kt`.
 - Out of scope (deferred per CONTEXT.md): compounding streaks, rank decay, leaderboards, custom achievements, sound effects, progress charts.
 
-**Plans:** 10/11 plans executed
+**Plans:** 11/11 plans complete
 
 **Wave structure** (serialized where plans touch the same file — revision-iter-1 BLOCKER-1 fix):
 - Wave 1 (foundation, parallel): 01 (Room schema + entities + DAO), 02 (pure domain — Rank/XpFormula/AchievementCatalog/UnlockEvent/NutritionGoalDayPolicy)
@@ -148,6 +148,6 @@ Plans:
 - [x] 15-08-PLAN.md — GamificationViewModel + Android OverviewRankStrip (D-18) + UnlockModalHost (D-19/D-20) + iOS contract
 - [x] 15-09-PLAN.md — AchievementGalleryViewModel + Android AchievementGalleryScreen + Settings entry + Route + iOS contract (D-21)
 - [x] 15-10-PLAN.md — GAP CLOSURE: create iOS OverviewRankStrip.swift + UnlockModalView.swift + AchievementGalleryView.swift + register in iosApp.xcodeproj (Wave 9)
-- [ ] 15-11-PLAN.md — GAP CLOSURE: wire the three new Swift views into OverviewView.swift + SettingsView.swift + MainTabView.swift — observe flows, present .fullScreenCover modal queue, add Settings NavigationLink (Wave 10)
+- [x] 15-11-PLAN.md — GAP CLOSURE: wire the three new Swift views into OverviewView.swift + SettingsView.swift + MainTabView.swift — observe flows, present .fullScreenCover modal queue, add Settings NavigationLink (Wave 10)
 </content>
 </invoke>

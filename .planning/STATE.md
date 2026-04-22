@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 15-10-PLAN.md — iOS gamification views created and registered
-last_updated: "2026-04-22T19:09:57.076Z"
+stopped_at: Completed 15-11-PLAN.md — iOS gamification UI fully wired, xcodebuild passes
+last_updated: "2026-04-22T19:21:16.412Z"
 last_activity: 2026-04-22
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 11
-  completed_plans: 10
-  percent: 91
+  completed_plans: 11
+  percent: 100
 ---
 
 # Project State
@@ -75,6 +75,7 @@ See `MILESTONES.md` → "Post-v1.5 (Untracked)" for the full summary. No per-pha
 | Phase 13-workout-session-core P04 | 3 | 2 tasks | 1 files |
 | Phase 14-history-settings-anatomy P01 | 5 | 2 tasks | 6 files |
 | Phase 15 P10 | 2 | 3 tasks | 4 files |
+| Phase 15 P11 | 8 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - [Post-v1.5 (untracked)]: OpenFoodFacts barcode lookup via Ktor CIO client; no local caching (network required per scan)
 - [Phase 15]: OverviewRankStrip is passive (let rankState) — OverviewView remains single subscription owner per existing pattern
 - [Phase 15]: UnlockModalView typealias uses flat Shared.UnlockEventRankPromotion — matches KMP-NativeCoroutines 1.0.2 flat export convention
+- [Phase 15]: unlockEvents (not unlockEventsFlow) is the correct KMPNativeCoroutines property name — KMP-Native generates the Swift property name from the Kotlin val name directly
+- [Phase 15]: KMP-Native sealed subclasses are nested Swift types (Shared.UnlockEvent.RankPromotion) not flat names — use swift_name attribute in Shared.h to determine correct access path
 
 ### Roadmap Evolution
 
@@ -121,7 +124,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-22T19:09:57.073Z
-Stopped at: Completed 15-10-PLAN.md — iOS gamification views created and registered
+Last session: 2026-04-22T19:21:16.409Z
+Stopped at: Completed 15-11-PLAN.md — iOS gamification UI fully wired, xcodebuild passes
 Resume file: None
 Next step: `/gsd-plan-phase 15` to break Phase 15 into plans
