@@ -123,7 +123,7 @@ Work landed on `feature/workouts` at `fe297ad` **without GSD planning artifacts*
 - Catalog: static code-defined 10–15 achievements × 3 tiers in `AchievementCatalog.kt`.
 - Out of scope (deferred per CONTEXT.md): compounding streaks, rank decay, leaderboards, custom achievements, sound effects, progress charts.
 
-**Plans:** 9 plans
+**Plans:** 11 plans (9 shipped + 2 gap closure for iOS UI — see 15-UAT.md)
 
 **Wave structure** (serialized where plans touch the same file — revision-iter-1 BLOCKER-1 fix):
 - Wave 1 (foundation, parallel): 01 (Room schema + entities + DAO), 02 (pure domain — Rank/XpFormula/AchievementCatalog/UnlockEvent/NutritionGoalDayPolicy)
@@ -134,6 +134,8 @@ Work landed on `feature/workouts` at `fe297ad` **without GSD planning artifacts*
 - Wave 6: 07 (OverviewVM rankState + GoalDayTrigger D-22 — edits SharedModule.kt for OverviewVM binding + GamificationEngineModule.kt for GoalDayTrigger)
 - Wave 7: 08 (OverviewRankStrip + UnlockModalHost — GamificationUiModule.kt + GamificationUiKoinHelper.kt; wraps Android MainScreen.kt in Box + UnlockModalHost())
 - Wave 8: 09 (AchievementGalleryScreen + Settings entry — AchievementGalleryModule.kt + AchievementGalleryKoinHelper.kt; adds composable<AchievementGalleryRoute> to Android MainScreen.kt, serialized after 08 to avoid same-file overlap)
+- Wave 9 (GAP CLOSURE, depends on 09): 10 (create iOS Swift files — OverviewRankStrip.swift + UnlockModalView.swift + AchievementGalleryView.swift + pbxproj Xcode target registration)
+- Wave 10 (GAP CLOSURE, depends on 10): 11 (wire iOS Swift files into existing OverviewView.swift + SettingsView.swift + MainTabView.swift — observe flows, present modal, add NavigationLink)
 
 Plans:
 - [x] 15-01-PLAN.md — Room schema v7 → v8: XpLedgerEntity + AchievementStateEntity + RankStateEntity + GamificationDao + AutoMigration(7, 8)
@@ -145,3 +147,7 @@ Plans:
 - [x] 15-07-PLAN.md — OverviewViewModel rankState StateFlow + GoalDayTrigger (D-22)
 - [x] 15-08-PLAN.md — GamificationViewModel + Android OverviewRankStrip (D-18) + UnlockModalHost (D-19/D-20) + iOS contract
 - [x] 15-09-PLAN.md — AchievementGalleryViewModel + Android AchievementGalleryScreen + Settings entry + Route + iOS contract (D-21)
+- [ ] 15-10-PLAN.md — GAP CLOSURE: create iOS OverviewRankStrip.swift + UnlockModalView.swift + AchievementGalleryView.swift + register in iosApp.xcodeproj (Wave 9)
+- [ ] 15-11-PLAN.md — GAP CLOSURE: wire the three new Swift views into OverviewView.swift + SettingsView.swift + MainTabView.swift — observe flows, present .fullScreenCover modal queue, add Settings NavigationLink (Wave 10)
+</content>
+</invoke>
