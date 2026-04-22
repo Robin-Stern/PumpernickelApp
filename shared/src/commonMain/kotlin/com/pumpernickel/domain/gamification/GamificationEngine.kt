@@ -397,5 +397,5 @@ class GamificationEngine(
             .toString()
 
     private fun currentTimeMillis(): Long =
-        kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+        kotlin.time.Clock.System.now().toEpochMilliseconds()
 }

@@ -17,7 +17,7 @@ object StreakCalculator {
      */
     fun longestStreak(epochDays: List<Long>): StreakResult {
         if (epochDays.isEmpty()) return StreakResult(0, null)
-        val sorted = epochDays.toSortedSet().toList()  // dedupe + ascending sort
+        val sorted = epochDays.distinct().sorted()  // dedupe + ascending sort
         var runLength = 1
         var runStart = sorted.last()
         // Walk backwards from the tail while entries are consecutive.
