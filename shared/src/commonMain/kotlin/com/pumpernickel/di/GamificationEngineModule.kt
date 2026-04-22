@@ -1,5 +1,6 @@
 package com.pumpernickel.di
 
+import com.pumpernickel.data.repository.RetroactiveWalker
 import com.pumpernickel.domain.gamification.GamificationEngine
 import org.koin.dsl.module
 
@@ -24,6 +25,8 @@ val gamificationEngineModule = module {
             settingsRepo = get()
         )
     }
-    // RetroactiveWalker, GamificationStartup bindings added by plan 05.
+    // Plan 05: retroactive XP replay + ordered first-launch startup helper.
+    single { RetroactiveWalker(get(), get(), get(), get()) }
+    single { GamificationStartup(get(), get()) }
     // GoalDayTrigger binding added by plan 07.
 }

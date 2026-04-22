@@ -117,6 +117,19 @@ class GamificationEngine(
         evaluateNutritionStreakAt(awardedAtMillis, retroactive = true)
     }
 
+    /**
+     * Called by RetroactiveWalker (plan 05) after the full historical replay
+     * completes so nutrition-driven achievements that wouldn't have fired during
+     * per-workout processing still unlock. Runs the same achievement + rank
+     * check as the live path but without emitting any rank-promotion event for
+     * already-ranked users (checkRankPromotion handles monotonicity via D-10).
+     */
+    suspend fun runAchievementAndRankChecksForReplay() {
+        runAchievementAndRankChecks(
+            nowMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        )
+    }
+
     // ---------- Internals ----------
 
     private suspend fun processWorkout(
