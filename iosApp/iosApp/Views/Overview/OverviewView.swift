@@ -5,16 +5,21 @@ import KMPNativeCoroutinesAsync
 
 struct OverviewView: View {
     private let viewModel = KoinHelper.shared.getOverviewViewModel()
+    private let gamificationViewModel = GamificationUiKoinHelper().getGamificationViewModel()
 
     @State private var muscleLoad: [String: SharedTrainingIntensity] = [:]  // groupName -> intensity
     @State private var todayMacros = SharedRecipeMacros(calories: 0, protein: 0, fat: 0, carbs: 0, sugar: 0)
     @State private var goals = SharedNutritionGoals(calorieGoal: 2500, proteinGoal: 150, fatGoal: 80, carbGoal: 300, sugarGoal: 50)
     @State private var isLoading = true
     @State private var showIntensityInfo = false
+    @State private var rankState: SharedRankState = SharedRankStateUnranked()
 
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // ── Rank Strip (D-11 / D-18) ──
+                OverviewRankStrip(rankState: rankState)
+
                 // ── Muscle Activity Section ──
                 muscleActivitySection
 
@@ -33,7 +38,12 @@ struct OverviewView: View {
                 }
             }
         }
-        .task { await observeUiState() }
+        .task {
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { await observeUiState() }
+                group.addTask { await observeRank() }
+            }
+        }
     }
 
     // MARK: - Observe ViewModel
@@ -57,6 +67,16 @@ struct OverviewView: View {
             }
         } catch {
             print("Overview observation error: \(error)")
+        }
+    }
+
+    private func observeRank() async {
+        do {
+            for try await state in asyncSequence(for: gamificationViewModel.rankStateFlow) {
+                self.rankState = state
+            }
+        } catch {
+            print("Overview rank observation error: \(error)")
         }
     }
 
@@ -345,3 +365,5 @@ private typealias SharedTrainingIntensity = Shared.TrainingIntensity
 private typealias SharedMuscleGroup = Shared.MuscleGroup
 private typealias SharedRecipeMacros = Shared.RecipeMacros
 private typealias SharedNutritionGoals = Shared.NutritionGoals
+private typealias SharedRankState = Shared.RankState
+private typealias SharedRankStateUnranked = Shared.RankStateUnranked
