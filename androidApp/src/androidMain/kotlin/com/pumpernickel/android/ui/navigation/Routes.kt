@@ -23,3 +23,6 @@ import kotlinx.serialization.Serializable
 @Serializable data object NutritionRecipeListRoute
 @Serializable data object NutritionRecipeCreationRoute
 @Serializable data object NutritionDailyLogRoute
+
+// Gamification
+@Serializable data object AchievementGalleryRoute
