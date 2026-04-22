@@ -55,6 +55,15 @@ import org.koin.core.context.startKoin
 import org.koin.core.KoinApplication
 
 val sharedModule = module {
+    // Gamification feature modules (plan 03) -- mounted here once; each plan
+    // adds its bindings to its own feature module file.
+    includes(
+        gamificationModule,
+        gamificationEngineModule,
+        gamificationUiModule,
+        achievementGalleryModule
+    )
+
     // Database -- build from platform-provided Builder
     single<AppDatabase> {
         get<RoomDatabase.Builder<AppDatabase>>()
