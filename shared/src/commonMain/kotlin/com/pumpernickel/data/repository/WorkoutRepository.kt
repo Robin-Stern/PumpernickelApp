@@ -29,7 +29,12 @@ interface WorkoutRepository {
     suspend fun updateExerciseOrder(order: String)
 
     // Completed workouts (WORK-07)
-    suspend fun saveCompletedWorkout(workout: CompletedWorkout)
+    /**
+     * Persists the completed workout + its exercises + its sets. Returns the
+     * new workoutId (the autoincrement row id of the inserted CompletedWorkoutEntity).
+     * D-20: gamification engine uses this id to load the just-saved sets for XP computation.
+     */
+    suspend fun saveCompletedWorkout(workout: CompletedWorkout): Long
 
     // History queries (HIST-01, HIST-02, HIST-03, HIST-04)
     fun getWorkoutSummaries(): Flow<List<WorkoutSummary>>
@@ -168,7 +173,7 @@ class WorkoutRepositoryImpl(
         workoutSessionDao.clearActiveSession()
     }
 
-    override suspend fun saveCompletedWorkout(workout: CompletedWorkout) {
+    override suspend fun saveCompletedWorkout(workout: CompletedWorkout): Long {
         val workoutId = completedWorkoutDao.insertWorkout(
             CompletedWorkoutEntity(
                 templateId = workout.templateId,
@@ -200,6 +205,7 @@ class WorkoutRepositoryImpl(
                 completedWorkoutDao.insertSets(setEntities)
             }
         }
+        return workoutId
     }
 
     override fun getWorkoutSummaries(): Flow<List<WorkoutSummary>> {
