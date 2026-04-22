@@ -144,4 +144,4 @@ Plans:
 - [x] 15-06-PLAN.md — Workout-save integration: WorkoutSessionViewModel.saveReviewedWorkout() + WorkoutRepository.saveCompletedWorkout returning Long (D-20)
 - [x] 15-07-PLAN.md — OverviewViewModel rankState StateFlow + GoalDayTrigger (D-22)
 - [x] 15-08-PLAN.md — GamificationViewModel + Android OverviewRankStrip (D-18) + UnlockModalHost (D-19/D-20) + iOS contract
-- [ ] 15-09-PLAN.md — AchievementGalleryViewModel + Android AchievementGalleryScreen + Settings entry + Route + iOS contract (D-21)
+- [x] 15-09-PLAN.md — AchievementGalleryViewModel + Android AchievementGalleryScreen + Settings entry + Route + iOS contract (D-21)
