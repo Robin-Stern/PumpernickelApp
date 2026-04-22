@@ -32,6 +32,8 @@ import com.pumpernickel.domain.model.MuscleRegionPath
 import com.pumpernickel.domain.model.MuscleRegionPaths
 import com.pumpernickel.domain.model.NutritionGoals
 import com.pumpernickel.domain.model.RecipeMacros
+import com.pumpernickel.domain.gamification.RankState
+import com.pumpernickel.presentation.gamification.GamificationViewModel
 import com.pumpernickel.presentation.overview.OverviewUiState
 import com.pumpernickel.presentation.overview.OverviewViewModel
 import com.pumpernickel.presentation.overview.TrainingIntensity
@@ -64,9 +66,11 @@ private val SugarRingColor = Color(0xFFBA68C8)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
-    viewModel: OverviewViewModel = koinViewModel()
+    viewModel: OverviewViewModel = koinViewModel(),
+    gamificationViewModel: GamificationViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val rankState by gamificationViewModel.rankState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.refresh()
@@ -103,6 +107,9 @@ fun OverviewScreen(
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // ── Rank Strip (D-18) ──
+                OverviewRankStrip(rankState = rankState)
 
                 // ── Muscle Activity Section ──
                 MuscleActivityCard(uiState)
