@@ -70,7 +70,7 @@ struct MainTabView: View {
 
     private func observeUnlocks() async {
         do {
-            for try await event in asyncSequence(for: gamificationViewModel.unlockEventsFlow) {
+            for try await event in asyncSequence(for: gamificationViewModel.unlockEvents) {
                 // D-20: append to the queue rather than present immediately — this
                 // preserves ordering even when multiple events fire within a single
                 // save (e.g., rank promotion + achievement tier unlock).

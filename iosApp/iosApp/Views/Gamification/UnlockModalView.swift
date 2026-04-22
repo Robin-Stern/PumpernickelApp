@@ -8,7 +8,7 @@ import Shared
 ///
 /// Supports both UnlockEvent subclasses (RankPromotion, AchievementTierUnlocked).
 struct UnlockModalView: View {
-    let event: SharedUnlockEvent
+    let event: Shared.UnlockEvent
     let onDismiss: () -> Void
 
     var body: some View {
@@ -153,9 +153,11 @@ struct UnlockModalView: View {
 }
 
 // MARK: - Shared type aliases
+// Note: KMP-Native exports sealed subclasses as nested Swift types (UnlockEvent.RankPromotion),
+// not flat top-level names (UnlockEventRankPromotion). Use Shared.UnlockEvent.RankPromotion.
 
 private typealias SharedUnlockEvent = Shared.UnlockEvent
-private typealias SharedUnlockEventRankPromotion = Shared.UnlockEventRankPromotion
-private typealias SharedUnlockEventAchievementTierUnlocked = Shared.UnlockEventAchievementTierUnlocked
+private typealias SharedUnlockEventRankPromotion = Shared.UnlockEvent.RankPromotion
+private typealias SharedUnlockEventAchievementTierUnlocked = Shared.UnlockEvent.AchievementTierUnlocked
 private typealias SharedRank = Shared.Rank
 private typealias SharedTier = Shared.Tier

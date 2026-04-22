@@ -366,4 +366,4 @@ private typealias SharedMuscleGroup = Shared.MuscleGroup
 private typealias SharedRecipeMacros = Shared.RecipeMacros
 private typealias SharedNutritionGoals = Shared.NutritionGoals
 private typealias SharedRankState = Shared.RankState
-private typealias SharedRankStateUnranked = Shared.RankStateUnranked
+private typealias SharedRankStateUnranked = Shared.RankState.Unranked

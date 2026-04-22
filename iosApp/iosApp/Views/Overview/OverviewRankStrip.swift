@@ -15,7 +15,7 @@ import Shared
 /// That keeps OverviewView as the single subscription owner, identical to how
 /// OverviewView already handles the other Kotlin Flows on its view model.
 struct OverviewRankStrip: View {
-    let rankState: SharedRankState
+    let rankState: Shared.RankState
 
     var body: some View {
         HStack(spacing: 12) {
@@ -116,8 +116,10 @@ struct OverviewRankStrip: View {
 }
 
 // MARK: - Shared type aliases
+// Note: KMP-Native exports sealed subclasses as nested Swift types (RankState.Ranked),
+// not flat top-level names (RankStateRanked). Use Shared.RankState.Ranked.
 
 private typealias SharedRankState = Shared.RankState
-private typealias SharedRankStateUnranked = Shared.RankStateUnranked
-private typealias SharedRankStateRanked = Shared.RankStateRanked
+private typealias SharedRankStateUnranked = Shared.RankState.Unranked
+private typealias SharedRankStateRanked = Shared.RankState.Ranked
 private typealias SharedRank = Shared.Rank
