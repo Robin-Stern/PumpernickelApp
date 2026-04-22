@@ -114,7 +114,7 @@ val sharedModule = module {
     viewModel { WorkoutSessionViewModel(get(), get(), get()) }
     viewModel { WorkoutHistoryViewModel(get(), get()) }
     viewModel { SettingsViewModel(get()) }
-    viewModel { OverviewViewModel(get(), get(), get(), get(), get()) }
+    viewModel { OverviewViewModel(get(), get(), get(), get(), get(), get(), get()) }
 
     // ViewModels -- Nutrition
     viewModel { FoodEntryViewModel(get(), get(), get(), get(), get(), get()) }

@@ -1,11 +1,11 @@
 package com.pumpernickel.domain.gamification
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 /**
  * D-22: Evaluate "was yesterday a goal-day?" on Overview tab appearance.

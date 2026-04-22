@@ -3,8 +3,11 @@ package com.pumpernickel.presentation.overview
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pumpernickel.data.repository.ExerciseRepository
+import com.pumpernickel.data.repository.GamificationRepository
 import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
+import com.pumpernickel.domain.gamification.GoalDayTrigger
+import com.pumpernickel.domain.gamification.RankState
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.NutritionGoals
 import com.pumpernickel.domain.model.RecipeMacros
@@ -82,7 +85,9 @@ class OverviewViewModel(
     private val exerciseRepository: ExerciseRepository,
     private val settingsRepository: SettingsRepository,
     private val loadConsumptionsForDate: LoadConsumptionsForDateUseCase,
-    private val calculateDailyMacros: CalculateDailyMacrosUseCase
+    private val calculateDailyMacros: CalculateDailyMacrosUseCase,
+    private val gamificationRepository: GamificationRepository,
+    private val goalDayTrigger: GoalDayTrigger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OverviewUiState())
@@ -95,11 +100,29 @@ class OverviewViewModel(
         .nutritionGoals
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), NutritionGoals())
 
+    /**
+     * D-18: rank + XP for the Overview strip. Unranked until first workout save.
+     */
+    @NativeCoroutinesState
+    val rankState: StateFlow<RankState> = gamificationRepository
+        .rankState
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RankState.Unranked)
+
     init {
         refresh()
     }
 
     fun refresh() {
+        // D-22: fire goal-day evaluation in its own coroutine so it does not
+        // block the muscle/macro UI refresh. Idempotent — safe to call on every tab appearance.
+        viewModelScope.launch {
+            try {
+                goalDayTrigger.maybeTrigger()
+            } catch (t: Throwable) {
+                println("GoalDayTrigger failed: ${t.message}")
+            }
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
