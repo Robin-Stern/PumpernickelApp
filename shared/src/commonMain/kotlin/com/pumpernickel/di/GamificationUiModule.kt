@@ -1,15 +1,13 @@
 package com.pumpernickel.di
 
+import com.pumpernickel.presentation.gamification.GamificationViewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
- * Feature-scoped Koin module for the Overview-strip + unlock-modal VM
- * (GamificationViewModel) and any other presentation-layer gamification
- * wiring that is NOT the achievement gallery.
- *
- * Populated by:
- *   - Plan 08 (wave 5): viewModel { GamificationViewModel(get(), get()) }
+ * Gamification presentation bindings. Populated in phase-15 plan 08.
+ * Mounted by SharedModule.kt via includes(gamificationUiModule).
  */
 val gamificationUiModule = module {
-    // Bindings populated by plan 08.
+    viewModel { GamificationViewModel(get(), get()) }
 }
