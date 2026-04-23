@@ -279,6 +279,14 @@ class GamificationEngine(
     private suspend fun checkRankPromotion(nowMillis: Long) {
         val currentState = gamificationRepo.getRankStateSnapshot()
         val totalXp = gamificationRepo.totalXp.first()
+
+        // D-11: Rank 1 (Silver) unlocks at XP = 0 on the first workout — NOT on app
+        // launch. If the user is still Unranked and has earned zero XP, do not promote.
+        // Without this guard, the first-launch RetroactiveWalker replay (which always
+        // ends with runAchievementAndRankChecksForReplay) would flip isUnranked=false
+        // and persist Rank.SILVER at 0 XP before any workout is ever saved.
+        if (currentState is RankState.Unranked && totalXp <= 0L) return
+
         val newRank = RankLadder.rankForXp(totalXp)
 
         val previousRank: Rank? = when (currentState) {
