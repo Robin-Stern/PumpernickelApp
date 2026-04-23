@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 15-11-PLAN.md — iOS gamification UI fully wired, xcodebuild passes
-last_updated: "2026-04-23T17:08:52.131Z"
-last_activity: 2026-04-23 -- Completed quick task 260423-sja: AchievementGalleryScreen category header polish
+last_updated: "2026-04-23T18:40:43.853Z"
+last_activity: 2026-04-23
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 15
-  completed_plans: 11
-  percent: 73
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Milestone: v1.5 (shipped 2026-03-31)
-Phase: 15.1 (ranks-and-achievements-browser) — EXECUTING
-Plan: 1 of 4
+Phase: 15.1
+Plan: Not started
 Branch: `feature/workouts` @ `985884c`
 Status: Executing Phase 15.1 (human UAT pending)
-Last activity: 2026-04-23 -- Completed quick task 260423-sja: AchievementGalleryScreen category header polish
+Last activity: 2026-04-23
 
 Progress: [██████████] 100% (v1.5 shipped)
 
@@ -50,7 +50,7 @@ See `MILESTONES.md` → "Post-v1.5 (Untracked)" for the full summary. No per-pha
 
 **Velocity:**
 
-- Total plans completed: 21 (12 v1.0 + 9 v1.1)
+- Total plans completed: 25 (12 v1.0 + 9 v1.1)
 - v1.1 execution: 6 phases, 9 plans, 18 tasks in 2 days
 
 **By Phase (v1.1):**
