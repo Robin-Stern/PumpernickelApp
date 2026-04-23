@@ -40,23 +40,18 @@ struct MainTabView: View {
         .tint(.appAccent)
         // D-20 queue host. `.fullScreenCover` sits at the TabView root so the modal
         // overlays whichever tab is selected when the engine emits an UnlockEvent.
+        // Single pop site: UnlockModalView's onDismiss callback. The binding setter
+        // is intentionally a no-op because UnlockModalView delegates dismissal fully
+        // via the callback (it does not use @Environment(\.dismiss)); popping in both
+        // places silently dropped every second event (CR-01).
         .fullScreenCover(
             isPresented: Binding(
                 get: { !pendingUnlocks.isEmpty },
-                set: { newValue in
-                    // Programmatic dismissal (e.g., swipe-down) — pop the head.
-                    if !newValue && !pendingUnlocks.isEmpty {
-                        pendingUnlocks.removeFirst()
-                    }
-                }
+                set: { _ in }
             )
         ) {
             if let head = pendingUnlocks.first {
                 UnlockModalView(event: head) {
-                    // Dismiss → pop head. If the queue has more events, the
-                    // binding above (`!pendingUnlocks.isEmpty`) remains true and
-                    // SwiftUI presents the next one (new UnlockModalView instance,
-                    // new .onAppear haptic).
                     if !pendingUnlocks.isEmpty {
                         pendingUnlocks.removeFirst()
                     }
