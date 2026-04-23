@@ -5,7 +5,7 @@ milestone_name: milestone
 status: executing
 stopped_at: Completed 15-11-PLAN.md — iOS gamification UI fully wired, xcodebuild passes
 last_updated: "2026-04-23T17:08:52.131Z"
-last_activity: 2026-04-23 -- Phase 15.1 execution started
+last_activity: 2026-04-23 -- Completed quick task 260423-sja: AchievementGalleryScreen category header polish
 progress:
   total_phases: 2
   completed_phases: 1
@@ -29,8 +29,8 @@ Milestone: v1.5 (shipped 2026-03-31)
 Phase: 15.1 (ranks-and-achievements-browser) — EXECUTING
 Plan: 1 of 4
 Branch: `feature/workouts` @ `985884c`
-Status: Executing Phase 15.1
-Last activity: 2026-04-23 -- Phase 15.1 execution started
+Status: Executing Phase 15.1 (human UAT pending)
+Last activity: 2026-04-23 -- Completed quick task 260423-sja: AchievementGalleryScreen category header polish
 
 Progress: [██████████] 100% (v1.5 shipped)
 
@@ -122,6 +122,12 @@ None.
 ### Blockers/Concerns
 
 - GSD history has a gap: nutrition + theming shipped without phase artifacts. If future work needs to reference how those features were built, `git log` is authoritative — not `.planning/phases/`.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260423-sja | Clean up AchievementGalleryScreen category headers — M3 section-break hierarchy (titleLarge + 20/8 padding + hairline divider) | 2026-04-23 | 4c0740b | [260423-sja-clean-up-achievementgalleryscreen-catego](./quick/260423-sja-clean-up-achievementgalleryscreen-catego/) |
 
 ## Session Continuity
 
