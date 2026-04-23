@@ -27,6 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import com.pumpernickel.android.ui.navigation.RanksAndAchievementsRoute
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.MuscleRegionPath
 import com.pumpernickel.domain.model.MuscleRegionPaths
@@ -66,6 +68,7 @@ private val SugarRingColor = Color(0xFFBA68C8)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
+    navController: NavHostController,
     viewModel: OverviewViewModel = koinViewModel(),
     gamificationViewModel: GamificationViewModel = koinViewModel()
 ) {
@@ -109,7 +112,10 @@ fun OverviewScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // ── Rank Strip (D-18) ──
-                OverviewRankStrip(rankState = rankState)
+                OverviewRankStrip(
+                    rankState = rankState,
+                    onTap = { navController.navigate(RanksAndAchievementsRoute) }
+                )
 
                 // ── Muscle Activity Section ──
                 MuscleActivityCard(uiState)
