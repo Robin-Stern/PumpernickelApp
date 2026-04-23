@@ -149,5 +149,23 @@ Plans:
 - [x] 15-09-PLAN.md — AchievementGalleryViewModel + Android AchievementGalleryScreen + Settings entry + Route + iOS contract (D-21)
 - [x] 15-10-PLAN.md — GAP CLOSURE: create iOS OverviewRankStrip.swift + UnlockModalView.swift + AchievementGalleryView.swift + register in iosApp.xcodeproj (Wave 9)
 - [x] 15-11-PLAN.md — GAP CLOSURE: wire the three new Swift views into OverviewView.swift + SettingsView.swift + MainTabView.swift — observe flows, present .fullScreenCover modal queue, add Settings NavigationLink (Wave 10)
+
+### Phase 15.1: Ranks & Achievements Browser (INSERTED)
+
+**Requirements:** GAME-01 follow-up (transparency gap surfaced in Phase 15 UAT)
+**Depends on:** Phase 15
+**Goal:** Add a browsable "Ranks & Achievements" UI reachable from the Overview XP banner so the gamification system becomes legible. Users can see (1) the full rank ladder — every tier in order, which one they're on, which they've passed, XP thresholds, and what's next; and (2) the full achievement catalog — every achievement (locked + unlocked), with progress bars on partially-completed ones, unlock state, and metadata (description, reward XP). Pure presentation over the existing `GamificationRepository` / `RankLadder` / `AchievementCatalog` / `AchievementStateSeeder` — no new domain logic, no schema changes.
+
+**Scope notes:**
+- iOS surface: tappable affordance on `OverviewRankStrip` (or a "View all" button adjacent) opens the browser; SwiftUI views written by user per MEMORY.md convention.
+- Shared VM contract: new `RanksAndAchievementsViewModel` in commonMain exposing `rankLadderState: StateFlow<RankLadderView>` and `achievementCatalogState: StateFlow<List<AchievementRowView>>`, registered via Koin + KoinHelper per the Phase 15 pattern.
+- Android: may reuse existing `AchievementGalleryScreen` (Phase 15-09) as the achievement half; rank-ladder screen is new.
+- Entry points: Overview XP banner tap → Ranks view; existing Settings → Achievements entry unchanged (or can be consolidated).
+
+**Out of scope:** new XP sources, new rank tiers, leaderboards, social features, custom achievements, progress charts beyond simple progress bars.
+
+**Status:** Not planned yet. Run `/gsd:plan-phase 15.1` to break into plans.
+
+**Context:** Surfaced during Phase 15 UAT (2026-04-23) — users reported current rank/XP and unlock toasts are visible but there is no way to browse what ranks exist or what achievements exist, so the system is not legible. See `.planning/debug/fresh-install-rank-silver1.md` for a related UAT bug from the same session.
 </content>
 </invoke>
