@@ -167,6 +167,13 @@ private fun AchievementCard(tile: AchievementTile) {
                 style = MaterialTheme.typography.labelSmall,
                 color = tierColor(tile.tier)
             )
+            // D-151-19 — reward XP label (D-17: BRONZE=+25, SILVER=+75, GOLD=+200).
+            // Small secondary-text line per CONTEXT "not a shout".
+            Text(
+                text = "Reward: +${rewardXp(tile.tier)} XP",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Text(
                 text = tile.flavourCopy,
                 style = MaterialTheme.typography.bodySmall,
@@ -198,6 +205,13 @@ private fun tierLabel(tier: Tier) = when (tier) {
     Tier.BRONZE -> "Bronze"
     Tier.SILVER -> "Silver"
     Tier.GOLD -> "Gold"
+}
+
+/** D-151-19 / D-17: reward XP values per tier. */
+private fun rewardXp(tier: Tier) = when (tier) {
+    Tier.BRONZE -> 25
+    Tier.SILVER -> 75
+    Tier.GOLD -> 200
 }
 
 private fun formatUnlockDate(millis: Long): String {
