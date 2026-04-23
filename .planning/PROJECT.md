@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A fitness tracking mobile app built with Kotlin Multiplatform + SwiftUI (iOS), shipping a complete workout tracking flow with firmware-grade UX polish — exercise catalog, template management, workout execution with scroll wheel input and auto-increment, post-workout recap/edit, mid-workout reorder/skip, abandon guards, personal best display, and a minimal lifting screen with VoiceOver accessibility.
+A fitness tracking mobile app built with Kotlin Multiplatform + SwiftUI (iOS) + Jetpack Compose (Android). Ships workout tracking with firmware-grade UX polish (exercise catalog, templates, execution flow with scroll wheel input, recap/edit, reorder/skip, PB display, VoiceOver), a nutrition tracker with OpenFoodFacts barcode scanning and custom recipes, and a dynamic theming system (light/dark/system + 8 accent colors).
 
 ## Core Value
 
@@ -10,26 +10,26 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 
 ## Current State
 
-**Shipped:** v1.1 Workout Polish & Firmware Parity (2026-03-31)
+**Branch:** `feature/workouts` @ `fe297ad` (2026-04-14)
 
-- 873-exercise seeded catalog with search and custom exercise creation
-- Workout templates with CRUD, drag-and-drop reorder, exercise picker
-- Full workout execution: set logging, rest timer with haptics, crash recovery
-- Workout history with detail views and previous performance inline
-- kg/lbs unit toggle with global application via DataStore Preferences
-- iOS scroll wheel pickers for reps (0-50) and weight (0-1000 @ 2.5kg steps)
-- Auto-increment: set 2+ pre-fills from previous actuals, set 1 from template targets
-- Volume-weighted PB display per exercise during set entry
-- Post-workout recap screen with tap-to-edit before saving
-- Mid-workout exercise reorder (drag) and skip with crash recovery
-- Abandon confirmation dialog (save & exit / discard / cancel)
-- Context menu (skip exercise, exercise overview, finish workout)
-- Firmware-style minimal SET N lifting screen with tap-to-reveal input
-- Haptic feedback on set completion, VoiceOver accessibility labels
-- Color.appAccent design token across workout views
-- ~43,900 LOC Kotlin (KMP shared) + ~19,400 LOC Swift (iOS UI)
+**Shipped:**
 
-**Tech stack:** Kotlin 2.3.20, Compose Multiplatform 1.10.3, Room KMP 2.8.4 (schema v4), Koin 4.2.0, Navigation Compose 2.9.2, DataStore Preferences 1.2.1, SwiftUI (iOS)
+- **v1.0 MVP (2026-03-29)** — Foundation, exercise catalog, templates, workout session, history & settings
+- **v1.1 Workout Polish & Firmware Parity (2026-03-31)** — scroll wheel pickers, auto-increment, PB display, recap/edit, reorder/skip, abandon guards, minimal SET N screen, haptics, VoiceOver, Color.appAccent design token
+- **v1.5 Android Material 3 UI (2026-03-31)** — full feature parity on Android via Jetpack Compose with Material 3 theme, navigation graph, catalog + templates + workout session (drum picker) + history + settings + anatomy picker (Canvas body drawings)
+- **Post-v1.5 work (2026-04-14, untracked by GSD)** — nutrition feature (Food/Recipe/Consumption with OpenFoodFacts barcode lookup), dynamic theming (light/dark/system + 8 accent colors), nutrition goals on Overview tab, template editor redesign, workout history set-count + RIR, PB calculation fix, Room v4 → v7, Android `android-kmp-library` plugin migration + `androidApp` module extraction
+
+**Key capability inventory:**
+- 873-exercise seeded catalog with search, filter, and custom exercise creation
+- Workout templates with CRUD, drag reorder, exercise picker
+- Full workout execution: set logging, rest timer with haptics, crash recovery, PB display, auto-increment, recap/edit, skip, mid-workout reorder, abandon guards, minimal SET N screen
+- Workout history list + detail (set count, RIR, previous performance)
+- Nutrition: daily macro log, food CRUD, custom recipes, barcode scanning (OpenFoodFacts), per-100g hints, goals (calorie/protein/fat/carb/sugar)
+- Dynamic theming: light/dark/system mode, 8 accent presets, persisted in DataStore
+- kg/lbs toggle with global application
+- iOS + Android parity on all workout flows; iOS exclusive: scroll wheel pickers (Android uses custom drum picker); Android exclusive: none
+
+**Tech stack:** Kotlin 2.3.20, Compose Multiplatform 1.10.x (Android), SwiftUI (iOS), Room KMP 2.8.4 (schema v7), Koin 4.2.0, Navigation Compose 2.9.2, DataStore Preferences, Ktor Client (CIO) for OpenFoodFacts, kotlinx-datetime 0.7.x, KMPNativeCoroutinesAsync (iOS ↔ Flow bridge)
 
 ## Requirements
 
@@ -60,33 +60,34 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - ✓ Haptic feedback on set completion — v1.1
 - ✓ VoiceOver accessibility labels — v1.1
 - ✓ Visual consistency (Color.appAccent, spacing standardization) — v1.1
+- ✓ Android Material 3 theme with bottom nav + type-safe routes — v1.5
+- ✓ Android parity: exercise catalog, detail, create — v1.5
+- ✓ Android parity: template list, editor, exercise picker — v1.5
+- ✓ Android parity: full workout session with custom drum picker, rest timer, auto-increment, PB — v1.5
+- ✓ Android parity: exercise overview sheet with reorder + skip — v1.5
+- ✓ Android parity: post-workout recap + finished state — v1.5
+- ✓ Android parity: workout history list + detail, settings (kg/lbs) — v1.5
+- ✓ Anatomy picker with Canvas-drawn body maps sharing `MuscleRegionPaths` from commonMain — v1.5
+- ✓ Nutrition tracking (F2): Food/Recipe/Consumption CRUD, daily macro log — post-v1.5
+- ✓ OpenFoodFacts barcode scanning with Ktor + AVFoundation camera — post-v1.5
+- ✓ Nutrition goals (calorie/protein/fat/carb/sugar) persisted in DataStore — post-v1.5
+- ✓ Dynamic theming: light/dark/system mode + 8 accent color presets — post-v1.5
+- ✓ Workout history detail shows per-set count + RIR — post-v1.5
+- ✓ PB calculation fix (volume-weighted aggregate consistent with firmware) — post-v1.5
+- ✓ Android `android-kmp-library` plugin migration + `androidApp` module extraction — post-v1.5
 
 ### Active
 
-#### Planned Milestone: v1.5 Android Material 3 UI
-
-**Goal:** Port all iOS SwiftUI screens to Jetpack Compose with Material 3, achieving full feature parity on Android with platform-native design.
-
-**Target features:**
-- Material 3 theme with app accent color, bottom navigation, navigation graph
-- Exercise catalog, detail, create — with anatomy picker (Canvas-drawn body maps)
-- Template management — list, editor, exercise picker, drag reorder
-- Full workout session — custom drum picker for reps/weight, rest timer, auto-increment, PB display
-- Exercise overview bottom sheet with drag reorder and skip
-- Abandon guards, post-workout recap with edit, finished state
-- Workout history list/detail, settings (kg/lbs toggle)
-
-**Phases:** 11 (Shell & Nav) → 12 (Catalog & Templates) → 13 (Workout Session) → 14 (History, Settings & Anatomy)
+No active milestone. Next step: `/gsd:new-milestone` before planning additional work.
 
 ### Out of Scope
 
 - Spring Boot backend / PostgreSQL — deferred, prototype is local-only
-- Nutrition tracking (F2) — future milestone
-- Overview/dashboard (F3) — future milestone
+- Overview/dashboard full experience (F3) — partial (macro goals only); full dashboard with training-intensity heatmap deferred
 - Gamification (F4) — future milestone
 - Location/GPS features (F5) — future milestone
 - AI workout generation (F6) — future milestone
-- Auto macro calculation (F7) — future milestone
+- Auto macro calculation from food macros (F7) — partial (daily totals + goals), full auto-calc deferred
 - AI meal generation (F8) — future milestone
 - All Should Have (S1-S6) and Nice to Have (N1-N7) features — future milestones
 - Progress charts/graphs — requires charting library, deferred
@@ -102,11 +103,11 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 
 ## Constraints
 
-- **Tech stack**: Kotlin Multiplatform + Compose Multiplatform (per Lastenheft)
-- **Platform focus**: iOS first (user handles iOS UI in SwiftUI), Android next (v1.5)
-- **Storage**: Local/offline only for prototype (Room KMP)
+- **Tech stack**: Kotlin Multiplatform + SwiftUI (iOS) + Compose Multiplatform (Android)
+- **Platform focus**: iOS + Android both at feature parity on workout & nutrition flows
+- **Storage**: Local-first (Room KMP v7, DataStore Preferences); network only for OpenFoodFacts barcode lookup (no auth, no backend)
 - **Timeline**: University deadline ~end of May 2026
-- **Scope**: v1.5 — Android Material 3 UI parity
+- **Scope**: currently between milestones; active iOS work branch is `feature/workouts`
 
 ## Key Decisions
 
@@ -125,6 +126,15 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 | Two-step recap (enterReview + saveReviewedWorkout) | Separates review from save; enables recap editing without affecting active state | ✓ Good — clean state machine extension |
 | exerciseOrder CSV in active_sessions | Lightweight crash recovery for reorder; avoids new table | ✓ Good — single-column migration, backward-compatible |
 | Color.appAccent design token | Consistent branding; single source of truth for accent color | ✓ Good — eliminated 9 hardcoded RGB values |
+| Room KMP v7 with 4 nutrition entities | Colocate nutrition in the same DB as workouts; single source of truth, single backup path | ✓ Good — AutoMigration 6→7 registered, no data loss |
+| OpenFoodFacts over local food DB | Avoid shipping a multi-GB food database; barcode lookup on demand is acceptable UX | ✓ Post-v1.5 — no caching yet, network required per scan |
+| Ktor CIO client over platform HTTP clients | Single KMP dependency, consistent error handling, smaller iOS binary than adding NSURLSession wrapper | ✓ Post-v1.5 — works, but adds ~1MB to binary |
+| `ThemeManager.shared` (@Observable) on iOS | iOS 17 Observation macro gives automatic view invalidation; avoids `@EnvironmentObject` plumbing through every view | ✓ Post-v1.5 — `Color.appAccent` computed extension reads from the observable |
+| Theme + accent persisted in DataStore, not Room | Key-value settings don't belong in relational DB; DataStore already used for `weightUnit` | ✓ Post-v1.5 — consistent with existing pattern |
+| NutritionGoals defaults (2500/150/80/300/50) | Baseline numbers for a moderately active adult; easier to tune than asking on first launch | ✓ Post-v1.5 — hard-coded defaults in SettingsRepository `Flow.map` |
+| `MuscleRegionPaths` moved to commonMain | Android Canvas + iOS SwiftUI Path both consume the same coordinate data | ✓ v1.5 — single source of truth across platforms |
+| `android-kmp-library` plugin + `androidApp` extraction | Separate per-module Gradle config; enables future per-platform build tuning | ✓ Post-v1.5 — clean module boundaries |
+| Nutrition work shipped outside GSD | Team/branch context; work progressed faster than planning cadence | ⚠️ Gap in `.planning/phases/`; git log is authoritative for this work |
 
 ## Evolution
 
@@ -144,4 +154,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-31 after v1.1 milestone completion*
+*Last updated: 2026-04-22 — reconciled with branch tip `fe297ad` after v1.5 shipped and untracked post-v1.5 work (nutrition + theming) merged outside GSD*
