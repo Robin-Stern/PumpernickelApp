@@ -75,6 +75,7 @@ Users can select a workout template and execute it set-by-set — logging reps, 
 - ✓ Workout history detail shows per-set count + RIR — post-v1.5
 - ✓ PB calculation fix (volume-weighted aggregate consistent with firmware) — post-v1.5
 - ✓ Android `android-kmp-library` plugin migration + `androidApp` module extraction — post-v1.5
+- ✓ Ranks & Achievements Browser (GAME-01 transparency follow-up): tappable Overview rank strip → 10-tier CSGO rank ladder with PASSED/CURRENT/LOCKED rows, achievement gallery now surfaces tier reward XP (+25/75/200) — Phase 15.1
 
 ### Active
 
@@ -154,4 +155,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-22 — reconciled with branch tip `fe297ad` after v1.5 shipped and untracked post-v1.5 work (nutrition + theming) merged outside GSD*
+*Last updated: 2026-04-23 — Phase 15.1 complete (Ranks & Achievements Browser, GAME-01 follow-up)*
