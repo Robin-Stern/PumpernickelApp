@@ -26,3 +26,7 @@ import kotlinx.serialization.Serializable
 
 // Gamification
 @Serializable data object AchievementGalleryRoute
+
+// Overview tab — Ranks & Achievements Browser (Phase 15.1)
+@Serializable data object OverviewRootRoute
+@Serializable data object RanksAndAchievementsRoute
