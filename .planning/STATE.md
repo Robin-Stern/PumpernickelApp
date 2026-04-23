@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
+status: executing
 stopped_at: Completed 15-11-PLAN.md — iOS gamification UI fully wired, xcodebuild passes
-last_updated: "2026-04-22T19:21:16.412Z"
-last_activity: 2026-04-22
+last_updated: "2026-04-23T17:08:52.131Z"
+last_activity: 2026-04-23 -- Phase 15.1 execution started
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 11
+  total_plans: 15
   completed_plans: 11
-  percent: 100
+  percent: 73
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Users can select a workout template and execute it set-by-set — logging reps, weight, and rest periods — with a clean, reliable flow
-**Current focus:** Phase 15 — gamifikation-lokal-xp-achievements-meilensteine-csgo-style-r
+**Current focus:** Phase 15.1 — ranks-and-achievements-browser
 
 ## Current Position
 
 Milestone: v1.5 (shipped 2026-03-31)
-Phase: 15 (gamifikation-lokal-xp-achievements-meilensteine-csgo-style-r) — COMPLETE (9/9 plans)
-Plan: 9 of 9
+Phase: 15.1 (ranks-and-achievements-browser) — EXECUTING
+Plan: 1 of 4
 Branch: `feature/workouts` @ `985884c`
-Status: Phase complete — ready for verification
-Last activity: 2026-04-22
+Status: Executing Phase 15.1
+Last activity: 2026-04-23 -- Phase 15.1 execution started
 
 Progress: [██████████] 100% (v1.5 shipped)
 
