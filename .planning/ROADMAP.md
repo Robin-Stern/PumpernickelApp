@@ -164,7 +164,7 @@ Plans:
 
 **Out of scope:** new XP sources, new rank tiers, leaderboards, social features, custom achievements, progress charts beyond simple progress bars.
 
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 
 **Wave structure:**
 - Wave 1 (foundation): 01 (shared `RanksAndAchievementsViewModel` + `RankLadderUiState` + `RankRow` + `RankRowStatus` in commonMain; register in `GamificationUiModule`; create `RanksAndAchievementsKoinHelper` in iosMain)
@@ -172,9 +172,9 @@ Plans:
 - Wave 3: 03 (Android navigation wiring — adds `OverviewRootRoute` + `RanksAndAchievementsRoute` to `Routes.kt`; introduces Overview-tab NavHost in `MainScreen.kt`; modifies `OverviewScreen.kt` to accept `navController`; modifies `OverviewRankStrip.kt` to accept `onTap` callback; adds D-151-19 reward-XP label to `AchievementGalleryScreen.kt`)
 
 Plans:
-- [ ] 15.1-01-PLAN.md — Shared `RanksAndAchievementsViewModel` + `RankLadderUiState`/`RankRow`/`RankRowStatus` + Koin + iOS `RanksAndAchievementsKoinHelper`
-- [ ] 15.1-02-PLAN.md — Android `RankLadderScreen.kt` rendering all 10 tiers with PASSED/CURRENT/LOCKED presentation + D-11 unranked header + SILVER "First workout unlocks" special case
-- [ ] 15.1-03-PLAN.md — Android navigation wiring: Routes.kt + Overview-tab NavHost in MainScreen.kt + OverviewScreen/OverviewRankStrip tappable card + reward-XP label on AchievementGalleryScreen tiles (D-151-19)
-- [ ] 15.1-04-PLAN.md — iOS handoff doc `15.1-IOS-HANDOFF.md` (per D-151-16/D-151-17 — user hand-writes SwiftUI, this plan specifies the contract)
+- [x] 15.1-01-PLAN.md — Shared `RanksAndAchievementsViewModel` + `RankLadderUiState`/`RankRow`/`RankRowStatus` + Koin + iOS `RanksAndAchievementsKoinHelper`
+- [x] 15.1-02-PLAN.md — Android `RankLadderScreen.kt` rendering all 10 tiers with PASSED/CURRENT/LOCKED presentation + D-11 unranked header + SILVER "First workout unlocks" special case
+- [x] 15.1-03-PLAN.md — Android navigation wiring: Routes.kt + Overview-tab NavHost in MainScreen.kt + OverviewScreen/OverviewRankStrip tappable card + reward-XP label on AchievementGalleryScreen tiles (D-151-19)
+- [x] 15.1-04-PLAN.md — iOS handoff doc `15.1-IOS-HANDOFF.md` (per D-151-16/D-151-17 — user hand-writes SwiftUI, this plan specifies the contract)
 
 **Context:** Surfaced during Phase 15 UAT (2026-04-23) — users reported current rank/XP and unlock toasts are visible but there is no way to browse what ranks exist or what achievements exist, so the system is not legible. See `.planning/debug/fresh-install-rank-silver1.md` for a related UAT bug from the same session.
