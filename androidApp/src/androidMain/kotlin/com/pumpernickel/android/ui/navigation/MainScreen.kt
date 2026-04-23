@@ -35,6 +35,7 @@ import com.pumpernickel.android.ui.screens.ExerciseCatalogScreen
 import com.pumpernickel.android.ui.screens.ExerciseDetailScreen
 import com.pumpernickel.android.ui.screens.ExercisePickerScreen
 import com.pumpernickel.android.ui.screens.OverviewScreen
+import com.pumpernickel.android.ui.screens.RankLadderScreen
 import com.pumpernickel.android.ui.screens.PlaceholderScreen
 import com.pumpernickel.android.ui.screens.TemplateEditorScreen
 import com.pumpernickel.android.ui.screens.TemplateListScreen
@@ -64,6 +65,7 @@ fun MainScreen() {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
     val workoutNavController: NavHostController = rememberNavController()
+    val overviewNavController: NavHostController = rememberNavController()
     val nutritionNavController: NavHostController = rememberNavController()
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -158,9 +160,24 @@ fun MainScreen() {
                 }
             }
 
-            // Overview tab
+            // Overview tab — always composed to preserve back stack (D-151-15)
             Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 1) 1f else 0f)) {
-                OverviewScreen()
+                NavHost(
+                    navController = overviewNavController,
+                    startDestination = OverviewRootRoute
+                ) {
+                    composable<OverviewRootRoute> {
+                        OverviewScreen(navController = overviewNavController)
+                    }
+                    composable<RanksAndAchievementsRoute> {
+                        RankLadderScreen(navController = overviewNavController)
+                    }
+                    composable<AchievementGalleryRoute> {
+                        // D-151-15: duplicate registration on the Overview tab for its own
+                        // back stack. The workout-tab registration at ~line 155 stays.
+                        AchievementGalleryScreen(navController = overviewNavController)
+                    }
+                }
             }
 
             // Nutrition tab — always composed to preserve back stack

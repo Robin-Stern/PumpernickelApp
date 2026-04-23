@@ -37,9 +37,11 @@ import com.pumpernickel.domain.gamification.RankState
 @Composable
 fun OverviewRankStrip(
     rankState: RankState,
+    onTap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
+        onClick = onTap,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
