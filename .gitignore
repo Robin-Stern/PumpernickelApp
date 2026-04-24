@@ -1,51 +1,34 @@
-# IDE - Android Studio / IntelliJ
-.idea/
-*.iml
-*.iws
-.project
-.settings
-.classpath
-bin/
-out/
-
 # Gradle
 .gradle/
 build/
-*/build/
-gradle-app.setting
-!gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.jar
 
-# Android spezifisch
-local.properties
-captures/
-.externalNativeBuild
-.cxx
-*.apk
-*.ap_
-*.dex
-
-# Kotlin Multiplatform / Native
-.konan/
-kotlin-js-store/
-package-lock.json
-
-# iOS (KMP spezifisch)
-*.xcworkspace
-xcuserdata/
-DerivedData/
-*.moved-aside
-podfile.lock
-Pods/
-.test_runtime
-iosApp/build/
-.swiftpm/
-
-# OS-spezifisch
+# IDE
+.idea/
+*.iml
 .DS_Store
-Thumbs.db
 
-# Secrets & Local Config (WICHTIG!)
-secrets.properties
-google-services.json
-*.keystore
-*.jks
+# Kotlin
+*.class
+.kotlin/
+
+# Android
+local.properties
+
+# iOS
+iosApp/Pods/
+iosApp/.symlinks/
+iosApp/Flutter/
+
+# Room schemas (generated)
+shared/schemas/
+
+# Agent/CLI
+.claude/
+.kotlin/
+*.db
+*.db-shm
+*.db-wal
+
+# Xcode
+xcuserdata/

@@ -1,3 +1,90 @@
 <resources>
     <string name="app_name">PumpernickelApp</string>
+
+    <!-- Nutrition: Navigation -->
+    <string name="tab_food">Lebensmittel</string>
+    <string name="tab_recipes">Rezepte</string>
+    <string name="tab_daily_log">Tagebuch</string>
+
+    <!-- Nutrition: Daily Log -->
+    <string name="title_daily_log">Tagebuch</string>
+    <string name="label_today">Heute</string>
+    <string name="label_amount">Menge</string>
+    <string name="label_daily_total">Gesamt heute</string>
+    <string name="action_log_entry">Eintragen</string>
+    <string name="action_add_entry">Eintrag hinzufügen</string>
+    <string name="action_ad_hoc_entry">Freier Eintrag</string>
+    <string name="label_per_100_hint">Werte pro 100 g/ml</string>
+    <string name="msg_no_entries_today">Noch keine Einträge an diesem Tag.</string>
+
+    <!-- Nutrition: Food Entry -->
+    <string name="title_food_entry">Lebensmittel erfassen</string>
+    <string name="title_food_edit">Lebensmittel bearbeiten</string>
+    <string name="label_name">Name *</string>
+    <string name="label_calories">Kalorien (kcal) *</string>
+    <string name="label_protein">Protein (g) *</string>
+    <string name="label_fat">Fett (g) *</string>
+    <string name="label_carbs">Kohlenhydrate (g) *</string>
+    <string name="label_sugar">davon Zucker (g) *</string>
+    <string name="unit_gram">Gramm (g)</string>
+    <string name="unit_ml">Milliliter (ml)</string>
+    <string name="label_unit_designation">Einheit der Nährwertangabe</string>
+    <string name="action_scan_barcode">Barcode scannen</string>
+    <string name="msg_camera_permission_denied">Kamera-Berechtigung wurde verweigert.</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="action_update">Aktualisieren</string>
+    <string name="action_save">Speichern</string>
+    <string name="action_delete">Löschen</string>
+    <string name="heading_saved_foods">Gespeicherte Lebensmittel</string>
+    <string name="hint_search">Suchen…</string>
+    <string name="msg_no_foods">Noch keine Lebensmittel gespeichert.</string>
+    <string name="msg_no_foods_found">Keine Lebensmittel gefunden.</string>
+
+    <!-- Nutrition: Recipe List -->
+    <string name="title_recipes">Rezepte</string>
+    <string name="msg_no_recipes">Noch keine Rezepte vorhanden. Tippe auf + um ein Rezept zu erstellen.</string>
+    <string name="action_favorite">★ Favorit</string>
+    <string name="recipe_total_grams">ergibt %1$d g</string>
+    <string name="recipe_ingredients_count">▼ %1$d Zutaten</string>
+    <string name="recipe_ingredients_hide">▲ Zutaten ausblenden</string>
+    <string name="label_unknown_food">Unbekannt</string>
+    <string name="dialog_recipe_action_prompt">Was möchtest du tun?</string>
+    <string name="action_delete_recipe">Rezept löschen</string>
+    <string name="action_remove_favorite">Aus Favoriten entfernen</string>
+
+    <!-- Nutrition: Recipe Creation -->
+    <string name="title_new_recipe">Neues Rezept</string>
+    <string name="action_back">← Zurück</string>
+    <string name="label_recipe_name">Rezeptname *</string>
+    <string name="hint_search_food">Lebensmittel suchen…</string>
+    <string name="label_recently_added">Zuletzt hinzugefügt</string>
+    <string name="label_search_results">Suchergebnisse</string>
+    <string name="label_ingredients">Zutaten:</string>
+    <string name="recipe_total_calories">Gesamt: %1$d kcal</string>
+    <string name="action_save_recipe">Rezept speichern</string>
+    <string name="action_add_food">+ Hinzufügen</string>
+
+    <!-- Main Tabs -->
+    <string name="tab_workout">Training</string>
+    <string name="tab_overview">Übersicht</string>
+    <string name="tab_nutrition">Ernährung</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_appearance">Darstellung</string>
+    <string name="settings_accent_color">Akzentfarbe</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Hell</string>
+    <string name="settings_theme_dark">Dunkel</string>
+    <string name="settings_weight_unit">Gewichtseinheit</string>
+
+    <!-- Template List -->
+    <string name="dialog_delete_template_title">Vorlage löschen?</string>
+    <string name="dialog_delete_template_message">Dies kann nicht rückgängig gemacht werden.</string>
+
+    <!-- Barcode Scanner -->
+    <string name="scanner_hint">Barcode in den Rahmen halten</string>
+
+    <!-- Daily Log Actions -->
+    <string name="action_add_entry_short">Eintragen</string>
 </resources>

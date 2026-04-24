@@ -3,139 +3,352 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 56;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		47884F742F78A5AC004CDDB3 /* free_exercise_db.json in Resources */ = {isa = PBXBuildFile; fileRef = 47884F732F78A5AC004CDDB3 /* free_exercise_db.json */; };
+		A10001 /* PumpernickelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10001 /* PumpernickelApp.swift */; };
+		A10002 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10002 /* MainTabView.swift */; };
+		A10003 /* WorkoutEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003 /* WorkoutEmptyStateView.swift */; };
+		A10004 /* PlaceholderTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10004 /* PlaceholderTabView.swift */; };
+		A10005 /* FlowObservation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10005 /* FlowObservation.swift */; };
+		A10006 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10006 /* Assets.xcassets */; };
+		A10007 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10007 /* Preview Assets.xcassets */; };
+		A10020 /* KMPNativeCoroutinesAsync in Frameworks */ = {isa = PBXBuildFile; productRef = D10001 /* KMPNativeCoroutinesAsync */; };
+		A10021 /* KMPNativeCoroutinesCore in Frameworks */ = {isa = PBXBuildFile; productRef = D10002 /* KMPNativeCoroutinesCore */; };
+		A10030 /* ExerciseCatalogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10030 /* ExerciseCatalogView.swift */; };
+		A10031 /* ExerciseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10031 /* ExerciseDetailView.swift */; };
+		A10032 /* CreateExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10032 /* CreateExerciseView.swift */; };
+		A10033 /* AnatomyPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10033 /* AnatomyPickerView.swift */; };
+		A10034 /* AnatomyFrontShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10034 /* AnatomyFrontShape.swift */; };
+		A10035 /* AnatomyBackShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10035 /* AnatomyBackShape.swift */; };
+		A10036 /* MuscleRegionPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10036 /* MuscleRegionPaths.swift */; };
+		A10040 /* SVGPath in Frameworks */ = {isa = PBXBuildFile; productRef = D10003 /* SVGPath */; };
+		A10050 /* TemplateListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10050 /* TemplateListView.swift */; };
+		A10051 /* TemplateEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10051 /* TemplateEditorView.swift */; };
+		A10052 /* ExercisePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10052 /* ExercisePickerView.swift */; };
+		A10060 /* WorkoutSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10060 /* WorkoutSessionView.swift */; };
+		A10061 /* WorkoutSetRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10061 /* WorkoutSetRow.swift */; };
+		A10062 /* RestTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10062 /* RestTimerView.swift */; };
+		A10063 /* ExerciseOverviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10063 /* ExerciseOverviewSheet.swift */; };
+		A10064 /* WorkoutFinishedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10064 /* WorkoutFinishedView.swift */; };
+		A10070 /* WorkoutHistoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10070 /* WorkoutHistoryListView.swift */; };
+		A10071 /* WorkoutHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10071 /* WorkoutHistoryDetailView.swift */; };
+		A10072 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10072 /* SettingsView.swift */; };
+		A10080 /* Color+App.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10080 /* Color+App.swift */; };
+		A10090 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10090 /* ThemeManager.swift */; };
+		A10100 /* MacroRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10100 /* MacroRowView.swift */; };
+		A10101 /* NutritionDailyLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10101 /* NutritionDailyLogView.swift */; };
+		A10102 /* NutritionFoodEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10102 /* NutritionFoodEntryView.swift */; };
+		A10103 /* NutritionRecipeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10103 /* NutritionRecipeListView.swift */; };
+		A10104 /* NutritionRecipeCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10104 /* NutritionRecipeCreationView.swift */; };
+		A10105 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10105 /* BarcodeScannerView.swift */; };
+		A10110 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10110 /* OverviewView.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
-		8959DDCF32CEB90F01101EE0 /* PumpernickelApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PumpernickelApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		47884F732F78A5AC004CDDB3 /* free_exercise_db.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = free_exercise_db.json; path = ../shared/src/commonMain/resources/free_exercise_db.json; sourceTree = SOURCE_ROOT; };
+		B10001 /* PumpernickelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpernickelApp.swift; sourceTree = "<group>"; };
+		B10002 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		B10003 /* WorkoutEmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutEmptyStateView.swift; sourceTree = "<group>"; };
+		B10004 /* PlaceholderTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderTabView.swift; sourceTree = "<group>"; };
+		B10005 /* FlowObservation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowObservation.swift; sourceTree = "<group>"; };
+		B10006 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B10007 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		B10010 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10030 /* ExerciseCatalogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCatalogView.swift; sourceTree = "<group>"; };
+		B10031 /* ExerciseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseDetailView.swift; sourceTree = "<group>"; };
+		B10032 /* CreateExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateExerciseView.swift; sourceTree = "<group>"; };
+		B10033 /* AnatomyPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnatomyPickerView.swift; sourceTree = "<group>"; };
+		B10034 /* AnatomyFrontShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnatomyFrontShape.swift; sourceTree = "<group>"; };
+		B10035 /* AnatomyBackShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnatomyBackShape.swift; sourceTree = "<group>"; };
+		B10036 /* MuscleRegionPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuscleRegionPaths.swift; sourceTree = "<group>"; };
+		B10050 /* TemplateListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateListView.swift; sourceTree = "<group>"; };
+		B10051 /* TemplateEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEditorView.swift; sourceTree = "<group>"; };
+		B10052 /* ExercisePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExercisePickerView.swift; sourceTree = "<group>"; };
+		B10060 /* WorkoutSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionView.swift; sourceTree = "<group>"; };
+		B10061 /* WorkoutSetRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSetRow.swift; sourceTree = "<group>"; };
+		B10062 /* RestTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerView.swift; sourceTree = "<group>"; };
+		B10063 /* ExerciseOverviewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseOverviewSheet.swift; sourceTree = "<group>"; };
+		B10064 /* WorkoutFinishedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutFinishedView.swift; sourceTree = "<group>"; };
+		B10070 /* WorkoutHistoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistoryListView.swift; sourceTree = "<group>"; };
+		B10071 /* WorkoutHistoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistoryDetailView.swift; sourceTree = "<group>"; };
+		B10072 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B10080 /* Color+App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+App.swift"; sourceTree = "<group>"; };
+		B10090 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
+		B10100 /* MacroRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacroRowView.swift; sourceTree = "<group>"; };
+		B10101 /* NutritionDailyLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionDailyLogView.swift; sourceTree = "<group>"; };
+		B10102 /* NutritionFoodEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionFoodEntryView.swift; sourceTree = "<group>"; };
+		B10103 /* NutritionRecipeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionRecipeListView.swift; sourceTree = "<group>"; };
+		B10104 /* NutritionRecipeCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionRecipeCreationView.swift; sourceTree = "<group>"; };
+		B10105 /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
+		B10110 /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C7948827ED8F3DF96E08BCCB /* Exceptions for "iosApp" folder in "iosApp" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 8CA1E2B325DD961964674A4B /* iosApp */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		D1919C1CB67046CAD96937A5 /* iosApp */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				C7948827ED8F3DF96E08BCCB /* Exceptions for "iosApp" folder in "iosApp" target */,
-			);
-			path = iosApp;
-			sourceTree = "<group>";
-		};
-		A02887E3B3F459964F8B630D /* Configuration */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Configuration;
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
-
 /* Begin PBXFrameworksBuildPhase section */
-		73CB0BEBF7BCA0D4CEB3C8F9 /* Frameworks */ = {
+		C10001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10020 /* KMPNativeCoroutinesAsync in Frameworks */,
+				A10021 /* KMPNativeCoroutinesCore in Frameworks */,
+				A10040 /* SVGPath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		848C9A5F3258BB7F29F466EC = {
+		E10001 = {
 			isa = PBXGroup;
 			children = (
-				A02887E3B3F459964F8B630D /* Configuration */,
-				D1919C1CB67046CAD96937A5 /* iosApp */,
-				685F11B109E685E9F1B05884 /* Products */,
+				47884F732F78A5AC004CDDB3 /* free_exercise_db.json */,
+				E10002 /* iosApp */,
+				E10010 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		685F11B109E685E9F1B05884 /* Products */ = {
+		E10002 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
-				8959DDCF32CEB90F01101EE0 /* PumpernickelApp.app */,
+				B10001 /* PumpernickelApp.swift */,
+				E10003 /* Views */,
+				E10005 /* Utilities */,
+				E10014 /* Extensions */,
+				E10015 /* Theme */,
+				B10006 /* Assets.xcassets */,
+				E10006 /* Preview Content */,
+			);
+			path = iosApp;
+			sourceTree = "<group>";
+		};
+		E10003 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B10002 /* MainTabView.swift */,
+				E10004 /* Common */,
+				E10007 /* Exercises */,
+				E10008 /* Anatomy */,
+				E10009 /* Templates */,
+				E10011 /* Workout */,
+				E10012 /* History */,
+				E10013 /* Settings */,
+				E10016 /* Nutrition */,
+				E10017 /* Overview */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E10004 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				B10003 /* WorkoutEmptyStateView.swift */,
+				B10004 /* PlaceholderTabView.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		E10005 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				B10005 /* FlowObservation.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		E10006 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				B10007 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		E10007 /* Exercises */ = {
+			isa = PBXGroup;
+			children = (
+				B10030 /* ExerciseCatalogView.swift */,
+				B10031 /* ExerciseDetailView.swift */,
+				B10032 /* CreateExerciseView.swift */,
+			);
+			path = Exercises;
+			sourceTree = "<group>";
+		};
+		E10008 /* Anatomy */ = {
+			isa = PBXGroup;
+			children = (
+				B10033 /* AnatomyPickerView.swift */,
+				B10034 /* AnatomyFrontShape.swift */,
+				B10035 /* AnatomyBackShape.swift */,
+				B10036 /* MuscleRegionPaths.swift */,
+			);
+			path = Anatomy;
+			sourceTree = "<group>";
+		};
+		E10009 /* Templates */ = {
+			isa = PBXGroup;
+			children = (
+				B10050 /* TemplateListView.swift */,
+				B10051 /* TemplateEditorView.swift */,
+				B10052 /* ExercisePickerView.swift */,
+			);
+			path = Templates;
+			sourceTree = "<group>";
+		};
+		E10010 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B10010 /* iosApp.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		E10011 /* Workout */ = {
+			isa = PBXGroup;
+			children = (
+				B10060 /* WorkoutSessionView.swift */,
+				B10061 /* WorkoutSetRow.swift */,
+				B10062 /* RestTimerView.swift */,
+				B10063 /* ExerciseOverviewSheet.swift */,
+				B10064 /* WorkoutFinishedView.swift */,
+			);
+			path = Workout;
+			sourceTree = "<group>";
+		};
+		E10012 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				B10070 /* WorkoutHistoryListView.swift */,
+				B10071 /* WorkoutHistoryDetailView.swift */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		E10013 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				B10072 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		E10014 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				B10080 /* Color+App.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		E10015 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				B10090 /* ThemeManager.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		E10017 /* Overview */ = {
+			isa = PBXGroup;
+			children = (
+				B10110 /* OverviewView.swift */,
+			);
+			path = Overview;
+			sourceTree = "<group>";
+		};
+		E10016 /* Nutrition */ = {
+			isa = PBXGroup;
+			children = (
+				B10100 /* MacroRowView.swift */,
+				B10101 /* NutritionDailyLogView.swift */,
+				B10102 /* NutritionFoodEntryView.swift */,
+				B10103 /* NutritionRecipeListView.swift */,
+				B10104 /* NutritionRecipeCreationView.swift */,
+				B10105 /* BarcodeScannerView.swift */,
+			);
+			path = Nutrition;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8CA1E2B325DD961964674A4B /* iosApp */ = {
+		F10001 /* iosApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 7AD302336F19B478AB9DF5DC /* Build configuration list for PBXNativeTarget "iosApp" */;
+			buildConfigurationList = G10003 /* Build configuration list for PBXNativeTarget "iosApp" */;
 			buildPhases = (
-				3484110D6854B066B7D36AFF /* Compile Kotlin Framework */,
-				30E9C6E211C2F576B7B6487D /* Sources */,
-				73CB0BEBF7BCA0D4CEB3C8F9 /* Frameworks */,
-				0F6C9E15C847CEDBD0EBD4CB /* Resources */,
+				F10010 /* Build Kotlin Framework */,
+				F10002 /* Sources */,
+				C10001 /* Frameworks */,
+				F10003 /* Resources */,
+				F10011 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			fileSystemSynchronizedGroups = (
-				D1919C1CB67046CAD96937A5 /* iosApp */,
-			);
 			name = iosApp;
 			packageProductDependencies = (
+				D10001 /* KMPNativeCoroutinesAsync */,
+				D10002 /* KMPNativeCoroutinesCore */,
+				D10003 /* SVGPath */,
 			);
 			productName = iosApp;
-			productReference = 8959DDCF32CEB90F01101EE0 /* PumpernickelApp.app */;
+			productReference = B10010 /* iosApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		16D1EA0D4A8941CA540C9DC6 /* Project object */ = {
+		H10001 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 1620;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 1540;
 				TargetAttributes = {
-					8CA1E2B325DD961964674A4B = {
-						CreatedOnToolsVersion = 16.2;
+					F10001 = {
+						CreatedOnToolsVersion = 15.4;
 					};
 				};
 			};
-			buildConfigurationList = 8676223DCF4ECDE023A814BF /* Build configuration list for PBXProject "iosApp" */;
+			buildConfigurationList = G10001 /* Build configuration list for PBXProject "iosApp" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 848C9A5F3258BB7F29F466EC;
-			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
-			productRefGroup = 685F11B109E685E9F1B05884 /* Products */;
+			mainGroup = E10001;
+			packageReferences = (
+				D10010 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */,
+				D10011 /* XCRemoteSwiftPackageReference "SVGPath" */,
+			);
+			productRefGroup = E10010 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8CA1E2B325DD961964674A4B /* iosApp */,
+				F10001 /* iosApp */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		0F6C9E15C847CEDBD0EBD4CB /* Resources */ = {
+		F10003 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10006 /* Assets.xcassets in Resources */,
+				A10007 /* Preview Assets.xcassets in Resources */,
+				47884F742F78A5AC004CDDB3 /* free_exercise_db.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		3484110D6854B066B7D36AFF /* Compile Kotlin Framework */ = {
+		F10010 /* Build Kotlin Framework */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -145,32 +358,80 @@
 			);
 			inputPaths = (
 			);
-			name = "Compile Kotlin Framework";
+			name = "Build Kotlin Framework";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :composeApp:embedAndSignAppleFrameworkForXcode\n";
+			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
+		};
+		F10011 /* Embed Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed Frameworks";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "";
 		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		30E9C6E211C2F576B7B6487D /* Sources */ = {
+		F10002 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10001 /* PumpernickelApp.swift in Sources */,
+				A10002 /* MainTabView.swift in Sources */,
+				A10003 /* WorkoutEmptyStateView.swift in Sources */,
+				A10004 /* PlaceholderTabView.swift in Sources */,
+				A10005 /* FlowObservation.swift in Sources */,
+				A10030 /* ExerciseCatalogView.swift in Sources */,
+				A10031 /* ExerciseDetailView.swift in Sources */,
+				A10032 /* CreateExerciseView.swift in Sources */,
+				A10033 /* AnatomyPickerView.swift in Sources */,
+				A10034 /* AnatomyFrontShape.swift in Sources */,
+				A10035 /* AnatomyBackShape.swift in Sources */,
+				A10036 /* MuscleRegionPaths.swift in Sources */,
+				A10050 /* TemplateListView.swift in Sources */,
+				A10051 /* TemplateEditorView.swift in Sources */,
+				A10052 /* ExercisePickerView.swift in Sources */,
+				A10060 /* WorkoutSessionView.swift in Sources */,
+				A10061 /* WorkoutSetRow.swift in Sources */,
+				A10062 /* RestTimerView.swift in Sources */,
+				A10063 /* ExerciseOverviewSheet.swift in Sources */,
+				A10064 /* WorkoutFinishedView.swift in Sources */,
+				A10070 /* WorkoutHistoryListView.swift in Sources */,
+				A10071 /* WorkoutHistoryDetailView.swift in Sources */,
+				A10072 /* SettingsView.swift in Sources */,
+				A10080 /* Color+App.swift in Sources */,
+				A10090 /* ThemeManager.swift in Sources */,
+				A10100 /* MacroRowView.swift in Sources */,
+				A10101 /* NutritionDailyLogView.swift in Sources */,
+				A10102 /* NutritionFoodEntryView.swift in Sources */,
+				A10103 /* NutritionRecipeListView.swift in Sources */,
+				A10104 /* NutritionRecipeCreationView.swift in Sources */,
+				A10105 /* BarcodeScannerView.swift in Sources */,
+				A10110 /* OverviewView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		81FBC5D6FA9C06D7E0A303F7 /* Debug */ = {
+		G10010 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = A02887E3B3F459964F8B630D /* Configuration */;
-			baseConfigurationReferenceRelativePath = Config.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -221,7 +482,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -232,10 +493,8 @@
 			};
 			name = Debug;
 		};
-		B9BD071E6E34602F96A1B73B /* Release */ = {
+		G10011 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = A02887E3B3F459964F8B630D /* Configuration */;
-			baseConfigurationReferenceRelativePath = Config.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -280,7 +539,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -290,19 +549,19 @@
 			};
 			name = Release;
 		};
-		EA756F2303B0E2E582A4F61B /* Debug */ = {
+		G10020 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				DEVELOPMENT_TEAM = RFV322677X;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = iosApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -312,25 +571,34 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					Shared,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.pumpernickel.iosApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
-		7CB94AAF0C7F0CD1864BC191 /* Release */ = {
+		G10021 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				DEVELOPMENT_TEAM = RFV322677X;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = iosApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -340,6 +608,15 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					Shared,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.pumpernickel.iosApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -349,25 +626,62 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		8676223DCF4ECDE023A814BF /* Build configuration list for PBXProject "iosApp" */ = {
+		G10001 /* Build configuration list for PBXProject "iosApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				81FBC5D6FA9C06D7E0A303F7 /* Debug */,
-				B9BD071E6E34602F96A1B73B /* Release */,
+				G10010 /* Debug */,
+				G10011 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		7AD302336F19B478AB9DF5DC /* Build configuration list for PBXNativeTarget "iosApp" */ = {
+		G10003 /* Build configuration list for PBXNativeTarget "iosApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				EA756F2303B0E2E582A4F61B /* Debug */,
-				7CB94AAF0C7F0CD1864BC191 /* Release */,
+				G10020 /* Debug */,
+				G10021 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D10010 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rickclephas/KMP-NativeCoroutines";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.2;
+			};
+		};
+		D10011 /* XCRemoteSwiftPackageReference "SVGPath" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nicklockwood/SVGPath";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D10001 /* KMPNativeCoroutinesAsync */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D10010 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */;
+			productName = KMPNativeCoroutinesAsync;
+		};
+		D10002 /* KMPNativeCoroutinesCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D10010 /* XCRemoteSwiftPackageReference "KMP-NativeCoroutines" */;
+			productName = KMPNativeCoroutinesCore;
+		};
+		D10003 /* SVGPath */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D10011 /* XCRemoteSwiftPackageReference "SVGPath" */;
+			productName = SVGPath;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = 16D1EA0D4A8941CA540C9DC6 /* Project object */;
+	rootObject = H10001 /* Project object */;
 }

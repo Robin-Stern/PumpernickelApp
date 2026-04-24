@@ -1,0 +1,44 @@
+import SwiftUI
+import SVGPath
+
+struct AnatomyBackView: View {
+    let selectedGroup: String?
+    let onRegionTapped: (String) -> Void
+
+    var body: some View {
+        GeometryReader { geo in
+            let scale = geo.size.width / MuscleRegionPaths.viewBoxWidth
+            let scaledHeight = MuscleRegionPaths.viewBoxHeight * scale
+
+            ZStack {
+                // Body outline (non-interactive)
+                ForEach(MuscleRegionPaths.backOutline.indices, id: \.self) { i in
+                    svgPath(MuscleRegionPaths.backOutline[i])
+                        .fill(Color(UIColor.systemGray5))
+                        .scaleEffect(x: scale, y: scale, anchor: .topLeading)
+                }
+
+                // Interactive muscle regions
+                ForEach(MuscleRegionPaths.backRegions) { region in
+                    let isSelected = region.groupName == selectedGroup
+
+                    svgPath(region.pathData)
+                        .fill(isSelected
+                            ? Color.appAccent.opacity(0.8)
+                            : Color(UIColor.systemGray4))
+                        .scaleEffect(x: scale, y: scale, anchor: .topLeading)
+                        .contentShape(svgPath(region.pathData).scale(x: scale, y: scale, anchor: .topLeading))
+                        .onTapGesture {
+                            onRegionTapped(region.groupName)
+                        }
+                }
+            }
+            .frame(height: scaledHeight)
+        }
+        .aspectRatio(MuscleRegionPaths.viewBoxWidth / MuscleRegionPaths.viewBoxHeight, contentMode: .fit)
+    }
+
+    private func svgPath(_ data: String) -> Path {
+        (try? Path(svgPath: data)) ?? Path()
+    }
+}
