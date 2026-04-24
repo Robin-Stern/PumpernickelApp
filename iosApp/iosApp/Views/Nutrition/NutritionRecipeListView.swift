@@ -79,31 +79,35 @@ struct NutritionRecipeListView: View {
 
     private func recipeCard(recipe: Recipe) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                if recipe.isFavorite {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
-                        .font(.caption)
+            NavigationLink(destination: NutritionRecipeCreationView(editingRecipe: recipe)) {
+                HStack {
+                    if recipe.isFavorite {
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                            .font(.caption)
+                    }
+                    Text(recipe.name)
+                        .font(.body.weight(.semibold))
+                    Spacer()
+                    let macros = viewModel.calculateMacros(recipe: recipe)
+                    Text("\(Int(macros.calories.rounded())) kcal")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
-                Text(recipe.name)
-                    .font(.body.weight(.semibold))
-                Spacer()
-                let macros = viewModel.calculateMacros(recipe: recipe)
-                Text("\(Int(macros.calories.rounded())) kcal")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
             }
+            .buttonStyle(.plain)
 
             let macros = viewModel.calculateMacros(recipe: recipe)
             MacroRowView(protein: macros.protein, fat: macros.fat, carbs: macros.carbs, sugar: macros.sugar)
 
             Button {
-                withAnimation(.easeInOut(duration: 0.25)) {
-                    if expandedRecipeIds.contains(recipe.id) {
-                        expandedRecipeIds.remove(recipe.id)
-                    } else {
-                        expandedRecipeIds.insert(recipe.id)
-                    }
+                if expandedRecipeIds.contains(recipe.id) {
+                    expandedRecipeIds.remove(recipe.id)
+                } else {
+                    expandedRecipeIds.insert(recipe.id)
                 }
             } label: {
                 Text(expandedRecipeIds.contains(recipe.id) ? "▲ Zutaten ausblenden" : "▼ \(recipe.ingredients.count) Zutaten")
@@ -122,9 +126,9 @@ struct NutritionRecipeListView: View {
                     }
                 }
                 .padding(.leading, 8)
-                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: expandedRecipeIds.contains(recipe.id))
     }
 
     // MARK: - Flow Observation

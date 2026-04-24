@@ -4,14 +4,21 @@ import KMPNativeCoroutinesAsync
 
 struct NutritionRecipeCreationView: View {
     private let viewModel = KoinHelper.shared.getRecipeCreationViewModel()
+    let editingRecipe: Recipe?
+
+    init(editingRecipe: Recipe? = nil) {
+        self.editingRecipe = editingRecipe
+    }
 
     @State private var state = RecipeCreationUiState(
         recipeName: "", searchQuery: "", searchResults: [],
         ingredients: [], totals: RecipeMacros(calories: 0, protein: 0, fat: 0, carbs: 0, sugar: 0),
-        errorMessage: nil
+        errorMessage: nil, editingRecipeId: nil, editingIsFavorite: false
     )
     @Environment(\.dismiss) private var dismiss
     @FocusState private var focusedField: Bool
+
+    private var isEditing: Bool { editingRecipe != nil }
 
     var body: some View {
         Form {
@@ -54,6 +61,9 @@ struct NutritionRecipeCreationView: View {
                 Section("Zutaten") {
                     ForEach(Array(state.ingredients.enumerated()), id: \.offset) { index, ingredient in
                         HStack {
+                            Image(systemName: "line.3.horizontal")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
                             Text(ingredient.food.name)
                                 .lineLimit(1)
                             Spacer()
@@ -74,6 +84,13 @@ struct NutritionRecipeCreationView: View {
                             }
                             .buttonStyle(.plain)
                         }
+                    }
+                    .onMove { source, destination in
+                        guard let from = source.first else { return }
+                        viewModel.onEvent(event: RecipeCreationEventOnIngredientMoved(
+                            fromIndex: Int32(from),
+                            toIndex: Int32(destination > from ? destination - 1 : destination)
+                        ))
                     }
                 }
 
@@ -104,7 +121,7 @@ struct NutritionRecipeCreationView: View {
                 Button {
                     viewModel.onEvent(event: RecipeCreationEventOnSaveClicked.shared)
                 } label: {
-                    Text("Rezept speichern")
+                    Text(isEditing ? "Rezept aktualisieren" : "Rezept speichern")
                         .font(.body.weight(.semibold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -116,7 +133,8 @@ struct NutritionRecipeCreationView: View {
                 .listRowBackground(Color.clear)
             }
         }
-        .navigationTitle("Neues Rezept")
+        .navigationTitle(isEditing ? "Rezept bearbeiten" : "Neues Rezept")
+        .environment(\.editMode, .constant(.active))
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
@@ -129,7 +147,13 @@ struct NutritionRecipeCreationView: View {
                 group.addTask { await observeSavedEvent() }
             }
         }
-        .onAppear { viewModel.reset() }
+        .onAppear {
+            if let recipe = editingRecipe {
+                viewModel.loadRecipe(recipe: recipe)
+            } else {
+                viewModel.reset()
+            }
+        }
     }
 
     // MARK: - Flow Observation

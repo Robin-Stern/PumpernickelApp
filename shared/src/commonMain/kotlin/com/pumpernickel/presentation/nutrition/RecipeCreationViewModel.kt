@@ -28,7 +28,9 @@ data class RecipeCreationUiState(
     val searchResults: List<Food> = emptyList(),
     val ingredients: List<IngredientEntry> = emptyList(),
     val totals: RecipeMacros = RecipeMacros(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val editingRecipeId: String? = null,
+    val editingIsFavorite: Boolean = false
 )
 
 sealed interface RecipeCreationEvent {
@@ -37,6 +39,7 @@ sealed interface RecipeCreationEvent {
     data class OnFoodSelected(val food: Food) : RecipeCreationEvent
     data class OnIngredientAmountChanged(val index: Int, val value: String) : RecipeCreationEvent
     data class OnIngredientRemoved(val index: Int) : RecipeCreationEvent
+    data class OnIngredientMoved(val fromIndex: Int, val toIndex: Int) : RecipeCreationEvent
     data object OnSaveClicked : RecipeCreationEvent
 }
 
@@ -66,6 +69,28 @@ class RecipeCreationViewModel(
         viewModelScope.launch {
             _foods.value = repository.loadFoods()
             _creationState.value = RecipeCreationUiState(searchResults = recentFoods())
+        }
+    }
+
+    fun loadRecipe(recipe: Recipe) {
+        viewModelScope.launch {
+            val allFoods = repository.loadFoods()
+            _foods.value = allFoods
+            val foodMap = allFoods.associateBy { it.id }
+            val entries = recipe.ingredients.mapNotNull { ingredient ->
+                val food = foodMap[ingredient.foodId] ?: return@mapNotNull null
+                val amountStr = if (ingredient.amountGrams == ingredient.amountGrams.toLong().toDouble())
+                    ingredient.amountGrams.toLong().toString() else ingredient.amountGrams.toString()
+                IngredientEntry(food, amountStr)
+            }
+            _creationState.value = RecipeCreationUiState(
+                recipeName = recipe.name,
+                searchResults = recentFoods(),
+                ingredients = entries,
+                totals = calcTotals(entries),
+                editingRecipeId = recipe.id,
+                editingIsFavorite = recipe.isFavorite
+            )
         }
     }
 
@@ -99,6 +124,13 @@ class RecipeCreationViewModel(
             is RecipeCreationEvent.OnIngredientRemoved -> _creationState.update { state ->
                 val newIngredients = state.ingredients.toMutableList().also { it.removeAt(event.index) }
                 state.withIngredients(newIngredients)
+            }
+
+            is RecipeCreationEvent.OnIngredientMoved -> _creationState.update { state ->
+                val list = state.ingredients.toMutableList()
+                val item = list.removeAt(event.fromIndex)
+                list.add(event.toIndex, item)
+                state.copy(ingredients = list)
             }
 
             RecipeCreationEvent.OnSaveClicked -> saveRecipe()
@@ -136,7 +168,16 @@ class RecipeCreationViewModel(
             val recipeIngredients = state.ingredients.map { entry ->
                 RecipeIngredient(foodId = entry.food.id, amountGrams = entry.amountGrams.toDouble())
             }
-            repository.saveRecipe(Recipe(name = state.recipeName.trim(), ingredients = recipeIngredients))
+            if (state.editingRecipeId != null) {
+                repository.updateRecipe(Recipe(
+                    id = state.editingRecipeId,
+                    name = state.recipeName.trim(),
+                    ingredients = recipeIngredients,
+                    isFavorite = state.editingIsFavorite
+                ))
+            } else {
+                repository.saveRecipe(Recipe(name = state.recipeName.trim(), ingredients = recipeIngredients))
+            }
             _savedEvent.tryEmit(Unit)
         }
     }

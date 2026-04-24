@@ -33,6 +33,7 @@ import com.pumpernickel.android.ui.screens.CreateExerciseScreen
 import com.pumpernickel.android.ui.screens.ExerciseCatalogScreen
 import com.pumpernickel.android.ui.screens.ExerciseDetailScreen
 import com.pumpernickel.android.ui.screens.ExercisePickerScreen
+import com.pumpernickel.android.ui.screens.OverviewScreen
 import com.pumpernickel.android.ui.screens.PlaceholderScreen
 import com.pumpernickel.android.ui.screens.TemplateEditorScreen
 import com.pumpernickel.android.ui.screens.TemplateListScreen
@@ -153,11 +154,7 @@ fun MainScreen() {
 
             // Overview tab
             Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 1) 1f else 0f)) {
-                PlaceholderScreen(
-                    icon = Icons.Filled.BarChart,
-                    title = stringResource(R.string.tab_overview),
-                    message = "Track your training progress and stats. Coming soon."
-                )
+                OverviewScreen()
             }
 
             // Nutrition tab — always composed to preserve back stack

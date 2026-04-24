@@ -80,25 +80,32 @@ struct NutritionFoodEntryView: View {
                 }
             }
 
-            TextField("Name *", text: Binding(
+            labeledField("Name *", text: Binding(
                 get: { uiState.name },
                 set: { viewModel.onEvent(event: FoodEntryEventOnNameChanged(value: $0)) }
-            ))
-            .textFieldStyle(.roundedBorder)
-            .submitLabel(.done)
-            .focused($focusedField)
+            ), keyboard: .default)
+
+            Text("Nährwerte pro 100 g/ml")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack(spacing: 12) {
-                numField("Kalorien (kcal) *", value: uiState.calories) { viewModel.onEvent(event: FoodEntryEventOnCaloriesChanged(value: $0)) }
-                numField("Protein (g) *", value: uiState.protein) { viewModel.onEvent(event: FoodEntryEventOnProteinChanged(value: $0)) }
+                labeledNumField("Kalorien (kcal) *", value: uiState.calories) { viewModel.onEvent(event: FoodEntryEventOnCaloriesChanged(value: $0)) }
+                labeledNumField("Protein (g)", value: uiState.protein) { viewModel.onEvent(event: FoodEntryEventOnProteinChanged(value: $0)) }
             }
             HStack(spacing: 12) {
-                numField("Fett (g) *", value: uiState.fat) { viewModel.onEvent(event: FoodEntryEventOnFatChanged(value: $0)) }
-                numField("KH (g) *", value: uiState.carbs) { viewModel.onEvent(event: FoodEntryEventOnCarbsChanged(value: $0)) }
+                labeledNumField("Fett (g)", value: uiState.fat) { viewModel.onEvent(event: FoodEntryEventOnFatChanged(value: $0)) }
+                labeledNumField("Kohlenhydrate (g)", value: uiState.carbs) { viewModel.onEvent(event: FoodEntryEventOnCarbsChanged(value: $0)) }
             }
             HStack(spacing: 12) {
-                numField("Zucker (g) *", value: uiState.sugar) { viewModel.onEvent(event: FoodEntryEventOnSugarChanged(value: $0)) }
-                unitPicker
+                labeledNumField("Zucker (g)", value: uiState.sugar) { viewModel.onEvent(event: FoodEntryEventOnSugarChanged(value: $0)) }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Einheit")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    unitPicker
+                }
             }
 
             HStack(spacing: 12) {
@@ -137,11 +144,29 @@ struct NutritionFoodEntryView: View {
         }
     }
 
-    private func numField(_ placeholder: String, value: String, onChange: @escaping (String) -> Void) -> some View {
-        TextField(placeholder, text: Binding(get: { value }, set: onChange))
-            .keyboardType(.decimalPad)
-            .textFieldStyle(.roundedBorder)
-            .focused($focusedField)
+    private func labeledField(_ label: String, text: Binding<String>, keyboard: UIKeyboardType) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            TextField("", text: text)
+                .keyboardType(keyboard)
+                .textFieldStyle(.roundedBorder)
+                .submitLabel(.done)
+                .focused($focusedField)
+        }
+    }
+
+    private func labeledNumField(_ label: String, value: String, onChange: @escaping (String) -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            TextField("0", text: Binding(get: { value }, set: onChange))
+                .keyboardType(.decimalPad)
+                .textFieldStyle(.roundedBorder)
+                .focused($focusedField)
+        }
     }
 
     private var unitPicker: some View {
@@ -220,13 +245,33 @@ struct NutritionFoodEntryView: View {
             VStack(spacing: 20) {
                 if let food = uiState.pendingLogFood {
                     Text(food.name).font(.headline)
-                    Text("\(Int(food.calories.rounded())) kcal / 100\(food.unit == .milliliter ? "ml" : "g")")
-                        .foregroundColor(.secondary)
-                    TextField("Menge (\(food.unit == .milliliter ? "ml" : "g"))", text: $logAmountText)
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 200)
-                        .focused($focusedField)
+
+                    VStack(spacing: 6) {
+                        Text("pro 100 \(food.unit == .milliliter ? "ml" : "g")")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("\(Int(food.calories.rounded())) kcal")
+                            .font(.body.weight(.bold))
+                            .foregroundColor(.appAccent)
+                        MacroRowView(
+                            protein: food.protein,
+                            fat: food.fat,
+                            carbs: food.carbohydrates,
+                            sugar: food.sugar
+                        )
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Menge (\(food.unit == .milliliter ? "ml" : "g"))")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        TextField("", text: $logAmountText)
+                            .keyboardType(.decimalPad)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 200)
+                            .focused($focusedField)
+                    }
+
                     Button("Eintragen") {
                         if let amount = Double(logAmountText) {
                             viewModel.onEvent(event: FoodEntryEventOnConfirmLogAmount(food: food, amount: amount))

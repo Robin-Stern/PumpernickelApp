@@ -84,6 +84,7 @@ fun WorkoutSessionScreen(
 
     var selectedReps by remember { mutableIntStateOf(0) }
     var selectedWeightKgX10 by remember { mutableIntStateOf(0) }
+    var selectedRir by remember { mutableIntStateOf(2) }
     var showAbandonDialog by remember { mutableStateOf(false) }
     var showExerciseOverview by remember { mutableStateOf(false) }
     var showSetInput by remember { mutableStateOf(false) }
@@ -94,6 +95,7 @@ fun WorkoutSessionScreen(
     var editSetIndex by remember { mutableIntStateOf(0) }
     var editSelectedReps by remember { mutableIntStateOf(0) }
     var editSelectedWeightKgX10 by remember { mutableIntStateOf(0) }
+    var editSelectedRir by remember { mutableIntStateOf(2) }
 
     // Sync pre-fill values into local picker state (D-05)
     LaunchedEffect(preFill) {
@@ -118,6 +120,7 @@ fun WorkoutSessionScreen(
                 elapsedSeconds = elapsedSeconds,
                 selectedReps = selectedReps,
                 selectedWeightKgX10 = selectedWeightKgX10,
+                selectedRir = selectedRir,
                 showSetInput = showSetInput,
                 showAbandonDialog = showAbandonDialog,
                 showExerciseOverview = showExerciseOverview,
@@ -126,11 +129,12 @@ fun WorkoutSessionScreen(
                 weightUnit = weightUnit,
                 onRepsChanged = { selectedReps = it },
                 onWeightChanged = { selectedWeightKgX10 = it },
+                onRirChanged = { selectedRir = it },
                 onShowSetInput = { showSetInput = it },
                 onShowAbandonDialog = { showAbandonDialog = it },
                 onShowExerciseOverview = { showExerciseOverview = it },
-                onCompleteSet = { reps, weight ->
-                    viewModel.completeSet(reps, weight)
+                onCompleteSet = { reps, weight, rir ->
+                    viewModel.completeSet(reps, weight, rir)
                 },
                 onSkipRest = { viewModel.skipRest() },
                 onSkipExercise = { viewModel.skipExercise() },
@@ -143,11 +147,12 @@ fun WorkoutSessionScreen(
                     navController.popBackStack()
                 },
                 onPopBackStack = { navController.popBackStack() },
-                onEditCompletedSet = { exIdx, setIdx, reps, weightKgX10 ->
+                onEditCompletedSet = { exIdx, setIdx, reps, weightKgX10, rir ->
                     editExerciseIndex = exIdx
                     editSetIndex = setIdx
                     editSelectedReps = reps
                     editSelectedWeightKgX10 = snapToWeightStep(weightKgX10)
+                    editSelectedRir = rir
                     showEditSheet = true
                 }
             )
@@ -160,13 +165,16 @@ fun WorkoutSessionScreen(
                         setIndex = editSetIndex,
                         selectedReps = editSelectedReps,
                         selectedWeightKgX10 = editSelectedWeightKgX10,
+                        selectedRir = editSelectedRir,
                         weightUnit = weightUnit,
                         onRepsChanged = { editSelectedReps = it },
                         onWeightChanged = { editSelectedWeightKgX10 = it },
+                        onRirChanged = { editSelectedRir = it },
                         onSave = {
                             viewModel.editCompletedSet(
                                 editExerciseIndex, editSetIndex,
-                                editSelectedReps, editSelectedWeightKgX10
+                                editSelectedReps, editSelectedWeightKgX10,
+                                editSelectedRir
                             )
                             showEditSheet = false
                         },
@@ -180,11 +188,12 @@ fun WorkoutSessionScreen(
                 reviewing = state,
                 weightUnit = weightUnit,
                 onSaveWorkout = { viewModel.saveReviewedWorkout() },
-                onEditSet = { exIdx, setIdx, reps, weightKgX10 ->
+                onEditSet = { exIdx, setIdx, reps, weightKgX10, rir ->
                     editExerciseIndex = exIdx
                     editSetIndex = setIdx
                     editSelectedReps = reps
                     editSelectedWeightKgX10 = snapToWeightStep(weightKgX10)
+                    editSelectedRir = rir
                     showEditSheet = true
                 }
             )
@@ -196,13 +205,16 @@ fun WorkoutSessionScreen(
                         setIndex = editSetIndex,
                         selectedReps = editSelectedReps,
                         selectedWeightKgX10 = editSelectedWeightKgX10,
+                        selectedRir = editSelectedRir,
                         weightUnit = weightUnit,
                         onRepsChanged = { editSelectedReps = it },
                         onWeightChanged = { editSelectedWeightKgX10 = it },
+                        onRirChanged = { editSelectedRir = it },
                         onSave = {
                             viewModel.editCompletedSet(
                                 editExerciseIndex, editSetIndex,
-                                editSelectedReps, editSelectedWeightKgX10
+                                editSelectedReps, editSelectedWeightKgX10,
+                                editSelectedRir
                             )
                             showEditSheet = false
                         },
@@ -235,6 +247,7 @@ private fun ActiveWorkoutContent(
     elapsedSeconds: Long,
     selectedReps: Int,
     selectedWeightKgX10: Int,
+    selectedRir: Int,
     showSetInput: Boolean,
     showAbandonDialog: Boolean,
     showExerciseOverview: Boolean,
@@ -243,10 +256,11 @@ private fun ActiveWorkoutContent(
     weightUnit: WeightUnit,
     onRepsChanged: (Int) -> Unit,
     onWeightChanged: (Int) -> Unit,
+    onRirChanged: (Int) -> Unit,
     onShowSetInput: (Boolean) -> Unit,
     onShowAbandonDialog: (Boolean) -> Unit,
     onShowExerciseOverview: (Boolean) -> Unit,
-    onCompleteSet: (Int, Int) -> Unit,
+    onCompleteSet: (Int, Int, Int) -> Unit,
     onSkipRest: () -> Unit,
     onSkipExercise: () -> Unit,
     onJumpToExercise: (Int) -> Unit,
@@ -255,7 +269,7 @@ private fun ActiveWorkoutContent(
     onSaveReviewedWorkout: () -> Unit,
     onDiscardWorkout: () -> Unit,
     onPopBackStack: () -> Unit,
-    onEditCompletedSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int) -> Unit = { _, _, _, _ -> }
+    onEditCompletedSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int) -> Unit = { _, _, _, _, _ -> }
 ) {
     val exercises = active.exercises
     val exIdx = active.currentExerciseIndex
@@ -360,9 +374,11 @@ private fun ActiveWorkoutContent(
                         SetInputSection(
                             selectedReps = selectedReps,
                             selectedWeightKgX10 = selectedWeightKgX10,
+                            selectedRir = selectedRir,
                             weightUnit = weightUnit,
                             onRepsChanged = onRepsChanged,
                             onWeightChanged = onWeightChanged,
+                            onRirChanged = onRirChanged,
                             onCompleteSet = {
                                 @Suppress("DEPRECATION")
                                 val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
@@ -373,7 +389,7 @@ private fun ActiveWorkoutContent(
                                 } else {
                                     vibrator?.vibrate(50)
                                 }
-                                onCompleteSet(selectedReps, selectedWeightKgX10)
+                                onCompleteSet(selectedReps, selectedWeightKgX10, selectedRir)
                             },
                             isEnabled = selectedReps > 0
                         )
@@ -653,9 +669,11 @@ private fun MinimalSetScreen(
 private fun SetInputSection(
     selectedReps: Int,
     selectedWeightKgX10: Int,
+    selectedRir: Int,
     weightUnit: WeightUnit,
     onRepsChanged: (Int) -> Unit,
     onWeightChanged: (Int) -> Unit,
+    onRirChanged: (Int) -> Unit,
     onCompleteSet: () -> Unit,
     isEnabled: Boolean
 ) {
@@ -679,6 +697,12 @@ private fun SetInputSection(
                 modifier = Modifier.weight(1f)
             )
         }
+
+        // RIR tap selector
+        RirSelector(
+            selectedRir = selectedRir,
+            onRirChanged = onRirChanged
+        )
 
         Button(
             onClick = onCompleteSet,
@@ -704,7 +728,7 @@ private fun CompletedSetsSection(
     exercise: SessionExercise,
     exerciseIndex: Int,
     weightUnit: WeightUnit,
-    onEditSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int) -> Unit = { _, _, _, _ -> }
+    onEditSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int) -> Unit = { _, _, _, _, _ -> }
 ) {
     val completedSets = exercise.sets.filter { it.isCompleted }
     if (completedSets.isEmpty()) return
@@ -722,6 +746,7 @@ private fun CompletedSetsSection(
         completedSets.forEach { set ->
             val reps = set.actualReps ?: 0
             val weight = set.actualWeightKgX10 ?: 0
+            val rir = set.rir ?: 2
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -730,7 +755,7 @@ private fun CompletedSetsSection(
                         shape = RoundedCornerShape(8.dp)
                     )
                     .clickable {
-                        onEditSet(exerciseIndex, set.setIndex, reps, weight)
+                        onEditSet(exerciseIndex, set.setIndex, reps, weight, rir)
                     }
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -748,6 +773,18 @@ private fun CompletedSetsSection(
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.weight(1f))
+                // RIR badge
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = if (rir >= 4) "RIR 4+" else "RIR $rir",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
                 Text(
                     text = "$reps reps",
                     style = MaterialTheme.typography.bodyMedium
@@ -769,7 +806,7 @@ private fun RecapContent(
     reviewing: WorkoutSessionState.Reviewing,
     weightUnit: WeightUnit,
     onSaveWorkout: () -> Unit,
-    onEditSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int) -> Unit
+    onEditSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int) -> Unit
 ) {
     val completedExercises = reviewing.exercises.filter { ex -> ex.sets.any { it.isCompleted } }
     val totalSets = completedExercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
@@ -878,6 +915,7 @@ private fun RecapContent(
                         completedSets.forEach { set ->
                             val reps = set.actualReps ?: 0
                             val weight = set.actualWeightKgX10 ?: 0
+                            val rir = set.rir ?: 2
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -886,7 +924,7 @@ private fun RecapContent(
                                         shape = RoundedCornerShape(10.dp)
                                     )
                                     .clickable {
-                                        onEditSet(originalIndex, set.setIndex, reps, weight)
+                                        onEditSet(originalIndex, set.setIndex, reps, weight, rir)
                                     }
                                     .padding(horizontal = 12.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -904,6 +942,17 @@ private fun RecapContent(
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Spacer(Modifier.weight(1f))
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = if (rir >= 4) "RIR 4+" else "RIR $rir",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
                                 Text(
                                     text = "$reps reps",
                                     style = MaterialTheme.typography.bodyMedium
@@ -944,9 +993,11 @@ private fun EditSetSheetContent(
     setIndex: Int,
     selectedReps: Int,
     selectedWeightKgX10: Int,
+    selectedRir: Int,
     weightUnit: WeightUnit,
     onRepsChanged: (Int) -> Unit,
     onWeightChanged: (Int) -> Unit,
+    onRirChanged: (Int) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit
 ) {
@@ -975,6 +1026,11 @@ private fun EditSetSheetContent(
                 modifier = Modifier.weight(1f)
             )
         }
+        Spacer(Modifier.height(12.dp))
+        RirSelector(
+            selectedRir = selectedRir,
+            onRirChanged = onRirChanged
+        )
         Spacer(Modifier.height(16.dp))
         Button(
             onClick = onSave,
@@ -1118,5 +1174,54 @@ private fun formatPreviousPerformance(exercise: CompletedExercise, weightUnit: W
         "${sets.size}x${first.actualReps} @ ${weightUnit.formatWeight(first.actualWeightKgX10)}"
     } else {
         sets.joinToString(", ") { "${it.actualReps}x${weightUnit.formatWeight(it.actualWeightKgX10)}" }
+    }
+}
+
+// MARK: - RIR Selector
+
+@Composable
+private fun RirSelector(
+    selectedRir: Int,
+    onRirChanged: (Int) -> Unit
+) {
+    val options = listOf(0, 1, 2, 3, 4) // 4 represents "4+"
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "RIR (Reps in Reserve)",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            options.forEach { value ->
+                val label = if (value >= 4) "4+" else value.toString()
+                val isSelected = selectedRir == value
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isSelected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clickable { onRirChanged(value) }
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
     }
 }

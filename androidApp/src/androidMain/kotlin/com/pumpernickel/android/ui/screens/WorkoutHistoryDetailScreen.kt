@@ -158,6 +158,18 @@ fun WorkoutHistoryDetailScreen(workoutId: Long, navController: NavHostController
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.width(60.dp)
                                     )
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                    ) {
+                                        Text(
+                                            text = if (set.rir >= 4) "RIR 4+" else "RIR ${set.rir}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = "${set.actualReps} reps",
                                         style = MaterialTheme.typography.bodyMedium,

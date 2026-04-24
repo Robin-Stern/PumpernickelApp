@@ -53,4 +53,13 @@ interface CompletedWorkoutDao {
         GROUP BY e.exerciseId
     """)
     suspend fun getPersonalBests(exerciseIds: List<String>): List<ExercisePbDto>
+
+    @Query("""
+        SELECT cwe.exerciseId, cws.rir
+        FROM completed_workout_exercises cwe
+        INNER JOIN completed_workouts cw ON cw.id = cwe.workoutId
+        INNER JOIN completed_workout_sets cws ON cws.workoutExerciseId = cwe.id
+        WHERE cw.startTimeMillis >= :sinceMillis
+    """)
+    suspend fun getExerciseSetRirSince(sinceMillis: Long): List<ExerciseSetRirDto>
 }

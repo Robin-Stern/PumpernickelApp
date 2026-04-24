@@ -1,5 +1,6 @@
 package com.pumpernickel.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -22,5 +23,6 @@ data class ActiveSessionSetEntity(
     val setIndex: Int,
     val actualReps: Int,
     val actualWeightKgX10: Int,
-    val completedAtMillis: Long
+    val completedAtMillis: Long,
+    @ColumnInfo(defaultValue = "2") val rir: Int = 2
 )

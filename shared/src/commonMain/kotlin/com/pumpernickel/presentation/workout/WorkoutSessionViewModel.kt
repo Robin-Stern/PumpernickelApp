@@ -234,7 +234,8 @@ class WorkoutSessionViewModel(
                         set.copy(
                             actualReps = completed.actualReps,
                             actualWeightKgX10 = completed.actualWeightKgX10,
-                            isCompleted = true
+                            isCompleted = true,
+                            rir = completed.rir
                         )
                     } else {
                         set
@@ -283,7 +284,7 @@ class WorkoutSessionViewModel(
      * Persists to Room immediately for crash recovery (D-13).
      * Starts rest timer after completion (D-04).
      */
-    fun completeSet(reps: Int, weightKgX10: Int) {
+    fun completeSet(reps: Int, weightKgX10: Int, rir: Int = 2) {
         viewModelScope.launch {
             // ENTRY-06: Reject 0-rep sets
             if (reps <= 0) return@launch
@@ -300,7 +301,8 @@ class WorkoutSessionViewModel(
                                 set.copy(
                                     actualReps = reps,
                                     actualWeightKgX10 = weightKgX10,
-                                    isCompleted = true
+                                    isCompleted = true,
+                                    rir = rir
                                 )
                             } else set
                         }
@@ -316,7 +318,8 @@ class WorkoutSessionViewModel(
             }
             workoutRepository.saveCompletedSet(
                 templateExIdx, setIdx, reps, weightKgX10,
-                kotlin.time.Clock.System.now().toEpochMilliseconds()
+                kotlin.time.Clock.System.now().toEpochMilliseconds(),
+                rir
             )
 
             // Compute next cursor position
@@ -371,7 +374,7 @@ class WorkoutSessionViewModel(
      * Edit a previously completed set's values (D-11).
      * Handles both Active and Reviewing states for recap editing (Pitfall 1).
      */
-    fun editCompletedSet(exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int) {
+    fun editCompletedSet(exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int = 2) {
         viewModelScope.launch {
             val currentState = _sessionState.value
             val exercises = when (currentState) {
@@ -387,7 +390,8 @@ class WorkoutSessionViewModel(
                             if (set.setIndex == setIndex) {
                                 set.copy(
                                     actualReps = reps,
-                                    actualWeightKgX10 = weightKgX10
+                                    actualWeightKgX10 = weightKgX10,
+                                    rir = rir
                                 )
                             } else set
                         }
@@ -395,7 +399,7 @@ class WorkoutSessionViewModel(
                 } else exercise
             }
 
-            workoutRepository.updateSetValues(exerciseIndex, setIndex, reps, weightKgX10)
+            workoutRepository.updateSetValues(exerciseIndex, setIndex, reps, weightKgX10, rir)
 
             _sessionState.value = when (currentState) {
                 is WorkoutSessionState.Active -> currentState.copy(exercises = updatedExercises)
@@ -539,7 +543,8 @@ class WorkoutSessionViewModel(
                         CompletedSet(
                             setIndex = set.setIndex,
                             actualReps = set.actualReps ?: 0,
-                            actualWeightKgX10 = set.actualWeightKgX10 ?: 0
+                            actualWeightKgX10 = set.actualWeightKgX10 ?: 0,
+                            rir = set.rir ?: 2
                         )
                     }
                 if (completedSets.isNotEmpty()) {

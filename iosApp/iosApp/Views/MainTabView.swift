@@ -14,11 +14,9 @@ struct MainTabView: View {
             }
             .tag(0)
 
-            PlaceholderTabView(
-                iconName: "chart.bar.fill",
-                title: "Overview",
-                message: "Track your training progress and stats. Coming soon."
-            )
+            NavigationStack {
+                OverviewView()
+            }
             .tabItem {
                 Image(systemName: "chart.bar.fill")
                 Text("Overview")
