@@ -113,7 +113,7 @@ val sharedModule = module {
     viewModel { FoodEntryViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { RecipeListViewModel(get(), get()) }
     viewModel { RecipeCreationViewModel(get(), get(), get()) }
-    viewModel { DailyLogViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { DailyLogViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 }
 
 // Common init function

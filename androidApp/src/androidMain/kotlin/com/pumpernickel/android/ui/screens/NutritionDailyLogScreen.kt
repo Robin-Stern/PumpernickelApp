@@ -153,7 +153,7 @@ fun NutritionDailyLogScreen(
                     ) {
                         Text(stringResource(R.string.label_daily_total), fontWeight = FontWeight.SemiBold)
                         Text(
-                            "${state.totals.calories.roundToInt()} kcal",
+                            "${state.totals.calories.roundToInt()} / ${state.goals.calorieGoal} kcal",
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
@@ -164,6 +164,14 @@ fun NutritionDailyLogScreen(
                         carbs = state.totals.carbs,
                         sugar = state.totals.sugar
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        MacroGoalChip("P", state.totals.protein, state.goals.proteinGoal.toDouble(), Modifier.weight(1f))
+                        MacroGoalChip("F", state.totals.fat, state.goals.fatGoal.toDouble(), Modifier.weight(1f))
+                        MacroGoalChip("KH", state.totals.carbs, state.goals.carbGoal.toDouble(), Modifier.weight(1f))
+                    }
                 }
             }
 
@@ -473,5 +481,17 @@ private fun AmountDialog(food: Food, onConfirm: (Double) -> Unit, onDismiss: () 
                 )
             }
         }
+    )
+}
+
+@Composable
+private fun MacroGoalChip(label: String, current: Double, goal: Double, modifier: Modifier = Modifier) {
+    val color = if (goal > 0 && current > goal) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurfaceVariant
+    Text(
+        text = "$label ${current.roundToInt()}/${goal.roundToInt()}g",
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+        modifier = modifier
     )
 }
