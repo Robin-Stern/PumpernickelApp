@@ -90,6 +90,12 @@ fun NutritionRecipeCreationScreen(
                     label = { Text(stringResource(R.string.hint_search_food)) }, modifier = Modifier.fillMaxWidth(), singleLine = true
                 )
             }
+            item {
+                BarcodeScannerButton(
+                    onBarcodeScanned = { viewModel.onEvent(RecipeCreationEvent.OnBarcodeScanned(it)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             if (state.searchResults.isNotEmpty()) {
                 item {

@@ -22,6 +22,7 @@ import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.WorkoutRepositoryImpl
 import com.pumpernickel.domain.nutrition.AddFoodUseCase
+import com.pumpernickel.domain.nutrition.CalculateTdeeUseCase
 import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
 import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
 import com.pumpernickel.domain.nutrition.DeleteConsumptionUseCase
@@ -84,6 +85,7 @@ val sharedModule = module {
     single { NutritionDataSeeder(get<NutritionDao>()) }
 
     // Nutrition: Use Cases
+    single { CalculateTdeeUseCase() }
     single { ValidateFoodInputUseCase() }
     single { LoadFoodsUseCase(get()) }
     single { AddFoodUseCase(get(), get()) }
@@ -104,13 +106,13 @@ val sharedModule = module {
     viewModel { TemplateEditorViewModel(get(), get()) }
     viewModel { WorkoutSessionViewModel(get(), get(), get()) }
     viewModel { WorkoutHistoryViewModel(get(), get()) }
-    viewModel { SettingsViewModel(get()) }
+    viewModel { SettingsViewModel(get(), get()) }
     viewModel { OverviewViewModel(get(), get(), get(), get(), get()) }
 
     // ViewModels -- Nutrition
     viewModel { FoodEntryViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { RecipeListViewModel(get(), get()) }
-    viewModel { RecipeCreationViewModel(get(), get()) }
+    viewModel { RecipeCreationViewModel(get(), get(), get()) }
     viewModel { DailyLogViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
 }
 

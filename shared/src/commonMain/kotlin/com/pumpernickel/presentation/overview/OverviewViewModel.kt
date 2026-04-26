@@ -97,6 +97,11 @@ class OverviewViewModel(
 
     init {
         refresh()
+        viewModelScope.launch {
+            settingsRepository.nutritionGoals.collect { goals ->
+                _uiState.update { it.copy(nutritionGoals = goals) }
+            }
+        }
     }
 
     fun refresh() {

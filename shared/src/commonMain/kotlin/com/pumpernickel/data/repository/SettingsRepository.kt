@@ -5,6 +5,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.pumpernickel.domain.model.ActivityLevel
+import com.pumpernickel.domain.model.BodyProfile
+import com.pumpernickel.domain.model.Gender
+import com.pumpernickel.domain.model.GoalType
 import com.pumpernickel.domain.model.NutritionGoals
 import com.pumpernickel.domain.model.WeightUnit
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +22,13 @@ class SettingsRepository(
     private val weightUnitKey = stringPreferencesKey("weight_unit")
     private val appThemeKey = stringPreferencesKey("app_theme")
     private val accentColorKey = stringPreferencesKey("accent_color")
+    private val bodyGenderKey = stringPreferencesKey("body_gender")
+    private val bodyAgeKey = stringPreferencesKey("body_age")
+    private val bodyWeightKey = stringPreferencesKey("body_weight")
+    private val bodyHeightKey = stringPreferencesKey("body_height")
+    private val bodyActivityKey = stringPreferencesKey("body_activity")
+    private val bodyGoalKey = stringPreferencesKey("body_goal")
+
     private val calorieGoalKey = stringPreferencesKey("calorie_goal")
     private val proteinGoalKey = stringPreferencesKey("protein_goal")
     private val fatGoalKey = stringPreferencesKey("fat_goal")
@@ -84,6 +95,28 @@ class SettingsRepository(
             prefs[fatGoalKey] = goals.fatGoal.toString()
             prefs[carbGoalKey] = goals.carbGoal.toString()
             prefs[sugarGoalKey] = goals.sugarGoal.toString()
+        }
+    }
+
+    val bodyProfile: Flow<BodyProfile> = dataStore.data.map { prefs ->
+        BodyProfile(
+            gender = prefs[bodyGenderKey]?.let { name -> Gender.entries.firstOrNull { it.name == name } } ?: Gender.Male,
+            age = prefs[bodyAgeKey]?.toIntOrNull() ?: 25,
+            weightKg = prefs[bodyWeightKey]?.toDoubleOrNull() ?: 70.0,
+            heightCm = prefs[bodyHeightKey]?.toIntOrNull() ?: 175,
+            activityLevel = prefs[bodyActivityKey]?.let { name -> ActivityLevel.entries.firstOrNull { it.name == name } } ?: ActivityLevel.Moderate,
+            goalType = prefs[bodyGoalKey]?.let { name -> GoalType.entries.firstOrNull { it.name == name } } ?: GoalType.Maintain
+        )
+    }
+
+    suspend fun setBodyProfile(profile: BodyProfile) {
+        dataStore.edit { prefs ->
+            prefs[bodyGenderKey] = profile.gender.name
+            prefs[bodyAgeKey] = profile.age.toString()
+            prefs[bodyWeightKey] = profile.weightKg.toString()
+            prefs[bodyHeightKey] = profile.heightCm.toString()
+            prefs[bodyActivityKey] = profile.activityLevel.name
+            prefs[bodyGoalKey] = profile.goalType.name
         }
     }
 }

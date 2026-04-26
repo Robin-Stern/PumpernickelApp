@@ -36,6 +36,11 @@ private val pages = listOf(
         emoji = "💪"
     ),
     TutorialPage(
+        title = "Die drei Bereiche",
+        body = "🏋️ Training — Vorlagen erstellen und Workouts loggen\n\n📊 Übersicht — Muskelbelastung und Tagesziele auf einen Blick\n\n🥦 Ernährung — Tagebuch, Lebensmittel und Rezepte verwalten",
+        emoji = "📱"
+    ),
+    TutorialPage(
         title = "Training starten",
         body = "Wähle eine Vorlage im Training-Tab und logge Satz für Satz dein Gewicht und deine Wiederholungen.",
         emoji = "🏋️"

@@ -1,6 +1,5 @@
 package com.pumpernickel.data.db
 
-import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.ConstructedBy
@@ -21,10 +20,7 @@ import androidx.room.RoomDatabaseConstructor
         RecipeIngredientEntity::class,
         ConsumptionEntryEntity::class
     ],
-    version = 7,
-    autoMigrations = [
-        AutoMigration(from = 6, to = 7)
-    ]
+    version = 7
 )
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
