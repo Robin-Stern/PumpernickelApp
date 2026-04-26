@@ -9,6 +9,7 @@ import com.pumpernickel.domain.model.RecipeIngredient
 import com.pumpernickel.domain.model.RecipeMacros
 import com.pumpernickel.domain.model.calculateMacros
 import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
+import com.pumpernickel.domain.nutrition.LookupBarcodeUseCase
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -41,11 +42,13 @@ sealed interface RecipeCreationEvent {
     data class OnIngredientRemoved(val index: Int) : RecipeCreationEvent
     data class OnIngredientMoved(val fromIndex: Int, val toIndex: Int) : RecipeCreationEvent
     data object OnSaveClicked : RecipeCreationEvent
+    data class OnBarcodeScanned(val barcode: String) : RecipeCreationEvent
 }
 
 class RecipeCreationViewModel(
     private val repository: FoodRepository,
-    private val calculateRecipeMacros: CalculateRecipeMacrosUseCase
+    private val calculateRecipeMacros: CalculateRecipeMacrosUseCase,
+    private val lookupBarcode: LookupBarcodeUseCase
 ) : ViewModel() {
 
     private val _foods = MutableStateFlow<List<Food>>(emptyList())
@@ -134,6 +137,29 @@ class RecipeCreationViewModel(
             }
 
             RecipeCreationEvent.OnSaveClicked -> saveRecipe()
+
+            is RecipeCreationEvent.OnBarcodeScanned -> viewModelScope.launch {
+                _creationState.update { it.copy(errorMessage = null) }
+                when (val result = lookupBarcode(event.barcode)) {
+                    is LookupBarcodeUseCase.Result.FoundLocally ->
+                        onEvent(RecipeCreationEvent.OnFoodSelected(result.food))
+                    is LookupBarcodeUseCase.Result.FoundRemote -> {
+                        val food = Food(
+                            name = result.name, calories = result.calories,
+                            protein = result.protein, fat = result.fat,
+                            carbohydrates = result.carbs, sugar = result.sugar,
+                            barcode = event.barcode
+                        )
+                        repository.saveFood(food)
+                        _foods.value = repository.loadFoods()
+                        onEvent(RecipeCreationEvent.OnFoodSelected(food))
+                    }
+                    is LookupBarcodeUseCase.Result.NotFound ->
+                        _creationState.update { it.copy(errorMessage = "Produkt nicht gefunden.") }
+                    is LookupBarcodeUseCase.Result.Error ->
+                        _creationState.update { it.copy(errorMessage = "Fehler: ${result.message}") }
+                }
+            }
         }
     }
 

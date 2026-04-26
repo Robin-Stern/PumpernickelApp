@@ -3,9 +3,11 @@ package com.pumpernickel.presentation.nutrition
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pumpernickel.data.repository.FoodRepository
+import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.domain.model.ConsumptionEntry
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
+import com.pumpernickel.domain.model.NutritionGoals
 import com.pumpernickel.domain.model.Recipe
 import com.pumpernickel.domain.model.RecipeMacros
 import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
@@ -35,6 +37,7 @@ data class DailyLogUiState(
     val foods: List<Food> = emptyList(),
     val recipes: List<Recipe> = emptyList(),
     val totals: RecipeMacros = RecipeMacros(),
+    val goals: NutritionGoals = NutritionGoals(),
     val showAddPicker: Boolean = false,
     val pendingFood: Food? = null,
     val showAdHocDialog: Boolean = false,
@@ -50,7 +53,8 @@ class DailyLogViewModel(
     private val calculateDaily: CalculateDailyMacrosUseCase,
     private val lookupBarcode: LookupBarcodeUseCase,
     private val repository: FoodRepository,
-    private val calculateRecipeMacros: CalculateRecipeMacrosUseCase
+    private val calculateRecipeMacros: CalculateRecipeMacrosUseCase,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private fun today(): LocalDate =
@@ -60,7 +64,14 @@ class DailyLogViewModel(
     @NativeCoroutinesState
     val uiState: StateFlow<DailyLogUiState> = _uiState.asStateFlow()
 
-    init { refresh() }
+    init {
+        refresh()
+        viewModelScope.launch {
+            settingsRepository.nutritionGoals.collect { goals ->
+                _uiState.update { it.copy(goals = goals) }
+            }
+        }
+    }
 
     fun refresh() {
         viewModelScope.launch {

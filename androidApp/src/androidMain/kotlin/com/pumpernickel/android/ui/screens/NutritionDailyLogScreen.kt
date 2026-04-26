@@ -64,7 +64,9 @@ import com.pumpernickel.domain.model.ConsumptionEntry
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
 import com.pumpernickel.domain.model.macros
+import com.pumpernickel.android.ui.components.BodyProfileBottomSheet
 import com.pumpernickel.presentation.nutrition.DailyLogViewModel
+import com.pumpernickel.presentation.settings.SettingsViewModel
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -75,10 +77,19 @@ import kotlin.math.roundToInt
 @Composable
 fun NutritionDailyLogScreen(
     navController: NavController,
-    viewModel: DailyLogViewModel = koinViewModel()
+    viewModel: DailyLogViewModel = koinViewModel(),
+    settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showBodyProfile by remember { mutableStateOf(false) }
+
+    if (showBodyProfile) {
+        BodyProfileBottomSheet(
+            viewModel = settingsViewModel,
+            onDismiss = { showBodyProfile = false }
+        )
+    }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -88,7 +99,16 @@ fun NutritionDailyLogScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.title_daily_log)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.title_daily_log)) },
+                actions = {
+                    IconButton(onClick = { showBodyProfile = true }) {
+                        Text("⚙", style = MaterialTheme.typography.titleLarge)
+                    }
+                }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { inner ->
         Column(
@@ -133,7 +153,7 @@ fun NutritionDailyLogScreen(
                     ) {
                         Text(stringResource(R.string.label_daily_total), fontWeight = FontWeight.SemiBold)
                         Text(
-                            "${state.totals.calories.roundToInt()} kcal",
+                            "${state.totals.calories.roundToInt()} / ${state.goals.calorieGoal} kcal",
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
@@ -144,6 +164,14 @@ fun NutritionDailyLogScreen(
                         carbs = state.totals.carbs,
                         sugar = state.totals.sugar
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        MacroGoalChip("P", state.totals.protein, state.goals.proteinGoal.toDouble(), Modifier.weight(1f))
+                        MacroGoalChip("F", state.totals.fat, state.goals.fatGoal.toDouble(), Modifier.weight(1f))
+                        MacroGoalChip("KH", state.totals.carbs, state.goals.carbGoal.toDouble(), Modifier.weight(1f))
+                    }
                 }
             }
 
@@ -453,5 +481,17 @@ private fun AmountDialog(food: Food, onConfirm: (Double) -> Unit, onDismiss: () 
                 )
             }
         }
+    )
+}
+
+@Composable
+private fun MacroGoalChip(label: String, current: Double, goal: Double, modifier: Modifier = Modifier) {
+    val color = if (goal > 0 && current > goal) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurfaceVariant
+    Text(
+        text = "$label ${current.roundToInt()}/${goal.roundToInt()}g",
+        style = MaterialTheme.typography.labelSmall,
+        color = color,
+        modifier = modifier
     )
 }
