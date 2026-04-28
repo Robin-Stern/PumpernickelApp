@@ -43,11 +43,13 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,34 +89,52 @@ fun NutritionGoalsEditorScreen(
     val storedStats by viewModel.userPhysicalStats.collectAsState()
     val storedGoals by viewModel.nutritionGoals.collectAsState()
 
-    // Stats inputs (placeholder defaults per UI-SPEC when storedStats == null)
-    var weightText by remember(storedStats) {
-        mutableStateOf((storedStats?.weightKg ?: 80.0).let { "%.0f".format(it) })
-    }
-    var heightText by remember(storedStats) {
-        mutableStateOf((storedStats?.heightCm ?: 180).toString())
-    }
-    var ageText by remember(storedStats) {
-        mutableStateOf((storedStats?.age ?: 30).toString())
-    }
-    var sex by remember(storedStats) {
-        mutableStateOf(storedStats?.sex ?: Sex.MALE)
-    }
-    var activity by remember(storedStats) {
-        mutableStateOf(storedStats?.activityLevel ?: ActivityLevel.MODERATELY_ACTIVE)
-    }
-    var statsExpanded by remember(storedStats) {
-        mutableStateOf(storedStats == null)
-    }
+    // Stats inputs — placeholder defaults; seeded once from the first non-null
+    // userPhysicalStats emission via LaunchedEffect below (Gap 2 / WR-03 fix).
+    var weightText by remember { mutableStateOf("80") }
+    var heightText by remember { mutableStateOf("180") }
+    var ageText by remember { mutableStateOf("30") }
+    var sex by remember { mutableStateOf(Sex.MALE) }
+    var activity by remember { mutableStateOf(ActivityLevel.MODERATELY_ACTIVE) }
+    var statsExpanded by remember { mutableStateOf(true) }
 
-    // Picker state — initialized from current goals
-    var kcalValue by remember(storedGoals) { mutableStateOf(storedGoals.calorieGoal) }
-    var proteinValue by remember(storedGoals) { mutableStateOf(storedGoals.proteinGoal) }
-    var carbsValue by remember(storedGoals) { mutableStateOf(storedGoals.carbGoal) }
-    var fatValue by remember(storedGoals) { mutableStateOf(storedGoals.fatGoal) }
-    var sugarValue by remember(storedGoals) { mutableStateOf(storedGoals.sugarGoal) }
+    // Picker state — defaults from NutritionGoals defaults; seeded once from
+    // first storedGoals emission via LaunchedEffect below.
+    var kcalValue by remember { mutableStateOf(2500) }
+    var proteinValue by remember { mutableStateOf(150) }
+    var carbsValue by remember { mutableStateOf(300) }
+    var fatValue by remember { mutableStateOf(80) }
+    var sugarValue by remember { mutableStateOf(50) }
 
     var selectedSuggestion by remember { mutableStateOf<SuggestionType?>(null) }
+
+    // One-shot initialization guards (WR-03 / Gap 2). Survives configuration
+    // changes because rememberSaveable persists across recomposition + rotation.
+    var statsInitialized by rememberSaveable { mutableStateOf(false) }
+    var goalsInitialized by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(storedStats) {
+        if (!statsInitialized && storedStats != null) {
+            weightText = "%.0f".format(storedStats!!.weightKg)
+            heightText = storedStats!!.heightCm.toString()
+            ageText = storedStats!!.age.toString()
+            sex = storedStats!!.sex
+            activity = storedStats!!.activityLevel
+            statsExpanded = false  // collapse when stats already stored (D-16-09)
+            statsInitialized = true
+        }
+    }
+
+    LaunchedEffect(storedGoals) {
+        if (!goalsInitialized) {
+            kcalValue = storedGoals.calorieGoal
+            proteinValue = storedGoals.proteinGoal
+            carbsValue = storedGoals.carbGoal
+            fatValue = storedGoals.fatGoal
+            sugarValue = storedGoals.sugarGoal
+            goalsInitialized = true
+        }
+    }
 
     // Live-computed suggestions based on current stats inputs
     val currentStatsForCalc by remember {
