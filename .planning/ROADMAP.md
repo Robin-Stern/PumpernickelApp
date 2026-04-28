@@ -199,3 +199,8 @@ Plans:
 - [x] 16-04-PLAN.md — OverviewViewModel: userPhysicalStats + bannerVisible StateFlows + updateUserPhysicalStats + dismissBanner; chain dismiss into updateNutritionGoals
 - [x] 16-05-PLAN.md — Android: NutritionGoalsEditorScreen + Routes/MainScreen wiring + OverviewScreen banner & edit pencil (with human verify checkpoint)
 - [x] 16-06-PLAN.md — iOS: NutritionGoalsEditorView SwiftUI sheet + OverviewView banner & edit pencil + pbxproj target membership (with human verify checkpoint)
+- [x] 16-07-PLAN.md — Gap closure (WR-05): snap kcal to multiple of 50 in TdeeCalculator.buildSplit + tests
+- [x] 16-08-PLAN.md — Gap closure (WR-03 / WR-04): one-shot field-state seeding in NutritionGoalsEditor on Android (rememberSaveable guards) and iOS (@State guards)
+- [x] 16-09-PLAN.md — Gap closure (CR-01 / WR-06 / IN-02): iOS sheet onDismiss refresh + bannerVisible default-false; Android remove redundant first-composition LaunchedEffect refresh
+
+**Status:** Complete (verified 2026-04-28 — see `16-VERIFICATION.md`)
