@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Android Material 3 UI
 status: executing
-stopped_at: Completed 16-08-PLAN.md
-last_updated: "2026-04-28T15:10:00.007Z"
+stopped_at: Completed 16-09-PLAN.md
+last_updated: "2026-04-28T15:15:54.513Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 24
-  completed_plans: 23
-  percent: 96
+  completed_plans: 24
+  percent: 100
 ---
 
 # Project State
@@ -27,12 +27,12 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 
 Milestone: v1.5 (shipped 2026-03-31)
 Phase: 16 (set-nutrition-goals-kcal-protein-carbs-fat-per-day-surface-p) — EXECUTING
-Plan: 2 of 9
+Plan: 3 of 9
 Branch: `feature/workouts` @ `985884c`
 Status: Ready to execute
 Last activity: 2026-04-28
 
-Progress: [██████████] 96%
+Progress: [██████████] 100%
 
 ## ⚠️  Untracked Drift
 
@@ -77,6 +77,7 @@ See `MILESTONES.md` → "Post-v1.5 (Untracked)" for the full summary. No per-pha
 | Phase 15 P10 | 2 | 3 tasks | 4 files |
 | Phase 15 P11 | 8 | 3 tasks | 5 files |
 | Phase 16-set-nutrition-goals-kcal-protein-carbs-fat-per-day-surface-p P08 | 3min | 2 tasks | 2 files |
+| Phase 16-set-nutrition-goals-kcal-protein-carbs-fat-per-day-surface-p P09 | 2min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,9 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - [Phase ?]: [Phase 16-08]: Use rememberSaveable booleans + LaunchedEffect for one-shot Flow → state seeding on Android — survives configuration changes and prevents re-keyed remember() from discarding user edits
 - [Phase ?]: [Phase 16-08]: Use @State guard + 'continue' (not 'break') in iOS async-sequence loops so first-launch nil emissions don't permanently lock initialization while subsequent re-emissions still short-circuit
 - [Phase ?]: [Phase 16-08]: Hard-code editor placeholder defaults (80/180/30/MALE/MODERATELY_ACTIVE; 2500/150/300/80/50) instead of reading initial Flow value — keeps the LaunchedEffect/async-sequence as the single source of truth for first-emission seeding
+- [Phase ?]: [Phase 16-09]: iOS rings staleness fixed via .sheet onDismiss refresh — non-invasive, no shared-VM plumbing across the editor sheet boundary
+- [Phase ?]: [Phase 16-09]: bannerVisible @State defaults to false on iOS — observeBannerVisible() seeds the persisted value on first emission; one-frame missing-banner is less distracting than the flash
+- [Phase ?]: [Phase 16-09]: Android first-composition refresh handled by OverviewViewModel.init { refresh() } alone — LaunchedEffect(Unit) was redundant and spawned a second concurrent refresh per re-entry
 
 ### Roadmap Evolution
 
@@ -136,7 +140,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-28T15:10:00.003Z
-Stopped at: Completed 16-08-PLAN.md
+Last session: 2026-04-28T15:15:54.509Z
+Stopped at: Completed 16-09-PLAN.md
 Resume file: None
 Next step: `/gsd-plan-phase 15` to break Phase 15 into plans

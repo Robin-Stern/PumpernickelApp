@@ -184,7 +184,7 @@ Plans:
 **Goal:** Ship a user-facing nutrition-goal editor (Mifflin–St Jeor TDEE calculator with Cut/Maintain/Bulk suggestions + drum-picker macro tweaking) reachable from the Overview tab via an edit pencil and a dismissable banner; persist `UserPhysicalStats` (weight/height/age/sex/activity) and `nutrition_goals_banner_dismissed` in DataStore alongside the existing `NutritionGoals` keys. Phase 15 engine (`NutritionGoalDayPolicy`, `GoalDayTrigger`, `GamificationEngine`, `XpFormula`) is unchanged — `±10%` tolerance and goal-day XP rewards stay as-is per D-16-15 / D-16-17.
 **Requirements**: TBD (decisions D-16-01 … D-16-17 in 16-CONTEXT.md serve as the requirement source)
 **Depends on:** Phase 15
-**Plans:** 8/9 plans executed
+**Plans:** 9/9 plans complete
 
 **Wave structure:**
 - Wave 1 (foundation, no deps): 01 (UserPhysicalStats domain model + Sex / ActivityLevel enums)
