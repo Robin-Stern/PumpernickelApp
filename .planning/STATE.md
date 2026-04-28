@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: Android Material 3 UI
 status: executing
 stopped_at: Phase 16 context gathered
-last_updated: "2026-04-28T08:25:34.775Z"
-last_activity: 2026-04-28 -- Phase 16 planning complete
+last_updated: "2026-04-28T08:26:43.725Z"
+last_activity: 2026-04-28 -- Phase 16 execution started
 progress:
   total_phases: 3
   completed_phases: 2
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Users can select a workout template and execute it set-by-set — logging reps, weight, and rest periods — with a clean, reliable flow
-**Current focus:** Phase 15.1 — ranks-and-achievements-browser
+**Current focus:** Phase 16 — set-nutrition-goals-kcal-protein-carbs-fat-per-day-surface-p
 
 ## Current Position
 
 Milestone: v1.5 (shipped 2026-03-31)
-Phase: 15.1
-Plan: Not started
+Phase: 16 (set-nutrition-goals-kcal-protein-carbs-fat-per-day-surface-p) — EXECUTING
+Plan: 1 of 6
 Branch: `feature/workouts` @ `985884c`
-Status: Ready to execute
-Last activity: 2026-04-28 -- Phase 16 planning complete
+Status: Executing Phase 16
+Last activity: 2026-04-28 -- Phase 16 execution started
 
 Progress: [██████████] 100% (v1.5 shipped)
 
