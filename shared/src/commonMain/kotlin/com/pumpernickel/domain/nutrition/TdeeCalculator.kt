@@ -51,7 +51,13 @@ object TdeeCalculator {
         kcalDouble: Double,
         proteinPerKg: Double
     ): MacroSplit {
-        val kcal = kcalDouble.roundToInt()
+        // Snap to nearest multiple of 50 (round-half-up) and clamp to picker range
+        // (800..6000 step 50) so the value is always present on both platforms.
+        // Per WR-05: Android DrumPicker and iOS Picker(.wheel) ranges step by 50;
+        // a non-matching selection silently fails to scroll. Snapping here keeps the
+        // shared calculator authoritative — no platform-side workaround needed.
+        val kcalSnapped = ((kcalDouble + 25.0).toInt() / 50) * 50
+        val kcal = kcalSnapped.coerceIn(800, 6000)
         val proteinRaw = stats.weightKg * proteinPerKg
         val fatRaw     = kcal * 0.25 / 9.0
         val proteinG   = roundToStep(proteinRaw)
