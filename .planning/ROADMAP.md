@@ -181,10 +181,21 @@ Plans:
 
 ### Phase 16: Set nutrition goals (kcal/protein/carbs/fat per day) — surface progress on Overview tab and award bonus XP when daily goal achieved within tolerance
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Ship a user-facing nutrition-goal editor (Mifflin–St Jeor TDEE calculator with Cut/Maintain/Bulk suggestions + drum-picker macro tweaking) reachable from the Overview tab via an edit pencil and a dismissable banner; persist `UserPhysicalStats` (weight/height/age/sex/activity) and `nutrition_goals_banner_dismissed` in DataStore alongside the existing `NutritionGoals` keys. Phase 15 engine (`NutritionGoalDayPolicy`, `GoalDayTrigger`, `GamificationEngine`, `XpFormula`) is unchanged — `±10%` tolerance and goal-day XP rewards stay as-is per D-16-15 / D-16-17.
+**Requirements**: TBD (decisions D-16-01 … D-16-17 in 16-CONTEXT.md serve as the requirement source)
 **Depends on:** Phase 15
-**Plans:** 0 plans
+**Plans:** 6 plans
+
+**Wave structure:**
+- Wave 1 (foundation, no deps): 01 (UserPhysicalStats domain model + Sex / ActivityLevel enums)
+- Wave 2 (parallel — both depend on 01, no file overlap): 02 (TdeeCalculator pure functions + tests); 03 (SettingsRepository extensions: userPhysicalStats Flow + bannerDismissed Flow)
+- Wave 3: 04 (OverviewViewModel extensions: 2 new StateFlows + updateUserPhysicalStats + dismissBanner; chains banner-dismiss into updateNutritionGoals)
+- Wave 4 (parallel — different platform files): 05 (Android: Routes + MainScreen NavHost + NutritionGoalsEditorScreen + OverviewScreen banner/edit pencil); 06 (iOS: NutritionGoalsEditorView + OverviewView banner/edit pencil + pbxproj target registration)
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 16 to break down)
+- [ ] 16-01-PLAN.md — UserPhysicalStats data class + Sex / ActivityLevel enums (commonMain)
+- [ ] 16-02-PLAN.md — TdeeCalculator pure functions (BMR, TDEE, suggestions) + 12 unit tests
+- [ ] 16-03-PLAN.md — SettingsRepository: userPhysicalStats Flow + setter + nutrition_goals_banner_dismissed Boolean
+- [ ] 16-04-PLAN.md — OverviewViewModel: userPhysicalStats + bannerVisible StateFlows + updateUserPhysicalStats + dismissBanner; chain dismiss into updateNutritionGoals
+- [ ] 16-05-PLAN.md — Android: NutritionGoalsEditorScreen + Routes/MainScreen wiring + OverviewScreen banner & edit pencil (with human verify checkpoint)
+- [ ] 16-06-PLAN.md — iOS: NutritionGoalsEditorView SwiftUI sheet + OverviewView banner & edit pencil + pbxproj target membership (with human verify checkpoint)
