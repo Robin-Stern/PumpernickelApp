@@ -26,6 +26,11 @@ struct NutritionGoalsEditorView: View {
     @State private var statsExpanded: Bool = true
     @State private var selectedSuggestion: SuggestionType? = nil
 
+    // One-shot initialization guards (WR-04 / Gap 2). Once true, subsequent
+    // DataStore Flow emissions are ignored so user edits aren't overwritten.
+    @State private var statsInitialized: Bool = false
+    @State private var goalsInitialized: Bool = false
+
     // Live-derived suggestions (recomputed every time stats change).
     private var currentStats: SharedUserPhysicalStats {
         SharedUserPhysicalStats(
@@ -226,6 +231,7 @@ struct NutritionGoalsEditorView: View {
     private func observeStats() async {
         do {
             for try await stats in asyncSequence(for: viewModel.userPhysicalStatsFlow) {
+                guard !statsInitialized else { continue }
                 if let s = stats as? SharedUserPhysicalStats {
                     weightText = String(format: "%.0f", s.weightKg)
                     heightText = "\(s.heightCm)"
@@ -233,6 +239,7 @@ struct NutritionGoalsEditorView: View {
                     sex = s.sex
                     activityLevel = s.activityLevel
                     statsExpanded = false   // collapse when stats already stored (D-16-09)
+                    statsInitialized = true
                 }
             }
         } catch {
@@ -243,12 +250,14 @@ struct NutritionGoalsEditorView: View {
     private func observeGoals() async {
         do {
             for try await goals in asyncSequence(for: viewModel.nutritionGoalsFlow) {
+                guard !goalsInitialized else { continue }
                 if let g = goals as? SharedNutritionGoals {
                     kcalValue = Int(g.calorieGoal)
                     proteinValue = Int(g.proteinGoal)
                     fatValue = Int(g.fatGoal)
                     carbsValue = Int(g.carbGoal)
                     sugarValue = Int(g.sugarGoal)
+                    goalsInitialized = true
                 }
             }
         } catch {
