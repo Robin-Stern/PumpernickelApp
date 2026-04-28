@@ -204,3 +204,13 @@ Plans:
 - [x] 16-09-PLAN.md — Gap closure (CR-01 / WR-06 / IN-02): iOS sheet onDismiss refresh + bannerVisible default-false; Android remove redundant first-composition LaunchedEffect refresh
 
 **Status:** Complete (verified 2026-04-28 — see `16-VERIFICATION.md`)
+
+### Phase 17: Progress-pic feature with biometric-locked gallery: post-workout photo capture (camera or library) tied to workouts, gallery under Overview tab with blurred-by-default tiles showing day highlights (volume, PRs, nutrition), tap to unlock individual image via biometrics with passcode fallback, re-locks on gallery close. Cross-platform iOS and Android via Compose Multiplatform.
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 16
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 17 to break down)
