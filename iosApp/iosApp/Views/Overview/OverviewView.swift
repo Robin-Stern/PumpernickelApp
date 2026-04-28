@@ -13,7 +13,7 @@ struct OverviewView: View {
     @State private var isLoading = true
     @State private var showIntensityInfo = false
     @State private var rankState: SharedRankState = SharedRankStateUnranked()
-    @State private var bannerVisible: Bool = true
+    @State private var bannerVisible: Bool = false
     @State private var showEditor: Bool = false
 
     var body: some View {
