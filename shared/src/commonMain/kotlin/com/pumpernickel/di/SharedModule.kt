@@ -22,7 +22,6 @@ import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.WorkoutRepositoryImpl
 import com.pumpernickel.domain.nutrition.AddFoodUseCase
-import com.pumpernickel.domain.nutrition.CalculateTdeeUseCase
 import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
 import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
 import com.pumpernickel.domain.nutrition.DeleteConsumptionUseCase
@@ -56,6 +55,15 @@ import org.koin.core.context.startKoin
 import org.koin.core.KoinApplication
 
 val sharedModule = module {
+    // Gamification feature modules (plan 03) -- mounted here once; each plan
+    // adds its bindings to its own feature module file.
+    includes(
+        gamificationModule,
+        gamificationEngineModule,
+        gamificationUiModule,
+        achievementGalleryModule
+    )
+
     // Database -- build from platform-provided Builder
     single<AppDatabase> {
         get<RoomDatabase.Builder<AppDatabase>>()
@@ -85,7 +93,6 @@ val sharedModule = module {
     single { NutritionDataSeeder(get<NutritionDao>()) }
 
     // Nutrition: Use Cases
-    single { CalculateTdeeUseCase() }
     single { ValidateFoodInputUseCase() }
     single { LoadFoodsUseCase(get()) }
     single { AddFoodUseCase(get(), get()) }
@@ -104,10 +111,10 @@ val sharedModule = module {
     viewModel { CreateExerciseViewModel(get()) }
     viewModel { TemplateListViewModel(get()) }
     viewModel { TemplateEditorViewModel(get(), get()) }
-    viewModel { WorkoutSessionViewModel(get(), get(), get()) }
+    viewModel { WorkoutSessionViewModel(get(), get(), get(), get()) }
     viewModel { WorkoutHistoryViewModel(get(), get()) }
-    viewModel { SettingsViewModel(get(), get()) }
-    viewModel { OverviewViewModel(get(), get(), get(), get(), get()) }
+    viewModel { SettingsViewModel(get()) }
+    viewModel { OverviewViewModel(get(), get(), get(), get(), get(), get(), get()) }
 
     // ViewModels -- Nutrition
     viewModel { FoodEntryViewModel(get(), get(), get(), get(), get(), get()) }

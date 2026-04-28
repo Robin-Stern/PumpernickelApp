@@ -2,14 +2,13 @@ package com.pumpernickel.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.pumpernickel.domain.model.ActivityLevel
-import com.pumpernickel.domain.model.BodyProfile
-import com.pumpernickel.domain.model.Gender
-import com.pumpernickel.domain.model.GoalType
 import com.pumpernickel.domain.model.NutritionGoals
+import com.pumpernickel.domain.model.Sex
+import com.pumpernickel.domain.model.UserPhysicalStats
 import com.pumpernickel.domain.model.WeightUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -22,18 +21,21 @@ class SettingsRepository(
     private val weightUnitKey = stringPreferencesKey("weight_unit")
     private val appThemeKey = stringPreferencesKey("app_theme")
     private val accentColorKey = stringPreferencesKey("accent_color")
-    private val bodyGenderKey = stringPreferencesKey("body_gender")
-    private val bodyAgeKey = stringPreferencesKey("body_age")
-    private val bodyWeightKey = stringPreferencesKey("body_weight")
-    private val bodyHeightKey = stringPreferencesKey("body_height")
-    private val bodyActivityKey = stringPreferencesKey("body_activity")
-    private val bodyGoalKey = stringPreferencesKey("body_goal")
 
     private val calorieGoalKey = stringPreferencesKey("calorie_goal")
     private val proteinGoalKey = stringPreferencesKey("protein_goal")
     private val fatGoalKey = stringPreferencesKey("fat_goal")
     private val carbGoalKey = stringPreferencesKey("carb_goal")
     private val sugarGoalKey = stringPreferencesKey("sugar_goal")
+    private val retroactiveAppliedKey = booleanPreferencesKey("gamification_retroactive_applied")
+    // D-16-10 — UserPhysicalStats persistence (kg/cm only per D-16-12).
+    private val userWeightKgKey = stringPreferencesKey("user_weight_kg")
+    private val userHeightCmKey = stringPreferencesKey("user_height_cm")
+    private val userAgeKey = stringPreferencesKey("user_age")
+    private val userSexKey = stringPreferencesKey("user_sex")
+    private val userActivityKey = stringPreferencesKey("user_activity_level")
+    // D-16-13 / D-16-14 — Overview-tab "set goals" banner dismissal sentinel.
+    private val nutritionGoalsBannerDismissedKey = booleanPreferencesKey("nutrition_goals_banner_dismissed")
 
     val hasSeenTutorial: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[hasSeenTutorialKey] ?: false
@@ -98,25 +100,67 @@ class SettingsRepository(
         }
     }
 
-    val bodyProfile: Flow<BodyProfile> = dataStore.data.map { prefs ->
-        BodyProfile(
-            gender = prefs[bodyGenderKey]?.let { name -> Gender.entries.firstOrNull { it.name == name } } ?: Gender.Male,
-            age = prefs[bodyAgeKey]?.toIntOrNull() ?: 25,
-            weightKg = prefs[bodyWeightKey]?.toDoubleOrNull() ?: 70.0,
-            heightCm = prefs[bodyHeightKey]?.toIntOrNull() ?: 175,
-            activityLevel = prefs[bodyActivityKey]?.let { name -> ActivityLevel.entries.firstOrNull { it.name == name } } ?: ActivityLevel.Moderate,
-            goalType = prefs[bodyGoalKey]?.let { name -> GoalType.entries.firstOrNull { it.name == name } } ?: GoalType.Maintain
-        )
+    /**
+     * D-13: Gamification retroactive-walker sentinel. True once the one-shot
+     * first-launch XP replay has completed successfully. If false or missing,
+     * the RetroactiveWalker runs on next app resume and writes true on success.
+     */
+    val retroactiveApplied: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[retroactiveAppliedKey] ?: false
     }
 
-    suspend fun setBodyProfile(profile: BodyProfile) {
+    suspend fun setRetroactiveApplied(applied: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[retroactiveAppliedKey] = applied
+        }
+    }
+
+    /**
+     * D-16-10 / D-16-11 — `null` when no stats ever stored (calculator opens with placeholders);
+     * fully populated otherwise. Flow only emits a value once ALL five keys are present.
+     */
+    val userPhysicalStats: Flow<UserPhysicalStats?> = combine(
+        dataStore.data.map { it[userWeightKgKey]?.toDoubleOrNull() },
+        dataStore.data.map { it[userHeightCmKey]?.toIntOrNull() },
+        dataStore.data.map { it[userAgeKey]?.toIntOrNull() },
+        dataStore.data.map { raw -> raw[userSexKey]?.let { runCatching { enumValueOf<Sex>(it) }.getOrNull() } },
+        dataStore.data.map { raw -> raw[userActivityKey]?.let { runCatching { enumValueOf<ActivityLevel>(it) }.getOrNull() } }
+    ) { weight, height, age, sex, activity ->
+        if (weight == null || height == null || age == null || sex == null || activity == null) {
+            null
+        } else {
+            UserPhysicalStats(
+                weightKg = weight,
+                heightCm = height,
+                age = age,
+                sex = sex,
+                activityLevel = activity
+            )
+        }
+    }
+
+    suspend fun setUserPhysicalStats(stats: UserPhysicalStats) {
         dataStore.edit { prefs ->
-            prefs[bodyGenderKey] = profile.gender.name
-            prefs[bodyAgeKey] = profile.age.toString()
-            prefs[bodyWeightKey] = profile.weightKg.toString()
-            prefs[bodyHeightKey] = profile.heightCm.toString()
-            prefs[bodyActivityKey] = profile.activityLevel.name
-            prefs[bodyGoalKey] = profile.goalType.name
+            prefs[userWeightKgKey] = stats.weightKg.toString()
+            prefs[userHeightCmKey] = stats.heightCm.toString()
+            prefs[userAgeKey] = stats.age.toString()
+            prefs[userSexKey] = stats.sex.name
+            prefs[userActivityKey] = stats.activityLevel.name
+        }
+    }
+
+    /**
+     * D-16-13 / D-16-14 — true once the user dismisses the Overview banner via "×"
+     * OR successfully saves new (non-default) nutrition goals. Default false (banner visible).
+     * Persisted across launches; never reset by this layer.
+     */
+    val nutritionGoalsBannerDismissed: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[nutritionGoalsBannerDismissedKey] ?: false
+    }
+
+    suspend fun setNutritionGoalsBannerDismissed(dismissed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[nutritionGoalsBannerDismissedKey] = dismissed
         }
     }
 }

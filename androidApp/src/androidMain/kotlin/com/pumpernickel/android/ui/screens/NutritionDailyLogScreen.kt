@@ -64,9 +64,7 @@ import com.pumpernickel.domain.model.ConsumptionEntry
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
 import com.pumpernickel.domain.model.macros
-import com.pumpernickel.android.ui.components.BodyProfileBottomSheet
 import com.pumpernickel.presentation.nutrition.DailyLogViewModel
-import com.pumpernickel.presentation.settings.SettingsViewModel
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -77,19 +75,10 @@ import kotlin.math.roundToInt
 @Composable
 fun NutritionDailyLogScreen(
     navController: NavController,
-    viewModel: DailyLogViewModel = koinViewModel(),
-    settingsViewModel: SettingsViewModel = koinViewModel()
+    viewModel: DailyLogViewModel = koinViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    var showBodyProfile by remember { mutableStateOf(false) }
-
-    if (showBodyProfile) {
-        BodyProfileBottomSheet(
-            viewModel = settingsViewModel,
-            onDismiss = { showBodyProfile = false }
-        )
-    }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -101,12 +90,7 @@ fun NutritionDailyLogScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.title_daily_log)) },
-                actions = {
-                    IconButton(onClick = { showBodyProfile = true }) {
-                        Text("⚙", style = MaterialTheme.typography.titleLarge)
-                    }
-                }
+                title = { Text(stringResource(R.string.title_daily_log)) }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

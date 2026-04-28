@@ -20,8 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
@@ -30,11 +28,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.pumpernickel.android.R
+import com.pumpernickel.android.ui.screens.AchievementGalleryScreen
 import com.pumpernickel.android.ui.screens.CreateExerciseScreen
 import com.pumpernickel.android.ui.screens.ExerciseCatalogScreen
 import com.pumpernickel.android.ui.screens.ExerciseDetailScreen
 import com.pumpernickel.android.ui.screens.ExercisePickerScreen
 import com.pumpernickel.android.ui.screens.OverviewScreen
+import com.pumpernickel.android.ui.screens.NutritionGoalsEditorScreen
+import com.pumpernickel.android.ui.screens.RankLadderScreen
 import com.pumpernickel.android.ui.screens.PlaceholderScreen
 import com.pumpernickel.android.ui.screens.TemplateEditorScreen
 import com.pumpernickel.android.ui.screens.TemplateListScreen
@@ -45,6 +46,7 @@ import com.pumpernickel.android.ui.screens.NutritionFoodEntryScreen
 import com.pumpernickel.android.ui.screens.NutritionRecipeListScreen
 import com.pumpernickel.android.ui.screens.NutritionRecipeCreationScreen
 import com.pumpernickel.android.ui.screens.NutritionDailyLogScreen
+import com.pumpernickel.android.ui.screens.UnlockModalHost
 import com.pumpernickel.presentation.nutrition.RecipeListViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -63,8 +65,10 @@ fun MainScreen() {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
     val workoutNavController: NavHostController = rememberNavController()
+    val overviewNavController: NavHostController = rememberNavController()
     val nutritionNavController: NavHostController = rememberNavController()
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -89,9 +93,10 @@ fun MainScreen() {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Workout tab — always composed to preserve back stack
-            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 0) 1f else 0f).zIndex(if (selectedTab == 0) 1f else 0f)) {
-                NavHost(
+            // Only the active tab is composed. Back stack is retained in the
+            // rememberNavController instance, which outlives tab switches.
+            when (selectedTab) {
+                0 -> NavHost(
                     navController = workoutNavController,
                     startDestination = TemplateListRoute
                 ) {
@@ -150,17 +155,32 @@ fun MainScreen() {
                             navController = workoutNavController
                         )
                     }
+                    composable<AchievementGalleryRoute> {
+                        AchievementGalleryScreen(navController = workoutNavController)
+                    }
                 }
-            }
 
-            // Overview tab
-            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 1) 1f else 0f).zIndex(if (selectedTab == 1) 1f else 0f)) {
-                OverviewScreen()
-            }
+                1 -> NavHost(
+                    navController = overviewNavController,
+                    startDestination = OverviewRootRoute
+                ) {
+                    composable<OverviewRootRoute> {
+                        OverviewScreen(navController = overviewNavController)
+                    }
+                    composable<RanksAndAchievementsRoute> {
+                        RankLadderScreen(navController = overviewNavController)
+                    }
+                    composable<AchievementGalleryRoute> {
+                        // D-151-15: duplicate registration on the Overview tab for its own
+                        // back stack. The workout-tab registration at ~line 155 stays.
+                        AchievementGalleryScreen(navController = overviewNavController)
+                    }
+                    composable<NutritionGoalsEditorRoute> {
+                        NutritionGoalsEditorScreen(navController = overviewNavController)
+                    }
+                }
 
-            // Nutrition tab — always composed to preserve back stack
-            Box(modifier = Modifier.fillMaxSize().alpha(if (selectedTab == 2) 1f else 0f).zIndex(if (selectedTab == 2) 1f else 0f)) {
-                NavHost(
+                2 -> NavHost(
                     navController = nutritionNavController,
                     startDestination = NutritionDailyLogRoute
                 ) {
@@ -188,5 +208,10 @@ fun MainScreen() {
                 }
             }
         }
+    }
+
+        // D-19 + D-20: root-level unlock modal host. Must sit at the composition
+        // root so AlertDialog overlays the current tab regardless of selection.
+        UnlockModalHost()
     }
 }

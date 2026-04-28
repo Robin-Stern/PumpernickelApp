@@ -1,8 +1,9 @@
 package com.pumpernickel.data.db
 
+import androidx.room.AutoMigration
+import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.ConstructedBy
 import androidx.room.RoomDatabaseConstructor
 
 @Database(
@@ -18,9 +19,16 @@ import androidx.room.RoomDatabaseConstructor
         FoodEntity::class,
         RecipeEntity::class,
         RecipeIngredientEntity::class,
-        ConsumptionEntryEntity::class
+        ConsumptionEntryEntity::class,
+        XpLedgerEntity::class,
+        AchievementStateEntity::class,
+        RankStateEntity::class
     ],
-    version = 7
+    version = 8,
+    autoMigrations = [
+        AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8)
+    ]
 )
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -29,6 +37,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutSessionDao(): WorkoutSessionDao
     abstract fun completedWorkoutDao(): CompletedWorkoutDao
     abstract fun nutritionDao(): NutritionDao
+    abstract fun gamificationDao(): GamificationDao
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")
