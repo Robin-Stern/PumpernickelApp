@@ -35,6 +35,7 @@ import com.pumpernickel.android.ui.screens.ExerciseCatalogScreen
 import com.pumpernickel.android.ui.screens.ExerciseDetailScreen
 import com.pumpernickel.android.ui.screens.ExercisePickerScreen
 import com.pumpernickel.android.ui.screens.OverviewScreen
+import com.pumpernickel.android.ui.screens.NutritionGoalsEditorScreen
 import com.pumpernickel.android.ui.screens.RankLadderScreen
 import com.pumpernickel.android.ui.screens.PlaceholderScreen
 import com.pumpernickel.android.ui.screens.TemplateEditorScreen
@@ -176,6 +177,9 @@ fun MainScreen() {
                         // D-151-15: duplicate registration on the Overview tab for its own
                         // back stack. The workout-tab registration at ~line 155 stays.
                         AchievementGalleryScreen(navController = overviewNavController)
+                    }
+                    composable<NutritionGoalsEditorRoute> {
+                        NutritionGoalsEditorScreen(navController = overviewNavController)
                     }
                 }
             }

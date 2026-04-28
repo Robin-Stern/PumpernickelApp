@@ -30,3 +30,6 @@ import kotlinx.serialization.Serializable
 // Overview tab — Ranks & Achievements Browser (Phase 15.1)
 @Serializable data object OverviewRootRoute
 @Serializable data object RanksAndAchievementsRoute
+
+// Overview tab — Nutrition Goals Editor (Phase 16)
+@Serializable data object NutritionGoalsEditorRoute
