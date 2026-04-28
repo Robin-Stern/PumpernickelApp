@@ -178,3 +178,13 @@ Plans:
 - [x] 15.1-04-PLAN.md — iOS handoff doc `15.1-IOS-HANDOFF.md` (per D-151-16/D-151-17 — user hand-writes SwiftUI, this plan specifies the contract)
 
 **Context:** Surfaced during Phase 15 UAT (2026-04-23) — users reported current rank/XP and unlock toasts are visible but there is no way to browse what ranks exist or what achievements exist, so the system is not legible. See `.planning/debug/fresh-install-rank-silver1.md` for a related UAT bug from the same session.
+
+### Phase 16: Set nutrition goals (kcal/protein/carbs/fat per day) — surface progress on Overview tab and award bonus XP when daily goal achieved within tolerance
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 15
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 16 to break down)

@@ -114,6 +114,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 
 - Phase 15 added (2026-04-22): Gamifikation lokal — XP, Achievements, Meilensteine, CSGO-Style Ranks (F4 from Lastenheft). Added outside an active milestone — assign to a new milestone before planning.
 - Phase 15.1 inserted after Phase 15 (2026-04-23): Ranks & Achievements Browser — rank ladder + achievement catalog UI (URGENT). Surfaced by Phase 15 UAT — current gamification is opaque: users see their rank and unlock toasts but cannot browse what tiers / achievements exist. Pure presentation over existing GamificationRepository / RankLadder / AchievementCatalog — no new domain logic.
+- Phase 16 added (2026-04-28): Set nutrition goals (kcal/protein/carbs/fat per day) — surface progress on Overview tab and award bonus XP when daily goal achieved within tolerance. Builds on existing post-v1.5 NutritionGoals model (in SettingsRepository) + Phase 15 gamification engine; user mentions a ±5–10% tolerance + XP reward already partially in code — planner should investigate first.
 
 ### Pending Todos
 
