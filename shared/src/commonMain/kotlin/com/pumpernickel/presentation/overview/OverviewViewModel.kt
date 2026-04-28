@@ -199,7 +199,29 @@ class OverviewViewModel(
     fun updateNutritionGoals(goals: NutritionGoals) {
         viewModelScope.launch {
             settingsRepository.setNutritionGoals(goals)
+            // D-16-14: any successful save also dismisses the discoverability banner.
+            settingsRepository.setNutritionGoalsBannerDismissed(true)
             _uiState.update { it.copy(nutritionGoals = goals) }
+        }
+    }
+
+    /**
+     * D-16-11 — persist the user's stats so the calculator remembers them.
+     * Triggered by the editor on Save (alongside `updateNutritionGoals`).
+     */
+    fun updateUserPhysicalStats(stats: UserPhysicalStats) {
+        viewModelScope.launch {
+            settingsRepository.setUserPhysicalStats(stats)
+        }
+    }
+
+    /**
+     * D-16-13 / D-16-14 — flip the banner-dismissed sentinel from the "×" tap.
+     * `updateNutritionGoals` also flips it on save, so this is only reached on explicit dismiss.
+     */
+    fun dismissBanner() {
+        viewModelScope.launch {
+            settingsRepository.setNutritionGoalsBannerDismissed(true)
         }
     }
 
