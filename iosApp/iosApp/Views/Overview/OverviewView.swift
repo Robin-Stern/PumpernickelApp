@@ -59,7 +59,9 @@ struct OverviewView: View {
                 group.addTask { await observeBannerVisible() }
             }
         }
-        .sheet(isPresented: $showEditor) {
+        .sheet(isPresented: $showEditor, onDismiss: {
+            viewModel.refresh()
+        }) {
             NutritionGoalsEditorView()
                 .presentationDragIndicator(.visible)
         }
