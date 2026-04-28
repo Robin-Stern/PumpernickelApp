@@ -38,6 +38,7 @@ Declared values (multiples of 4, matching the existing codebase):
 |-------|-------|---------------------|
 | xs | 4dp/pt | Icon gaps, label-to-picker gap, legend dot-to-label gap |
 | sm | 8dp/pt | Between banner icon and text; between stat field and its label; top padding after TopAppBar |
+| smPlus | 12dp/pt | Overview banner internal vertical padding (OS notification banner conventions); suggestion card internal padding (tighter than full card to pack three cards side-by-side) |
 | md | 16dp/pt | Section card internal padding; horizontal screen padding; stat row padding |
 | lg | 24dp/pt | Vertical spacing between cards in Overview; vertical spacing between sections inside editor |
 | xl | 32dp/pt | Save button horizontal padding; bottom scroll padding |
@@ -46,8 +47,6 @@ Declared values (multiples of 4, matching the existing codebase):
 
 Exceptions:
 - DrumPicker item height: **40dp** (existing `DrumPicker.kt` constant — do not change)
-- Overview banner: **12dp** vertical internal padding (slightly tighter than md, matching OS notification banner conventions)
-- Suggestion card internal padding: **12dp** (tighter than full card to pack three cards side-by-side or in a row)
 - Touch target minimum: **44pt** (iOS) / **48dp** (Android) for all interactive controls (banner dismiss "×", stat picker controls, Save button)
 
 ---
@@ -159,6 +158,8 @@ Card content layout (same on both platforms):
 3. Macro breakdown: three lines: "Protein 156 g", "Kohlenhydrate 210 g", "Fett 58 g" — `labelSmall` + macro ring color dot (8dp circle) per line
 4. Sugar line: "Zucker 50 g" — `labelSmall` + sugar ring color dot
 
+Card internal padding uses the `smPlus` token (12dp/pt) to pack three cards side-by-side.
+
 Tapping a card selects it (only one can be selected at a time), fills the pickers below, and visually highlights. Tapping the same card again has no effect (does not deselect — the user must pick one of the three).
 
 ---
@@ -180,8 +181,8 @@ Tapping a card selects it (only one can be selected at a time), fills the picker
 - iOS: `withAnimation(.easeOut(duration: 0.3))` + `transition(.move(edge: .top).combined(with: .opacity))`
 
 **Banner card style:**
-- Android: `Card` with `RoundedCornerShape(12.dp)`, `colorScheme.surfaceVariant.copy(alpha = 0.6f)` background
-- iOS: `RoundedRectangle(cornerRadius: 12)` with `Color(.secondarySystemGroupedBackground)` fill
+- Android: `Card` with `RoundedCornerShape(12.dp)`, `colorScheme.surfaceVariant.copy(alpha = 0.6f)` background; internal vertical padding uses `smPlus` token (12dp)
+- iOS: `RoundedRectangle(cornerRadius: 12)` with `Color(.secondarySystemGroupedBackground)` fill; internal vertical padding uses `smPlus` token (12pt)
 
 ---
 
