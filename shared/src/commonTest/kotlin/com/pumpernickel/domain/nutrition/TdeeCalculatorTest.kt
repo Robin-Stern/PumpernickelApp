@@ -55,19 +55,45 @@ class TdeeCalculatorTest {
     @Test fun cutSuggestionIsTdeeMinus500() {
         val s = TdeeCalculator.suggestions(stats())
         val tdeeRounded = TdeeCalculator.tdee(stats())
-        assertEquals((tdeeRounded - 500).toInt().toDouble(), s.cut.kcal.toDouble(), absoluteTolerance = 1.0)
+        // Tolerance widened to 25.0 because TdeeCalculator now snaps kcal to nearest 50 (WR-05 fix).
+        assertEquals((tdeeRounded - 500).toInt().toDouble(), s.cut.kcal.toDouble(), absoluteTolerance = 25.0)
     }
 
     @Test fun maintainSuggestionEqualsTdee() {
         val s = TdeeCalculator.suggestions(stats())
         val tdeeRounded = TdeeCalculator.tdee(stats())
-        assertEquals(tdeeRounded.toInt().toDouble(), s.maintain.kcal.toDouble(), absoluteTolerance = 1.0)
+        // Tolerance widened to 25.0 because TdeeCalculator now snaps kcal to nearest 50 (WR-05 fix).
+        assertEquals(tdeeRounded.toInt().toDouble(), s.maintain.kcal.toDouble(), absoluteTolerance = 25.0)
     }
 
     @Test fun bulkSuggestionIsTdeePlus300() {
         val s = TdeeCalculator.suggestions(stats())
         val tdeeRounded = TdeeCalculator.tdee(stats())
-        assertEquals((tdeeRounded + 300).toInt().toDouble(), s.bulk.kcal.toDouble(), absoluteTolerance = 1.0)
+        // Tolerance widened to 25.0 because TdeeCalculator now snaps kcal to nearest 50 (WR-05 fix).
+        assertEquals((tdeeRounded + 300).toInt().toDouble(), s.bulk.kcal.toDouble(), absoluteTolerance = 25.0)
+    }
+
+    @Test fun cutSuggestionKcalIsMultipleOf50AndInPickerRange() {
+        // WR-05 / Gap 3: kcal must be a multiple of 50 so DrumPicker (Android) and
+        // Picker(.wheel) (iOS) ranges (800..6000 step 50) include the value.
+        val s = TdeeCalculator.suggestions(stats())  // 80kg/180cm/30/male/moderately
+        // Reference cut TDEE = 2759 - 500 = 2259, raw roundToInt = 2259.
+        // Round-half-up snap to nearest 50 → 2250.
+        assertEquals(0, s.cut.kcal % 50, "cut kcal must be a multiple of 50; got ${s.cut.kcal}")
+        assertTrue(s.cut.kcal in 800..6000, "cut kcal must be in picker range; got ${s.cut.kcal}")
+        assertEquals(2250, s.cut.kcal, "expected snap of 2259 → 2250")
+    }
+
+    @Test fun allSuggestionKcalSnappedToFifty() {
+        val s = TdeeCalculator.suggestions(stats())
+        // All three suggestions must satisfy the picker-range invariant.
+        assertEquals(0, s.cut.kcal % 50,      "cut kcal not snapped: ${s.cut.kcal}")
+        assertEquals(0, s.maintain.kcal % 50, "maintain kcal not snapped: ${s.maintain.kcal}")
+        assertEquals(0, s.bulk.kcal % 50,     "bulk kcal not snapped: ${s.bulk.kcal}")
+        // And all must lie within the picker bounds (800..6000).
+        assertTrue(s.cut.kcal in 800..6000)
+        assertTrue(s.maintain.kcal in 800..6000)
+        assertTrue(s.bulk.kcal in 800..6000)
     }
 
     @Test fun proteinCut2Point2PerKg() {
