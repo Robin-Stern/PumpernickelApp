@@ -85,10 +85,6 @@ fun OverviewScreen(
     val rankState by gamificationViewModel.rankState.collectAsState()
     val bannerVisible by viewModel.nutritionGoalsBannerVisible.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.refresh()
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
