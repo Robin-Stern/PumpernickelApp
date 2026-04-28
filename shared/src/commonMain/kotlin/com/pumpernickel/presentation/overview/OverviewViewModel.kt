@@ -11,6 +11,7 @@ import com.pumpernickel.domain.gamification.RankState
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.NutritionGoals
 import com.pumpernickel.domain.model.RecipeMacros
+import com.pumpernickel.domain.model.UserPhysicalStats
 import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
 import com.pumpernickel.domain.nutrition.LoadConsumptionsForDateUseCase
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -107,6 +109,25 @@ class OverviewViewModel(
     val rankState: StateFlow<RankState> = gamificationRepository
         .rankState
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RankState.Unranked)
+
+    /**
+     * D-16-11 — null until the user has saved a complete `UserPhysicalStats` once.
+     * The editor opens with placeholder defaults (UI-SPEC) when null.
+     */
+    @NativeCoroutinesState
+    val userPhysicalStats: StateFlow<UserPhysicalStats?> = settingsRepository
+        .userPhysicalStats
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /**
+     * D-16-13 / D-16-14 — true while the "set personal goals" banner should be shown.
+     * Negation of the persisted dismissed flag; starts true on first launch.
+     */
+    @NativeCoroutinesState
+    val nutritionGoalsBannerVisible: StateFlow<Boolean> = settingsRepository
+        .nutritionGoalsBannerDismissed
+        .map { !it }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     init {
         refresh()
