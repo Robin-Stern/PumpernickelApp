@@ -13,6 +13,8 @@ struct OverviewView: View {
     @State private var isLoading = true
     @State private var showIntensityInfo = false
     @State private var rankState: SharedRankState = SharedRankStateUnranked()
+    @State private var bannerVisible: Bool = true
+    @State private var showEditor: Bool = false
 
     var body: some View {
         ScrollView {
@@ -22,6 +24,18 @@ struct OverviewView: View {
 
                 // ── Muscle Activity Section ──
                 muscleActivitySection
+
+                // ── Nutrition Goals Banner (D-16-13) ──
+                if bannerVisible {
+                    NutritionGoalsBannerView(
+                        onTap: { showEditor = true },
+                        onDismiss: {
+                            withAnimation(.easeOut(duration: 0.3)) { bannerVisible = false }
+                            viewModel.dismissBanner()
+                        }
+                    )
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
 
                 // ── Nutrition Rings Section ──
                 nutritionRingsSection
@@ -42,7 +56,12 @@ struct OverviewView: View {
             await withTaskGroup(of: Void.self) { group in
                 group.addTask { await observeUiState() }
                 group.addTask { await observeRank() }
+                group.addTask { await observeBannerVisible() }
             }
+        }
+        .sheet(isPresented: $showEditor) {
+            NutritionGoalsEditorView()
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -77,6 +96,18 @@ struct OverviewView: View {
             }
         } catch {
             print("Overview rank observation error: \(error)")
+        }
+    }
+
+    private func observeBannerVisible() async {
+        do {
+            for try await visible in asyncSequence(for: viewModel.nutritionGoalsBannerVisibleFlow) {
+                if let v = visible as? Bool {
+                    withAnimation(.easeOut(duration: 0.3)) { bannerVisible = v }
+                }
+            }
+        } catch {
+            print("Banner observation error: \(error)")
         }
     }
 
@@ -132,8 +163,17 @@ struct OverviewView: View {
 
     private var nutritionRingsSection: some View {
         VStack(spacing: 20) {
-            Text("Ernährung · Heute")
-                .font(.headline)
+            HStack {
+                Spacer()
+                Text("Ernährung · Heute")
+                    .font(.headline)
+                Spacer()
+                Button(action: { showEditor = true }) {
+                    Image(systemName: "pencil")
+                        .foregroundColor(.appAccent)
+                }
+                .accessibilityLabel("Ziele bearbeiten")
+            }
 
             // Main calorie ring
             CalorieRingView(
@@ -356,6 +396,43 @@ private struct MacroRingItem: View {
                 .font(.system(size: 9))
                 .foregroundColor(.secondary.opacity(0.7))
         }
+    }
+}
+
+// MARK: - Nutrition Goals Banner
+
+private struct NutritionGoalsBannerView: View {
+    let onTap: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "target")
+                .foregroundColor(.appAccent)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Persönliche Ziele setzen")
+                    .font(.body)
+                Text("Berechne deinen Tagesbedarf und passe deine Makros an.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundColor(.appAccent)
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Banner ausblenden")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.secondarySystemGroupedBackground))
+        .cornerRadius(12)
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
     }
 }
 
