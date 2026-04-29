@@ -5,6 +5,7 @@ import com.pumpernickel.data.db.ExerciseDao
 import com.pumpernickel.data.db.NutritionDao
 import com.pumpernickel.data.repository.GamificationRepository
 import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.domain.location.GeoPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -54,11 +55,26 @@ class GamificationEngine(
     // ---------- F5: inactivity penalty ----------
 
     /**
-     * Called from WorkoutSessionViewModel when the inactivity timer fires during
-     * an active session. Deducts XP via a negative ledger entry. The timestamp-based
-     * event key ensures repeated penalties within the same session are not deduplicated.
+     * Called from WorkoutSessionViewModel when the inactivity timer fires.
+     * Decides whether the user has left the gym based on GPS and only then
+     * deducts XP. All location business logic lives here, not in the ViewModel.
+     *
+     * Penalty fires when:
+     *   - gymRef is null (no GPS reference captured — permission denied or first set not yet logged)
+     *   - current is null (no GPS fix at timer time)
+     *   - distance from gymRef to current exceeds GYM_RADIUS_METERS
      */
-    suspend fun onInactivityPenalty(sessionStartMillis: Long) {
+    suspend fun onInactivityPenalty(
+        sessionStartMillis: Long,
+        gymRef: GeoPoint?,
+        current: GeoPoint?
+    ) {
+        val leftGym = gymRef == null
+            || current == null
+            || gymRef.distanceMetersTo(current) > XpFormula.GYM_RADIUS_METERS
+
+        if (!leftGym) return
+
         val nowMillis = currentTimeMillis()
         gamificationRepo.awardXp(
             source = EventKeys.SOURCE_INACTIVITY,

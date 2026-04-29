@@ -765,28 +765,17 @@ class WorkoutSessionViewModel(
             delay(XpFormula.INACTIVITY_TIMEOUT_SECONDS * 1000L)
             if (_sessionState.value !is WorkoutSessionState.Active) return@launch
 
-            val ref = gymLocation
-            val shouldPenalize = if (ref == null) {
-                // No GPS reference (permission denied or not yet captured) → strict: timer fires
-                true
-            } else {
-                val current = locationProvider.getCurrentLocation()
-                // current == null: couldn't get fix → strict: timer fires
-                current == null || ref.distanceMetersTo(current) > GYM_RADIUS_METERS
-            }
-
-            if (shouldPenalize) {
-                try {
-                    gamificationEngine.onInactivityPenalty(sessionStartMillis)
-                } catch (t: Throwable) {
-                    println("GamificationEngine.onInactivityPenalty failed: ${t.message}")
-                }
+            val current = if (gymLocation != null) locationProvider.getCurrentLocation() else null
+            try {
+                gamificationEngine.onInactivityPenalty(
+                    sessionStartMillis = sessionStartMillis,
+                    gymRef = gymLocation,
+                    current = current
+                )
+            } catch (t: Throwable) {
+                println("GamificationEngine.onInactivityPenalty failed: ${t.message}")
             }
         }
-    }
-
-    companion object {
-        private const val GYM_RADIUS_METERS = 50.0
     }
 
     /**
