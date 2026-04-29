@@ -1,11 +1,15 @@
 package com.pumpernickel.android
 
+import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,6 +28,19 @@ class MainActivity : ComponentActivity() {
             val themeMode by settingsViewModel.appTheme.collectAsState()
             val accentColorKey by settingsViewModel.accentColor.collectAsState()
             val hasSeenTutorial by settingsViewModel.hasSeenTutorial.collectAsState()
+
+            val locationPermissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions()
+            ) { /* result handled silently; LocationProvider checks permission before each call */ }
+
+            LaunchedEffect(Unit) {
+                locationPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            }
 
             PumpernickelTheme(
                 themeMode = themeMode,

@@ -6,5 +6,7 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Barcode scanning requires camera access</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>PumpernickelApp uses your location to detect when you leave the gym and end your workout automatically.</string>
 </dict>
 </plist>

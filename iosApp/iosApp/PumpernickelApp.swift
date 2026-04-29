@@ -1,11 +1,15 @@
 import SwiftUI
 import Shared
 import KMPNativeCoroutinesAsync
+import CoreLocation
 
 @main
 struct PumpernickelApp: App {
+    private let locationManager = CLLocationManager()
+
     init() {
         KoinInitIosKt.doInitKoinIos()
+        locationManager.requestWhenInUseAuthorization()
     }
 
     var body: some Scene {

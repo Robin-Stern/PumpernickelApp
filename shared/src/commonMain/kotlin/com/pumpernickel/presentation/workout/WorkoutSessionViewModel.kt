@@ -7,6 +7,8 @@ import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.domain.gamification.GamificationEngine
 import com.pumpernickel.domain.gamification.XpFormula
+import com.pumpernickel.domain.location.GeoPoint
+import com.pumpernickel.domain.location.LocationProvider
 import com.pumpernickel.domain.model.CompletedExercise
 import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
@@ -68,7 +70,8 @@ class WorkoutSessionViewModel(
     private val workoutRepository: WorkoutRepository,
     private val templateRepository: TemplateRepository,
     private val settingsRepository: SettingsRepository,
-    private val gamificationEngine: GamificationEngine
+    private val gamificationEngine: GamificationEngine,
+    private val locationProvider: LocationProvider
 ) : ViewModel() {
 
     private val _sessionState = MutableStateFlow<WorkoutSessionState>(WorkoutSessionState.Idle)
@@ -107,6 +110,8 @@ class WorkoutSessionViewModel(
     private var timerJob: Job? = null
     private var elapsedJob: Job? = null
     private var inactivityJob: Job? = null
+    private var locationJob: Job? = null
+    private var gymLocation: GeoPoint? = null
     private var templateOriginalIndices: MutableList<Int> = mutableListOf()
 
     // -- Public methods --
@@ -364,6 +369,14 @@ class WorkoutSessionViewModel(
 
             // Reset inactivity timer — user is still active in the gym
             startInactivityTimer(active.startTimeMillis)
+
+            // Capture gym reference location on first set of each session
+            if (gymLocation == null) {
+                locationJob?.cancel()
+                locationJob = viewModelScope.launch {
+                    gymLocation = locationProvider.getCurrentLocation()
+                }
+            }
         }
     }
 
@@ -522,6 +535,8 @@ class WorkoutSessionViewModel(
             timerJob?.cancel()
             elapsedJob?.cancel()
             inactivityJob?.cancel()
+            locationJob?.cancel()
+            gymLocation = null
 
             val endTimeMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
             val durationMillis = endTimeMillis - active.startTimeMillis
@@ -613,6 +628,8 @@ class WorkoutSessionViewModel(
             timerJob?.cancel()
             elapsedJob?.cancel()
             inactivityJob?.cancel()
+            locationJob?.cancel()
+            gymLocation = null
             workoutRepository.clearActiveSession()
             _hasActiveSession.value = false
             _sessionState.value = WorkoutSessionState.Idle
@@ -746,7 +763,19 @@ class WorkoutSessionViewModel(
         inactivityJob?.cancel()
         inactivityJob = viewModelScope.launch {
             delay(XpFormula.INACTIVITY_TIMEOUT_SECONDS * 1000L)
-            if (_sessionState.value is WorkoutSessionState.Active) {
+            if (_sessionState.value !is WorkoutSessionState.Active) return@launch
+
+            val ref = gymLocation
+            val shouldPenalize = if (ref == null) {
+                // No GPS reference (permission denied or not yet captured) → strict: timer fires
+                true
+            } else {
+                val current = locationProvider.getCurrentLocation()
+                // current == null: couldn't get fix → strict: timer fires
+                current == null || ref.distanceMetersTo(current) > GYM_RADIUS_METERS
+            }
+
+            if (shouldPenalize) {
                 try {
                     gamificationEngine.onInactivityPenalty(sessionStartMillis)
                 } catch (t: Throwable) {
@@ -754,6 +783,10 @@ class WorkoutSessionViewModel(
                 }
             }
         }
+    }
+
+    companion object {
+        private const val GYM_RADIUS_METERS = 50.0
     }
 
     /**
