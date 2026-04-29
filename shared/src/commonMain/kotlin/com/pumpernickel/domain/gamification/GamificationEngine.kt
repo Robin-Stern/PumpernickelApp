@@ -51,6 +51,24 @@ class GamificationEngine(
         runAchievementAndRankChecks(nowMillis = nowMillis)
     }
 
+    // ---------- F5: inactivity penalty ----------
+
+    /**
+     * Called from WorkoutSessionViewModel when the inactivity timer fires during
+     * an active session. Deducts XP via a negative ledger entry. The timestamp-based
+     * event key ensures repeated penalties within the same session are not deduplicated.
+     */
+    suspend fun onInactivityPenalty(sessionStartMillis: Long) {
+        val nowMillis = currentTimeMillis()
+        gamificationRepo.awardXp(
+            source = EventKeys.SOURCE_INACTIVITY,
+            eventKey = EventKeys.inactivityPenalty(sessionStartMillis, nowMillis),
+            amount = -XpFormula.INACTIVITY_PENALTY_XP,
+            awardedAtMillis = nowMillis,
+            retroactive = false
+        )
+    }
+
     // ---------- D-22: nutrition goal-day evaluation ----------
 
     /**

@@ -10,6 +10,8 @@ object XpFormula {
 
     // ----- Per-source constants (D-02, D-03, D-06, D-17) -----
     const val PR_XP: Int = 50                      // D-03
+    const val INACTIVITY_PENALTY_XP: Int = 50      // F5
+    const val INACTIVITY_TIMEOUT_SECONDS: Long = 600L // F5 — 10 minutes
     const val NUTRITION_GOAL_DAY_XP: Int = 25      // Claude-discretion flat award per goal-day (D-04/D-05)
 
     // Streak thresholds (D-06) — flat bonus on crossing the threshold once per run.

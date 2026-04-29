@@ -6,6 +6,7 @@ import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.domain.gamification.GamificationEngine
+import com.pumpernickel.domain.gamification.XpFormula
 import com.pumpernickel.domain.model.CompletedExercise
 import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
@@ -105,6 +106,7 @@ class WorkoutSessionViewModel(
 
     private var timerJob: Job? = null
     private var elapsedJob: Job? = null
+    private var inactivityJob: Job? = null
     private var templateOriginalIndices: MutableList<Int> = mutableListOf()
 
     // -- Public methods --
@@ -359,6 +361,9 @@ class WorkoutSessionViewModel(
             if (restPeriodSec > 0) {
                 startRestTimer(restPeriodSec)
             }
+
+            // Reset inactivity timer — user is still active in the gym
+            startInactivityTimer(active.startTimeMillis)
         }
     }
 
@@ -516,6 +521,7 @@ class WorkoutSessionViewModel(
 
             timerJob?.cancel()
             elapsedJob?.cancel()
+            inactivityJob?.cancel()
 
             val endTimeMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
             val durationMillis = endTimeMillis - active.startTimeMillis
@@ -606,6 +612,7 @@ class WorkoutSessionViewModel(
         viewModelScope.launch {
             timerJob?.cancel()
             elapsedJob?.cancel()
+            inactivityJob?.cancel()
             workoutRepository.clearActiveSession()
             _hasActiveSession.value = false
             _sessionState.value = WorkoutSessionState.Idle
@@ -726,6 +733,25 @@ class WorkoutSessionViewModel(
             while (true) {
                 delay(1000L)
                 _elapsedSeconds.value++
+            }
+        }
+    }
+
+    /**
+     * Starts a 10-minute inactivity watchdog. If no set is completed before the
+     * timer fires, the user has likely left the gym — deduct XP as penalty (F5).
+     * Cancelled on every set completion, enterReview(), and discardWorkout().
+     */
+    private fun startInactivityTimer(sessionStartMillis: Long) {
+        inactivityJob?.cancel()
+        inactivityJob = viewModelScope.launch {
+            delay(XpFormula.INACTIVITY_TIMEOUT_SECONDS * 1000L)
+            if (_sessionState.value is WorkoutSessionState.Active) {
+                try {
+                    gamificationEngine.onInactivityPenalty(sessionStartMillis)
+                } catch (t: Throwable) {
+                    println("GamificationEngine.onInactivityPenalty failed: ${t.message}")
+                }
             }
         }
     }

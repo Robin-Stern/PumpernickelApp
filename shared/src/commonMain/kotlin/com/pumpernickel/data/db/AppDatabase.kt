@@ -26,7 +26,6 @@ import androidx.room.RoomDatabaseConstructor
     ],
     version = 8,
     autoMigrations = [
-        AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8)
     ]
 )
