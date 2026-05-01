@@ -210,7 +210,7 @@ Plans:
 **Goal:** Ship a privacy-conscious post-workout photo feature: capture (camera or library) tied to the just-saved workout; new "Fortschritts-Galerie" entry on the Overview tab renders one tile per workout-with-photos as a blurred cover photo overlaid with date/volume/PR-count/goal-day stats; tapping a tile triggers OS biometric/passcode auth (LAContext .deviceOwnerAuthentication on iOS, BiometricPrompt BIOMETRIC_STRONG or DEVICE_CREDENTIAL on Android) and pages all of that workout's photos in a swipeable carousel; closing re-blurs the tile. Files live in app-private storage with NSFileProtectionComplete + NSURLIsExcludedFromBackupKey on iOS and dataExtractionRules + fullBackupContent exclusion on Android. Schema bumps Room v8 → v9 via additive AutoMigration. Phase 15 engine, retroactive walker, rank ladder, and existing nutrition/gamification surfaces are unchanged.
 **Requirements**: D-17-01 through D-17-19 (decisions in 17-CONTEXT.md serve as the requirement source)
 **Depends on:** Phase 16
-**Plans:** 1/8 plans executed
+**Plans:** 2/8 plans executed
 
 **Wave structure:**
 - Wave 1 (foundation): 01 (Room v8 → v9 — ProgressPictureEntity + DAO + AutoMigration)
@@ -222,7 +222,7 @@ Plans:
 
 Plans:
 - [x] 17-01-PLAN.md — Room schema v8 → v9: ProgressPictureEntity + ProgressPictureDao + AutoMigration(8, 9)
-- [ ] 17-02-PLAN.md — commonMain expect classes (PhotoVault, PhotoCaptureLauncher, BiometricGate) + ProgressPictureRepository + domain models (ProgressPicture, ProgressGalleryTile, UnlockResult)
+- [x] 17-02-PLAN.md — commonMain expect classes (PhotoVault, PhotoCaptureLauncher, BiometricGate) + ProgressPictureRepository + domain models (ProgressPicture, ProgressGalleryTile, UnlockResult)
 - [ ] 17-03-PLAN.md — Android actuals + OS hardening: PhotoVault.android, PhotoCaptureLauncher.android, BiometricGate.android, AndroidManifest dataExtractionRules + fullBackupContent, androidx.biometric dep
 - [ ] 17-04-PLAN.md — iOS actuals + OS hardening: PhotoVault.ios with NSFileProtectionComplete + isExcludedFromBackupKey, PhotoCaptureLauncher.ios, BiometricGate.ios with LAContext.deviceOwnerAuthentication, Info.plist NSPhotoLibraryUsageDescription + NSFaceIDUsageDescription
 - [ ] 17-05-PLAN.md — Capture flow + Workout integration: extend WorkoutSessionState.Finished with workoutId, ProgressPicturePromptViewModel, ProgressPicturePromptCard mounted on Finished branch
