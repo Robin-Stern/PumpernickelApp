@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: Android Material 3 UI
 status: milestone_complete
 stopped_at: Phase 17 context gathered
-last_updated: "2026-05-01T15:15:11.524Z"
-last_activity: 2026-05-01 -- Phase 17 execution started
+last_updated: "2026-05-01T21:30:00.000Z"
+last_activity: 2026-05-01 -- Completed quick task 260501-wcg: Phase 17 iOS surfaces
 progress:
   total_phases: 4
   completed_phases: 4
@@ -138,6 +138,7 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260423-sja | Clean up AchievementGalleryScreen category headers — M3 section-break hierarchy (titleLarge + 20/8 padding + hairline divider) | 2026-04-23 | 4c0740b | [260423-sja-clean-up-achievementgalleryscreen-catego](./quick/260423-sja-clean-up-achievementgalleryscreen-catego/) |
+| 260501-wcg | Phase 17 iOS surfaces (SwiftUI gallery + viewer + prompt card + presenter holder wire) | 2026-05-01 | 17581fa | [260501-wcg-phase-17-ios-surfaces](./quick/260501-wcg-phase-17-ios-surfaces/) |
 
 ## Session Continuity
 
