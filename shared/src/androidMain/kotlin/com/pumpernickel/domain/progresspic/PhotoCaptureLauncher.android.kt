@@ -155,25 +155,57 @@ actual class PhotoCaptureLauncher(private val context: Context) {
     /**
      * Resizes the source bytes so the long edge is 1600px and re-encodes as
      * JPEG quality 0.8 (D-17-07). Falls back to source bytes if decode fails.
+     *
+     * REVIEW M-02: two-pass decode. First pass reads the source dimensions
+     * cheaply via inJustDecodeBounds; we compute an inSampleSize so the second
+     * decode produces a bitmap close to the target size, instead of allocating
+     * a full ~50 MB ARGB_8888 bitmap from a modern phone camera and then
+     * scaling down. After scaling we recycle the decoded original so it
+     * doesn't sit in the heap waiting for a Full GC between captures.
      */
     private fun resizeAndEncode(source: ByteArray): ByteArray {
-        val original = BitmapFactory.decodeByteArray(source, 0, source.size) ?: return source
-        val w = original.width
-        val h = original.height
-        val longEdge = maxOf(w, h)
-        val scaled = if (longEdge <= 1600) {
-            original
+        // Pass 1: bounds only — no pixels allocated.
+        val boundsOpts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(source, 0, source.size, boundsOpts)
+        val srcW = boundsOpts.outWidth
+        val srcH = boundsOpts.outHeight
+        if (srcW <= 0 || srcH <= 0) return source
+
+        // Compute power-of-two sample size so the decoded bitmap's long edge
+        // is no smaller than the target (we still apply a precise scale below).
+        var sample = 1
+        var longEdge = maxOf(srcW, srcH)
+        while (longEdge / 2 >= 1600) {
+            sample *= 2
+            longEdge /= 2
+        }
+
+        val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sample }
+        val decoded = BitmapFactory.decodeByteArray(source, 0, source.size, decodeOpts)
+            ?: return source
+
+        val w = decoded.width
+        val h = decoded.height
+        val maxEdge = maxOf(w, h)
+        val scaled = if (maxEdge <= 1600) {
+            decoded
         } else {
-            val ratio = 1600f / longEdge
-            Bitmap.createScaledBitmap(
-                original,
+            val ratio = 1600f / maxEdge
+            val tmp = Bitmap.createScaledBitmap(
+                decoded,
                 (w * ratio).toInt(),
                 (h * ratio).toInt(),
                 /* filter = */ true
             )
+            // M-02 — recycle the intermediate decoded bitmap if the scale call
+            // returned a new instance (it usually does for non-trivial scales).
+            if (tmp !== decoded) decoded.recycle()
+            tmp
         }
         val out = ByteArrayOutputStream()
         scaled.compress(Bitmap.CompressFormat.JPEG, /* quality = */ 80, out)
+        // Recycle the final scaled bitmap as well — we have the JPEG bytes now.
+        scaled.recycle()
         return out.toByteArray()
     }
 }
