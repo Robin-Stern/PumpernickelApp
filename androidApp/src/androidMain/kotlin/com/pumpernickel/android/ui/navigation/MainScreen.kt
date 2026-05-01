@@ -35,6 +35,8 @@ import com.pumpernickel.android.ui.screens.ExerciseDetailScreen
 import com.pumpernickel.android.ui.screens.ExercisePickerScreen
 import com.pumpernickel.android.ui.screens.OverviewScreen
 import com.pumpernickel.android.ui.screens.NutritionGoalsEditorScreen
+import com.pumpernickel.android.ui.screens.ProgressGalleryScreen
+import com.pumpernickel.android.ui.screens.ProgressViewerScreen
 import com.pumpernickel.android.ui.screens.RankLadderScreen
 import com.pumpernickel.android.ui.screens.PlaceholderScreen
 import com.pumpernickel.android.ui.screens.TemplateEditorScreen
@@ -177,6 +179,16 @@ fun MainScreen() {
                     }
                     composable<NutritionGoalsEditorRoute> {
                         NutritionGoalsEditorScreen(navController = overviewNavController)
+                    }
+                    composable<ProgressGalleryRoute> {
+                        ProgressGalleryScreen(navController = overviewNavController)
+                    }
+                    composable<ProgressViewerRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ProgressViewerRoute>()
+                        ProgressViewerScreen(
+                            workoutId = route.workoutId,
+                            navController = overviewNavController
+                        )
                     }
                 }
 
