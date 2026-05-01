@@ -26,6 +26,7 @@ kotlin {
             implementation(libs.camerax.lifecycle)
             implementation(libs.camerax.view)
             implementation(libs.mlkit.barcode)
+            implementation(libs.androidx.biometric)
             implementation(libs.kotlinx.datetime)
             implementation("com.google.guava:guava:33.4.0-android")
         }
