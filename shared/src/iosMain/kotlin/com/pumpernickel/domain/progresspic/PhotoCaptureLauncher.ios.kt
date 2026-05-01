@@ -12,7 +12,6 @@ import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSData
 import platform.Foundation.NSItemProvider
-import platform.Foundation.NSItemProviderReadingProtocol
 import platform.PhotosUI.PHPickerConfiguration
 import platform.PhotosUI.PHPickerFilter
 import platform.PhotosUI.PHPickerResult
@@ -133,18 +132,19 @@ private class PhPickerDelegate(
             return
         }
         val provider: NSItemProvider = first.itemProvider
-        // K/N quirk: loadObjectOfClass / canLoadObjectOfClass take an
-        // NSItemProviderReadingProtocol parameter, but at runtime ObjC expects
-        // a Class object. UIImage's metaclass conforms to NSItemProviderReading
-        // (UIImage adopts the protocol via category), so the cast is safe.
-        @Suppress("CAST_NEVER_SUCCEEDS")
-        val uiImageReadingClass = UIImage as NSItemProviderReadingProtocol
-        if (!provider.canLoadObjectOfClass(uiImageReadingClass)) {
-            deferred.complete(null)
-            return
-        }
-        provider.loadObjectOfClass(uiImageReadingClass) { obj, _ ->
-            deferred.complete(obj as? UIImage)
+        // REVIEW M-04: avoid the `UIImage as NSItemProviderReadingProtocol`
+        // metaclass cast (it required a CAST_NEVER_SUCCEEDS suppression and
+        // was K/N-version-fragile). Instead, request the raw image bytes via
+        // loadDataRepresentationForTypeIdentifier and decode them with
+        // UIImage's NSData initializer. Result: no protocol cast, no
+        // suppression, and the picker fails cleanly if the underlying
+        // identifier is missing.
+        provider.loadDataRepresentationForTypeIdentifier("public.image") { data, _ ->
+            if (data == null) {
+                deferred.complete(null)
+            } else {
+                deferred.complete(UIImage.imageWithData(data))
+            }
         }
     }
 }
