@@ -6,5 +6,9 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Barcode scanning requires camera access</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Wähle Fotos für deine Fortschritts-Galerie.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Fortschrittsbild entsperren.</string>
 </dict>
 </plist>
