@@ -51,7 +51,9 @@ sealed class WorkoutSessionState {
         val workoutName: String,
         val durationMillis: Long,
         val totalSets: Int,
-        val totalExercises: Int
+        val totalExercises: Int,
+        val workoutId: Long,
+        val photoCount: Int = 0
     ) : WorkoutSessionState()
 }
 
@@ -594,7 +596,9 @@ class WorkoutSessionViewModel(
                 workoutName = reviewing.templateName,
                 durationMillis = reviewing.durationMillis,
                 totalSets = totalSets,
-                totalExercises = completedExercises.size
+                totalExercises = completedExercises.size,
+                workoutId = workoutId,
+                photoCount = 0
             )
         }
     }
