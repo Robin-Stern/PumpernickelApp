@@ -22,6 +22,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FoodBank
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -90,7 +93,12 @@ fun NutritionDailyLogScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.title_daily_log)) }
+                title = { Text(stringResource(R.string.title_daily_log)) },
+                actions = {
+                    IconButton(onClick = { navController.navigate(NutritionFoodEntryRoute) }) {
+                        Icon(Icons.Default.FoodBank, contentDescription = "Lebensmittel verwalten")
+                    }
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

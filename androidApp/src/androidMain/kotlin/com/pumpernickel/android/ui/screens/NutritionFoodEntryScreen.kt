@@ -297,12 +297,13 @@ fun NutritionFoodEntryScreen(
                     }
                 }
 
-                if (uiState.remoteSearchError != null) {
+                uiState.remoteSearchError?.let { error ->
                     item {
-                        Text(uiState.remoteSearchError, color = MaterialTheme.colorScheme.error,
+                        Text(error, color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall)
                     }
-                } else if (!uiState.isSearchingRemote && uiState.remoteSearchResults.isEmpty()) {
+                }
+                if (uiState.remoteSearchError == null && !uiState.isSearchingRemote && uiState.remoteSearchResults.isEmpty()) {
                     item {
                         Text("Keine Ergebnisse", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
