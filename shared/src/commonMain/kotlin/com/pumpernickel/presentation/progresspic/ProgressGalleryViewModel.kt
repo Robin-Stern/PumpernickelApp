@@ -8,6 +8,7 @@ import com.pumpernickel.data.repository.ProgressPictureRepository
 import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.domain.gamification.NutritionGoalDayPolicy
 import com.pumpernickel.domain.progresspic.ProgressGalleryTile
+import com.pumpernickel.domain.model.NutritionGoals
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,8 +16,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
@@ -68,31 +70,34 @@ class ProgressGalleryViewModel(
 ) : ViewModel() {
 
     @NativeCoroutinesState
-    val uiState: StateFlow<GalleryUiState> = repository.observeGalleryTiles()
-        .map { rawTiles ->
-            // Option A — repository emits placeholders; this VM enriches per-tile.
-            // Goals + entries are read fresh per emission so the enrichment
-            // reflects the latest user-configured macros and the latest
-            // consumption log. Flow.map supports suspend mappers natively.
-            val goals = settingsRepository.nutritionGoals.first()
-            val allEntries = nutritionDao.getAllEntries()
-
-            rawTiles.map { tile ->
-                val prCount = gamificationDao.getPrLedgerEntriesForWorkout(tile.workoutId).size
-                val workoutIsoDate = Instant.fromEpochMilliseconds(tile.startTimeMillis)
+    val uiState: StateFlow<GalleryUiState> = combine(
+        repository.observeGalleryTiles(),
+        // REVIEW M-03 — compose Flows instead of suspending on `first()`.
+        // `onStart` emits a default so the gallery is never blocked on a
+        // cold-start DataStore read; the real goals replace the default
+        // as soon as the underlying Flow emits.
+        settingsRepository.nutritionGoals.onStart { emit(NutritionGoals()) },
+        // Reactive entries Flow (NutritionDao.observeAllEntries — added in M-03)
+        // means the goal-day chip flips live when the user logs food, instead
+        // of only re-evaluating when the gallery list itself changes.
+        nutritionDao.observeAllEntries()
+    ) { rawTiles, goals, allEntries ->
+        rawTiles.map { tile ->
+            val prCount = gamificationDao.getPrLedgerEntriesForWorkout(tile.workoutId).size
+            val workoutIsoDate = Instant.fromEpochMilliseconds(tile.startTimeMillis)
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .date
+                .toString()
+            val entriesForDate = allEntries.filter { entry ->
+                Instant.fromEpochMilliseconds(entry.timestampMillis)
                     .toLocalDateTime(TimeZone.currentSystemDefault())
                     .date
-                    .toString()
-                val entriesForDate = allEntries.filter { entry ->
-                    Instant.fromEpochMilliseconds(entry.timestampMillis)
-                        .toLocalDateTime(TimeZone.currentSystemDefault())
-                        .date
-                        .toString() == workoutIsoDate
-                }
-                val isGoalDay = nutritionGoalDayPolicy.isGoalDay(entriesForDate, goals)
-                tile.copy(prCount = prCount, isGoalDay = isGoalDay)
+                    .toString() == workoutIsoDate
             }
+            val isGoalDay = nutritionGoalDayPolicy.isGoalDay(entriesForDate, goals)
+            tile.copy(prCount = prCount, isGoalDay = isGoalDay)
         }
+    }
         .map { tiles -> GalleryUiState(tiles = tiles, isLoading = false) }
         .stateIn(
             viewModelScope,

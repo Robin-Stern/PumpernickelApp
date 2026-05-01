@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NutritionDao {
@@ -51,6 +52,13 @@ interface NutritionDao {
 
     @Query("SELECT * FROM consumption_entries ORDER BY timestampMillis ASC")
     suspend fun getAllEntries(): List<ConsumptionEntryEntity>
+
+    /**
+     * Reactive variant of [getAllEntries] for surfaces that need to react to
+     * inserts (e.g. ProgressGalleryViewModel — REVIEW M-03).
+     */
+    @Query("SELECT * FROM consumption_entries ORDER BY timestampMillis ASC")
+    fun observeAllEntries(): Flow<List<ConsumptionEntryEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertConsumption(entry: ConsumptionEntryEntity)
