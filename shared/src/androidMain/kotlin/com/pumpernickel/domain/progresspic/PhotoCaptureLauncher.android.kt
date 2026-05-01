@@ -81,8 +81,19 @@ class PhotoCaptureLauncherHost(
      * null on cancel. Crucially, we never read from a URI the camera echoed
      * back — REVIEW B-03 — so a malicious package cannot redirect us to read
      * an arbitrary file.
+     *
+     * REVIEW M-01: a previous in-flight camera launch is cancelled (its
+     * deferred completes with null) before the new one starts, so no awaiter
+     * is left dangling and no result is silently dropped. The VM-layer busy
+     * flag still prevents re-entrant taps in the normal flow; this is defence
+     * in depth for any path that reaches the host directly.
      */
     suspend fun launchCamera(): File? {
+        // M-01: cancel any prior in-flight camera capture so the previous
+        // awaiter doesn't suspend forever.
+        pendingCameraDeferred?.complete(null)
+        pendingCameraDeferred = null
+
         val cacheDir = File(context.cacheDir, "capture").apply { mkdirs() }
         val file = File(cacheDir, "${UUID.randomUUID()}.jpg")
         pendingCameraFile = file
@@ -96,6 +107,10 @@ class PhotoCaptureLauncherHost(
     }
 
     suspend fun launchLibrary(): Uri? {
+        // M-01: cancel any prior in-flight library pick the same way.
+        pendingLibraryDeferred?.complete(null)
+        pendingLibraryDeferred = null
+
         val deferred = CompletableDeferred<Uri?>()
         pendingLibraryDeferred = deferred
         libraryLauncher.launch(
