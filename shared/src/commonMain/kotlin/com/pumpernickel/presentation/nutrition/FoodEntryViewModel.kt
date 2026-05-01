@@ -9,6 +9,7 @@ import com.pumpernickel.domain.nutrition.DeleteFoodUseCase
 import com.pumpernickel.domain.nutrition.LoadFoodsUseCase
 import com.pumpernickel.domain.nutrition.LogConsumptionUseCase
 import com.pumpernickel.domain.nutrition.LookupBarcodeUseCase
+import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
 import com.pumpernickel.domain.nutrition.UpdateFoodUseCase
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.delay
@@ -17,6 +18,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -35,7 +39,10 @@ data class FoodEntryUiState(
     val editingFoodId: String? = null,
     val searchQuery: String = "",
     val isLookingUp: Boolean = false,
-    val pendingLogFood: Food? = null
+    val pendingLogFood: Food? = null,
+    val remoteSearchResults: List<SearchFoodsRemoteUseCase.RemoteFoodResult> = emptyList(),
+    val isSearchingRemote: Boolean = false,
+    val remoteSearchError: String? = null
 )
 
 sealed interface FoodEntryEvent {
@@ -50,6 +57,7 @@ sealed interface FoodEntryEvent {
     data class OnFoodSelected(val food: Food) : FoodEntryEvent
     data class OnSearchQueryChanged(val value: String) : FoodEntryEvent
     data class OnBarcodeScanned(val barcode: String) : FoodEntryEvent
+    data class OnRemoteFoodSelected(val result: SearchFoodsRemoteUseCase.RemoteFoodResult) : FoodEntryEvent
     data class OnConfirmLogAmount(val food: Food, val amount: Double) : FoodEntryEvent
     data object OnDismissLogDialog : FoodEntryEvent
     data object OnCancelEdit : FoodEntryEvent
@@ -63,7 +71,8 @@ class FoodEntryViewModel(
     private val deleteFood: DeleteFoodUseCase,
     private val updateFood: UpdateFoodUseCase,
     private val lookupBarcode: LookupBarcodeUseCase,
-    private val logConsumption: LogConsumptionUseCase
+    private val logConsumption: LogConsumptionUseCase,
+    private val searchFoodsRemote: SearchFoodsRemoteUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FoodEntryUiState())
@@ -82,6 +91,27 @@ class FoodEntryViewModel(
 
     init {
         viewModelScope.launch { _foods.value = loadFoods() }
+        viewModelScope.launch {
+            _uiState
+                .map { it.searchQuery }
+                .distinctUntilChanged()
+                .debounce(500)
+                .collect { query ->
+                    if (query.length >= 3) {
+                        _uiState.update { it.copy(isSearchingRemote = true, remoteSearchError = null) }
+                        when (val result = searchFoodsRemote(query)) {
+                            is SearchFoodsRemoteUseCase.Result.Success ->
+                                _uiState.update { it.copy(remoteSearchResults = result.foods, isSearchingRemote = false) }
+                            is SearchFoodsRemoteUseCase.Result.Empty ->
+                                _uiState.update { it.copy(remoteSearchResults = emptyList(), isSearchingRemote = false) }
+                            is SearchFoodsRemoteUseCase.Result.Error ->
+                                _uiState.update { it.copy(remoteSearchResults = emptyList(), isSearchingRemote = false, remoteSearchError = result.message) }
+                        }
+                    } else {
+                        _uiState.update { it.copy(remoteSearchResults = emptyList(), isSearchingRemote = false, remoteSearchError = null) }
+                    }
+                }
+        }
     }
 
     fun onEvent(event: FoodEntryEvent) {
@@ -98,7 +128,17 @@ class FoodEntryViewModel(
                 _foods.value = loadFoods()
             }
             is FoodEntryEvent.OnFoodSelected    -> loadFoodForEdit(event.food)
-            is FoodEntryEvent.OnSearchQueryChanged -> _uiState.update { it.copy(searchQuery = event.value) }
+            is FoodEntryEvent.OnSearchQueryChanged -> _uiState.update { it.copy(searchQuery = event.value, remoteSearchResults = emptyList()) }
+            is FoodEntryEvent.OnRemoteFoodSelected  -> _uiState.update { it.copy(
+                name = event.result.name,
+                calories = formatNumber(event.result.calories),
+                protein = formatNumber(event.result.protein),
+                fat = formatNumber(event.result.fat),
+                carbs = formatNumber(event.result.carbs),
+                sugar = formatNumber(event.result.sugar),
+                barcode = "",
+                editingFoodId = null
+            )}
             is FoodEntryEvent.OnBarcodeScanned  -> onBarcodeScanned(event.barcode)
             is FoodEntryEvent.OnConfirmLogAmount -> viewModelScope.launch {
                 logConsumption(event.food, event.amount)

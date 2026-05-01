@@ -81,6 +81,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.pumpernickel.android.R
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
+import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
 import com.pumpernickel.presentation.nutrition.FoodEntryEvent
 import com.pumpernickel.presentation.nutrition.FoodEntryViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -277,6 +278,41 @@ fun NutritionFoodEntryScreen(
                         onDelete = { viewModel.onEvent(FoodEntryEvent.OnFoodDeleted(food)) },
                         onEdit = { viewModel.onEvent(FoodEntryEvent.OnFoodSelected(food)) }
                     )
+                }
+            }
+
+            if (uiState.searchQuery.length >= 3) {
+                item {
+                    Spacer(Modifier.height(8.dp))
+                    HorizontalDivider()
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("OpenFoodFacts", style = MaterialTheme.typography.titleMedium)
+                        if (uiState.isSearchingRemote) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        }
+                    }
+                }
+
+                if (uiState.remoteSearchError != null) {
+                    item {
+                        Text(uiState.remoteSearchError, color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall)
+                    }
+                } else if (!uiState.isSearchingRemote && uiState.remoteSearchResults.isEmpty()) {
+                    item {
+                        Text("Keine Ergebnisse", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                } else {
+                    items(uiState.remoteSearchResults, key = { "remote_${it.name}" }) { result ->
+                        RemoteFoodCard(
+                            result = result,
+                            onClick = { viewModel.onEvent(FoodEntryEvent.OnRemoteFoodSelected(result)) }
+                        )
+                    }
                 }
             }
 
@@ -528,6 +564,24 @@ private fun CameraPreview(onBarcodeDetected: (String) -> Unit) {
         },
         modifier = Modifier.fillMaxSize()
     )
+}
+
+@Composable
+private fun RemoteFoodCard(result: SearchFoodsRemoteUseCase.RemoteFoodResult, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(result.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                "${result.calories.roundToInt()} kcal · E ${result.protein.roundToInt()}g · F ${result.fat.roundToInt()}g · KH ${result.carbs.roundToInt()}g",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
 
 @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
