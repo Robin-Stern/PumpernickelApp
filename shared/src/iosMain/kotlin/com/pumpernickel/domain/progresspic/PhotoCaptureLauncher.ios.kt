@@ -55,26 +55,40 @@ object PhotoCapturePresenterHolder {
  */
 actual class PhotoCaptureLauncher {
 
+    // REVIEW M-05: hold the active delegate explicitly on the class instance
+    // until the deferred completes. The picker holds its delegate via a weak
+    // ObjC property, so the only thing keeping it alive across the suspension
+    // point is the reference graph from `this`. Relying on a local `val` and
+    // a `@Suppress("UNUSED_EXPRESSION")` reference is fragile — K/N's
+    // continuation lowering may discard the local before the callback fires.
+    // Field-level retention is the K/N-idiomatic fix.
+    @Volatile
+    private var currentCameraDelegate: ImagePickerDelegate? = null
+
+    @Volatile
+    private var currentLibraryDelegate: PhPickerDelegate? = null
+
     actual suspend fun captureFromCamera(): ByteArray? {
         val presenter = PhotoCapturePresenterHolder.current ?: return null
 
         val deferred = CompletableDeferred<UIImage?>()
         val delegate = ImagePickerDelegate(deferred)
-        val picker = UIImagePickerController()
-        picker.sourceType = UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
-        picker.delegate = delegate
+        currentCameraDelegate = delegate
+        try {
+            val picker = UIImagePickerController()
+            picker.sourceType = UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
+            picker.delegate = delegate
 
-        // Hold a strong reference so the delegate is not GC'd while the
-        // picker is presented (Kotlin/Native ObjC delegates are weakly held
-        // by the picker; the local `delegate` val keeps it alive).
-        presenter.presentViewController(picker, animated = true, completion = null)
-        val image = deferred.await()
-        // Keep the delegate alive past await(); referencing it after the
-        // suspension point prevents the compiler from dropping it early.
-        @Suppress("UNUSED_EXPRESSION") delegate
-        if (image == null) return null
+            presenter.presentViewController(picker, animated = true, completion = null)
+            val image = deferred.await()
+            if (image == null) return null
 
-        return image.toResizedJpegBytes(maxLongEdgePx = 1600.0, quality = 0.8)
+            return image.toResizedJpegBytes(maxLongEdgePx = 1600.0, quality = 0.8)
+        } finally {
+            // Only clear if it's still us — guards against a concurrent
+            // captureFromCamera() that overwrote the field after we yielded.
+            if (currentCameraDelegate === delegate) currentCameraDelegate = null
+        }
     }
 
     actual suspend fun pickFromLibrary(): ByteArray? {
@@ -86,15 +100,19 @@ actual class PhotoCaptureLauncher {
             filter = PHPickerFilter.imagesFilter
         }
         val delegate = PhPickerDelegate(deferred)
-        val picker = PHPickerViewController(configuration = config)
-        picker.delegate = delegate
+        currentLibraryDelegate = delegate
+        try {
+            val picker = PHPickerViewController(configuration = config)
+            picker.delegate = delegate
 
-        presenter.presentViewController(picker, animated = true, completion = null)
-        val image = deferred.await()
-        @Suppress("UNUSED_EXPRESSION") delegate
-        if (image == null) return null
+            presenter.presentViewController(picker, animated = true, completion = null)
+            val image = deferred.await()
+            if (image == null) return null
 
-        return image.toResizedJpegBytes(maxLongEdgePx = 1600.0, quality = 0.8)
+            return image.toResizedJpegBytes(maxLongEdgePx = 1600.0, quality = 0.8)
+        } finally {
+            if (currentLibraryDelegate === delegate) currentLibraryDelegate = null
+        }
     }
 }
 
