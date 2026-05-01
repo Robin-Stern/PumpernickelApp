@@ -2,6 +2,7 @@ package com.pumpernickel.android.ui.screens
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -149,16 +150,23 @@ private fun GalleryTile(
     val bytes by produceState<ByteArray?>(initialValue = null, key1 = tile.coverRelativePath) {
         value = photoVault.read(tile.coverRelativePath)
     }
-    // REVIEW M-08: decode tiles at ~400px target (tile is ~half-screen-width
-    // so a 400px source is ample for the blurred rendering) instead of
-    // decoding the full 1600px source for every tile. Power-of-two
-    // inSampleSize halves memory roughly 4x per step. Without this fix the
-    // gallery's working set scaled with tile count to easy 100+ MB ranges.
-    val decodedBitmap = remember(bytes) { bytes?.let { decodeDownsampled(it, targetEdgePx = 400) } }
+    // REVIEW M-08 + M-09: decode at a tile-appropriate resolution and recycle.
+    //
+    // M-09: `Modifier.blur` is a no-op on Android < API 31. minSdk on this
+    // project is 26, so on Android 8/9/10/11 the gallery would silently render
+    // *unblurred* photos in the grid — breaking D-17-13's "faces must be
+    // unrecognisable" privacy contract. Fallback strategy: on API < 31, decode
+    // at a tiny target resolution (32px long edge) and let
+    // `ContentScale.Crop` upscale the pixels back to tile size — the resulting
+    // chunky pixelation makes faces just as unrecognisable as a smooth blur,
+    // and works on every API level. On API >= 31, decode at 400px and rely on
+    // the genuine `Modifier.blur` for a smooth effect.
+    val supportsRealBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val targetEdgePx = if (supportsRealBlur) 400 else 32
+    val decodedBitmap = remember(bytes, targetEdgePx) {
+        bytes?.let { decodeDownsampled(it, targetEdgePx) }
+    }
     val imageBitmap = remember(decodedBitmap) { decodedBitmap?.asImageBitmap() }
-    // M-08: recycle the underlying Bitmap when this tile leaves composition
-    // (scroll out of view, screen disposed). Without this, scrolled-away
-    // bitmaps wait on GC and the heap grows linearly with scroll distance.
     DisposableEffect(decodedBitmap) {
         onDispose { decodedBitmap?.recycle() }
     }
@@ -176,13 +184,21 @@ private fun GalleryTile(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (imageBitmap != null) {
+                // D-17-13 — faces must be unrecognisable. On API >= 31 the real
+                // blur runs over a 400px source. On API < 31 the bitmap is
+                // already 32px-sourced and gets pixelated by ContentScale.Crop
+                // upscaling it to the tile — no real blur is needed because
+                // the pixelation already obscures the photo (M-09).
+                val blurModifier = if (supportsRealBlur) {
+                    Modifier.fillMaxSize().blur(radius = 24.dp)
+                } else {
+                    Modifier.fillMaxSize()
+                }
                 androidx.compose.foundation.Image(
                     bitmap = imageBitmap,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .blur(radius = 24.dp) // D-17-13 — heavy blur, faces unrecognizable
+                    modifier = blurModifier
                 )
             }
 
