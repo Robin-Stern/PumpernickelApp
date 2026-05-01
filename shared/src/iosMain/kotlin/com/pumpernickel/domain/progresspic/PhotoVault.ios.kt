@@ -18,6 +18,7 @@ import platform.Foundation.NSError
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSURLIsExcludedFromBackupKey
+import platform.Foundation.URLByStandardizingPath
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.create
 import platform.Foundation.dataWithContentsOfURL
@@ -95,16 +96,39 @@ actual class PhotoVault {
         return "progress_pics/$id.jpg"
     }
 
-    actual suspend fun read(relativePath: String): ByteArray? {
-        val fileUrl = documentsDir.URLByAppendingPathComponent(relativePath, isDirectory = false)
+    /**
+     * Resolve a relative path inside the vault, returning null if the path
+     * escapes the vault root (path-traversal defence — REVIEW B-01). The
+     * Phase 17 writer only ever produces "progress_pics/{uuid}.jpg" so any
+     * relative path that doesn't start with "progress_pics/" or whose
+     * standardised filesystem path falls outside [rootDir] is rejected —
+     * defence in depth against a stale / tampered DB row.
+     *
+     * `URLByStandardizingPath` resolves `..` segments; comparing the result's
+     * `path` against the root's standardised `path` is the iOS equivalent of
+     * `File.canonicalPath.startsWith(rootCanonical)`.
+     */
+    private fun resolveSafe(relativePath: String): NSURL? {
+        if (!relativePath.startsWith("progress_pics/")) return null
+        val candidate = documentsDir.URLByAppendingPathComponent(relativePath, isDirectory = false)
             ?: return null
+        val candidateStd = candidate.URLByStandardizingPath ?: return null
+        val rootStd = rootDir.URLByStandardizingPath ?: return null
+        val candidatePath = candidateStd.path ?: return null
+        val rootPath = rootStd.path ?: return null
+        if (candidatePath == rootPath) return null
+        if (!candidatePath.startsWith("$rootPath/")) return null
+        return candidateStd
+    }
+
+    actual suspend fun read(relativePath: String): ByteArray? {
+        val fileUrl = resolveSafe(relativePath) ?: return null
         val data = NSData.dataWithContentsOfURL(fileUrl) ?: return null
         return data.toByteArray()
     }
 
     actual suspend fun delete(relativePath: String) {
-        val fileUrl = documentsDir.URLByAppendingPathComponent(relativePath, isDirectory = false)
-            ?: return
+        val fileUrl = resolveSafe(relativePath) ?: return
         NSFileManager.defaultManager.removeItemAtURL(fileUrl, error = null)
     }
 
