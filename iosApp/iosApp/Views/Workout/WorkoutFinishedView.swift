@@ -5,45 +5,49 @@ struct WorkoutFinishedView: View {
     let durationMillis: Int64
     let totalSets: Int32
     let totalExercises: Int32
+    let workoutId: Int64
     var onDone: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: 24) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 72))
+                    .foregroundColor(.appAccent)
+                    .accessibilityHidden(true)
+                    .padding(.top, 32)
 
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 72))
-                .foregroundColor(.appAccent)
-                .accessibilityHidden(true)
+                Text("Workout Complete!")
+                    .font(.title.weight(.bold))
 
-            Text("Workout Complete!")
-                .font(.title.weight(.bold))
+                VStack(spacing: 12) {
+                    SummaryRow(label: "Workout", value: workoutName)
+                    SummaryRow(label: "Duration", value: formatDuration(durationMillis))
+                    SummaryRow(label: "Exercises", value: "\(totalExercises)")
+                    SummaryRow(label: "Sets", value: "\(totalSets)")
+                }
+                .padding()
+                .background(Color(UIColor.secondarySystemBackground))
+                .cornerRadius(16)
+                .padding(.horizontal, 32)
 
-            VStack(spacing: 12) {
-                SummaryRow(label: "Workout", value: workoutName)
-                SummaryRow(label: "Duration", value: formatDuration(durationMillis))
-                SummaryRow(label: "Exercises", value: "\(totalExercises)")
-                SummaryRow(label: "Sets", value: "\(totalSets)")
+                // Phase 17 D-17-01 — non-blocking post-workout photo prompt.
+                ProgressPicturePromptCard(workoutId: workoutId)
+                    .padding(.horizontal, 32)
+
+                Button("Done") {
+                    onDone()
+                }
+                .font(.body.weight(.semibold))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .background(Color.appAccent)
+                .cornerRadius(12)
+                .padding(.horizontal, 32)
+                .padding(.bottom, 32)
+                .accessibilityLabel("Close workout summary")
             }
-            .padding()
-            .background(Color(UIColor.secondarySystemBackground))
-            .cornerRadius(16)
-            .padding(.horizontal, 32)
-
-            Spacer()
-
-            Button("Done") {
-                onDone()
-            }
-            .font(.body.weight(.semibold))
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 48)
-            .background(Color.appAccent)
-            .cornerRadius(12)
-            .padding(.horizontal, 32)
-            .padding(.bottom, 32)
-            .accessibilityLabel("Close workout summary")
         }
     }
 
