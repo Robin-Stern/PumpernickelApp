@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.pumpernickel.android.ui.navigation.NutritionGoalsEditorRoute
+import com.pumpernickel.android.ui.navigation.ProgressGalleryRoute
 import com.pumpernickel.android.ui.navigation.RanksAndAchievementsRoute
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.MuscleRegionPath
@@ -125,6 +127,11 @@ fun OverviewScreen(
 
                 // ── Muscle Activity Section ──
                 MuscleActivityCard(uiState)
+
+                // ── Progress Gallery entry (Phase 17 — D-17-10) ──
+                ProgressGalleryEntry(
+                    onTap = { navController.navigate(ProgressGalleryRoute) }
+                )
 
                 // ── Nutrition Goals Banner (D-16-13) ──
                 AnimatedVisibility(
@@ -607,6 +614,52 @@ private fun NutritionGoalsBanner(
                     modifier = Modifier.size(16.dp)
                 )
             }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// Progress Gallery Entry (Phase 17 — D-17-10)
+// ══════════════════════════════════════════════════════════════
+
+@Composable
+private fun ProgressGalleryEntry(onTap: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onTap() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Outlined.PhotoLibrary,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Fortschritts-Galerie",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "Sieh dir deine Workout-Fotos an.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }

@@ -33,3 +33,7 @@ import kotlinx.serialization.Serializable
 
 // Overview tab — Nutrition Goals Editor (Phase 16)
 @Serializable data object NutritionGoalsEditorRoute
+
+// Overview tab — Progress gallery (Phase 17)
+@Serializable data object ProgressGalleryRoute
+@Serializable data class ProgressViewerRoute(val workoutId: Long)
