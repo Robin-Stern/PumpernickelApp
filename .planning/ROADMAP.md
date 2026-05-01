@@ -210,7 +210,7 @@ Plans:
 **Goal:** Ship a privacy-conscious post-workout photo feature: capture (camera or library) tied to the just-saved workout; new "Fortschritts-Galerie" entry on the Overview tab renders one tile per workout-with-photos as a blurred cover photo overlaid with date/volume/PR-count/goal-day stats; tapping a tile triggers OS biometric/passcode auth (LAContext .deviceOwnerAuthentication on iOS, BiometricPrompt BIOMETRIC_STRONG or DEVICE_CREDENTIAL on Android) and pages all of that workout's photos in a swipeable carousel; closing re-blurs the tile. Files live in app-private storage with NSFileProtectionComplete + NSURLIsExcludedFromBackupKey on iOS and dataExtractionRules + fullBackupContent exclusion on Android. Schema bumps Room v8 → v9 via additive AutoMigration. Phase 15 engine, retroactive walker, rank ladder, and existing nutrition/gamification surfaces are unchanged.
 **Requirements**: D-17-01 through D-17-19 (decisions in 17-CONTEXT.md serve as the requirement source)
 **Depends on:** Phase 16
-**Plans:** 7/8 plans executed
+**Plans:** 8/8 plans complete
 
 **Wave structure:**
 - Wave 1 (foundation): 01 (Room v8 → v9 — ProgressPictureEntity + DAO + AutoMigration)
@@ -228,4 +228,4 @@ Plans:
 - [x] 17-05-PLAN.md — Capture flow + Workout integration: extend WorkoutSessionState.Finished with workoutId, ProgressPicturePromptViewModel, ProgressPicturePromptCard mounted on Finished branch
 - [x] 17-06-PLAN.md — Gallery + Viewer: ProgressGalleryViewModel + ProgressViewerViewModel (unlockedWorkoutId gate addresses T-BIOMETRIC-BYPASS) + ProgressGalleryScreen + ProgressViewerScreen + Routes/MainScreen/OverviewScreen wiring
 - [x] 17-07-PLAN.md — DI: ProgressGalleryModule + PlatformModule.{android,ios} bindings + 3 iOS KoinHelpers (Gallery, Viewer, Prompt)
-- [ ] 17-08-PLAN.md — iOS handoff doc 17-IOS-HANDOFF.md (per D-17-18 — SwiftUI hand-written, not Compose Multiplatform)
+- [x] 17-08-PLAN.md — iOS handoff doc 17-IOS-HANDOFF.md (per D-17-18 — SwiftUI hand-written, not Compose Multiplatform)
