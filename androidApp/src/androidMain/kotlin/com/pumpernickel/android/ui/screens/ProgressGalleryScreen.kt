@@ -1,5 +1,6 @@
 package com.pumpernickel.android.ui.screens
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -147,8 +149,18 @@ private fun GalleryTile(
     val bytes by produceState<ByteArray?>(initialValue = null, key1 = tile.coverRelativePath) {
         value = photoVault.read(tile.coverRelativePath)
     }
-    val imageBitmap = remember(bytes) {
-        bytes?.let { BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap() }
+    // REVIEW M-08: decode tiles at ~400px target (tile is ~half-screen-width
+    // so a 400px source is ample for the blurred rendering) instead of
+    // decoding the full 1600px source for every tile. Power-of-two
+    // inSampleSize halves memory roughly 4x per step. Without this fix the
+    // gallery's working set scaled with tile count to easy 100+ MB ranges.
+    val decodedBitmap = remember(bytes) { bytes?.let { decodeDownsampled(it, targetEdgePx = 400) } }
+    val imageBitmap = remember(decodedBitmap) { decodedBitmap?.asImageBitmap() }
+    // M-08: recycle the underlying Bitmap when this tile leaves composition
+    // (scroll out of view, screen disposed). Without this, scrolled-away
+    // bitmaps wait on GC and the heap grows linearly with scroll distance.
+    DisposableEffect(decodedBitmap) {
+        onDispose { decodedBitmap?.recycle() }
     }
 
     Card(
@@ -226,6 +238,28 @@ private fun formatGermanShortDate(epochMillis: Long): String {
         "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."
     )
     return "${ldt.dayOfMonth}. ${months[ldt.monthNumber - 1]}"
+}
+
+/**
+ * Two-pass decode that uses [BitmapFactory.Options.inSampleSize] so the
+ * resulting Bitmap's long edge is no smaller than [targetEdgePx]. Power-of-two
+ * sample size halves per step so we trade a tiny bit of precision for a
+ * massive memory win — REVIEW M-08.
+ */
+private fun decodeDownsampled(bytes: ByteArray, targetEdgePx: Int): Bitmap? {
+    val boundsOpts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, boundsOpts)
+    val srcW = boundsOpts.outWidth
+    val srcH = boundsOpts.outHeight
+    if (srcW <= 0 || srcH <= 0) return null
+    var sample = 1
+    var longEdge = maxOf(srcW, srcH)
+    while (longEdge / 2 >= targetEdgePx) {
+        sample *= 2
+        longEdge /= 2
+    }
+    val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
 }
 
 private fun formatGermanThousand(value: Long): String {

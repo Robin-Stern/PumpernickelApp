@@ -1,5 +1,6 @@
 package com.pumpernickel.android.ui.screens
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -109,8 +110,16 @@ fun ProgressViewerScreen(
                         initialValue = null,
                         key1 = photo.relativePath
                     ) { value = photoVault.read(photo.relativePath) }
-                    val imageBitmap = remember(bytes) {
-                        bytes?.let { BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap() }
+                    // REVIEW M-08: decode at full edge (1600px is the storage
+                    // target) but recycle the bitmap when this page leaves
+                    // composition. Without recycling, paging through N photos
+                    // leaves N decoded bitmaps in the heap waiting for GC.
+                    val decodedBitmap = remember(bytes) {
+                        bytes?.let { decodeDownsampledViewer(it, targetEdgePx = 1600) }
+                    }
+                    val imageBitmap = remember(decodedBitmap) { decodedBitmap?.asImageBitmap() }
+                    DisposableEffect(decodedBitmap) {
+                        onDispose { decodedBitmap?.recycle() }
                     }
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         if (imageBitmap != null) {
@@ -238,4 +247,28 @@ private fun EmptyState(onCloseClick: () -> Unit) {
             }
         }
     }
+}
+
+/**
+ * Two-pass decode that uses [BitmapFactory.Options.inSampleSize] so the
+ * resulting Bitmap's long edge is no smaller than [targetEdgePx]. Power-of-two
+ * sample size halves per step — REVIEW M-08. Stored photos are written at
+ * 1600px long edge (D-17-07), so for the viewer we mostly fall through with
+ * sample=1; the helper still protects the heap if the source happens to be
+ * larger (e.g. legacy / pre-resize captures).
+ */
+private fun decodeDownsampledViewer(bytes: ByteArray, targetEdgePx: Int): Bitmap? {
+    val boundsOpts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, boundsOpts)
+    val srcW = boundsOpts.outWidth
+    val srcH = boundsOpts.outHeight
+    if (srcW <= 0 || srcH <= 0) return null
+    var sample = 1
+    var longEdge = maxOf(srcW, srcH)
+    while (longEdge / 2 >= targetEdgePx) {
+        sample *= 2
+        longEdge /= 2
+    }
+    val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
 }
