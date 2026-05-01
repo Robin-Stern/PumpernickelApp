@@ -51,15 +51,21 @@ class PhotoCaptureLauncherHost(
 ) {
 
     private var pendingCameraFile: File? = null
-    private var pendingCameraDeferred: CompletableDeferred<Uri?>? = null
+    // REVIEW B-03: camera deferred returns the *file we passed to the camera*,
+    // not the URI the camera reports back. The TakePicture contract gives us a
+    // boolean, not a URI, so the only attacker-controllable value here is the
+    // success flag. We deliberately do NOT trust any returned URI / Uri.toFile()
+    // path — we re-open the cache file we ourselves created.
+    private var pendingCameraDeferred: CompletableDeferred<File?>? = null
     private var pendingLibraryDeferred: CompletableDeferred<Uri?>? = null
 
     private val cameraLauncher = activity.registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
-        val uri = if (success) pendingCameraFile?.let { Uri.fromFile(it) } else null
-        pendingCameraDeferred?.complete(uri)
+        val file = if (success) pendingCameraFile else null
+        pendingCameraDeferred?.complete(file)
         pendingCameraDeferred = null
+        pendingCameraFile = null
     }
 
     private val libraryLauncher = activity.registerForActivityResult(
@@ -69,11 +75,18 @@ class PhotoCaptureLauncherHost(
         pendingLibraryDeferred = null
     }
 
-    suspend fun launchCamera(): Uri? {
+    /**
+     * Launches the system camera. Returns the [File] inside our app cache that
+     * the camera wrote to (the same File we passed via FileProvider URI), or
+     * null on cancel. Crucially, we never read from a URI the camera echoed
+     * back — REVIEW B-03 — so a malicious package cannot redirect us to read
+     * an arbitrary file.
+     */
+    suspend fun launchCamera(): File? {
         val cacheDir = File(context.cacheDir, "capture").apply { mkdirs() }
         val file = File(cacheDir, "${UUID.randomUUID()}.jpg")
         pendingCameraFile = file
-        val deferred = CompletableDeferred<Uri?>()
+        val deferred = CompletableDeferred<File?>()
         pendingCameraDeferred = deferred
         // Use FileProvider to grant the camera app write access to our cache file.
         val authority = "${context.packageName}.provider"
@@ -104,24 +117,24 @@ actual class PhotoCaptureLauncher(private val context: Context) {
 
     actual suspend fun captureFromCamera(): ByteArray? = withContext(Dispatchers.IO) {
         val host = PhotoCaptureLauncherActivityHolder.current ?: return@withContext null
-        val uri = host.launchCamera() ?: return@withContext null
-        val bytes = readUriBytes(uri) ?: return@withContext null
+        // REVIEW B-03 — read bytes directly from the cache File we created and
+        // passed to the camera, NOT from a URI the camera echoed back. The
+        // TakePicture contract carries no URI in its result, but a malicious
+        // result-URI helper would have been the path-traversal vector.
+        val file = host.launchCamera() ?: return@withContext null
+        if (!file.exists()) return@withContext null
+        val bytes = file.readBytes()
         resizeAndEncode(bytes)
     }
 
     actual suspend fun pickFromLibrary(): ByteArray? = withContext(Dispatchers.IO) {
         val host = PhotoCaptureLauncherActivityHolder.current ?: return@withContext null
         val uri = host.launchLibrary() ?: return@withContext null
-        val bytes = readUriBytes(uri) ?: return@withContext null
+        // Library URIs are content:// — go through ContentResolver. We never
+        // call Uri.toFile() (it was a path-traversal foot-gun on file:// URIs).
+        val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: return@withContext null
         resizeAndEncode(bytes)
-    }
-
-    private fun readUriBytes(uri: Uri): ByteArray? {
-        return if (uri.scheme == "file") {
-            uri.toFile().takeIf { it.exists() }?.readBytes()
-        } else {
-            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-        }
     }
 
     /**
@@ -150,4 +163,3 @@ actual class PhotoCaptureLauncher(private val context: Context) {
     }
 }
 
-private fun Uri.toFile(): File = File(requireNotNull(path) { "URI has no path: $this" })
