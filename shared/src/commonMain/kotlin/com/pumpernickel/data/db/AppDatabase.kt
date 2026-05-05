@@ -22,12 +22,14 @@ import androidx.room.RoomDatabaseConstructor
         ConsumptionEntryEntity::class,
         XpLedgerEntity::class,
         AchievementStateEntity::class,
-        RankStateEntity::class
+        RankStateEntity::class,
+        ProgressPictureEntity::class
     ],
-    version = 8,
+    version = 9,
     autoMigrations = [
         AutoMigration(from = 6, to = 7),
-        AutoMigration(from = 7, to = 8)
+        AutoMigration(from = 7, to = 8),
+        AutoMigration(from = 8, to = 9)
     ]
 )
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -38,6 +40,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun completedWorkoutDao(): CompletedWorkoutDao
     abstract fun nutritionDao(): NutritionDao
     abstract fun gamificationDao(): GamificationDao
+    abstract fun progressPictureDao(): ProgressPictureDao
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")

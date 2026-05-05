@@ -25,6 +25,33 @@ struct OverviewView: View {
                 // ── Muscle Activity Section ──
                 muscleActivitySection
 
+                // ── Progress Gallery Entry (Phase 17 D-17-10) ──
+                NavigationLink(destination: ProgressGalleryView()) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "photo.stack")
+                            .font(.title3)
+                            .foregroundColor(.appAccent)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Fortschritts-Galerie")
+                                .font(.body)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
+                            Text("Sieh dir deine Workout-Fotos an.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .cornerRadius(16)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Fortschritts-Galerie öffnen")
+
                 // ── Nutrition Goals Banner (D-16-13) ──
                 if bannerVisible {
                     NutritionGoalsBannerView(

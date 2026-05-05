@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Android Material 3 UI
-status: executing
-stopped_at: Completed 16-09-PLAN.md
-last_updated: "2026-04-28T15:15:54.513Z"
-last_activity: 2026-04-28
+status: milestone_complete
+stopped_at: Phase 17 context gathered
+last_updated: "2026-05-01T21:30:00.000Z"
+last_activity: 2026-05-01 -- Completed quick task 260501-wcg: Phase 17 iOS surfaces
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 24
-  completed_plans: 24
+  total_phases: 4
+  completed_phases: 4
+  total_plans: 32
+  completed_plans: 25
   percent: 100
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Users can select a workout template and execute it set-by-set — logging reps, weight, and rest periods — with a clean, reliable flow
-**Current focus:** Phase 16 — set-nutrition-goals-kcal-protein-carbs-fat-per-day-surface-p
+**Current focus:** Phase 17 — progress-pic-feature-with-biometric-locked-gallery-post-work
 
 ## Current Position
 
 Milestone: v1.5 (shipped 2026-03-31)
-Phase: 16 (set-nutrition-goals-kcal-protein-carbs-fat-per-day-surface-p) — EXECUTING
-Plan: 3 of 9
+Phase: 17
+Plan: Not started
 Branch: `feature/workouts` @ `985884c`
-Status: Ready to execute
-Last activity: 2026-04-28
+Status: Milestone complete
+Last activity: 2026-05-01
 
 Progress: [██████████] 100%
 
@@ -50,7 +50,7 @@ See `MILESTONES.md` → "Post-v1.5 (Untracked)" for the full summary. No per-pha
 
 **Velocity:**
 
-- Total plans completed: 25 (12 v1.0 + 9 v1.1)
+- Total plans completed: 33 (12 v1.0 + 9 v1.1)
 - v1.1 execution: 6 phases, 9 plans, 18 tasks in 2 days
 
 **By Phase (v1.1):**
@@ -123,6 +123,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - Phase 15 added (2026-04-22): Gamifikation lokal — XP, Achievements, Meilensteine, CSGO-Style Ranks (F4 from Lastenheft). Added outside an active milestone — assign to a new milestone before planning.
 - Phase 15.1 inserted after Phase 15 (2026-04-23): Ranks & Achievements Browser — rank ladder + achievement catalog UI (URGENT). Surfaced by Phase 15 UAT — current gamification is opaque: users see their rank and unlock toasts but cannot browse what tiers / achievements exist. Pure presentation over existing GamificationRepository / RankLadder / AchievementCatalog — no new domain logic.
 - Phase 16 added (2026-04-28): Set nutrition goals (kcal/protein/carbs/fat per day) — surface progress on Overview tab and award bonus XP when daily goal achieved within tolerance. Builds on existing post-v1.5 NutritionGoals model (in SettingsRepository) + Phase 15 gamification engine; user mentions a ±5–10% tolerance + XP reward already partially in code — planner should investigate first.
+- Phase 17 added (2026-04-28): Progress-pic feature with biometric-locked gallery — post-workout photo capture (camera or library) tied to workouts; gallery surfaces under Overview tab with blurred-by-default tiles showing day highlights (volume, PRs, nutrition); tap unblurs individual image via biometric auth (passcode fallback); re-locks on gallery close. Cross-platform iOS + Android via Compose Multiplatform. Spans new domain (ProgressPicture entity tied to WorkoutHistory), platform integrations (camera/photo-library + LocalAuthentication on iOS, CameraX/PhotoPicker + BiometricPrompt on Android), and a new gallery surface integrated into Overview rather than a corner button.
 
 ### Pending Todos
 
@@ -137,10 +138,11 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260423-sja | Clean up AchievementGalleryScreen category headers — M3 section-break hierarchy (titleLarge + 20/8 padding + hairline divider) | 2026-04-23 | 4c0740b | [260423-sja-clean-up-achievementgalleryscreen-catego](./quick/260423-sja-clean-up-achievementgalleryscreen-catego/) |
+| 260501-wcg | Phase 17 iOS surfaces (SwiftUI gallery + viewer + prompt card + presenter holder wire) | 2026-05-01 | 17581fa | [260501-wcg-phase-17-ios-surfaces](./quick/260501-wcg-phase-17-ios-surfaces/) |
 
 ## Session Continuity
 
-Last session: 2026-04-28T15:15:54.509Z
-Stopped at: Completed 16-09-PLAN.md
-Resume file: None
+Last session: 2026-04-28T17:49:42.430Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-progress-pic-feature-with-biometric-locked-gallery-post-work/17-CONTEXT.md
 Next step: `/gsd-plan-phase 15` to break Phase 15 into plans
