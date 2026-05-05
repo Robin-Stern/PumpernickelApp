@@ -41,7 +41,8 @@ struct ProgressGalleryView: View {
                                 })
                             }
                         }
-                        .padding(12)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
                     }
                 }
             } else {
@@ -168,6 +169,8 @@ private struct CoverImage: View {
                     .fill(Color(uiColor: .secondarySystemBackground))
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
         .task(id: relativePath) {
             self.image = await Self.loadOffMain(relativePath: relativePath)
         }
