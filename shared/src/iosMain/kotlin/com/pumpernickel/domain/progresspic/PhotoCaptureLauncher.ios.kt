@@ -69,6 +69,18 @@ actual class PhotoCaptureLauncher {
     private var currentLibraryDelegate: PhPickerDelegate? = null
 
     actual suspend fun captureFromCamera(): ByteArray? {
+        // Simulator has no camera and some iPads/iPods report unavailable.
+        // Without this guard, setting sourceType = .camera below raises
+        // NSInvalidArgumentException ("Source type 1 not available") which
+        // K/N propagates as a fatal crash. Throw instead so the shared VM's
+        // Throwable catch surfaces the message inline (D-17-17).
+        if (!UIImagePickerController.isSourceTypeAvailable(
+                UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
+            )
+        ) {
+            throw IllegalStateException("Kamera ist auf diesem Gerät nicht verfügbar.")
+        }
+
         val presenter = PhotoCapturePresenterHolder.current ?: return null
 
         val deferred = CompletableDeferred<UIImage?>()

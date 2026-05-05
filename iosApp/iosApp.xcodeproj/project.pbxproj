@@ -598,6 +598,9 @@
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Aufnehmen von Fortschritts-Fotos.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Fortschrittsbild entsperren.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wähle Fotos für deine Fortschritts-Galerie.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -635,6 +638,9 @@
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Aufnehmen von Fortschritts-Fotos.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Fortschrittsbild entsperren.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wähle Fotos für deine Fortschritts-Galerie.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

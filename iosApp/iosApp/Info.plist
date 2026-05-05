@@ -5,7 +5,7 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Barcode scanning requires camera access</string>
+	<string>Aufnehmen von Fortschritts-Fotos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Wähle Fotos für deine Fortschritts-Galerie.</string>
 	<key>NSFaceIDUsageDescription</key>
