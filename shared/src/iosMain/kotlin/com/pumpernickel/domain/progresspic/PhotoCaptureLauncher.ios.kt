@@ -154,13 +154,49 @@ private class PhPickerDelegate(
 ) : NSObject(), PHPickerViewControllerDelegateProtocol {
 
     override fun picker(picker: PHPickerViewController, didFinishPicking: List<*>) {
-        picker.dismissViewControllerAnimated(true, completion = null)
+        // PHPickerViewController calls this method for BOTH selection and
+        // user-cancel. On cancel, `didFinishPicking` is an empty array.
+        //
+        // BUG FIX (cancel-stuck-spinner): The previous version called
+        // `picker.dismissViewControllerAnimated(...)` BEFORE completing the
+        // deferred. On the cancel path the deferred is completed
+        // synchronously inside this method on the main thread, which
+        // interleaved the suspending-coroutine resumption with the in-flight
+        // modal dismiss machinery — and dropped the resumption. The
+        // suspending `pickFromLibrary()` never returned, the VM's `_busy`
+        // flag stayed true, and the "Speichere" spinner was stuck forever.
+        //
+        // The selection path was unaffected because
+        // loadDataRepresentationForTypeIdentifier's completion closure runs
+        // ASYNC on a background queue *after* this delegate method has
+        // already returned and the dismiss animation has started — so
+        // `deferred.complete(image)` was no longer interleaved with modal
+        // teardown.
+        //
+        // The fix is the Apple-documented PHPickerViewController pattern
+        // (WWDC 2020 "Meet the new Photos picker"): handle the result first,
+        // then dismiss. For the cancel branch we complete-then-dismiss
+        // synchronously. For the selection branch we dismiss-then-load (the
+        // load is async, so the deferred resolves after dismiss as before).
         val results = didFinishPicking.filterIsInstance<PHPickerResult>()
         val first = results.firstOrNull()
+
         if (first == null) {
+            // Cancel (or any case where no PHPickerResult is present).
+            // Complete first to release the suspending coroutine, then
+            // dismiss the picker — order matters to avoid the modal-teardown
+            // race that caused the stuck spinner bug.
             deferred.complete(null)
+            picker.dismissViewControllerAnimated(true, completion = null)
             return
         }
+
+        // Selection: dismiss the picker now so the UI returns immediately,
+        // then load the image bytes asynchronously. The async load callback
+        // resolves the deferred from a background queue, after the modal
+        // dismissal has begun — so the resumption is not interleaved with
+        // dismiss machinery.
+        picker.dismissViewControllerAnimated(true, completion = null)
         val provider: NSItemProvider = first.itemProvider
         // REVIEW M-04: avoid the `UIImage as NSItemProviderReadingProtocol`
         // metaclass cast (it required a CAST_NEVER_SUCCEEDS suppression and
