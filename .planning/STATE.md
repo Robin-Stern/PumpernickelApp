@@ -30,7 +30,7 @@ Phase: 17
 Plan: Not started
 Branch: `feature/workouts` @ `985884c`
 Status: Milestone complete
-Last activity: 2026-05-01
+Last activity: 2026-05-06 - Completed quick task 260506-pf3: iOS Progress Gallery photo viewer prompts for passcode instead of Face ID
 
 Progress: [██████████] 100%
 
@@ -140,6 +140,7 @@ None.
 | 260423-sja | Clean up AchievementGalleryScreen category headers — M3 section-break hierarchy (titleLarge + 20/8 padding + hairline divider) | 2026-04-23 | 4c0740b | [260423-sja-clean-up-achievementgalleryscreen-catego](./quick/260423-sja-clean-up-achievementgalleryscreen-catego/) |
 | 260501-wcg | Phase 17 iOS surfaces (SwiftUI gallery + viewer + prompt card + presenter holder wire) | 2026-05-01 | 17581fa | [260501-wcg-phase-17-ios-surfaces](./quick/260501-wcg-phase-17-ios-surfaces/) |
 | 260506-0hk | fix iOS Progress Gallery tile layout — tiles render offscreen-left with date label clipped (visual checkpoint pending) | 2026-05-05 | db2812e | [260506-0hk-fix-ios-progress-gallery-tile-layout-til](./quick/260506-0hk-fix-ios-progress-gallery-tile-layout-til/) |
+| 260506-pf3 | iOS Progress Gallery photo viewer prompts for passcode instead of Face ID (visual UAT pending) | 2026-05-06 | abb61f5 | [260506-pf3-ios-progress-gallery-photo-viewer-prompt](./quick/260506-pf3-ios-progress-gallery-photo-viewer-prompt/) |
 
 ## Session Continuity
 
