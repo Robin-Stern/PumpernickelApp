@@ -229,3 +229,41 @@ Plans:
 - [x] 17-06-PLAN.md — Gallery + Viewer: ProgressGalleryViewModel + ProgressViewerViewModel (unlockedWorkoutId gate addresses T-BIOMETRIC-BYPASS) + ProgressGalleryScreen + ProgressViewerScreen + Routes/MainScreen/OverviewScreen wiring
 - [x] 17-07-PLAN.md — DI: ProgressGalleryModule + PlatformModule.{android,ios} bindings + 3 iOS KoinHelpers (Gallery, Viewer, Prompt)
 - [x] 17-08-PLAN.md — iOS handoff doc 17-IOS-HANDOFF.md (per D-17-18 — SwiftUI hand-written, not Compose Multiplatform)
+
+### Phase 18: AI Features — F6 Workout Generation + F8 Meal Generation (BYOK, OpenAI-compatible HTTPS)
+
+**Requirements:** REQ-AI-01 … REQ-AI-08 — see `.planning/REQUIREMENTS-ai-features.md`. Anchored in Lastenheft F6 ("MCP/API für CRU(D) Operationen, Systemprompt, vordefinierte Struktur, UI Interface, LLM, D manuell möglich") and F8 ("KI querien für Mahlzeiten").
+**Depends on:** Phase 17 (no code dep — sequencing only, so AI/network is the *last* dependency added before deadline). Leverages existing `WorkoutTemplate`, `Exercise`, `Recipe`, `Food`, `ConsumptionEntry`, `NutritionGoals` data models from v1.0 + Post-v1.5.
+
+**Goal:** Ship two AI-driven generation flows on a single Bring-Your-Own-API-Key OpenAI-compatible HTTPS LLM transport. **(1) Workout AI (F6):** user fills a small form (target muscles, exercise count, optional Push/Pull/Legs-style split), app calls the configured LLM with a versioned system prompt + JSON schema, persists the result(s) through the existing `WorkoutTemplate` repository — single-template or multi-template "chained" generation per the user's split selection. Delete stays manual. **(2) Meal AI (F8):** user taps "Fill remaining macros", app reads today's `ConsumptionEntry` log against `NutritionGoals` to compute remaining kcal + protein/carbs/fat/sugar, prompts the LLM with those targets + a recipe schema, persists the result through the existing `Recipe` entity. Both flows share: a single `OpenAICompatibleClient` (Ktor), a Settings screen with API key + base URL stored in Keychain (iOS) / EncryptedSharedPreferences (Android), schema validation on every response, and consistent error UX for timeout / 4xx / 5xx / refusal. No on-device LLM, no MCP server, no tool-use, no multi-provider abstraction (all deferred — see `SEED-002` and `.planning/notes/ai-features-design-decisions.md`).
+
+**Scope notes:**
+- **Provider:** Single OpenAI-compatible HTTPS client. Works against OpenAI, Together.AI, OpenRouter, Groq, and any compatible endpoint by changing base URL only.
+- **Structured output:** JSON schemas live in source under the AI feature module; validated before any DB write. Use `response_format: json_schema` where supported, fall back to schema-validate-and-retry pattern otherwise.
+- **System prompts:** Versioned in the repo (one for workout, one for recipe), referenced by the client. Reviewable in PRs.
+- **Settings UX:** API key + base URL + optional model name. Key never logged or persisted to plaintext storage. Cleared key disables AI features with explanatory empty state.
+- **F6 form:** Reuse existing `AnatomyPickerSheet` (Phase 14) for muscle-group selection where it makes sense. Number-of-exercises and split-style as additional fields. Single big LLM call returning an array for multi-template generation (decided at plan-phase between this and N sequential calls per D-AI-08).
+- **F8 entry point:** "Fill remaining macros" CTA from the Nutrition tab / Overview surface. Refuses cleanly when remaining macros are negative or near zero.
+- **Cross-platform:** Compose Multiplatform shared UI for the form + settings screen; iOS-specific handoff doc only if the AI Settings screen needs SwiftUI per existing project conventions (decided at plan-phase).
+- **Schema migration:** None expected — existing `WorkoutTemplate` / `Recipe` schemas are reused as-is. Verify during plan-phase that `Recipe` accepts AI-sourced provenance metadata (e.g., a `source` field) without a Room migration; if not, bump v9 → v10 with an additive AutoMigration.
+
+**Out of scope (this phase):**
+- On-device / local Gemma inference — see `.planning/seeds/SEED-002-on-device-gemma-llamatik.md`.
+- Multi-provider abstraction with more than one concrete client.
+- An MCP server implementation.
+- Agent loops / tool use.
+- Prompt-injection hardening, jailbreak audits, content-moderation pipelines.
+- RAG, embeddings, fine-tuning.
+- AI editing of *existing* templates / recipes (Update via AI).
+- Streaming responses.
+- Cost / token-count UI.
+
+**Plans:** Not yet planned. Run `/gsd-discuss-phase 18` and `/gsd-plan-phase 18`.
+
+**Success criteria (draft, finalized at plan-phase):**
+- A user with no API key sees clear empty-state UX in the AI flows; settings prompts them to add a key.
+- A user with a valid key generates a workout template from a small form; the result is editable / launchable via the existing template UI; multi-template "split" generation produces ≥3 templates from one form submission.
+- A user with a valid key generates a recipe matching today's remaining macros to within ±10% on a representative day; the recipe is saveable and shows up in the existing recipe collection.
+- Schema-invalid LLM responses surface a clear error and never write partial data.
+- BYOK key is stored in Keychain (iOS) / EncryptedSharedPreferences (Android), never in DataStore plaintext.
+- Phase 15 gamification, Phase 16 nutrition goals, and Phase 17 progress-pic flows continue to work unchanged.
