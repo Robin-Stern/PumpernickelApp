@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: Android Material 3 UI
 status: milestone_complete
 stopped_at: Phase 17 context gathered
-last_updated: "2026-05-01T21:30:00.000Z"
-last_activity: 2026-05-01 -- Completed quick task 260501-wcg: Phase 17 iOS surfaces
+last_updated: "2026-05-05T22:21:04.388Z"
+last_activity: 2026-05-05 -- Completed quick task 260506-0hk: fix iOS Progress Gallery tile layout
 progress:
   total_phases: 4
   completed_phases: 4
@@ -139,6 +139,7 @@ None.
 |---|-------------|------|--------|-----------|
 | 260423-sja | Clean up AchievementGalleryScreen category headers — M3 section-break hierarchy (titleLarge + 20/8 padding + hairline divider) | 2026-04-23 | 4c0740b | [260423-sja-clean-up-achievementgalleryscreen-catego](./quick/260423-sja-clean-up-achievementgalleryscreen-catego/) |
 | 260501-wcg | Phase 17 iOS surfaces (SwiftUI gallery + viewer + prompt card + presenter holder wire) | 2026-05-01 | 17581fa | [260501-wcg-phase-17-ios-surfaces](./quick/260501-wcg-phase-17-ios-surfaces/) |
+| 260506-0hk | fix iOS Progress Gallery tile layout — tiles render offscreen-left with date label clipped (visual checkpoint pending) | 2026-05-05 | db2812e | [260506-0hk-fix-ios-progress-gallery-tile-layout-til](./quick/260506-0hk-fix-ios-progress-gallery-tile-layout-til/) |
 
 ## Session Continuity
 
