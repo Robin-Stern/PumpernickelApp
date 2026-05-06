@@ -127,7 +127,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 
 ### Pending Todos
 
-None.
+- [ios] Retroactive progress photo attach from History (2026-05-06) — `.planning/todos/pending/2026-05-06-retroactive-progress-photo-attach-from-history.md`
 
 ### Blockers/Concerns
 
