@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.pumpernickel.android.ui.components.ProgressPicturePromptCard
 import com.pumpernickel.android.ui.components.RepsPicker
 import com.pumpernickel.android.ui.components.WeightPicker
 import com.pumpernickel.domain.model.CompletedExercise
@@ -1101,6 +1102,17 @@ private fun FinishedContent(
                 SummaryRow("Sets", finished.totalSets.toString())
             }
         }
+
+        Spacer(Modifier.height(16.dp))
+
+        // D-17-01: post-workout photo prompt. Non-blocking — Done button below
+        // stays enabled regardless of this card's interaction state.
+        ProgressPicturePromptCard(
+            workoutId = finished.workoutId,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+        )
 
         Spacer(Modifier.weight(1f))
 

@@ -64,6 +64,7 @@ struct WorkoutSessionView: View {
                     durationMillis: finished.durationMillis,
                     totalSets: finished.totalSets,
                     totalExercises: finished.totalExercises,
+                    workoutId: finished.workoutId,
                     onDone: {
                         viewModel.resetToIdle()
                         dismiss()

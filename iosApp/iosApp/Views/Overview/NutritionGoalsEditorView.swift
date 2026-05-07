@@ -118,34 +118,33 @@ struct NutritionGoalsEditorView: View {
                         selection: $kcalValue,
                         onChange: { selectedSuggestion = nil }
                     )
-                    wheelPicker(
-                        label: "Protein",
-                        unit: "g",
-                        range: Array(stride(from: 20, through: 400, by: 5)),
-                        selection: $proteinValue,
-                        onChange: { selectedSuggestion = nil }
-                    )
-                    wheelPicker(
-                        label: "Kohlenhydrate",
-                        unit: "g",
-                        range: Array(stride(from: 20, through: 700, by: 5)),
-                        selection: $carbsValue,
-                        onChange: { selectedSuggestion = nil }
-                    )
-                    wheelPicker(
-                        label: "Fett",
-                        unit: "g",
-                        range: Array(stride(from: 10, through: 250, by: 5)),
-                        selection: $fatValue,
-                        onChange: { selectedSuggestion = nil }
-                    )
-                    wheelPicker(
-                        label: "Zucker",
-                        unit: "g",
-                        range: Array(stride(from: 0, through: 200, by: 5)),
-                        selection: $sugarValue,
-                        onChange: { selectedSuggestion = nil }
-                    )
+                    HStack(spacing: 0) {
+                        compactWheelPicker(
+                            label: "Protein (g)",
+                            range: Array(stride(from: 20, through: 400, by: 5)),
+                            selection: $proteinValue,
+                            onChange: { selectedSuggestion = nil }
+                        )
+                        compactWheelPicker(
+                            label: "Kohlenh. (g)",
+                            range: Array(stride(from: 20, through: 700, by: 5)),
+                            selection: $carbsValue,
+                            onChange: { selectedSuggestion = nil }
+                        )
+                        compactWheelPicker(
+                            label: "Fett (g)",
+                            range: Array(stride(from: 10, through: 250, by: 5)),
+                            selection: $fatValue,
+                            onChange: { selectedSuggestion = nil }
+                        )
+                        compactWheelPicker(
+                            label: "Zucker (g)",
+                            range: Array(stride(from: 0, through: 200, by: 5)),
+                            selection: $sugarValue,
+                            onChange: { selectedSuggestion = nil }
+                        )
+                    }
+                    .listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
                 }
             }
             .navigationTitle("Ernährungsziele")
@@ -189,6 +188,32 @@ struct NutritionGoalsEditorView: View {
             .frame(height: 100)
             .onChange(of: selection.wrappedValue) { _, _ in onChange() }
         }
+    }
+
+    @ViewBuilder
+    private func compactWheelPicker(
+        label: String,
+        range: [Int],
+        selection: Binding<Int>,
+        onChange: @escaping () -> Void
+    ) -> some View {
+        VStack(alignment: .center, spacing: 2) {
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Picker(label, selection: selection) {
+                ForEach(range, id: \.self) { v in
+                    Text("\(v)").tag(v)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(height: 100)
+            .clipped()
+            .onChange(of: selection.wrappedValue) { _, _ in onChange() }
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private func applySuggestion(_ type: SuggestionType) {
