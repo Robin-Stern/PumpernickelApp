@@ -14,5 +14,6 @@ data class FoodEntity(
     val sugar: Double,
     val unit: String, // "GRAM" or "MILLILITER"
     val isRecipe: Boolean = false,
-    val barcode: String? = null
+    val barcode: String? = null,
+    val source: String? = null  // "USER" | "AI" — null treated as USER on read (D-18-11)
 )
