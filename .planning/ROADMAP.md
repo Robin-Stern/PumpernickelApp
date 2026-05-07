@@ -258,7 +258,29 @@ Plans:
 - Streaming responses.
 - Cost / token-count UI.
 
-**Plans:** Not yet planned. Run `/gsd-discuss-phase 18` and `/gsd-plan-phase 18`.
+**Plans:** 10/10 plans planned (2026-05-07)
+
+**Wave structure** (serialized where plans share files; parallelism within a wave only when files_modified do not overlap):
+- Wave 1 (foundation, parallel): 01 (Room v9 → v10 — source column on 4 entities + AutoMigration(9, 10)), 02 (HttpClientFactory plugins + AiChatDto + OpenAICompatibleClient + AiError sealed)
+- Wave 2 (parallel — different files): 03 (versioned prompt .md files + WorkoutAiSchema + RecipeAiSchema + AiPromptCatalog), 04 (SecureKeyStore expect/actual + EncryptedSharedPreferences/Keychain bindings + SettingsRepository AI fields + security-crypto dep)
+- Wave 3: 05 (AiSettingsViewModel + AiModule + SharedModule includes + Routes/MainScreen + AiSettingsScreen + SettingsSheet AI row + iOS KoinHelper) — *checkpoint:human-verify*
+- Wave 4: 06 (WorkoutAiUseCase + WorkoutAiPreview + WorkoutAiViewModel + AiModule binding + iOS KoinHelper + TemplateRepository.createTemplate source arg)
+- Wave 5: 07 (AiPreviewSheet sealed shape + Workout body + AiWorkoutGenScreen + TemplateListScreen sparkles + MainScreen route) — *checkpoint:human-verify*
+- Wave 6: 08 (RecipeAiUseCase + RecipeAiPreview + RecipeAiViewModel + AiModule binding + iOS KoinHelper)
+- Wave 7: 09 (AiPreviewSheet Recipe branch + AiMealGenScreen + NutritionDailyLogScreen sparkles + MainScreen route) — *checkpoint:human-verify*
+- Wave 8: 10 (18-IOS-HANDOFF.md spec)
+
+Plans:
+- [ ] 18-01-PLAN.md — Room v9 → v10: nullable source column on WorkoutTemplate / Exercise / Recipe / Food entities + AutoMigration(9, 10) + propagate field through domain models
+- [ ] 18-02-PLAN.md — OpenAICompatibleClient + AiChatDto + AiError sealed + HttpClientFactory ContentNegotiation/HttpTimeout(60s) install
+- [ ] 18-03-PLAN.md — Versioned prompt files (workout-system.md / recipe-system.md) + WorkoutAiSchema + RecipeAiSchema + AiPromptCatalog (reuses readResourceFile)
+- [ ] 18-04-PLAN.md — SecureKeyStore expect/actual (Keychain on iOS, EncryptedSharedPreferences on Android) + PlatformModule bindings + SettingsRepository AI configuration fields
+- [ ] 18-05-PLAN.md — AiSettingsViewModel + AiModule (registered in SharedModule) + AiSettingsScreen + SettingsSheet AI row + Routes/MainScreen wiring + iOS AiSettingsKoinHelper
+- [ ] 18-06-PLAN.md — WorkoutAiUseCase + WorkoutAiViewModel + AiModule binding + iOS WorkoutAiKoinHelper + TemplateRepository.createTemplate gains source arg
+- [ ] 18-07-PLAN.md — AiPreviewSheet sealed AiPreviewContent + Workout body + AiWorkoutGenScreen + TemplateListScreen sparkles entry + MainScreen route
+- [ ] 18-08-PLAN.md — RecipeAiUseCase + RecipeAiViewModel + AiModule binding + iOS RecipeAiKoinHelper
+- [ ] 18-09-PLAN.md — AiPreviewSheet Recipe branch + AiMealGenScreen + NutritionDailyLogScreen sparkles + MainScreen route
+- [ ] 18-10-PLAN.md — 18-IOS-HANDOFF.md spec for SwiftUI surfaces (4 new + 2 modify)
 
 **Success criteria (draft, finalized at plan-phase):**
 - A user with no API key sees clear empty-state UX in the AI flows; settings prompts them to add a key.
