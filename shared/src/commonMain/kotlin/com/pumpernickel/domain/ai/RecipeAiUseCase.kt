@@ -1,4 +1,4 @@
-@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)
+@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class, kotlin.time.ExperimentalTime::class)
 
 package com.pumpernickel.domain.ai
 
@@ -20,7 +20,8 @@ import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
 import com.pumpernickel.domain.nutrition.LoadConsumptionsForDateUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
