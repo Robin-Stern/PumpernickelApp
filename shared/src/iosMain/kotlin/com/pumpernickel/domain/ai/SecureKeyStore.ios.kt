@@ -2,24 +2,23 @@
 
 package com.pumpernickel.domain.ai
 
-import kotlinx.cinterop.CFBridgingRelease
-import kotlinx.cinterop.CFBridgingRetain
+import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import platform.CoreFoundation.CFDictionaryCreateMutable
 import platform.CoreFoundation.CFDictionaryRef
-import platform.CoreFoundation.CFMutableDictionaryRef
 import platform.CoreFoundation.CFTypeRefVar
-import platform.CoreFoundation.kCFAllocatorDefault
-import platform.CoreFoundation.kCFBooleanTrue
 import platform.Foundation.NSData
+import platform.Foundation.NSMutableDictionary
+import platform.Foundation.NSNumber
 import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
+import platform.Foundation.numberWithBool
 import platform.Security.SecItemAdd
 import platform.Security.SecItemCopyMatching
 import platform.Security.SecItemDelete
@@ -42,73 +41,74 @@ private const val ACCOUNT = "openai.api.key"
 
 actual class SecureKeyStore {
 
-    actual suspend fun writeApiKey(value: String) = withContext(Dispatchers.IO) {
-        val data = (value as NSString).dataUsingEncoding(NSUTF8StringEncoding)
-            ?: error("Failed to encode API key as UTF-8")
+    actual suspend fun writeApiKey(value: String) = withContext(Dispatchers.Default) {
+        val data: NSData = value.encodeToByteArray().toNSData()
 
         // Try update first; if not found, add.
-        val updateQuery = baseQuery()
-        val updateAttrs = CFDictionaryCreateMutable(kCFAllocatorDefault, 1, null, null)
-        CFDictionarySetValueBridge(updateAttrs, kSecValueData, data)
-        val updateStatus = SecItemUpdate(updateQuery as CFDictionaryRef, updateAttrs as CFDictionaryRef)
+        val updateAttrs = NSMutableDictionary().apply {
+            setObject(data, forKey = kSecValueData!! as NSString)
+        }
+        @Suppress("CAST_NEVER_SUCCEEDS")
+        val updateStatus = SecItemUpdate(
+            baseQuery() as CFDictionaryRef,
+            updateAttrs as CFDictionaryRef
+        )
         if (updateStatus == errSecItemNotFound) {
-            val addQuery = baseQuery()
-            CFDictionarySetValueBridge(addQuery, kSecValueData, data)
-            CFDictionarySetValueBridge(addQuery, kSecAttrAccessible, kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly)
+            val addQuery = baseQuery().apply {
+                setObject(data, forKey = kSecValueData!! as NSString)
+                setObject(
+                    kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly!! as NSString,
+                    forKey = kSecAttrAccessible!! as NSString
+                )
+            }
+            @Suppress("CAST_NEVER_SUCCEEDS")
             val addStatus = SecItemAdd(addQuery as CFDictionaryRef, null)
-            require(addStatus == errSecSuccess) { "Keychain SecItemAdd failed (status $addStatus)" }
+            require(addStatus == errSecSuccess) {
+                "Keychain SecItemAdd failed (status $addStatus)"
+            }
         } else {
-            require(updateStatus == errSecSuccess) { "Keychain SecItemUpdate failed (status $updateStatus)" }
+            require(updateStatus == errSecSuccess) {
+                "Keychain SecItemUpdate failed (status $updateStatus)"
+            }
         }
     }
 
-    actual suspend fun readApiKey(): String? = withContext(Dispatchers.IO) {
+    actual suspend fun readApiKey(): String? = withContext(Dispatchers.Default) {
         memScoped {
-            val query = baseQuery()
-            CFDictionarySetValueBridge(query, kSecMatchLimit, kSecMatchLimitOne)
-            CFDictionarySetValueBridge(query, kSecReturnData, kCFBooleanTrue)
-
-            val result = alloc<CFTypeRefVar>()
-            val status = SecItemCopyMatching(query as CFDictionaryRef, result.ptr)
-            if (status == errSecItemNotFound) return@withContext null
+            val query = baseQuery().apply {
+                setObject(kSecMatchLimitOne!! as NSString, forKey = kSecMatchLimit!! as NSString)
+                setObject(NSNumber.numberWithBool(true), forKey = kSecReturnData!! as NSString)
+            }
+            val resultVar = alloc<CFTypeRefVar>()
+            @Suppress("CAST_NEVER_SUCCEEDS")
+            val status = SecItemCopyMatching(query as CFDictionaryRef, resultVar.ptr)
             if (status != errSecSuccess) return@withContext null
-
-            val cfData = result.value ?: return@withContext null
-            val nsData = CFBridgingRelease(cfData) as? NSData ?: return@withContext null
-            NSString.create(nsData, NSUTF8StringEncoding) as? String
+            val cfData = resultVar.value ?: return@withContext null
+            // CFData is toll-free bridged with NSData
+            @Suppress("CAST_NEVER_SUCCEEDS")
+            val nsData = cfData as NSData
+            NSString.create(data = nsData, encoding = NSUTF8StringEncoding) as String?
         }
     }
 
-    actual suspend fun clearApiKey() = withContext(Dispatchers.IO) {
-        val query = baseQuery()
-        SecItemDelete(query as CFDictionaryRef)
+    actual suspend fun clearApiKey() = withContext(Dispatchers.Default) {
+        @Suppress("CAST_NEVER_SUCCEEDS")
+        SecItemDelete(baseQuery() as CFDictionaryRef)
         Unit
     }
 
-    private fun baseQuery(): CFMutableDictionaryRef {
-        val dict = CFDictionaryCreateMutable(kCFAllocatorDefault, 4, null, null)
-            ?: error("Failed to create Keychain query dictionary")
-        CFDictionarySetValueBridge(dict, kSecClass, kSecClassGenericPassword)
-        CFDictionarySetValueBridge(dict, kSecAttrService, SERVICE as NSString)
-        CFDictionarySetValueBridge(dict, kSecAttrAccount, ACCOUNT as NSString)
-        return dict
+    private fun baseQuery(): NSMutableDictionary {
+        return NSMutableDictionary().apply {
+            setObject(kSecClassGenericPassword!! as NSString, forKey = kSecClass!! as NSString)
+            setObject(SERVICE, forKey = kSecAttrService!! as NSString)
+            setObject(ACCOUNT, forKey = kSecAttrAccount!! as NSString)
+        }
     }
+}
 
-    /**
-     * Bridge helper that retains an Objective-C / NSObject value as a Core
-     * Foundation pointer and sets it in the mutable dictionary. The retain is
-     * balanced by the dictionary's own release on deallocation, consistent with
-     * the CFBridgingRetain usage in other cinterop files in this project.
-     */
-    private fun CFDictionarySetValueBridge(
-        dict: CFMutableDictionaryRef?,
-        key: Any?,
-        value: Any?
-    ) {
-        platform.CoreFoundation.CFDictionarySetValue(
-            dict,
-            CFBridgingRetain(key),
-            CFBridgingRetain(value)
-        )
+private fun ByteArray.toNSData(): NSData {
+    if (isEmpty()) return NSData()
+    return usePinned { pinned ->
+        NSData.create(bytes = pinned.addressOf(0), length = size.toULong())
     }
 }
