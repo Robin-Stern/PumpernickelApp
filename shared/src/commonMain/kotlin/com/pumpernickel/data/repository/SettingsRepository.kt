@@ -163,4 +163,34 @@ class SettingsRepository(
             preferences[nutritionGoalsBannerDismissedKey] = dismissed
         }
     }
+
+    // D-18-06 — AI configuration. NOT secrets — the API key lives in
+    // SecureKeyStore (Keychain on iOS, EncryptedSharedPreferences on Android).
+    private val aiProviderPresetKey = stringPreferencesKey("ai_provider_preset")
+    private val aiBaseUrlKey = stringPreferencesKey("ai_base_url")
+    private val aiModelKey = stringPreferencesKey("ai_model")
+
+    val aiProviderPreset: Flow<String> = dataStore.data.map { prefs ->
+        prefs[aiProviderPresetKey] ?: "openai"
+    }
+
+    val aiBaseUrl: Flow<String> = dataStore.data.map { prefs ->
+        prefs[aiBaseUrlKey] ?: "https://api.openai.com/v1"
+    }
+
+    val aiModel: Flow<String> = dataStore.data.map { prefs ->
+        prefs[aiModelKey] ?: "gpt-4o-mini"
+    }
+
+    suspend fun setAiProviderPreset(preset: String) {
+        dataStore.edit { prefs -> prefs[aiProviderPresetKey] = preset }
+    }
+
+    suspend fun setAiBaseUrl(url: String) {
+        dataStore.edit { prefs -> prefs[aiBaseUrlKey] = url }
+    }
+
+    suspend fun setAiModel(model: String) {
+        dataStore.edit { prefs -> prefs[aiModelKey] = model }
+    }
 }
