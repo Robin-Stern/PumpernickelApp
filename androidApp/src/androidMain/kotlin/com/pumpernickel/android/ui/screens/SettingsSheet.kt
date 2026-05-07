@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,7 +50,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun SettingsSheet(
     onDismiss: () -> Unit,
-    onNavigateToAchievements: () -> Unit
+    onNavigateToAchievements: () -> Unit,
+    onNavigateToAiSettings: () -> Unit = {}
 ) {
     val viewModel: SettingsViewModel = koinViewModel()
     val weightUnit by viewModel.weightUnit.collectAsState()
@@ -200,6 +202,42 @@ fun SettingsSheet(
                 )
                 Text(
                     text = "Achievements",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── KI-Einstellungen (D-18-05) ──
+            Text(
+                text = "KI / BYOK",
+                style = MaterialTheme.typography.labelLarge
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        onDismiss()
+                        onNavigateToAiSettings()
+                    }
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "KI-Einstellungen",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
