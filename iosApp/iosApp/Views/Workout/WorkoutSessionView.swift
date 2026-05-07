@@ -104,10 +104,32 @@ struct WorkoutSessionView: View {
             editSetSheet
         }
         .task {
-            if isResume {
-                viewModel.resumeWorkout()
-            } else {
-                viewModel.startWorkout(templateId: templateId)
+            // BUG FIX (ios-camera-post-workout-lost): only kick off the
+            // session-start when the VM is genuinely idle. SwiftUI's `.task`
+            // re-fires every time the view re-appears, including after a
+            // fullscreen modal (UIImagePickerController .camera) is dismissed.
+            // Without this guard the camera-dismiss event re-invoked
+            // startWorkout(templateId:) which regressed the state machine
+            // from .Finished back to .Active(0,0) and inserted a fresh
+            // active_session row in Room — the user landed on Exercise 1 /
+            // Set 1 of a phantom workout immediately after the photo accept,
+            // with the only escape being "discard current workout".
+            //
+            // The gallery path is unaffected because PHPickerViewController
+            // presents as `.formSheet`/`.pageSheet` and does not remove the
+            // presenter's view from the window — `.task` is not cancelled
+            // and not re-fired on its dismissal.
+            //
+            // Observers (sessionStateFlow, elapsedSeconds, etc.) are
+            // intentionally re-attached on every re-appearance: re-binding
+            // the same StateFlow yields the current value plus subsequent
+            // emissions, with no duplication risk.
+            if sessionState is WorkoutSessionState.Idle {
+                if isResume {
+                    viewModel.resumeWorkout()
+                } else {
+                    viewModel.startWorkout(templateId: templateId)
+                }
             }
             await withTaskGroup(of: Void.self) { group in
                 group.addTask { await observeSessionState() }
