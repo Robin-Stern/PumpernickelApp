@@ -1,9 +1,15 @@
 package com.pumpernickel.di
 
 import com.pumpernickel.data.api.OpenAICompatibleClient
+import com.pumpernickel.data.repository.FoodRepository
 import com.pumpernickel.domain.ai.AiPromptCatalog
+import com.pumpernickel.domain.ai.RecipeAiUseCase
 import com.pumpernickel.domain.ai.SecureKeyStore
+import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
+import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
+import com.pumpernickel.domain.nutrition.LoadConsumptionsForDateUseCase
 import com.pumpernickel.presentation.ai.AiSettingsViewModel
+import com.pumpernickel.presentation.ai.RecipeAiViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -28,4 +34,12 @@ val aiModule = module {
     }
 
     viewModel { AiSettingsViewModel(get(), get()) }
+
+    // --- Recipe AI (F8) — Plan 08 additions. Keep isolated for clean wave-merge. ---
+    // get() order: OpenAICompatibleClient, AiPromptCatalog, FoodRepository,
+    //              SettingsRepository, CalculateDailyMacrosUseCase,
+    //              CalculateRecipeMacrosUseCase, LoadConsumptionsForDateUseCase
+    single { RecipeAiUseCase(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { RecipeAiViewModel(get(), get()) }
+    // --- End Recipe AI (Plan 08) ---
 }
