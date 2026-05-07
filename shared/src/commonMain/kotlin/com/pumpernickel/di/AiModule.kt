@@ -1,15 +1,20 @@
 package com.pumpernickel.di
 
 import com.pumpernickel.data.api.OpenAICompatibleClient
+import com.pumpernickel.data.repository.ExerciseRepository
 import com.pumpernickel.data.repository.FoodRepository
+import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.domain.ai.AiPromptCatalog
 import com.pumpernickel.domain.ai.RecipeAiUseCase
 import com.pumpernickel.domain.ai.SecureKeyStore
+import com.pumpernickel.domain.ai.WorkoutAiUseCase
 import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
 import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
 import com.pumpernickel.domain.nutrition.LoadConsumptionsForDateUseCase
 import com.pumpernickel.presentation.ai.AiSettingsViewModel
 import com.pumpernickel.presentation.ai.RecipeAiViewModel
+import com.pumpernickel.presentation.ai.WorkoutAiViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -34,6 +39,11 @@ val aiModule = module {
     }
 
     viewModel { AiSettingsViewModel(get(), get()) }
+
+    // --- Workout AI (F6) — Plan 06 additions. Keep isolated for clean wave-merge. ---
+    single { WorkoutAiUseCase(get(), get(), get(), get(), get()) }
+    viewModel { WorkoutAiViewModel(get(), get()) }
+    // --- End Workout AI (Plan 06) ---
 
     // --- Recipe AI (F8) — Plan 08 additions. Keep isolated for clean wave-merge. ---
     // get() order: OpenAICompatibleClient, AiPromptCatalog, FoodRepository,
