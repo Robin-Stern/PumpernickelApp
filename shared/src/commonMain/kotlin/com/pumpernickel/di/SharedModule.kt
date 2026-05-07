@@ -62,7 +62,8 @@ val sharedModule = module {
         gamificationEngineModule,
         gamificationUiModule,
         achievementGalleryModule,
-        progressGalleryModule
+        progressGalleryModule,
+        aiModule
     )
 
     // Database -- build from platform-provided Builder

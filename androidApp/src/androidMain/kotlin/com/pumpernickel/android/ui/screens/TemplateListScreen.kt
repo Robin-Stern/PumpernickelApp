@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.pumpernickel.android.R
 import com.pumpernickel.android.ui.navigation.AchievementGalleryRoute
+import com.pumpernickel.android.ui.navigation.AiSettingsRoute
 import com.pumpernickel.android.ui.navigation.TemplateEditorRoute
 import com.pumpernickel.android.ui.navigation.WorkoutHistoryListRoute
 import com.pumpernickel.android.ui.navigation.WorkoutSessionRoute
@@ -223,6 +224,9 @@ fun TemplateListScreen(navController: NavHostController) {
             onDismiss = { showSettingsSheet = false },
             onNavigateToAchievements = {
                 navController.navigate(AchievementGalleryRoute)
+            },
+            onNavigateToAiSettings = {
+                navController.navigate(AiSettingsRoute)
             }
         )
     }
