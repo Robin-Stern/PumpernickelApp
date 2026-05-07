@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import com.pumpernickel.data.db.AppDatabase
 import com.pumpernickel.data.db.getDatabaseBuilder
 import com.pumpernickel.data.preferences.createDataStoreAndroid
+import com.pumpernickel.domain.ai.SecureKeyStore
 import com.pumpernickel.domain.progresspic.BiometricGate
 import com.pumpernickel.domain.progresspic.PhotoCaptureLauncher
 import com.pumpernickel.domain.progresspic.PhotoVault
@@ -20,4 +21,6 @@ actual val platformModule: Module = module {
     single<PhotoVault> { PhotoVault(androidContext()) }
     single<PhotoCaptureLauncher> { PhotoCaptureLauncher(androidContext()) }
     single<BiometricGate> { BiometricGate(androidContext()) }
+    // Phase 18 — BYOK key store (REQ-AI-06).
+    single<SecureKeyStore> { SecureKeyStore(androidContext()) }
 }

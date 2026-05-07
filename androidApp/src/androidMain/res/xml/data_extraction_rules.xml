@@ -2,8 +2,12 @@
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="progress_pics/" />
+        <!-- Phase 18 T-18-04-03 — exclude EncryptedSharedPreferences file from cloud backup -->
+        <exclude domain="sharedpref" path="ai_secrets.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="progress_pics/" />
+        <!-- Phase 18 T-18-04-03 — exclude EncryptedSharedPreferences file from device transfer -->
+        <exclude domain="sharedpref" path="ai_secrets.xml" />
     </device-transfer>
 </data-extraction-rules>
