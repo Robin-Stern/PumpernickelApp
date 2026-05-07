@@ -42,59 +42,69 @@ private const val ACCOUNT = "openai.api.key"
 actual class SecureKeyStore {
 
     actual suspend fun writeApiKey(value: String) = withContext(Dispatchers.Default) {
-        val data: NSData = value.encodeToByteArray().toNSData()
+        try {
+            val data: NSData = value.encodeToByteArray().toNSData()
 
-        // Try update first; if not found, add.
-        val updateAttrs = NSMutableDictionary().apply {
-            setObject(data, forKey = kSecValueData!! as NSString)
-        }
-        @Suppress("CAST_NEVER_SUCCEEDS")
-        val updateStatus = SecItemUpdate(
-            baseQuery() as CFDictionaryRef,
-            updateAttrs as CFDictionaryRef
-        )
-        if (updateStatus == errSecItemNotFound) {
-            val addQuery = baseQuery().apply {
+            val updateAttrs = NSMutableDictionary().apply {
                 setObject(data, forKey = kSecValueData!! as NSString)
-                setObject(
-                    kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly!! as NSString,
-                    forKey = kSecAttrAccessible!! as NSString
-                )
             }
             @Suppress("CAST_NEVER_SUCCEEDS")
-            val addStatus = SecItemAdd(addQuery as CFDictionaryRef, null)
-            require(addStatus == errSecSuccess) {
-                "Keychain SecItemAdd failed (status $addStatus)"
+            val updateStatus = SecItemUpdate(
+                baseQuery() as CFDictionaryRef,
+                updateAttrs as CFDictionaryRef
+            )
+            if (updateStatus == errSecItemNotFound) {
+                val addQuery = baseQuery().apply {
+                    setObject(data, forKey = kSecValueData!! as NSString)
+                    setObject(
+                        kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly!! as NSString,
+                        forKey = kSecAttrAccessible!! as NSString
+                    )
+                }
+                @Suppress("CAST_NEVER_SUCCEEDS")
+                val addStatus = SecItemAdd(addQuery as CFDictionaryRef, null)
+                if (addStatus != errSecSuccess) {
+                    println("[SecureKeyStore.ios] SecItemAdd failed (status=$addStatus)")
+                }
+            } else if (updateStatus != errSecSuccess) {
+                println("[SecureKeyStore.ios] SecItemUpdate failed (status=$updateStatus)")
             }
-        } else {
-            require(updateStatus == errSecSuccess) {
-                "Keychain SecItemUpdate failed (status $updateStatus)"
-            }
+        } catch (t: Throwable) {
+            println("[SecureKeyStore.ios] writeApiKey crashed: $t")
         }
     }
 
     actual suspend fun readApiKey(): String? = withContext(Dispatchers.Default) {
-        memScoped {
-            val query = baseQuery().apply {
-                setObject(kSecMatchLimitOne!! as NSString, forKey = kSecMatchLimit!! as NSString)
-                setObject(NSNumber.numberWithBool(true), forKey = kSecReturnData!! as NSString)
+        try {
+            memScoped {
+                val query = baseQuery().apply {
+                    setObject(kSecMatchLimitOne!! as NSString, forKey = kSecMatchLimit!! as NSString)
+                    setObject(NSNumber.numberWithBool(true), forKey = kSecReturnData!! as NSString)
+                }
+                val resultVar = alloc<CFTypeRefVar>()
+                @Suppress("CAST_NEVER_SUCCEEDS")
+                val status = SecItemCopyMatching(query as CFDictionaryRef, resultVar.ptr)
+                if (status != errSecSuccess) return@withContext null
+                val cfData = resultVar.value ?: return@withContext null
+                @Suppress("CAST_NEVER_SUCCEEDS")
+                val nsData = cfData as NSData
+                NSString.create(data = nsData, encoding = NSUTF8StringEncoding) as String?
             }
-            val resultVar = alloc<CFTypeRefVar>()
-            @Suppress("CAST_NEVER_SUCCEEDS")
-            val status = SecItemCopyMatching(query as CFDictionaryRef, resultVar.ptr)
-            if (status != errSecSuccess) return@withContext null
-            val cfData = resultVar.value ?: return@withContext null
-            // CFData is toll-free bridged with NSData
-            @Suppress("CAST_NEVER_SUCCEEDS")
-            val nsData = cfData as NSData
-            NSString.create(data = nsData, encoding = NSUTF8StringEncoding) as String?
+        } catch (t: Throwable) {
+            println("[SecureKeyStore.ios] readApiKey crashed: $t")
+            null
         }
     }
 
     actual suspend fun clearApiKey() = withContext(Dispatchers.Default) {
-        @Suppress("CAST_NEVER_SUCCEEDS")
-        SecItemDelete(baseQuery() as CFDictionaryRef)
-        Unit
+        try {
+            @Suppress("CAST_NEVER_SUCCEEDS")
+            SecItemDelete(baseQuery() as CFDictionaryRef)
+            Unit
+        } catch (t: Throwable) {
+            println("[SecureKeyStore.ios] clearApiKey crashed: $t")
+            Unit
+        }
     }
 
     private fun baseQuery(): NSMutableDictionary {
