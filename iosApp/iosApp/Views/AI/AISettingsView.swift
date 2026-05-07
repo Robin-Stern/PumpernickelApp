@@ -163,12 +163,13 @@ struct AISettingsView: View {
     }
 
     private func observeBaseUrl() async {
+        // Always mirror the flow into the draft. Flow changes are user-driven
+        // (preset switch resets baseUrl/model to per-preset defaults — D-18-06),
+        // so the field SHOULD visibly update on preset change.
         do {
             for try await value in asyncSequence(for: viewModel.baseUrlFlow) {
                 self.baseUrl = value
-                if !didSeedDrafts || baseUrlDraft.isEmpty {
-                    self.baseUrlDraft = value
-                }
+                self.baseUrlDraft = value
             }
         } catch {
             print("AISettingsView baseUrl observation error: \(error)")
@@ -179,10 +180,7 @@ struct AISettingsView: View {
         do {
             for try await value in asyncSequence(for: viewModel.modelFlow) {
                 self.model = value
-                if !didSeedDrafts || modelDraft.isEmpty {
-                    self.modelDraft = value
-                    self.didSeedDrafts = true
-                }
+                self.modelDraft = value
             }
         } catch {
             print("AISettingsView model observation error: \(error)")

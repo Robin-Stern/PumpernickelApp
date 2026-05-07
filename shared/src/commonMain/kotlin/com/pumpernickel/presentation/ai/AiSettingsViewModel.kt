@@ -81,8 +81,8 @@ class AiSettingsViewModel(
         // Custom preset has empty defaults so the user fills them.
         private val PROVIDER_DEFAULTS: Map<String, Pair<String, String>> = mapOf(
             "openai" to ("https://api.openai.com/v1" to "gpt-4o-mini"),
-            "together" to ("https://api.together.xyz/v1" to "meta-llama/Llama-3.3-70B-Instruct-Turbo"),
-            "openrouter" to ("https://openrouter.ai/api/v1" to "meta-llama/llama-3.3-70b-instruct"),
+            "together" to ("https://api.together.ai/v1" to "openai/gpt-oss-20b"),
+            "openrouter" to ("https://openrouter.ai/api/v1" to "openai/gpt-oss-20b"),
             "groq" to ("https://api.groq.com/openai/v1" to "llama-3.3-70b-versatile"),
             "custom" to ("" to "")
         )
