@@ -79,9 +79,13 @@ actual class SecureKeyStore {
                 }
                 if (addStatus != errSecSuccess) {
                     println("[SecureKeyStore.ios] SecItemAdd failed (status=$addStatus)")
+                } else {
+                    println("[SecureKeyStore.ios] writeApiKey OK (added, length=${value.length})")
                 }
             } else if (updateStatus != errSecSuccess) {
                 println("[SecureKeyStore.ios] SecItemUpdate failed (status=$updateStatus)")
+            } else {
+                println("[SecureKeyStore.ios] writeApiKey OK (updated, length=${value.length})")
             }
         } catch (t: Throwable) {
             println("[SecureKeyStore.ios] writeApiKey crashed: $t")
@@ -121,7 +125,9 @@ actual class SecureKeyStore {
                     memcpy(pinned.addressOf(0), bytePtr, length.convert())
                 }
                 CFRelease(cfData)
-                bytes.decodeToString()
+                val str = bytes.decodeToString()
+                println("[SecureKeyStore.ios] readApiKey OK (length=${str.length})")
+                str
             }
         } catch (t: Throwable) {
             println("[SecureKeyStore.ios] readApiKey crashed: $t")

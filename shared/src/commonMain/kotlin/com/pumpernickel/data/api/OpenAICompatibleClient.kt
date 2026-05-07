@@ -38,9 +38,14 @@ class OpenAICompatibleClient(
         baseUrl: String,
         request: ChatRequest
     ): ChatResponse {
-        val key = keyProvider() ?: throw AiError.AuthOrQuota(401)
+        val key = keyProvider()
+        if (key == null) {
+            println("[AI] keyProvider returned null — no API key configured (or Keychain read failed)")
+            throw AiError.AuthOrQuota(401)
+        }
         val normalisedBase = baseUrl.trimEnd('/')
         val url = "$normalisedBase/chat/completions"
+        println("[AI] POST $url model=${request.model} messages=${request.messages.size} keyLen=${key.length}")
         try {
             val response = client.post(url) {
                 header("Authorization", "Bearer $key")
@@ -51,6 +56,10 @@ class OpenAICompatibleClient(
                 setBody(request)
             }
             val responseText = response.bodyAsText()
+            println("[AI] response status=${response.status.value} bodyLen=${responseText.length}")
+            if (response.status.value !in 200..299) {
+                println("[AI] non-2xx body (truncated 1KB): ${responseText.take(1024)}")
+            }
             if (responseText.length > 64 * 1024) {
                 throw AiError.SchemaInvalid("response exceeded 64KB cap")
             }
@@ -58,8 +67,10 @@ class OpenAICompatibleClient(
         } catch (ce: CancellationException) {
             throw ce  // do not wrap — let coroutine cancellation propagate
         } catch (ai: AiError) {
+            println("[AI] AiError: $ai")
             throw ai
         } catch (t: Throwable) {
+            println("[AI] caught throwable: ${t::class.simpleName}: ${t.message}")
             throw AiError.fromThrowable(t)
         }
     }
