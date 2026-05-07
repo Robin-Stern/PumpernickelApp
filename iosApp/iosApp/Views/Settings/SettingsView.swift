@@ -75,6 +75,15 @@ struct SettingsView: View {
                         Label("Achievements", systemImage: "trophy.fill")
                     }
                 }
+
+                // D-18-05: BYOK AI configuration reachable from Settings.
+                Section("AI") {
+                    NavigationLink {
+                        AISettingsView()
+                    } label: {
+                        Label("KI-Einstellungen", systemImage: "sparkles")
+                    }
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)

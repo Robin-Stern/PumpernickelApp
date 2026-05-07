@@ -54,6 +54,10 @@
 		A10122 /* AchievementGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10122 /* AchievementGalleryView.swift */; };
 		A10130 /* ProgressGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10130 /* ProgressGalleryView.swift */; };
 		A10131 /* ProgressViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10131 /* ProgressViewerView.swift */; };
+		A11810 /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11810 /* AISettingsView.swift */; };
+		A11811 /* AIWorkoutGenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11811 /* AIWorkoutGenView.swift */; };
+		A11812 /* AIMealGenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11812 /* AIMealGenView.swift */; };
+		A11813 /* AIPreviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11813 /* AIPreviewSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -102,6 +106,10 @@
 		B10122 /* AchievementGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementGalleryView.swift; sourceTree = "<group>"; };
 		B10130 /* ProgressGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressGalleryView.swift; sourceTree = "<group>"; };
 		B10131 /* ProgressViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressViewerView.swift; sourceTree = "<group>"; };
+		B11810 /* AISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettingsView.swift; sourceTree = "<group>"; };
+		B11811 /* AIWorkoutGenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIWorkoutGenView.swift; sourceTree = "<group>"; };
+		B11812 /* AIMealGenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIMealGenView.swift; sourceTree = "<group>"; };
+		B11813 /* AIPreviewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPreviewSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -157,6 +165,7 @@
 				E10016 /* Nutrition */,
 				E10017 /* Overview */,
 				E10018 /* Gamification */,
+				E11810 /* AI */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -303,6 +312,17 @@
 				B10122 /* AchievementGalleryView.swift */,
 			);
 			path = Gamification;
+			sourceTree = "<group>";
+		};
+		E11810 /* AI */ = {
+			isa = PBXGroup;
+			children = (
+				B11810 /* AISettingsView.swift */,
+				B11811 /* AIWorkoutGenView.swift */,
+				B11812 /* AIMealGenView.swift */,
+				B11813 /* AIPreviewSheet.swift */,
+			);
+			path = AI;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -468,6 +488,10 @@
 				A10122 /* AchievementGalleryView.swift in Sources */,
 				A10130 /* ProgressGalleryView.swift in Sources */,
 				A10131 /* ProgressViewerView.swift in Sources */,
+				A11810 /* AISettingsView.swift in Sources */,
+				A11811 /* AIWorkoutGenView.swift in Sources */,
+				A11812 /* AIMealGenView.swift in Sources */,
+				A11813 /* AIPreviewSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
