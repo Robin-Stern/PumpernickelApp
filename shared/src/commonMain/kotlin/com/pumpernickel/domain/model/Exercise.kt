@@ -15,7 +15,8 @@ data class Exercise(
     val images: List<String>,
     val isCustom: Boolean,
     val primaryMuscles: List<MuscleGroup>,
-    val secondaryMuscles: List<MuscleGroup>
+    val secondaryMuscles: List<MuscleGroup>,
+    val source: String? = null
 )
 
 private val json = Json { ignoreUnknownKeys = true }
@@ -46,5 +47,6 @@ fun ExerciseEntity.toDomain(): Exercise = Exercise(
     secondaryMuscles = secondaryMuscles
         .split(",")
         .filter { it.isNotBlank() }
-        .mapNotNull { MuscleGroup.fromDbName(it) }
+        .mapNotNull { MuscleGroup.fromDbName(it) },
+    source = source
 )

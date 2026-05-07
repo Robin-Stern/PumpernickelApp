@@ -11,7 +11,8 @@ data class Recipe(
     val id: String = Uuid.random().toString(),
     val name: String,
     val ingredients: List<RecipeIngredient>,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val source: String? = null
 ) {
     init {
         require(name.isNotBlank()) { "Name darf nicht leer sein" }

@@ -17,7 +17,8 @@ data class Food(
     val sugar: Double,
     val unit: FoodUnit = FoodUnit.GRAM,
     val isRecipe: Boolean = false,
-    val barcode: String? = null
+    val barcode: String? = null,
+    val source: String? = null
 ) {
     init {
         require(calories >= 0) { "Kalorien dürfen nicht negativ sein" }

@@ -78,7 +78,7 @@ class FoodRepositoryImpl(
     // -- Recipes --
 
     override suspend fun saveRecipe(recipe: Recipe) {
-        dao.insertRecipe(RecipeEntity(id = recipe.id, name = recipe.name, isFavorite = recipe.isFavorite))
+        dao.insertRecipe(RecipeEntity(id = recipe.id, name = recipe.name, isFavorite = recipe.isFavorite, source = recipe.source))
         dao.insertIngredients(recipe.ingredients.map {
             RecipeIngredientEntity(recipeId = recipe.id, foodId = it.foodId, amountGrams = it.amountGrams)
         })
@@ -92,7 +92,8 @@ class FoodRepositoryImpl(
                 id = entity.id,
                 name = entity.name,
                 isFavorite = entity.isFavorite,
-                ingredients = ingredients.map { RecipeIngredient(foodId = it.foodId, amountGrams = it.amountGrams) }
+                ingredients = ingredients.map { RecipeIngredient(foodId = it.foodId, amountGrams = it.amountGrams) },
+                source = entity.source
             )
         }
     }
@@ -103,7 +104,7 @@ class FoodRepositoryImpl(
     }
 
     override suspend fun updateRecipe(recipe: Recipe) {
-        dao.updateRecipe(RecipeEntity(id = recipe.id, name = recipe.name, isFavorite = recipe.isFavorite))
+        dao.updateRecipe(RecipeEntity(id = recipe.id, name = recipe.name, isFavorite = recipe.isFavorite, source = recipe.source))
         dao.deleteIngredientsForRecipe(recipe.id)
         dao.insertIngredients(recipe.ingredients.map {
             RecipeIngredientEntity(recipeId = recipe.id, foodId = it.foodId, amountGrams = it.amountGrams)
@@ -128,13 +129,13 @@ class FoodRepositoryImpl(
     private fun Food.toEntity() = FoodEntity(
         id = id, name = name, calories = calories, protein = protein,
         fat = fat, carbohydrates = carbohydrates, sugar = sugar,
-        unit = unit.name, isRecipe = isRecipe, barcode = barcode
+        unit = unit.name, isRecipe = isRecipe, barcode = barcode, source = source
     )
 
     private fun FoodEntity.toDomain() = Food(
         id = id, name = name, calories = calories, protein = protein,
         fat = fat, carbohydrates = carbohydrates, sugar = sugar,
-        unit = FoodUnit.valueOf(unit), isRecipe = isRecipe, barcode = barcode
+        unit = FoodUnit.valueOf(unit), isRecipe = isRecipe, barcode = barcode, source = source
     )
 
     private fun ConsumptionEntry.toEntity() = ConsumptionEntryEntity(

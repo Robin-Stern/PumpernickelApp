@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class RecipeEntity(
     @PrimaryKey val id: String,
     val name: String,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val source: String? = null  // "USER" | "AI" — null treated as USER on read (D-18-11)
 )
