@@ -258,7 +258,7 @@ Plans:
 - Streaming responses.
 - Cost / token-count UI.
 
-**Plans:** 2/10 plans executed
+**Plans:** 4/10 plans executed
 
 **Wave structure** (serialized where plans share files; parallelism within a wave only when files_modified do not overlap):
 - Wave 1 (foundation, parallel): 01 (Room v9 → v10 — source column on 4 entities + AutoMigration(9, 10)), 02 (HttpClientFactory plugins + AiChatDto + OpenAICompatibleClient + AiError sealed)
@@ -273,8 +273,8 @@ Plans:
 Plans:
 - [x] 18-01-PLAN.md — Room v9 → v10: nullable source column on WorkoutTemplate / Exercise / Recipe / Food entities + AutoMigration(9, 10) + propagate field through domain models
 - [x] 18-02-PLAN.md — OpenAICompatibleClient + AiChatDto + AiError sealed + HttpClientFactory ContentNegotiation/HttpTimeout(60s) install
-- [ ] 18-03-PLAN.md — Versioned prompt files (workout-system.md / recipe-system.md) + WorkoutAiSchema + RecipeAiSchema + AiPromptCatalog (reuses readResourceFile)
-- [ ] 18-04-PLAN.md — SecureKeyStore expect/actual (Keychain on iOS, EncryptedSharedPreferences on Android) + PlatformModule bindings + SettingsRepository AI configuration fields
+- [x] 18-03-PLAN.md — Versioned prompt files (workout-system.md / recipe-system.md) + WorkoutAiSchema + RecipeAiSchema + AiPromptCatalog (reuses readResourceFile)
+- [x] 18-04-PLAN.md — SecureKeyStore expect/actual (Keychain on iOS, EncryptedSharedPreferences on Android) + PlatformModule bindings + SettingsRepository AI configuration fields
 - [ ] 18-05-PLAN.md — AiSettingsViewModel + AiModule (registered in SharedModule) + AiSettingsScreen + SettingsSheet AI row + Routes/MainScreen wiring + iOS AiSettingsKoinHelper
 - [ ] 18-06-PLAN.md — WorkoutAiUseCase + WorkoutAiViewModel + AiModule binding + iOS WorkoutAiKoinHelper + TemplateRepository.createTemplate gains source arg
 - [ ] 18-07-PLAN.md — AiPreviewSheet sealed AiPreviewContent + Workout body + AiWorkoutGenScreen + TemplateListScreen sparkles entry + MainScreen route
