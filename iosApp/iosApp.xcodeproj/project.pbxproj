@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		47884F742F78A5AC004CDDB3 /* free_exercise_db.json in Resources */ = {isa = PBXBuildFile; fileRef = 47884F732F78A5AC004CDDB3 /* free_exercise_db.json */; };
+		A11801 /* workout-system-prompt.md in Resources */ = {isa = PBXBuildFile; fileRef = B11801 /* workout-system-prompt.md */; };
+		A11802 /* recipe-system-prompt.md in Resources */ = {isa = PBXBuildFile; fileRef = B11802 /* recipe-system-prompt.md */; };
 		A10001 /* PumpernickelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10001 /* PumpernickelApp.swift */; };
 		A10002 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10002 /* MainTabView.swift */; };
 		A10003 /* WorkoutEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003 /* WorkoutEmptyStateView.swift */; };
@@ -56,6 +58,8 @@
 
 /* Begin PBXFileReference section */
 		47884F732F78A5AC004CDDB3 /* free_exercise_db.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = free_exercise_db.json; path = ../shared/src/commonMain/resources/free_exercise_db.json; sourceTree = SOURCE_ROOT; };
+		B11801 /* workout-system-prompt.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = workout-system-prompt.md; path = ../shared/src/commonMain/resources/workout-system-prompt.md; sourceTree = SOURCE_ROOT; };
+		B11802 /* recipe-system-prompt.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = recipe-system-prompt.md; path = ../shared/src/commonMain/resources/recipe-system-prompt.md; sourceTree = SOURCE_ROOT; };
 		B10001 /* PumpernickelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpernickelApp.swift; sourceTree = "<group>"; };
 		B10002 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		B10003 /* WorkoutEmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutEmptyStateView.swift; sourceTree = "<group>"; };
@@ -118,6 +122,8 @@
 			isa = PBXGroup;
 			children = (
 				47884F732F78A5AC004CDDB3 /* free_exercise_db.json */,
+				B11801 /* workout-system-prompt.md */,
+				B11802 /* recipe-system-prompt.md */,
 				E10002 /* iosApp */,
 				E10010 /* Products */,
 			);
@@ -371,6 +377,8 @@
 				A10006 /* Assets.xcassets in Resources */,
 				A10007 /* Preview Assets.xcassets in Resources */,
 				47884F742F78A5AC004CDDB3 /* free_exercise_db.json in Resources */,
+				A11801 /* workout-system-prompt.md in Resources */,
+				A11802 /* recipe-system-prompt.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
