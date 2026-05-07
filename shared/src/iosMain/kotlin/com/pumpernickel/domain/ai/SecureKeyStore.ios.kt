@@ -2,23 +2,36 @@
 
 package com.pumpernickel.domain.ai
 
+import kotlinx.cinterop.COpaquePointer
+import kotlinx.cinterop.COpaquePointerVar
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.pointed
+import kotlinx.cinterop.set
+import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import platform.CoreFoundation.CFDataGetBytePtr
+import platform.CoreFoundation.CFDataGetLength
+import platform.CoreFoundation.CFDataRef
+import platform.CoreFoundation.CFDictionaryCreate
 import platform.CoreFoundation.CFDictionaryRef
+import platform.CoreFoundation.CFRelease
 import platform.CoreFoundation.CFTypeRefVar
+import platform.CoreFoundation.kCFAllocatorDefault
+import platform.CoreFoundation.kCFBooleanTrue
 import platform.Foundation.NSData
-import platform.Foundation.NSMutableDictionary
-import platform.Foundation.NSNumber
-import platform.Foundation.NSString
-import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
-import platform.Foundation.numberWithBool
 import platform.Security.SecItemAdd
 import platform.Security.SecItemCopyMatching
 import platform.Security.SecItemDelete
@@ -35,6 +48,7 @@ import platform.Security.kSecMatchLimit
 import platform.Security.kSecMatchLimitOne
 import platform.Security.kSecReturnData
 import platform.Security.kSecValueData
+import platform.posix.memcpy
 
 private const val SERVICE = "PumpernickelApp.AI"
 private const val ACCOUNT = "openai.api.key"
@@ -44,25 +58,25 @@ actual class SecureKeyStore {
     actual suspend fun writeApiKey(value: String) = withContext(Dispatchers.Default) {
         try {
             val data: NSData = value.encodeToByteArray().toNSData()
+            val dataPtr: CPointer<*> = data.objcPointer()
 
-            val updateAttrs = NSMutableDictionary().apply {
-                setObject(data, forKey = kSecValueData!! as NSString)
+            // 1) Try update
+            val updateStatus = memScoped {
+                val q = baseQueryDict()
+                val a = makeDict(arrayOf(kSecValueData to dataPtr))
+                SecItemUpdate(q, a)
             }
-            @Suppress("CAST_NEVER_SUCCEEDS")
-            val updateStatus = SecItemUpdate(
-                baseQuery() as CFDictionaryRef,
-                updateAttrs as CFDictionaryRef
-            )
+
             if (updateStatus == errSecItemNotFound) {
-                val addQuery = baseQuery().apply {
-                    setObject(data, forKey = kSecValueData!! as NSString)
-                    setObject(
-                        kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly!! as NSString,
-                        forKey = kSecAttrAccessible!! as NSString
-                    )
+                // 2) Add new
+                val accessibility: CPointer<*>? = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+                val addStatus = memScoped {
+                    val q = baseQueryDict(extras = arrayOf(
+                        kSecValueData to dataPtr,
+                        kSecAttrAccessible to (accessibility ?: return@memScoped errSecSuccess.toInt())
+                    ))
+                    SecItemAdd(q, null)
                 }
-                @Suppress("CAST_NEVER_SUCCEEDS")
-                val addStatus = SecItemAdd(addQuery as CFDictionaryRef, null)
                 if (addStatus != errSecSuccess) {
                     println("[SecureKeyStore.ios] SecItemAdd failed (status=$addStatus)")
                 }
@@ -77,18 +91,37 @@ actual class SecureKeyStore {
     actual suspend fun readApiKey(): String? = withContext(Dispatchers.Default) {
         try {
             memScoped {
-                val query = baseQuery().apply {
-                    setObject(kSecMatchLimitOne!! as NSString, forKey = kSecMatchLimit!! as NSString)
-                    setObject(NSNumber.numberWithBool(true), forKey = kSecReturnData!! as NSString)
-                }
+                val matchLimit: CPointer<*>? = kSecMatchLimitOne
+                val returnTrue: CPointer<*>? = kCFBooleanTrue
+                if (matchLimit == null || returnTrue == null) return@withContext null
+
+                val q = baseQueryDict(extras = arrayOf(
+                    kSecMatchLimit to matchLimit,
+                    kSecReturnData to returnTrue
+                ))
                 val resultVar = alloc<CFTypeRefVar>()
-                @Suppress("CAST_NEVER_SUCCEEDS")
-                val status = SecItemCopyMatching(query as CFDictionaryRef, resultVar.ptr)
+                val status = SecItemCopyMatching(q, resultVar.ptr)
                 if (status != errSecSuccess) return@withContext null
                 val cfData = resultVar.value ?: return@withContext null
-                @Suppress("CAST_NEVER_SUCCEEDS")
-                val nsData = cfData as NSData
-                NSString.create(data = nsData, encoding = NSUTF8StringEncoding) as String?
+
+                @Suppress("UNCHECKED_CAST")
+                val cfDataRef = cfData as CFDataRef
+                val length = CFDataGetLength(cfDataRef).toInt()
+                if (length <= 0) {
+                    CFRelease(cfData)
+                    return@withContext null
+                }
+                val bytePtr = CFDataGetBytePtr(cfDataRef)
+                if (bytePtr == null) {
+                    CFRelease(cfData)
+                    return@withContext null
+                }
+                val bytes = ByteArray(length)
+                bytes.usePinned { pinned ->
+                    memcpy(pinned.addressOf(0), bytePtr, length.convert())
+                }
+                CFRelease(cfData)
+                bytes.decodeToString()
             }
         } catch (t: Throwable) {
             println("[SecureKeyStore.ios] readApiKey crashed: $t")
@@ -98,8 +131,7 @@ actual class SecureKeyStore {
 
     actual suspend fun clearApiKey() = withContext(Dispatchers.Default) {
         try {
-            @Suppress("CAST_NEVER_SUCCEEDS")
-            SecItemDelete(baseQuery() as CFDictionaryRef)
+            memScoped { SecItemDelete(baseQueryDict()) }
             Unit
         } catch (t: Throwable) {
             println("[SecureKeyStore.ios] clearApiKey crashed: $t")
@@ -107,13 +139,58 @@ actual class SecureKeyStore {
         }
     }
 
-    private fun baseQuery(): NSMutableDictionary {
-        return NSMutableDictionary().apply {
-            setObject(kSecClassGenericPassword!! as NSString, forKey = kSecClass!! as NSString)
-            setObject(SERVICE, forKey = kSecAttrService!! as NSString)
-            setObject(ACCOUNT, forKey = kSecAttrAccount!! as NSString)
-        }
+    /**
+     * Build the Keychain query dictionary using parallel-array CFDictionaryCreate.
+     *
+     * Pattern lifted from russhwolf/multiplatform-settings KeychainSettings:
+     * the Kotlin/Native runtime can't cast CFStringRef CPointer values to NSString
+     * (toll-free bridging is an Obj-C runtime concept the K/N type checker
+     * doesn't model), so we keep everything as raw CPointer and let CoreFoundation
+     * sort it out at the C boundary.
+     */
+    private fun MemScope.baseQueryDict(
+        extras: Array<Pair<CPointer<*>?, CPointer<*>?>> = emptyArray()
+    ): CFDictionaryRef {
+        val cfService: CPointer<*>? = (SERVICE as platform.Foundation.NSString).objcPointer()
+        val cfAccount: CPointer<*>? = (ACCOUNT as platform.Foundation.NSString).objcPointer()
+        val classConst: CPointer<*>? = kSecClassGenericPassword
+        val pairs: Array<Pair<CPointer<*>?, CPointer<*>?>> = arrayOf<Pair<CPointer<*>?, CPointer<*>?>>(
+            kSecClass to classConst,
+            kSecAttrService to cfService,
+            kSecAttrAccount to cfAccount
+        ) + extras
+        return makeDict(pairs)
     }
+
+    private fun MemScope.makeDict(
+        pairs: Array<Pair<CPointer<*>?, CPointer<*>?>>
+    ): CFDictionaryRef {
+        val nonNull = pairs.filter { it.first != null && it.second != null }
+        val n = nonNull.size
+        val keys = allocArray<COpaquePointerVar>(n)
+        val values = allocArray<COpaquePointerVar>(n)
+        nonNull.forEachIndexed { i, (k, v) ->
+            keys[i] = k as COpaquePointer?
+            values[i] = v as COpaquePointer?
+        }
+        return CFDictionaryCreate(
+            kCFAllocatorDefault,
+            keys,
+            values,
+            n.convert(),
+            null,
+            null
+        )!!
+    }
+}
+
+// MARK: - helpers
+
+/** Get the underlying Obj-C pointer of any NSObject as a generic CPointer. */
+@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
+private fun Any.objcPointer(): CPointer<*> {
+    val raw = this.objcPtr()
+    return kotlinx.cinterop.interpretCPointer<kotlinx.cinterop.CPointed>(raw)!!
 }
 
 private fun ByteArray.toNSData(): NSData {
