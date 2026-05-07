@@ -1,9 +1,14 @@
 package com.pumpernickel.di
 
 import com.pumpernickel.data.api.OpenAICompatibleClient
+import com.pumpernickel.data.repository.ExerciseRepository
+import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.domain.ai.AiPromptCatalog
 import com.pumpernickel.domain.ai.SecureKeyStore
+import com.pumpernickel.domain.ai.WorkoutAiUseCase
 import com.pumpernickel.presentation.ai.AiSettingsViewModel
+import com.pumpernickel.presentation.ai.WorkoutAiViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -28,4 +33,7 @@ val aiModule = module {
     }
 
     viewModel { AiSettingsViewModel(get(), get()) }
+
+    single { WorkoutAiUseCase(get(), get(), get(), get(), get()) }
+    viewModel { WorkoutAiViewModel(get(), get()) }
 }
