@@ -8,7 +8,8 @@ data class WorkoutTemplate(
     val name: String,
     val createdAt: Long,
     val updatedAt: Long,
-    val exercises: List<TemplateExercise> = emptyList()
+    val exercises: List<TemplateExercise> = emptyList(),
+    val source: String? = null  // "USER" | "AI" — null treated as USER (D-18-11)
 )
 
 data class TemplateExercise(
@@ -30,7 +31,8 @@ fun WorkoutTemplateEntity.toDomain(
     name = name,
     createdAt = createdAt,
     updatedAt = updatedAt,
-    exercises = exercises
+    exercises = exercises,
+    source = source  // pass through from entity
 )
 
 fun TemplateExerciseEntity.toDomain(

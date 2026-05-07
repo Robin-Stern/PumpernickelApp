@@ -75,7 +75,8 @@ class ExerciseRepositoryImpl(
             images = json.encodeToString(exercise.images),
             isCustom = true,
             primaryMuscles = exercise.primaryMuscles.joinToString(",") { it.dbName },
-            secondaryMuscles = exercise.secondaryMuscles.joinToString(",") { it.dbName }
+            secondaryMuscles = exercise.secondaryMuscles.joinToString(",") { it.dbName },
+            source = exercise.source
         )
         dao.insert(entity)
     }
