@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.3.20"
-agp = "8.9.3"
+agp = "8.13.2"
 room = "2.8.4"
 sqlite = "2.6.2"
 ksp = "2.3.6"
