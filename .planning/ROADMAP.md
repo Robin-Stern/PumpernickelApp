@@ -258,7 +258,7 @@ Plans:
 - Streaming responses.
 - Cost / token-count UI.
 
-**Plans:** 10/10 plans planned (2026-05-07)
+**Plans:** 2/10 plans executed
 
 **Wave structure** (serialized where plans share files; parallelism within a wave only when files_modified do not overlap):
 - Wave 1 (foundation, parallel): 01 (Room v9 → v10 — source column on 4 entities + AutoMigration(9, 10)), 02 (HttpClientFactory plugins + AiChatDto + OpenAICompatibleClient + AiError sealed)
@@ -271,8 +271,8 @@ Plans:
 - Wave 8: 10 (18-IOS-HANDOFF.md spec)
 
 Plans:
-- [ ] 18-01-PLAN.md — Room v9 → v10: nullable source column on WorkoutTemplate / Exercise / Recipe / Food entities + AutoMigration(9, 10) + propagate field through domain models
-- [ ] 18-02-PLAN.md — OpenAICompatibleClient + AiChatDto + AiError sealed + HttpClientFactory ContentNegotiation/HttpTimeout(60s) install
+- [x] 18-01-PLAN.md — Room v9 → v10: nullable source column on WorkoutTemplate / Exercise / Recipe / Food entities + AutoMigration(9, 10) + propagate field through domain models
+- [x] 18-02-PLAN.md — OpenAICompatibleClient + AiChatDto + AiError sealed + HttpClientFactory ContentNegotiation/HttpTimeout(60s) install
 - [ ] 18-03-PLAN.md — Versioned prompt files (workout-system.md / recipe-system.md) + WorkoutAiSchema + RecipeAiSchema + AiPromptCatalog (reuses readResourceFile)
 - [ ] 18-04-PLAN.md — SecureKeyStore expect/actual (Keychain on iOS, EncryptedSharedPreferences on Android) + PlatformModule bindings + SettingsRepository AI configuration fields
 - [ ] 18-05-PLAN.md — AiSettingsViewModel + AiModule (registered in SharedModule) + AiSettingsScreen + SettingsSheet AI row + Routes/MainScreen wiring + iOS AiSettingsKoinHelper
