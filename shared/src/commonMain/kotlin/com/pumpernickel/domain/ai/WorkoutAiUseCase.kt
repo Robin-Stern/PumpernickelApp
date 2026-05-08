@@ -193,7 +193,7 @@ class WorkoutAiUseCase(
             temperature = 0.7
         )
         val chat = client.chatCompletion(baseUrl, request)
-        return parseResponse(chat.choices.firstOrNull()?.message?.content)
+        return parseResponse(chat.choices.firstOrNull()?.message)
     }
 
     private suspend fun callWithJsonObject(
@@ -212,18 +212,40 @@ class WorkoutAiUseCase(
             temperature = 0.7
         )
         val chat = client.chatCompletion(baseUrl, request)
-        return parseResponse(chat.choices.firstOrNull()?.message?.content)
+        return parseResponse(chat.choices.firstOrNull()?.message)
     }
 
-    private fun parseResponse(content: String?): WorkoutAiResponse {
-        if (content.isNullOrBlank()) {
-            throw AiError.SchemaInvalid("Empty response content")
+    private fun parseResponse(message: ChatMessage?): WorkoutAiResponse {
+        if (message == null) throw AiError.SchemaInvalid("LLM returned no choices")
+        if (!message.refusal.isNullOrBlank()) {
+            throw AiError.SchemaInvalid("LLM refused: ${message.refusal}")
         }
+        val raw = message.content
+        if (raw.isNullOrBlank()) {
+            throw AiError.SchemaInvalid(
+                "LLM returned empty content (Modell hat vermutlich tool_calls statt Text geliefert — wechsle das Modell, z.B. openai/gpt-oss-20b)"
+            )
+        }
+        val cleaned = stripCodeFences(raw)
         return try {
-            json.decodeFromString(content)
+            json.decodeFromString(cleaned)
         } catch (e: Exception) {
-            throw AiError.SchemaInvalid("JSON parse failed: ${e.message ?: "unknown"}")
+            val excerpt = cleaned.take(500).replace("\n", " ")
+            throw AiError.SchemaInvalid("JSON parse failed: ${e.message ?: "unknown"}\n\nAntwort: $excerpt")
         }
+    }
+
+    /**
+     * LLMs often return ```json\n{...}\n``` fences even when prompted not to.
+     * Strip the wrapping fence so the JSON parser actually sees JSON.
+     */
+    private fun stripCodeFences(raw: String): String {
+        val t = raw.trim()
+        if (!t.startsWith("```")) return t
+        val firstNewline = t.indexOf('\n').takeIf { it >= 0 } ?: return t
+        val withoutOpen = t.substring(firstNewline + 1)
+        val closeIdx = withoutOpen.lastIndexOf("```")
+        return if (closeIdx >= 0) withoutOpen.substring(0, closeIdx).trim() else withoutOpen.trim()
     }
 
     private fun validateResponse(response: WorkoutAiResponse, form: WorkoutAiForm) {

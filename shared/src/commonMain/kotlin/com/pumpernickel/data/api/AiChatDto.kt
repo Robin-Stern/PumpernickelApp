@@ -16,7 +16,11 @@ data class ChatRequest(
 @Serializable
 data class ChatMessage(
     val role: String,            // "system" | "user" | "assistant"
-    val content: String
+    // Nullable: some providers (Qwen via Together, GPT with tool_calls) return
+    // {"role":"assistant","content":null,"tool_calls":[...]}. Non-nullable broke
+    // ChatResponse deserialization completely — user just saw "could not parse".
+    val content: String? = null,
+    val refusal: String? = null
 )
 
 /**

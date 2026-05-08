@@ -171,7 +171,7 @@ class RecipeAiUseCase(
             temperature = 0.7
         )
         val chat = client.chatCompletion(baseUrl, request)
-        return parseResponse(chat.choices.firstOrNull()?.message?.content)
+        return parseResponse(chat.choices.firstOrNull()?.message)
     }
 
     private suspend fun callWithJsonObject(
@@ -187,16 +187,36 @@ class RecipeAiUseCase(
             temperature = 0.7
         )
         val chat = client.chatCompletion(baseUrl, request)
-        return parseResponse(chat.choices.firstOrNull()?.message?.content)
+        return parseResponse(chat.choices.firstOrNull()?.message)
     }
 
-    private fun parseResponse(content: String?): RecipeAiResponse {
-        if (content.isNullOrBlank()) throw AiError.SchemaInvalid("Empty recipe response")
-        return try {
-            json.decodeFromString(content)
-        } catch (e: Exception) {
-            throw AiError.SchemaInvalid("Recipe JSON parse failed: ${e.message ?: "unknown"}")
+    private fun parseResponse(message: ChatMessage?): RecipeAiResponse {
+        if (message == null) throw AiError.SchemaInvalid("LLM returned no choices")
+        if (!message.refusal.isNullOrBlank()) {
+            throw AiError.SchemaInvalid("LLM refused: ${message.refusal}")
         }
+        val raw = message.content
+        if (raw.isNullOrBlank()) {
+            throw AiError.SchemaInvalid(
+                "LLM returned empty content (Modell hat vermutlich tool_calls statt Text geliefert — wechsle das Modell, z.B. openai/gpt-oss-20b)"
+            )
+        }
+        val cleaned = stripCodeFences(raw)
+        return try {
+            json.decodeFromString(cleaned)
+        } catch (e: Exception) {
+            val excerpt = cleaned.take(500).replace("\n", " ")
+            throw AiError.SchemaInvalid("Recipe JSON parse failed: ${e.message ?: "unknown"}\n\nAntwort: $excerpt")
+        }
+    }
+
+    private fun stripCodeFences(raw: String): String {
+        val t = raw.trim()
+        if (!t.startsWith("```")) return t
+        val firstNewline = t.indexOf('\n').takeIf { it >= 0 } ?: return t
+        val withoutOpen = t.substring(firstNewline + 1)
+        val closeIdx = withoutOpen.lastIndexOf("```")
+        return if (closeIdx >= 0) withoutOpen.substring(0, closeIdx).trim() else withoutOpen.trim()
     }
 
     private fun validateResponse(response: RecipeAiResponse) {

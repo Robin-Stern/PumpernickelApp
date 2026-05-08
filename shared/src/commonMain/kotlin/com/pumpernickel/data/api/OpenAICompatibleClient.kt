@@ -60,6 +60,12 @@ class OpenAICompatibleClient(
             val responseText = response.bodyAsText()
             println("[AI] response status=${response.status.value} bodyLen=${responseText.length}")
             val statusCode = response.status.value
+            if (statusCode in 200..299) {
+                // Surface successful body excerpt too — when parsing fails downstream
+                // (e.g., model returned content:null with tool_calls, or wrapped JSON in
+                // ```json fences) we need to see what was actually returned.
+                println("[AI] 2xx body (truncated 2KB): ${responseText.take(2048)}")
+            }
             if (statusCode !in 200..299) {
                 println("[AI] non-2xx body (truncated 1KB): ${responseText.take(1024)}")
                 // Surface provider error messages to the user instead of swallowing them.
