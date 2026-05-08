@@ -74,9 +74,13 @@ struct AISettingsView: View {
                     .buttonStyle(.borderless)
                     .accessibilityLabel(keyVisible ? "Schlüssel verbergen" : "Schlüssel zeigen")
                 }
-                Text(apiKeyConfigured ? "Gespeichert" : "Kein Schlüssel gespeichert")
-                    .font(.caption)
-                    .foregroundColor(apiKeyConfigured ? .green : .secondary)
+                HStack(spacing: 6) {
+                    Image(systemName: apiKeyConfigured ? "checkmark.seal.fill" : "exclamationmark.triangle")
+                        .foregroundColor(apiKeyConfigured ? .green : .orange)
+                    Text(apiKeyConfigured ? "Schlüssel gespeichert" : "Noch kein Schlüssel gespeichert")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(apiKeyConfigured ? .green : .orange)
+                }
 
                 HStack(spacing: 12) {
                     Button {
@@ -129,10 +133,14 @@ struct AISettingsView: View {
                 }
             }
 
-            Section("Modell") {
+            Section {
                 TextField("gpt-4o-mini", text: $modelDraft)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
+                    .onSubmit {
+                        let trimmed = modelDraft.trimmingCharacters(in: .whitespaces)
+                        if !trimmed.isEmpty { viewModel.setModel(value: trimmed) }
+                    }
                 Button("Modell speichern") {
                     let trimmed = modelDraft.trimmingCharacters(in: .whitespaces)
                     guard !trimmed.isEmpty else { return }
@@ -140,6 +148,36 @@ struct AISettingsView: View {
                 }
                 .disabled(modelDraft.trimmingCharacters(in: .whitespaces).isEmpty
                           || modelDraft == model)
+
+                if providerPreset == "together" {
+                    DisclosureGroup("Vorgeschlagene Together-Modelle") {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ModelSuggestionRow(name: "openai/gpt-oss-20b", note: "Kostenlos · empfohlen") {
+                                modelDraft = "openai/gpt-oss-20b"
+                                viewModel.setModel(value: "openai/gpt-oss-20b")
+                            }
+                            ModelSuggestionRow(name: "openai/gpt-oss-120b", note: "Stärker, langsamer") {
+                                modelDraft = "openai/gpt-oss-120b"
+                                viewModel.setModel(value: "openai/gpt-oss-120b")
+                            }
+                            ModelSuggestionRow(name: "meta-llama/Llama-3.3-70B-Instruct-Turbo", note: "Bezahlt") {
+                                modelDraft = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+                                viewModel.setModel(value: "meta-llama/Llama-3.3-70B-Instruct-Turbo")
+                            }
+                            ModelSuggestionRow(name: "google/gemma-2-27b-it", note: "Bezahlt") {
+                                modelDraft = "google/gemma-2-27b-it"
+                                viewModel.setModel(value: "google/gemma-2-27b-it")
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .font(.subheadline)
+                }
+            } header: {
+                Text("Modell")
+            } footer: {
+                Text("Modellname tippen oder einen Vorschlag wählen. Falsche Namen führen zu einem Timeout — der Anbieter sucht dann ergebnislos nach dem Modell.")
+                    .font(.caption2)
             }
         }
         .navigationTitle("KI-Einstellungen")
@@ -190,10 +228,42 @@ struct AISettingsView: View {
     private func observeApiKeyConfigured() async {
         do {
             for try await value in asyncSequence(for: viewModel.apiKeyConfiguredFlow) {
-                self.apiKeyConfigured = value.boolValue
+                // KMP-NC may emit Swift Bool directly OR a KotlinBoolean wrapper
+                // depending on the @NativeCoroutinesState codegen version. Handle
+                // both by going through NSNumber bridging which works for either.
+                let asBool: Bool = (value as? Bool) ?? ((value as? NSNumber)?.boolValue ?? false)
+                self.apiKeyConfigured = asBool
+                print("[AISettingsView] apiKeyConfigured emitted: \(asBool)")
             }
         } catch {
             print("AISettingsView apiKeyConfigured observation error: \(error)")
         }
+    }
+}
+
+private struct ModelSuggestionRow: View {
+    let name: String
+    let note: String
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundColor(.primary)
+                    Text(note)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    .font(.caption2)
+                    .foregroundColor(.accentColor)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }

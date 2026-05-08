@@ -51,14 +51,26 @@ class OpenAICompatibleClient(
                 header("Authorization", "Bearer $key")
                 contentType(ContentType.Application.Json)
                 timeout {
-                    requestTimeoutMillis = 60_000  // D-18-16
+                    requestTimeoutMillis = 120_000  // bumped from 60s — provider responses for
+                                                    // structured-output requests with large schemas
+                                                    // can take 30-90s on free-tier inference.
                 }
                 setBody(request)
             }
             val responseText = response.bodyAsText()
             println("[AI] response status=${response.status.value} bodyLen=${responseText.length}")
-            if (response.status.value !in 200..299) {
+            val statusCode = response.status.value
+            if (statusCode !in 200..299) {
                 println("[AI] non-2xx body (truncated 1KB): ${responseText.take(1024)}")
+                // Surface provider error messages to the user instead of swallowing them.
+                // Keep the body short — Together/OpenAI errors are usually JSON like
+                // {"error":{"message":"...","code":"..."}} so 400 chars is plenty.
+                val excerpt = responseText.take(400).replace("\n", " ")
+                throw when (statusCode) {
+                    401, 403 -> AiError.AuthOrQuota(statusCode)
+                    in 500..599 -> AiError.Provider(statusCode)
+                    else -> AiError.SchemaInvalid("HTTP $statusCode — $excerpt")
+                }
             }
             if (responseText.length > 64 * 1024) {
                 throw AiError.SchemaInvalid("response exceeded 64KB cap")

@@ -170,16 +170,45 @@ private struct MacroRow: View {
 private struct GeneratingBody: View {
     let viewModel: RecipeAiViewModel
 
+    @State private var elapsedSeconds: Int = 0
+    @State private var pulse: Bool = false
+
     var body: some View {
-        VStack(spacing: 12) {
-            VStack(spacing: 8) {
+        VStack(spacing: 24) {
+            Spacer()
+
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.accentColor.opacity(pulse ? 0.15 : 0.05))
+                        .frame(width: 120, height: 120)
+                        .scaleEffect(pulse ? 1.1 : 1.0)
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 44))
+                        .foregroundColor(.accentColor)
+                        .symbolEffect(.pulse, options: .repeating, value: pulse)
+                }
+                Text("KI denkt nach…")
+                    .font(.title3.bold())
+                Text("\(elapsedSeconds)s")
+                    .font(.system(.subheadline, design: .monospaced))
+                    .foregroundColor(.secondary)
+                Text("Erstelle Rezept aus deinen Restmakros…")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
+            VStack(spacing: 6) {
                 ForEach(0..<5, id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 6)
                         .fill(Color(.tertiarySystemBackground))
-                        .frame(height: 48)
+                        .frame(height: 32)
+                        .opacity(0.6)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 32)
 
             Spacer()
 
@@ -187,11 +216,22 @@ private struct GeneratingBody: View {
                 viewModel.cancel()
             } label: {
                 Text("Abbrechen")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
-            .padding(.bottom, 16)
+            .padding(.horizontal, 32)
+            .padding(.bottom, 24)
         }
-        .padding(.top, 16)
+        .task {
+            withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                pulse = true
+            }
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                if Task.isCancelled { break }
+                elapsedSeconds += 1
+            }
+        }
     }
 }
 

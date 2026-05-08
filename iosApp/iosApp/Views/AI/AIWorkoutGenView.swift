@@ -197,16 +197,45 @@ private struct GeneratingBody: View {
     let rowCount: Int
     let viewModel: WorkoutAiViewModel
 
+    @State private var elapsedSeconds: Int = 0
+    @State private var pulse: Bool = false
+
     var body: some View {
-        VStack(spacing: 12) {
-            VStack(spacing: 8) {
+        VStack(spacing: 24) {
+            Spacer()
+
+            // Big obvious "thinking" header so the user knows something's happening.
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.accentColor.opacity(pulse ? 0.15 : 0.05))
+                        .frame(width: 120, height: 120)
+                        .scaleEffect(pulse ? 1.1 : 1.0)
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 44))
+                        .foregroundColor(.accentColor)
+                        .symbolEffect(.pulse, options: .repeating, value: pulse)
+                }
+                Text("KI denkt nach…")
+                    .font(.title3.bold())
+                Text("\(elapsedSeconds)s")
+                    .font(.system(.subheadline, design: .monospaced))
+                    .foregroundColor(.secondary)
+                Text("Erstelle \(rowCount) Übung\(rowCount == 1 ? "" : "en")…")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            // Subtle skeleton hint underneath
+            VStack(spacing: 6) {
                 ForEach(0..<rowCount, id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 6)
                         .fill(Color(.tertiarySystemBackground))
-                        .frame(height: 56)
+                        .frame(height: 36)
+                        .opacity(0.6)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 32)
 
             Spacer()
 
@@ -214,11 +243,24 @@ private struct GeneratingBody: View {
                 viewModel.cancel()
             } label: {
                 Text("Abbrechen")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
-            .padding(.bottom, 16)
+            .padding(.horizontal, 32)
+            .padding(.bottom, 24)
         }
-        .padding(.top, 16)
+        .task {
+            // Pulse animation
+            withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                pulse = true
+            }
+            // Elapsed-second counter — keeps user oriented during 30-90s waits.
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                if Task.isCancelled { break }
+                elapsedSeconds += 1
+            }
+        }
     }
 }
 
@@ -236,6 +278,21 @@ private struct ErrorBody: View {
             Text(title(for: error))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
+                .font(.headline)
+
+            if let detail = detail(for: error), !detail.isEmpty {
+                ScrollView {
+                    Text(detail)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(8)
+                }
+                .frame(maxHeight: 200)
+                .padding(.horizontal, 16)
+            }
 
             if error is AiError.AuthOrQuota {
                 NavigationLink {
@@ -271,6 +328,19 @@ private struct ErrorBody: View {
             return "Der KI-Anbieter hat ein Problem."
         }
         return "Die KI-Antwort war nicht verwertbar."
+    }
+
+    private func detail(for error: AiError) -> String? {
+        if let schema = error as? AiError.SchemaInvalid {
+            return schema.detail
+        }
+        if let provider = error as? AiError.Provider {
+            return "HTTP \(provider.httpStatus) — Versuche einen anderen Modellnamen oder warte und probiere es nochmal."
+        }
+        if let auth = error as? AiError.AuthOrQuota {
+            return "HTTP \(auth.httpStatus) — Prüfe API-Schlüssel und Kontingent in den Einstellungen."
+        }
+        return nil
     }
 }
 
