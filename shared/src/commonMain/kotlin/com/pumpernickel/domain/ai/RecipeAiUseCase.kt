@@ -168,7 +168,8 @@ class RecipeAiUseCase(
                     strict = false
                 )
             ),
-            temperature = 0.7
+            temperature = 0.7,
+            maxTokens = 4096
         )
         val chat = client.chatCompletion(baseUrl, request)
         return parseResponse(chat.choices.firstOrNull()?.message)
@@ -184,7 +185,8 @@ class RecipeAiUseCase(
                 ChatMessage(role = "user", content = userMessage)
             ),
             responseFormat = ResponseFormat(type = "json_object"),
-            temperature = 0.7
+            temperature = 0.7,
+            maxTokens = 4096
         )
         val chat = client.chatCompletion(baseUrl, request)
         return parseResponse(chat.choices.firstOrNull()?.message)
@@ -197,9 +199,16 @@ class RecipeAiUseCase(
         }
         val raw = message.content
         if (raw.isNullOrBlank()) {
-            throw AiError.SchemaInvalid(
-                "LLM returned empty content (Modell hat vermutlich tool_calls statt Text geliefert — wechsle das Modell, z.B. openai/gpt-oss-20b)"
-            )
+            val reasoningExcerpt = message.reasoning?.takeIf { it.isNotBlank() }
+            val msg = if (reasoningExcerpt != null) {
+                "Reasoning-Modell hat 4096 Tokens nur für Gedanken verbraucht und keine Antwort geliefert. " +
+                "Wechsle in den KI-Einstellungen zu einem Nicht-Reasoning-Modell wie openai/gpt-oss-20b.\n\n" +
+                "Gedanken-Auszug: ${reasoningExcerpt.take(300).replace("\n", " ")}…"
+            } else {
+                "LLM returned empty content. Modell existiert vermutlich nicht oder lieferte nur tool_calls. " +
+                "Wechsle in den KI-Einstellungen zu openai/gpt-oss-20b."
+            }
+            throw AiError.SchemaInvalid(msg)
         }
         val cleaned = stripCodeFences(raw)
         return try {

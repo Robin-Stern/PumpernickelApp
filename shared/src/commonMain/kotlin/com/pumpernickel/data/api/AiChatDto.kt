@@ -20,7 +20,12 @@ data class ChatMessage(
     // {"role":"assistant","content":null,"tool_calls":[...]}. Non-nullable broke
     // ChatResponse deserialization completely — user just saw "could not parse".
     val content: String? = null,
-    val refusal: String? = null
+    val refusal: String? = null,
+    // Reasoning models (Qwen QwQ, DeepSeek R1, o1) emit chain-of-thought into
+    // a `reasoning` field. When max_tokens is too small the reasoning eats all
+    // tokens and `content` ends up empty. Detecting this lets us give the user
+    // a useful error instead of a generic "empty response".
+    val reasoning: String? = null
 )
 
 /**
