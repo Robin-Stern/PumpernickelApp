@@ -16,6 +16,12 @@ android {
         versionName = "1.0"
     }
 
+    sourceSets["main"].apply {
+        manifest.srcFile("src/androidMain/AndroidManifest.xml")
+        kotlin.srcDirs("src/androidMain/kotlin")
+        res.srcDirs("src/androidMain/res")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
