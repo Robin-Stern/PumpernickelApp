@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidKotlinMultiplatform)
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.room)
     alias(libs.plugins.kotlinx.serialization)
@@ -8,7 +8,11 @@ plugins {
 }
 
 kotlin {
-    androidTarget()
+    android {
+        namespace = "com.pumpernickel.shared"
+        compileSdk = 35
+        minSdk = 26
+    }
 
     listOf(
         iosArm64(),
@@ -43,26 +47,6 @@ kotlin {
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
-        }
-    }
-}
-
-android {
-    namespace = "com.pumpernickel.shared"
-    compileSdk = 35
-
-    defaultConfig {
-        minSdk = 26
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    sourceSets {
-        getByName("main") {
-            assets.srcDirs("src/commonMain/resources")
         }
     }
 }
