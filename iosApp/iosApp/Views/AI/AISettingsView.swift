@@ -4,12 +4,11 @@ import KMPNativeCoroutinesAsync
 
 /// BYOK Settings (D-18-05 / D-18-06 / D-18-07).
 ///
-/// Wraps the shared AiSettingsViewModel via AiSettingsKoinHelper. Provider
-/// preset picker resets baseUrl + model to per-preset defaults; baseUrl is
-/// disabled unless preset == "custom"; non-HTTPS URLs are rejected with an
-/// inline error and the save button stays disabled while the URL is invalid.
-/// API key is read/written via Keychain (kSecAttrAccessibleAfterFirstUnlock-
-/// ThisDeviceOnly) and never lands in DataStore (REQ-AI-06).
+/// Wraps the shared AiSettingsViewModel via AiSettingsKoinHelper. Selecting a
+/// provider preset resets baseUrl + model AND clears the previously saved key
+/// (an OpenAI key won't work on Together — leaving it around with a green
+/// "saved" indicator was misleading). Per provider the user is shown a list
+/// of known-good model names that auto-fill on tap.
 struct AISettingsView: View {
     private let viewModel = AiSettingsKoinHelper().getAiSettingsViewModel()
 
@@ -22,9 +21,11 @@ struct AISettingsView: View {
     @State private var keyVisible: Bool = false
     @State private var baseUrlDraft: String = ""
     @State private var modelDraft: String = ""
-    @State private var didSeedDrafts = false
 
+    @FocusState private var focusedField: Field?
     @Environment(\.dismiss) private var dismiss
+
+    private enum Field { case key, baseUrl, model }
 
     private static let presetLabels: [(key: String, label: String)] = [
         ("openai", "OpenAI"),
@@ -41,151 +42,244 @@ struct AISettingsView: View {
         return !trimmed.isEmpty && !trimmed.lowercased().hasPrefix("https://")
     }
 
+    private var providerLabel: String {
+        Self.presetLabels.first(where: { $0.key == providerPreset })?.label ?? providerPreset
+    }
+
     var body: some View {
         Form {
-            Section("Anbieter") {
-                Picker("Anbieter", selection: $providerPreset) {
-                    ForEach(Self.presetLabels, id: \.key) { item in
-                        Text(item.label).tag(item.key)
-                    }
-                }
-                .pickerStyle(.menu)
-                .onChange(of: providerPreset) { _, newValue in
-                    viewModel.setProviderPreset(preset: newValue)
-                }
-            }
-
-            Section {
-                HStack {
-                    Group {
-                        if keyVisible {
-                            TextField("sk-…", text: $keyDraft)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled(true)
-                        } else {
-                            SecureField("sk-…", text: $keyDraft)
-                        }
-                    }
-                    Button {
-                        keyVisible.toggle()
-                    } label: {
-                        Image(systemName: keyVisible ? "eye.slash" : "eye")
-                    }
-                    .buttonStyle(.borderless)
-                    .accessibilityLabel(keyVisible ? "Schlüssel verbergen" : "Schlüssel zeigen")
-                }
-                HStack(spacing: 6) {
-                    Image(systemName: apiKeyConfigured ? "checkmark.seal.fill" : "exclamationmark.triangle")
-                        .foregroundColor(apiKeyConfigured ? .green : .orange)
-                    Text(apiKeyConfigured ? "Schlüssel gespeichert" : "Noch kein Schlüssel gespeichert")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor(apiKeyConfigured ? .green : .orange)
-                }
-
-                HStack(spacing: 12) {
-                    Button {
-                        let trimmed = keyDraft.trimmingCharacters(in: .whitespaces)
-                        guard !trimmed.isEmpty else { return }
-                        viewModel.setApiKey(value: trimmed)
-                        keyDraft = ""
-                        keyVisible = false
-                    } label: {
-                        Text("Schlüssel speichern")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(keyDraft.trimmingCharacters(in: .whitespaces).isEmpty)
-
-                    Button(role: .destructive) {
-                        viewModel.clearApiKey()
-                        keyDraft = ""
-                        keyVisible = false
-                    } label: {
-                        Text("Schlüssel löschen")
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(!apiKeyConfigured)
-                }
-            } header: {
-                Text("API-Schlüssel")
-            } footer: {
-                Text("Der Schlüssel wird nur lokal im Schlüsselbund gespeichert (kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly).")
-                    .font(.caption2)
-            }
-
-            Section("Basis-URL") {
-                TextField("https://api.openai.com/v1", text: $baseUrlDraft)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled(true)
-                    .keyboardType(.URL)
-                    .disabled(!isCustomPreset)
-                    .foregroundColor(isCustomPreset ? .primary : .secondary)
-                if isCustomPreset && baseUrlInvalid {
-                    Text("Nur HTTPS-URLs erlaubt.")
-                        .font(.caption)
-                        .foregroundColor(.red)
-                }
-                if isCustomPreset {
-                    Button("Basis-URL speichern") {
-                        let trimmed = baseUrlDraft.trimmingCharacters(in: .whitespaces)
-                        viewModel.setBaseUrl(url: trimmed)
-                    }
-                    .disabled(baseUrlInvalid || baseUrlDraft.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-            }
-
-            Section {
-                TextField("gpt-4o-mini", text: $modelDraft)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled(true)
-                    .onSubmit {
-                        let trimmed = modelDraft.trimmingCharacters(in: .whitespaces)
-                        if !trimmed.isEmpty { viewModel.setModel(value: trimmed) }
-                    }
-                Button("Modell speichern") {
-                    let trimmed = modelDraft.trimmingCharacters(in: .whitespaces)
-                    guard !trimmed.isEmpty else { return }
-                    viewModel.setModel(value: trimmed)
-                }
-                .disabled(modelDraft.trimmingCharacters(in: .whitespaces).isEmpty
-                          || modelDraft == model)
-
-                if providerPreset == "together" {
-                    DisclosureGroup("Vorgeschlagene Together-Modelle") {
-                        VStack(alignment: .leading, spacing: 6) {
-                            ModelSuggestionRow(name: "openai/gpt-oss-20b", note: "Kostenlos · empfohlen") {
-                                modelDraft = "openai/gpt-oss-20b"
-                                viewModel.setModel(value: "openai/gpt-oss-20b")
-                            }
-                            ModelSuggestionRow(name: "openai/gpt-oss-120b", note: "Stärker, langsamer") {
-                                modelDraft = "openai/gpt-oss-120b"
-                                viewModel.setModel(value: "openai/gpt-oss-120b")
-                            }
-                            ModelSuggestionRow(name: "meta-llama/Llama-3.3-70B-Instruct-Turbo", note: "Bezahlt") {
-                                modelDraft = "meta-llama/Llama-3.3-70B-Instruct-Turbo"
-                                viewModel.setModel(value: "meta-llama/Llama-3.3-70B-Instruct-Turbo")
-                            }
-                            ModelSuggestionRow(name: "google/gemma-2-27b-it", note: "Bezahlt") {
-                                modelDraft = "google/gemma-2-27b-it"
-                                viewModel.setModel(value: "google/gemma-2-27b-it")
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                    .font(.subheadline)
-                }
-            } header: {
-                Text("Modell")
-            } footer: {
-                Text("Modellname tippen oder einen Vorschlag wählen. Falsche Namen führen zu einem Timeout — der Anbieter sucht dann ergebnislos nach dem Modell.")
-                    .font(.caption2)
-            }
+            providerSection
+            apiKeySection
+            baseUrlSection
+            modelSection
         }
         .navigationTitle("KI-Einstellungen")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Fertig") { saveAllAndDismiss() }
+                    .bold()
+            }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Fertig") { commitFocusedField() }
+                    .bold()
+            }
+        }
         .task { await observeProviderPreset() }
         .task { await observeBaseUrl() }
         .task { await observeModel() }
         .task { await observeApiKeyConfigured() }
+    }
+
+    // MARK: - Sections
+
+    private var providerSection: some View {
+        Section {
+            Picker("Anbieter", selection: $providerPreset) {
+                ForEach(Self.presetLabels, id: \.key) { item in
+                    Text(item.label).tag(item.key)
+                }
+            }
+            .pickerStyle(.menu)
+            .onChange(of: providerPreset) { _, newValue in
+                viewModel.setProviderPreset(preset: newValue)
+                keyDraft = ""
+                keyVisible = false
+            }
+        } header: {
+            Text("Anbieter")
+        } footer: {
+            Text("Beim Wechsel des Anbieters wird der bisherige API-Schlüssel automatisch gelöscht — Schlüssel sind anbieter-spezifisch.")
+                .font(.caption2)
+        }
+    }
+
+    private var apiKeySection: some View {
+        Section {
+            HStack {
+                Group {
+                    if keyVisible {
+                        TextField("sk-…", text: $keyDraft)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                    } else {
+                        SecureField("sk-…", text: $keyDraft)
+                    }
+                }
+                .focused($focusedField, equals: .key)
+                .submitLabel(.done)
+                .onSubmit { saveKeyDraft() }
+
+                Button {
+                    keyVisible.toggle()
+                } label: {
+                    Image(systemName: keyVisible ? "eye.slash" : "eye")
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(keyVisible ? "Schlüssel verbergen" : "Schlüssel zeigen")
+            }
+
+            HStack(spacing: 8) {
+                Image(systemName: apiKeyConfigured ? "checkmark.seal.fill" : "exclamationmark.triangle")
+                    .foregroundColor(apiKeyConfigured ? .green : .orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(apiKeyConfigured ? "Schlüssel für \(providerLabel) gespeichert" : "Kein Schlüssel für \(providerLabel)")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(apiKeyConfigured ? .green : .orange)
+                    if !apiKeyConfigured {
+                        Text("Schlüssel oben eintippen und auf Speichern tippen.")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+
+            HStack(spacing: 12) {
+                Button(action: saveKeyDraft) {
+                    Text("Speichern")
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(keyDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+
+                Button(role: .destructive) {
+                    viewModel.clearApiKey()
+                    keyDraft = ""
+                    keyVisible = false
+                } label: {
+                    Text("Löschen")
+                }
+                .buttonStyle(.bordered)
+                .disabled(!apiKeyConfigured)
+            }
+        } header: {
+            Text("API-Schlüssel · \(providerLabel)")
+        } footer: {
+            Text("Wird nur lokal im Schlüsselbund abgelegt (kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly). Nie an einen Server gesendet.")
+                .font(.caption2)
+        }
+    }
+
+    private var baseUrlSection: some View {
+        Section {
+            TextField("https://api.openai.com/v1", text: $baseUrlDraft)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+                .keyboardType(.URL)
+                .focused($focusedField, equals: .baseUrl)
+                .disabled(!isCustomPreset)
+                .foregroundColor(isCustomPreset ? .primary : .secondary)
+                .onSubmit { commitBaseUrlDraft() }
+            if isCustomPreset && baseUrlInvalid {
+                Text("Nur HTTPS-URLs erlaubt.")
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
+            if isCustomPreset {
+                Button("Basis-URL speichern") { commitBaseUrlDraft() }
+                    .disabled(baseUrlInvalid || baseUrlDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        } header: {
+            Text("Basis-URL")
+        } footer: {
+            if !isCustomPreset {
+                Text("Bei Standard-Anbietern fest auf den offiziellen Endpunkt gesetzt.")
+                    .font(.caption2)
+            }
+        }
+    }
+
+    private var modelSection: some View {
+        Section {
+            TextField("gpt-4o-mini", text: $modelDraft)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+                .focused($focusedField, equals: .model)
+                .submitLabel(.done)
+                .onSubmit { commitModelDraft() }
+            Button("Modell speichern") { commitModelDraft() }
+                .disabled(modelDraft.trimmingCharacters(in: .whitespaces).isEmpty
+                          || modelDraft == model)
+
+            modelSuggestionsForCurrentProvider
+        } header: {
+            Text("Modell")
+        } footer: {
+            Text("Modellname tippen oder einen Vorschlag wählen. Falsche Namen führen zu Timeouts oder leeren Antworten.")
+                .font(.caption2)
+        }
+    }
+
+    @ViewBuilder
+    private var modelSuggestionsForCurrentProvider: some View {
+        let suggestions = Self.modelSuggestions[providerPreset] ?? []
+        if !suggestions.isEmpty {
+            DisclosureGroup("Empfohlene Modelle") {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(suggestions, id: \.name) { item in
+                        ModelSuggestionRow(name: item.name, note: item.note) {
+                            modelDraft = item.name
+                            viewModel.setModel(value: item.name)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .font(.subheadline)
+        }
+    }
+
+    // MARK: - Actions
+
+    private func saveKeyDraft() {
+        let trimmed = keyDraft.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        viewModel.setApiKey(value: trimmed)
+        keyDraft = ""
+        keyVisible = false
+        focusedField = nil
+    }
+
+    private func commitBaseUrlDraft() {
+        let trimmed = baseUrlDraft.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, !baseUrlInvalid else { return }
+        viewModel.setBaseUrl(url: trimmed)
+        focusedField = nil
+    }
+
+    private func commitModelDraft() {
+        let trimmed = modelDraft.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        viewModel.setModel(value: trimmed)
+        focusedField = nil
+    }
+
+    private func commitFocusedField() {
+        switch focusedField {
+        case .key: saveKeyDraft()
+        case .baseUrl: commitBaseUrlDraft()
+        case .model: commitModelDraft()
+        case .none: break
+        }
+        focusedField = nil
+    }
+
+    private func saveAllAndDismiss() {
+        if !keyDraft.trimmingCharacters(in: .whitespaces).isEmpty {
+            saveKeyDraft()
+        }
+        if isCustomPreset
+            && !baseUrlDraft.trimmingCharacters(in: .whitespaces).isEmpty
+            && !baseUrlInvalid
+            && baseUrlDraft != baseUrl {
+            commitBaseUrlDraft()
+        }
+        if !modelDraft.trimmingCharacters(in: .whitespaces).isEmpty
+            && modelDraft != model {
+            commitModelDraft()
+        }
+        focusedField = nil
+        dismiss()
     }
 
     // MARK: - Observers
@@ -201,9 +295,6 @@ struct AISettingsView: View {
     }
 
     private func observeBaseUrl() async {
-        // Always mirror the flow into the draft. Flow changes are user-driven
-        // (preset switch resets baseUrl/model to per-preset defaults — D-18-06),
-        // so the field SHOULD visibly update on preset change.
         do {
             for try await value in asyncSequence(for: viewModel.baseUrlFlow) {
                 self.baseUrl = value
@@ -228,9 +319,6 @@ struct AISettingsView: View {
     private func observeApiKeyConfigured() async {
         do {
             for try await value in asyncSequence(for: viewModel.apiKeyConfiguredFlow) {
-                // KMP-NC may emit Swift Bool directly OR a KotlinBoolean wrapper
-                // depending on the @NativeCoroutinesState codegen version. Handle
-                // both by going through NSNumber bridging which works for either.
                 let asBool: Bool = (value as? Bool) ?? ((value as? NSNumber)?.boolValue ?? false)
                 self.apiKeyConfigured = asBool
                 print("[AISettingsView] apiKeyConfigured emitted: \(asBool)")
@@ -239,6 +327,39 @@ struct AISettingsView: View {
             print("AISettingsView apiKeyConfigured observation error: \(error)")
         }
     }
+}
+
+// MARK: - Model suggestions per provider (verified May 2026)
+
+private struct ModelSuggestion: Hashable {
+    let name: String
+    let note: String
+}
+
+private extension AISettingsView {
+    static let modelSuggestions: [String: [ModelSuggestion]] = [
+        "openai": [
+            ModelSuggestion(name: "gpt-4o-mini", note: "Günstig · Standard"),
+            ModelSuggestion(name: "gpt-4o", note: "Stärker"),
+            ModelSuggestion(name: "o4-mini", note: "Reasoning, langsamer")
+        ],
+        "together": [
+            ModelSuggestion(name: "openai/gpt-oss-20b", note: "Kostenlos · empfohlen"),
+            ModelSuggestion(name: "meta-llama/Llama-3.3-70B-Instruct-Turbo", note: "Stark, allround"),
+            ModelSuggestion(name: "deepseek-ai/DeepSeek-V3", note: "Stark bei Code/Logik"),
+            ModelSuggestion(name: "Qwen/Qwen2.5-72B-Instruct-Turbo", note: "Mehrsprachig")
+        ],
+        "openrouter": [
+            ModelSuggestion(name: "openai/gpt-oss-20b:free", note: "Kostenlos · empfohlen"),
+            ModelSuggestion(name: "meta-llama/llama-3.3-70b-instruct", note: "Stark, allround"),
+            ModelSuggestion(name: "deepseek/deepseek-chat", note: "Stark bei Code/Logik")
+        ],
+        "groq": [
+            ModelSuggestion(name: "llama-3.3-70b-versatile", note: "Standard, sehr schnell"),
+            ModelSuggestion(name: "llama-3.1-8b-instant", note: "Klein, sehr schnell"),
+            ModelSuggestion(name: "openai/gpt-oss-20b", note: "Stark, mittlere Latenz")
+        ]
+    ]
 }
 
 private struct ModelSuggestionRow: View {

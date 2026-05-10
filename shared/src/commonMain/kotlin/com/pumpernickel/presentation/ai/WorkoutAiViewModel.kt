@@ -3,6 +3,7 @@ package com.pumpernickel.presentation.ai
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pumpernickel.domain.ai.AiError
+import com.pumpernickel.domain.ai.ApiKeyState
 import com.pumpernickel.domain.ai.SecureKeyStore
 import com.pumpernickel.domain.ai.WorkoutAiForm
 import com.pumpernickel.domain.ai.WorkoutAiPreview
@@ -46,10 +47,33 @@ class WorkoutAiViewModel(
 
     private var generationJob: Job? = null
 
+    private val defaultForm = WorkoutAiUiState.Form(
+        targetMuscles = emptyList(),
+        exerciseCount = 5,
+        splitStyle = WorkoutAiSplit.NONE
+    )
+
     init {
+        // Bootstrap ApiKeyState from Keychain on first init (read updates the flow).
+        viewModelScope.launch { secureKeyStore.readApiKey() }
+        // Live-react to key changes: this ensures the screen exits NoKey the
+        // moment the user saves a key from the Settings screen — even if this
+        // VM instance was created before the key existed (the common case
+        // because SwiftUI holds VM references across navigation).
         viewModelScope.launch {
-            if (secureKeyStore.readApiKey() == null) {
-                _uiState.value = WorkoutAiUiState.NoKey
+            ApiKeyState.configured.collect { hasKey ->
+                val current = _uiState.value
+                when {
+                    !hasKey && current !is WorkoutAiUiState.Generating
+                            && current !is WorkoutAiUiState.Preview
+                            && current !is WorkoutAiUiState.Saved -> {
+                        _uiState.value = WorkoutAiUiState.NoKey
+                    }
+                    hasKey && current is WorkoutAiUiState.NoKey -> {
+                        _uiState.value = defaultForm
+                    }
+                    else -> {} // don't disturb in-flight generation / preview / error
+                }
             }
         }
     }

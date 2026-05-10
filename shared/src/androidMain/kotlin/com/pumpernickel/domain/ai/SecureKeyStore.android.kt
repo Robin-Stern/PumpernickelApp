@@ -21,14 +21,18 @@ actual class SecureKeyStore(private val context: Context) {
 
     actual suspend fun writeApiKey(value: String) = withContext(Dispatchers.IO) {
         prefs.edit().putString(KEY_API_KEY, value).apply()
+        ApiKeyState.set(true)
     }
 
     actual suspend fun readApiKey(): String? = withContext(Dispatchers.IO) {
-        prefs.getString(KEY_API_KEY, null)
+        val v = prefs.getString(KEY_API_KEY, null)
+        ApiKeyState.set(v != null)
+        v
     }
 
     actual suspend fun clearApiKey() = withContext(Dispatchers.IO) {
         prefs.edit().remove(KEY_API_KEY).apply()
+        ApiKeyState.set(false)
     }
 
     companion object {

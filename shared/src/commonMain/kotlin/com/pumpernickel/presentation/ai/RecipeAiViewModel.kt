@@ -3,6 +3,7 @@ package com.pumpernickel.presentation.ai
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pumpernickel.domain.ai.AiError
+import com.pumpernickel.domain.ai.ApiKeyState
 import com.pumpernickel.domain.ai.RecipeAiPreview
 import com.pumpernickel.domain.ai.RecipeAiUseCase
 import com.pumpernickel.domain.ai.RemainingMacros
@@ -41,12 +42,25 @@ class RecipeAiViewModel(
     private var generationJob: Job? = null
 
     init {
+        viewModelScope.launch { secureKeyStore.readApiKey() }
         viewModelScope.launch {
-            if (secureKeyStore.readApiKey() == null) {
-                _uiState.value = RecipeAiUiState.NoKey
-                return@launch
+            ApiKeyState.configured.collect { hasKey ->
+                val current = _uiState.value
+                when {
+                    !hasKey && current !is RecipeAiUiState.Generating
+                            && current !is RecipeAiUiState.Preview
+                            && current !is RecipeAiUiState.Saved -> {
+                        _uiState.value = RecipeAiUiState.NoKey
+                    }
+                    hasKey && (current is RecipeAiUiState.NoKey
+                            || current is RecipeAiUiState.Loading) -> {
+                        // Re-enter Loading then refresh remaining macros to land in Form.
+                        _uiState.value = RecipeAiUiState.Loading
+                        refreshRemaining()
+                    }
+                    else -> {}
+                }
             }
-            refreshRemaining()
         }
     }
 

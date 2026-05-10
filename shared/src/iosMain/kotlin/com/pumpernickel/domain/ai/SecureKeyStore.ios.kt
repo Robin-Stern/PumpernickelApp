@@ -81,11 +81,13 @@ actual class SecureKeyStore {
                     println("[SecureKeyStore.ios] SecItemAdd failed (status=$addStatus)")
                 } else {
                     println("[SecureKeyStore.ios] writeApiKey OK (added, length=${value.length})")
+                    ApiKeyState.set(true)
                 }
             } else if (updateStatus != errSecSuccess) {
                 println("[SecureKeyStore.ios] SecItemUpdate failed (status=$updateStatus)")
             } else {
                 println("[SecureKeyStore.ios] writeApiKey OK (updated, length=${value.length})")
+                ApiKeyState.set(true)
             }
         } catch (t: Throwable) {
             println("[SecureKeyStore.ios] writeApiKey crashed: $t")
@@ -127,6 +129,7 @@ actual class SecureKeyStore {
                 CFRelease(cfData)
                 val str = bytes.decodeToString()
                 println("[SecureKeyStore.ios] readApiKey OK (length=${str.length})")
+                ApiKeyState.set(true)
                 str
             }
         } catch (t: Throwable) {
@@ -138,6 +141,7 @@ actual class SecureKeyStore {
     actual suspend fun clearApiKey() = withContext(Dispatchers.Default) {
         try {
             memScoped { SecItemDelete(baseQueryDict()) }
+            ApiKeyState.set(false)
             Unit
         } catch (t: Throwable) {
             println("[SecureKeyStore.ios] clearApiKey crashed: $t")
