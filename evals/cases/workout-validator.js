@@ -7,14 +7,40 @@
 //   - context: { vars: { templatesExpected, exerciseCount, ... } }
 // Returns: { pass: boolean, score?: number, reason?: string }
 
-function stripFences(raw) {
-  const t = raw.trim();
-  if (!t.startsWith("```")) return t;
-  const firstNl = t.indexOf("\n");
-  if (firstNl < 0) return t;
-  const inner = t.slice(firstNl + 1);
-  const closeIdx = inner.lastIndexOf("```");
-  return (closeIdx >= 0 ? inner.slice(0, closeIdx) : inner).trim();
+// Strip markdown fences, then extract the first balanced {...} object.
+// Models often emit reasoning prose followed by the actual JSON; this
+// finds the JSON regardless of where it is in the response. If no balanced
+// object is found, returns the original (parse will then fail loudly).
+function extractJsonObject(raw) {
+  let t = raw.trim();
+  if (t.startsWith("```")) {
+    const firstNl = t.indexOf("\n");
+    if (firstNl >= 0) {
+      const inner = t.slice(firstNl + 1);
+      const closeIdx = inner.lastIndexOf("```");
+      t = (closeIdx >= 0 ? inner.slice(0, closeIdx) : inner).trim();
+    }
+  }
+
+  const start = t.indexOf("{");
+  if (start < 0) return t;
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < t.length; i++) {
+    const ch = t[i];
+    if (escape) { escape = false; continue; }
+    if (ch === "\\" && inString) { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return t.slice(start, i + 1);
+    }
+  }
+  return t.slice(start);
 }
 
 const ALLOWED_MUSCLES = new Set([
@@ -24,10 +50,15 @@ const ALLOWED_MUSCLES = new Set([
 ]);
 
 module.exports = function (output, { vars }) {
-  const cleaned = stripFences(output);
+  const cleaned = extractJsonObject(output);
   let parsed;
   try { parsed = JSON.parse(cleaned); }
-  catch (e) { return { pass: false, reason: `JSON parse failed: ${e.message}` }; }
+  catch (e) {
+    return {
+      pass: false,
+      reason: `JSON parse failed: ${e.message}\n\nFirst 300 chars of raw output:\n${output.slice(0, 300)}`
+    };
+  }
 
   if (!Array.isArray(parsed.templates)) {
     return { pass: false, reason: "templates is not an array" };

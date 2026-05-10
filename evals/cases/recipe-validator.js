@@ -4,23 +4,46 @@
 // "close enough" recipe doesn't flunk evals — the app itself doesn't reject
 // based on macro fit, only flags via MacrosFitIndicator).
 
-function stripFences(raw) {
-  const t = raw.trim();
-  if (!t.startsWith("```")) return t;
-  const firstNl = t.indexOf("\n");
-  if (firstNl < 0) return t;
-  const inner = t.slice(firstNl + 1);
-  const closeIdx = inner.lastIndexOf("```");
-  return (closeIdx >= 0 ? inner.slice(0, closeIdx) : inner).trim();
+function extractJsonObject(raw) {
+  let t = raw.trim();
+  if (t.startsWith("```")) {
+    const firstNl = t.indexOf("\n");
+    if (firstNl >= 0) {
+      const inner = t.slice(firstNl + 1);
+      const closeIdx = inner.lastIndexOf("```");
+      t = (closeIdx >= 0 ? inner.slice(0, closeIdx) : inner).trim();
+    }
+  }
+  const start = t.indexOf("{");
+  if (start < 0) return t;
+  let depth = 0, inString = false, escape = false;
+  for (let i = start; i < t.length; i++) {
+    const ch = t[i];
+    if (escape) { escape = false; continue; }
+    if (ch === "\\" && inString) { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return t.slice(start, i + 1);
+    }
+  }
+  return t.slice(start);
 }
 
 const ALLOWED_UNITS = new Set(["GRAM", "MILLILITER"]);
 
 module.exports = function (output, { vars }) {
-  const cleaned = stripFences(output);
+  const cleaned = extractJsonObject(output);
   let parsed;
   try { parsed = JSON.parse(cleaned); }
-  catch (e) { return { pass: false, reason: `JSON parse failed: ${e.message}` }; }
+  catch (e) {
+    return {
+      pass: false,
+      reason: `JSON parse failed: ${e.message}\n\nFirst 300 chars of raw output:\n${output.slice(0, 300)}`
+    };
+  }
 
   if (parsed.refusal) {
     return { pass: false, reason: `LLM refused: ${parsed.refusal}` };
