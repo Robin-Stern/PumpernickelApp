@@ -33,27 +33,29 @@ fast — the prompts and test inputs only change when you edit them in
 
 ## Switching providers / models
 
-Edit the `providers:` array in either `promptfoo.*.yaml`. Each provider entry
-points to an OpenAI-compatible endpoint via `apiBaseUrl` and reads the key
-from `apiKeyEnvar`. Add as many models as you want to A/B compare them — the
-HTML viewer aligns rows so you can see which prompt+model pair passes.
+Promptfoo has a built-in `togetherai:<model>` provider that reads
+`TOGETHER_API_KEY` from env automatically. Add another model by adding one
+entry to the `providers:` array — each becomes a column in the HTML viewer
+so you can A/B compare prompt+model pairs.
 
 Examples shipped:
-- `together-gpt-oss-20b` (free, recommended baseline)
-- `together-gemma-4-31b` (newer, may need higher max_tokens for reasoning)
+- `togetherai:openai/gpt-oss-20b` (kostenlos, baseline)
+- `togetherai:google/gemma-4-31B-it` (newer, larger; needs higher `max_tokens`)
 
-To add OpenAI:
+To add OpenAI directly:
 
 ```yaml
-- id: openai-4o-mini
+- id: openai:gpt-4o-mini
+  label: gpt-4o-mini
   config:
-    apiBaseUrl: https://api.openai.com/v1
-    apiKeyEnvar: OPENAI_API_KEY
-    model: gpt-4o-mini
-    max_tokens: 4096
     temperature: 0.7
-    response_format: { type: json_object }
+    max_tokens: 4096
+    response_format: { type: 'json_object' }
 ```
+
+The OpenAI provider reads `OPENAI_API_KEY` from env. Other built-in
+providers in promptfoo include `groq:`, `anthropic:`, `openrouter:`,
+`bedrock:`. See [promptfoo.dev/docs/providers](https://www.promptfoo.dev/docs/providers/).
 
 ## Assertions
 

@@ -4,24 +4,18 @@ prompts:
   - file://./prompts/recipe-system.json
 
 providers:
-  - id: together-gpt-oss-20b
-    label: openai/gpt-oss-20b (kostenlos)
+  - id: togetherai:openai/gpt-oss-20b
+    label: gpt-oss-20b (kostenlos)
     config:
-      apiBaseUrl: https://api.together.ai/v1
-      apiKeyEnvar: TOGETHER_API_KEY
-      model: openai/gpt-oss-20b
-      max_tokens: 4096
       temperature: 0.7
-      response_format: { type: json_object }
-  - id: together-gemma-4-31b
-    label: google/gemma-4-31B-it
+      max_tokens: 4096
+      response_format: { type: 'json_object' }
+  - id: togetherai:google/gemma-4-31B-it
+    label: Gemma 4 31B
     config:
-      apiBaseUrl: https://api.together.ai/v1
-      apiKeyEnvar: TOGETHER_API_KEY
-      model: google/gemma-4-31B-it
-      max_tokens: 4096
       temperature: 0.7
-      response_format: { type: json_object }
+      max_tokens: 4096
+      response_format: { type: 'json_object' }
 
 defaultTest:
   assert:
