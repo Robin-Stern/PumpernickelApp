@@ -6,6 +6,7 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import java.util.concurrent.TimeUnit
 
 actual fun createHttpClient(): HttpClient = HttpClient(OkHttp) {
     install(ContentNegotiation) {
@@ -15,6 +16,16 @@ actual fun createHttpClient(): HttpClient = HttpClient(OkHttp) {
         })
     }
     install(HttpTimeout) {
-        requestTimeoutMillis = 60_000  // D-18-16 — 60s hard timeout
+        requestTimeoutMillis = 180_000
+    }
+    engine {
+        config {
+            // OkHttp defaults are 10s — much shorter than the Ktor request timeout.
+            // For AI endpoints free-tier inference can run 90-150s, so all three
+            // socket-level timeouts must match the Ktor ceiling.
+            readTimeout(180, TimeUnit.SECONDS)
+            writeTimeout(180, TimeUnit.SECONDS)
+            connectTimeout(30, TimeUnit.SECONDS)
+        }
     }
 }

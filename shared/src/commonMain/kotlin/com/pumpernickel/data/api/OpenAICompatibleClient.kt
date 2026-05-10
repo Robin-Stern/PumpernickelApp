@@ -51,9 +51,11 @@ class OpenAICompatibleClient(
                 header("Authorization", "Bearer $key")
                 contentType(ContentType.Application.Json)
                 timeout {
-                    requestTimeoutMillis = 120_000  // bumped from 60s — provider responses for
-                                                    // structured-output requests with large schemas
-                                                    // can take 30-90s on free-tier inference.
+                    // Ceiling for AI requests. Must NOT exceed the engine-level
+                    // socket timeout (180s set in HttpClientFactory.{ios,android}.kt) —
+                    // the smallest of the two wins, so if you ever want to go higher,
+                    // bump both.
+                    requestTimeoutMillis = 180_000
                 }
                 setBody(request)
             }
