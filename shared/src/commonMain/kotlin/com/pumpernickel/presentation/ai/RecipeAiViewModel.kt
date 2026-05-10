@@ -139,6 +139,22 @@ class RecipeAiViewModel(
         _uiState.value = RecipeAiUiState.Form(preview.originatingRemaining)
     }
 
+    /**
+     * Called from the iOS view's `.onAppear` so the remaining-macros panel is
+     * always fresh when the screen returns to foreground (after the user logged
+     * food elsewhere). State-guarded: an in-flight Generating call or an open
+     * Preview is preserved — only Form / RemainingExhausted / Error states are
+     * re-derived from the latest day's totals.
+     */
+    fun onAppearRefresh() {
+        when (_uiState.value) {
+            is RecipeAiUiState.Form,
+            is RecipeAiUiState.RemainingExhausted,
+            is RecipeAiUiState.Error -> refreshRemaining()
+            else -> {} // NoKey / Loading / Generating / Preview / Saved — leave alone
+        }
+    }
+
     fun retryFromError() {
         val error = (_uiState.value as? RecipeAiUiState.Error) ?: return
         if (error.originatingRemaining == null) {

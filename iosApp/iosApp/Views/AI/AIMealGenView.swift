@@ -23,6 +23,7 @@ struct AIMealGenView: View {
         .navigationTitle("KI-Mahlzeit")
         .navigationBarTitleDisplayMode(.inline)
         .task { await observeUiState() }
+        .onAppear { viewModel.onAppearRefresh() }
     }
 
     @ViewBuilder
