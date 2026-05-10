@@ -344,22 +344,22 @@ private extension AISettingsView {
             ModelSuggestion(name: "o4-mini", note: "Reasoning, langsamer")
         ],
         "together": [
-            ModelSuggestion(name: "openai/gpt-oss-20b", note: "Kostenlos · empfohlen"),
-            ModelSuggestion(name: "google/gemma-4-31B-it", note: "Google Gemma 4 · neu"),
-            ModelSuggestion(name: "google/gemma-3-27b-it", note: "Google Gemma 3"),
-            ModelSuggestion(name: "google/gemma-2-27b-it", note: "Google Gemma 2"),
+            ModelSuggestion(name: "google/gemma-4-31B-it", note: "Empfohlen · 12/12 in Eval"),
+            ModelSuggestion(name: "openai/gpt-oss-20b", note: "Kostenlos · Reasoning · Recipe unzuverlässig"),
+            ModelSuggestion(name: "google/gemma-3-27b-it", note: "Vorgänger · Gemma 4 bevorzugen"),
+            ModelSuggestion(name: "google/gemma-2-27b-it", note: "Veraltet · Gemma 4 bevorzugen"),
             ModelSuggestion(name: "meta-llama/Llama-3.3-70B-Instruct-Turbo", note: "Llama · stark allround"),
             ModelSuggestion(name: "deepseek-ai/DeepSeek-V3", note: "DeepSeek · Code/Logik")
         ],
         "openrouter": [
-            ModelSuggestion(name: "openai/gpt-oss-20b:free", note: "Kostenlos · empfohlen"),
+            ModelSuggestion(name: "openai/gpt-oss-20b:free", note: "Kostenlos · Reasoning · Recipe unzuverlässig"),
             ModelSuggestion(name: "meta-llama/llama-3.3-70b-instruct", note: "Stark, allround"),
             ModelSuggestion(name: "deepseek/deepseek-chat", note: "Stark bei Code/Logik")
         ],
         "groq": [
             ModelSuggestion(name: "llama-3.3-70b-versatile", note: "Standard, sehr schnell"),
             ModelSuggestion(name: "llama-3.1-8b-instant", note: "Klein, sehr schnell"),
-            ModelSuggestion(name: "openai/gpt-oss-20b", note: "Stark, mittlere Latenz")
+            ModelSuggestion(name: "openai/gpt-oss-20b", note: "Reasoning · Recipe unzuverlässig")
         ]
     ]
 }
