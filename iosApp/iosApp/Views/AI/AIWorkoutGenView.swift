@@ -9,6 +9,8 @@ struct AIWorkoutGenView: View {
     private let viewModel = WorkoutAiKoinHelper().getWorkoutAiViewModel()
 
     @State private var uiState: WorkoutAiUiState? = nil
+    @State private var streamingContent: String = ""
+    @State private var streamingReasoning: String = ""
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -23,6 +25,7 @@ struct AIWorkoutGenView: View {
         .navigationTitle("KI-Workout")
         .navigationBarTitleDisplayMode(.inline)
         .task { await observeUiState() }
+        .task { await observeStreaming() }
     }
 
     @ViewBuilder
@@ -32,7 +35,12 @@ struct AIWorkoutGenView: View {
         } else if let form = state as? WorkoutAiUiState.Form {
             FormBody(state: form, viewModel: viewModel)
         } else if let generating = state as? WorkoutAiUiState.Generating {
-            GeneratingBody(rowCount: Int(generating.skeletonRowCount), viewModel: viewModel)
+            GeneratingBody(
+                rowCount: Int(generating.skeletonRowCount),
+                streamingContent: streamingContent,
+                streamingReasoning: streamingReasoning,
+                viewModel: viewModel
+            )
         } else if let preview = state as? WorkoutAiUiState.Preview {
             FormBody(state: preview.originatingForm, viewModel: viewModel)
                 .sheet(isPresented: .constant(true)) {
@@ -57,6 +65,17 @@ struct AIWorkoutGenView: View {
             }
         } catch {
             print("AIWorkoutGenView uiState observation error: \(error)")
+        }
+    }
+
+    private func observeStreaming() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.streamingTextFlow) {
+                self.streamingContent = value.content
+                self.streamingReasoning = value.reasoning
+            }
+        } catch {
+            print("AIWorkoutGenView streaming observation error: \(error)")
         }
     }
 }
@@ -195,49 +214,51 @@ private struct MuscleChip: View {
 
 private struct GeneratingBody: View {
     let rowCount: Int
+    let streamingContent: String
+    let streamingReasoning: String
     let viewModel: WorkoutAiViewModel
 
     @State private var elapsedSeconds: Int = 0
     @State private var pulse: Bool = false
 
-    var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+    private var hasAnyStream: Bool {
+        !streamingContent.isEmpty || !streamingReasoning.isEmpty
+    }
 
-            // Big obvious "thinking" header so the user knows something's happening.
-            VStack(spacing: 12) {
+    var body: some View {
+        VStack(spacing: 16) {
+            // Compact header so the streaming box gets the screen real estate.
+            HStack(spacing: 12) {
                 ZStack {
                     Circle()
                         .fill(Color.accentColor.opacity(pulse ? 0.15 : 0.05))
-                        .frame(width: 120, height: 120)
+                        .frame(width: 44, height: 44)
                         .scaleEffect(pulse ? 1.1 : 1.0)
                     Image(systemName: "sparkles")
-                        .font(.system(size: 44))
+                        .font(.system(size: 20))
                         .foregroundColor(.accentColor)
                         .symbolEffect(.pulse, options: .repeating, value: pulse)
                 }
-                Text("KI denkt nach…")
-                    .font(.title3.bold())
-                Text("\(elapsedSeconds)s")
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundColor(.secondary)
-                Text("Erstelle \(rowCount) Übung\(rowCount == 1 ? "" : "en")…")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            // Subtle skeleton hint underneath
-            VStack(spacing: 6) {
-                ForEach(0..<rowCount, id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color(.tertiarySystemBackground))
-                        .frame(height: 36)
-                        .opacity(0.6)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("KI denkt nach…")
+                        .font(.headline)
+                    Text("\(elapsedSeconds)s · \(rowCount) Übung\(rowCount == 1 ? "" : "en")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
                 }
+                Spacer()
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
 
-            Spacer()
+            StreamingPanel(
+                content: streamingContent,
+                reasoning: streamingReasoning,
+                hasAnyStream: hasAnyStream,
+                rowCount: rowCount
+            )
+            .padding(.horizontal, 16)
 
             Button(role: .destructive) {
                 viewModel.cancel()
@@ -246,21 +267,90 @@ private struct GeneratingBody: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
-            .padding(.horizontal, 32)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
         .task {
-            // Pulse animation
             withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                 pulse = true
             }
-            // Elapsed-second counter — keeps user oriented during 30-90s waits.
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 if Task.isCancelled { break }
                 elapsedSeconds += 1
             }
         }
+    }
+}
+
+/// Live panel that shows the LLM's streamed text. Reasoning chunks (Qwen QwQ /
+/// DeepSeek R1) appear in a "Gedanken" subsection, the actual answer JSON in
+/// "Antwort". When nothing has streamed yet (first second or two) a skeleton
+/// is shown so the box isn't empty.
+private struct StreamingPanel: View {
+    let content: String
+    let reasoning: String
+    let hasAnyStream: Bool
+    let rowCount: Int
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    if hasAnyStream {
+                        if !reasoning.isEmpty {
+                            sectionHeader("Gedanken", icon: "brain")
+                            Text(reasoning)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .id("reasoning-tail-\(reasoning.count)")
+                        }
+                        if !content.isEmpty {
+                            sectionHeader("Antwort", icon: "text.alignleft")
+                            Text(content)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundColor(.primary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .id("content-tail-\(content.count)")
+                        }
+                    } else {
+                        VStack(spacing: 6) {
+                            ForEach(0..<rowCount, id: \.self) { _ in
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color(.tertiarySystemBackground))
+                                    .frame(height: 28)
+                                    .opacity(0.6)
+                            }
+                        }
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .background(Color(.secondarySystemBackground))
+            .cornerRadius(12)
+            .onChange(of: content) { _, _ in
+                withAnimation { proxy.scrollTo("content-tail-\(content.count)", anchor: .bottom) }
+            }
+            .onChange(of: reasoning) { _, _ in
+                if content.isEmpty {
+                    withAnimation { proxy.scrollTo("reasoning-tail-\(reasoning.count)", anchor: .bottom) }
+                }
+            }
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func sectionHeader(_ title: String, icon: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption2)
+            Text(title)
+                .font(.caption.weight(.semibold))
+        }
+        .foregroundColor(.secondary)
     }
 }
 

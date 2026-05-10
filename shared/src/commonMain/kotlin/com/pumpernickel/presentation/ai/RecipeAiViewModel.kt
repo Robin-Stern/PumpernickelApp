@@ -39,6 +39,11 @@ class RecipeAiViewModel(
     @NativeCoroutinesState
     val uiState: StateFlow<RecipeAiUiState> = _uiState.asStateFlow()
 
+    /** See WorkoutAiViewModel.streamingText. */
+    private val _streamingText = MutableStateFlow(StreamingText())
+    @NativeCoroutinesState
+    val streamingText: StateFlow<StreamingText> = _streamingText.asStateFlow()
+
     private var generationJob: Job? = null
 
     init {
@@ -92,9 +97,12 @@ class RecipeAiViewModel(
         val form = (_uiState.value as? RecipeAiUiState.Form) ?: return
         val remaining = form.remaining
         _uiState.value = RecipeAiUiState.Generating
+        _streamingText.value = StreamingText()
         generationJob = viewModelScope.launch {
             try {
-                val preview = useCase.invoke(remaining)
+                val preview = useCase.invoke(remaining) { content, reasoning ->
+                    _streamingText.value = StreamingText(content, reasoning)
+                }
                 _uiState.value = RecipeAiUiState.Preview(preview, originatingRemaining = remaining)
             } catch (ce: CancellationException) {
                 _uiState.value = RecipeAiUiState.Form(remaining)

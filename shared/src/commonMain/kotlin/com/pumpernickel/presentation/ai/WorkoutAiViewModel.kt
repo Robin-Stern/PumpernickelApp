@@ -45,6 +45,17 @@ class WorkoutAiViewModel(
     @NativeCoroutinesState
     val uiState: StateFlow<WorkoutAiUiState> = _uiState.asStateFlow()
 
+    /**
+     * Live token stream from the LLM. Updated during Generating state — each
+     * SSE chunk replaces the value with the latest accumulated text. Reset to
+     * empty string before each generate(). UI shows it inside the
+     * "KI denkt nach…" panel as monospace text so the user sees what the
+     * model is actually producing instead of a blind timer.
+     */
+    private val _streamingText = MutableStateFlow(StreamingText())
+    @NativeCoroutinesState
+    val streamingText: StateFlow<StreamingText> = _streamingText.asStateFlow()
+
     private var generationJob: Job? = null
 
     private val defaultForm = WorkoutAiUiState.Form(
@@ -98,14 +109,18 @@ class WorkoutAiViewModel(
         if (form.targetMuscles.isEmpty()) return  // form-side validation; UI also disables button
 
         _uiState.value = WorkoutAiUiState.Generating(skeletonRowCount = form.exerciseCount)
+        _streamingText.value = StreamingText()
         generationJob = viewModelScope.launch {
             try {
                 val preview = useCase.invoke(
-                    WorkoutAiForm(
+                    form = WorkoutAiForm(
                         targetMuscles = form.targetMuscles,
                         exerciseCount = form.exerciseCount,
                         splitStyle = form.splitStyle
-                    )
+                    ),
+                    onProgress = { content, reasoning ->
+                        _streamingText.value = StreamingText(content, reasoning)
+                    }
                 )
                 _uiState.value = WorkoutAiUiState.Preview(preview, originatingForm = form)
             } catch (ce: CancellationException) {
@@ -157,6 +172,9 @@ class WorkoutAiViewModel(
         _uiState.value = error.originatingForm
     }
 }
+
+/** Live LLM token stream — both ai-content (the answer) and reasoning (chain-of-thought, reasoning models only). */
+data class StreamingText(val content: String = "", val reasoning: String = "")
 
 /**
  * Sealed UiState — exported to Swift via the KMPNativeCoroutines flat-export

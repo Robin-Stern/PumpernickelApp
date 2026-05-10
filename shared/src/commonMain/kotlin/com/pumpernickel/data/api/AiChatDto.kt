@@ -10,7 +10,36 @@ data class ChatRequest(
     val messages: List<ChatMessage>,
     @SerialName("response_format") val responseFormat: ResponseFormat? = null,
     val temperature: Double = 0.7,
-    @SerialName("max_tokens") val maxTokens: Int? = null
+    @SerialName("max_tokens") val maxTokens: Int? = null,
+    val stream: Boolean = false
+)
+
+/**
+ * Per-event payload from a streaming /chat/completions response.
+ *
+ * Each Server-Sent Events frame from an OpenAI-compatible endpoint is shaped
+ * `data: {"choices":[{"delta":{"content":"...","reasoning":"..."}}]}` and
+ * terminates with `data: [DONE]`. We only care about `delta.content` (the
+ * actual answer text the user wants) and `delta.reasoning` (chain-of-thought
+ * for visibility — Qwen, DeepSeek R1, o1, etc.).
+ */
+@Serializable
+data class StreamChunkResponse(
+    val choices: List<StreamChunkChoice> = emptyList()
+)
+
+@Serializable
+data class StreamChunkChoice(
+    val index: Int = 0,
+    val delta: StreamChunkDelta = StreamChunkDelta(),
+    @SerialName("finish_reason") val finishReason: String? = null
+)
+
+@Serializable
+data class StreamChunkDelta(
+    val role: String? = null,
+    val content: String? = null,
+    val reasoning: String? = null
 )
 
 @Serializable

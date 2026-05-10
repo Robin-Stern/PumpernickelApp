@@ -9,6 +9,8 @@ struct AIMealGenView: View {
     private let viewModel = RecipeAiKoinHelper().getRecipeAiViewModel()
 
     @State private var uiState: RecipeAiUiState? = nil
+    @State private var streamingContent: String = ""
+    @State private var streamingReasoning: String = ""
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -23,6 +25,7 @@ struct AIMealGenView: View {
         .navigationTitle("KI-Mahlzeit")
         .navigationBarTitleDisplayMode(.inline)
         .task { await observeUiState() }
+        .task { await observeStreaming() }
         .onAppear { viewModel.onAppearRefresh() }
     }
 
@@ -38,7 +41,11 @@ struct AIMealGenView: View {
         } else if let form = state as? RecipeAiUiState.Form {
             FormBody(remaining: form.remaining, viewModel: viewModel)
         } else if state is RecipeAiUiState.Generating {
-            GeneratingBody(viewModel: viewModel)
+            GeneratingBody(
+                streamingContent: streamingContent,
+                streamingReasoning: streamingReasoning,
+                viewModel: viewModel
+            )
         } else if let preview = state as? RecipeAiUiState.Preview {
             FormBody(remaining: preview.originatingRemaining, viewModel: viewModel)
                 .sheet(isPresented: .constant(true)) {
@@ -63,6 +70,17 @@ struct AIMealGenView: View {
             }
         } catch {
             print("AIMealGenView uiState observation error: \(error)")
+        }
+    }
+
+    private func observeStreaming() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.streamingTextFlow) {
+                self.streamingContent = value.content
+                self.streamingReasoning = value.reasoning
+            }
+        } catch {
+            print("AIMealGenView streaming observation error: \(error)")
         }
     }
 }
@@ -169,49 +187,49 @@ private struct MacroRow: View {
 // MARK: - Generating
 
 private struct GeneratingBody: View {
+    let streamingContent: String
+    let streamingReasoning: String
     let viewModel: RecipeAiViewModel
 
     @State private var elapsedSeconds: Int = 0
     @State private var pulse: Bool = false
 
-    var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+    private var hasAnyStream: Bool {
+        !streamingContent.isEmpty || !streamingReasoning.isEmpty
+    }
 
-            VStack(spacing: 12) {
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack(spacing: 12) {
                 ZStack {
                     Circle()
                         .fill(Color.accentColor.opacity(pulse ? 0.15 : 0.05))
-                        .frame(width: 120, height: 120)
+                        .frame(width: 44, height: 44)
                         .scaleEffect(pulse ? 1.1 : 1.0)
                     Image(systemName: "sparkles")
-                        .font(.system(size: 44))
+                        .font(.system(size: 20))
                         .foregroundColor(.accentColor)
                         .symbolEffect(.pulse, options: .repeating, value: pulse)
                 }
-                Text("KI denkt nach…")
-                    .font(.title3.bold())
-                Text("\(elapsedSeconds)s")
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundColor(.secondary)
-                Text("Erstelle Rezept aus deinen Restmakros…")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-
-            VStack(spacing: 6) {
-                ForEach(0..<5, id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color(.tertiarySystemBackground))
-                        .frame(height: 32)
-                        .opacity(0.6)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("KI denkt nach…")
+                        .font(.headline)
+                    Text("\(elapsedSeconds)s · Rezept aus Restmakros")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
                 }
+                Spacer()
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
 
-            Spacer()
+            StreamingPanel(
+                content: streamingContent,
+                reasoning: streamingReasoning,
+                hasAnyStream: hasAnyStream
+            )
+            .padding(.horizontal, 16)
 
             Button(role: .destructive) {
                 viewModel.cancel()
@@ -220,8 +238,8 @@ private struct GeneratingBody: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
-            .padding(.horizontal, 32)
-            .padding(.bottom, 24)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
         .task {
             withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
@@ -233,6 +251,72 @@ private struct GeneratingBody: View {
                 elapsedSeconds += 1
             }
         }
+    }
+}
+
+private struct StreamingPanel: View {
+    let content: String
+    let reasoning: String
+    let hasAnyStream: Bool
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    if hasAnyStream {
+                        if !reasoning.isEmpty {
+                            sectionHeader("Gedanken", icon: "brain")
+                            Text(reasoning)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .id("reasoning-tail-\(reasoning.count)")
+                        }
+                        if !content.isEmpty {
+                            sectionHeader("Antwort", icon: "text.alignleft")
+                            Text(content)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundColor(.primary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .id("content-tail-\(content.count)")
+                        }
+                    } else {
+                        VStack(spacing: 6) {
+                            ForEach(0..<5, id: \.self) { _ in
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color(.tertiarySystemBackground))
+                                    .frame(height: 28)
+                                    .opacity(0.6)
+                            }
+                        }
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .background(Color(.secondarySystemBackground))
+            .cornerRadius(12)
+            .onChange(of: content) { _, _ in
+                withAnimation { proxy.scrollTo("content-tail-\(content.count)", anchor: .bottom) }
+            }
+            .onChange(of: reasoning) { _, _ in
+                if content.isEmpty {
+                    withAnimation { proxy.scrollTo("reasoning-tail-\(reasoning.count)", anchor: .bottom) }
+                }
+            }
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func sectionHeader(_ title: String, icon: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption2)
+            Text(title)
+                .font(.caption.weight(.semibold))
+        }
+        .foregroundColor(.secondary)
     }
 }
 

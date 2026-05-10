@@ -38,10 +38,16 @@ class WorkoutAiUseCase(
      * references — all WITHOUT touching the DB. Returns a WorkoutAiPreview
      * that the VM can render in the preview sheet.
      *
+     * [onProgress] fires on every streaming chunk (`content`, `reasoning`)
+     * so the VM can update a live preview while the model generates.
+     *
      * Throws AiError on any failure (Timeout / Network / AuthOrQuota / Provider /
      * SchemaInvalid). Coroutine cancellation propagates as CancellationException.
      */
-    suspend fun invoke(form: WorkoutAiForm): WorkoutAiPreview {
+    suspend fun invoke(
+        form: WorkoutAiForm,
+        onProgress: (content: String, reasoning: String) -> Unit = { _, _ -> }
+    ): WorkoutAiPreview {
         val baseUrl = settingsRepository.aiBaseUrl.first()
         val model = settingsRepository.aiModel.first()
         val systemPrompt = promptCatalog.workoutSystemPrompt()
@@ -57,14 +63,14 @@ class WorkoutAiUseCase(
         //      rather than 401/403). Retry with json_object + schema-in-prompt.
         // 401 / 403 / 429 etc. still surface as auth/quota error per D-18-08.
         val response = try {
-            callWithJsonSchema(baseUrl, model, systemPrompt, userMessage)
+            callWithJsonSchema(baseUrl, model, systemPrompt, userMessage, onProgress)
         } catch (ce: CancellationException) {
             throw ce
         } catch (e: AiError) {
             val shouldFallback = e is AiError.SchemaInvalid ||
                 (e is AiError.AuthOrQuota && e.httpStatus in setOf(400, 422))
             if (shouldFallback) {
-                callWithJsonObject(baseUrl, model, systemPrompt, userMessage)
+                callWithJsonObject(baseUrl, model, systemPrompt, userMessage, onProgress)
             } else throw e
         }
 
@@ -174,7 +180,8 @@ class WorkoutAiUseCase(
         baseUrl: String,
         model: String,
         systemPrompt: String,
-        userMessage: String
+        userMessage: String,
+        onProgress: (content: String, reasoning: String) -> Unit
     ): WorkoutAiResponse {
         val request = ChatRequest(
             model = model,
@@ -197,15 +204,16 @@ class WorkoutAiUseCase(
             // 4096 is plenty for our schema and still bounded.
             maxTokens = 4096
         )
-        val chat = client.chatCompletion(baseUrl, request)
-        return parseResponse(chat.choices.firstOrNull()?.message)
+        val finalContent = client.chatCompletionStreaming(baseUrl, request, onProgress)
+        return parseResponseFromContent(finalContent)
     }
 
     private suspend fun callWithJsonObject(
         baseUrl: String,
         model: String,
         systemPrompt: String,
-        userMessage: String
+        userMessage: String,
+        onProgress: (content: String, reasoning: String) -> Unit
     ): WorkoutAiResponse {
         val request = ChatRequest(
             model = model,
@@ -217,8 +225,25 @@ class WorkoutAiUseCase(
             temperature = 0.7,
             maxTokens = 4096
         )
-        val chat = client.chatCompletion(baseUrl, request)
-        return parseResponse(chat.choices.firstOrNull()?.message)
+        val finalContent = client.chatCompletionStreaming(baseUrl, request, onProgress)
+        return parseResponseFromContent(finalContent)
+    }
+
+    /** Streaming variant — parses an already-accumulated content string. */
+    private fun parseResponseFromContent(content: String): WorkoutAiResponse {
+        if (content.isBlank()) {
+            throw AiError.SchemaInvalid(
+                "LLM returned empty content. Modell hat vermutlich nur Reasoning produziert oder existiert nicht. " +
+                "Wechsle zu openai/gpt-oss-20b in den KI-Einstellungen."
+            )
+        }
+        val cleaned = stripCodeFences(content)
+        return try {
+            json.decodeFromString(cleaned)
+        } catch (e: Exception) {
+            val excerpt = cleaned.take(500).replace("\n", " ")
+            throw AiError.SchemaInvalid("JSON parse failed: ${e.message ?: "unknown"}\n\nAntwort: $excerpt")
+        }
     }
 
     private fun parseResponse(message: ChatMessage?): WorkoutAiResponse {
