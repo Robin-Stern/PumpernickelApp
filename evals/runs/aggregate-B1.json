@@ -1,0 +1,949 @@
+{
+  "runs": [
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "workout",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1185,
+          "completionTokens": 423
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1266,
+          "completionTokens": 1123
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1246,
+          "completionTokens": 2250
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1085,
+          "completionTokens": 301
+        }
+      ],
+      "totalTokens": 8879,
+      "durationMs": 23449,
+      "evalId": "eval-MF6-2026-05-10T22:04:46"
+    },
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "workout",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 3,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to produce JSON with templates array of length 1 as templatesExpected=1. exerciseCount=5. All targetMuscles: chest, shoulders. So we need 5 exercises covering chest and shoulders? Should we include chest and shoulder exercises. We can mix. Must use existing exercises only. No inlin",
+          "failureReason": 1,
+          "promptTokens": 1185,
+          "completionTokens": 798
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1266,
+          "completionTokens": 1521
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1246,
+          "completionTokens": 1036
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1085,
+          "completionTokens": 192
+        }
+      ],
+      "totalTokens": 8329,
+      "durationMs": 15652,
+      "evalId": "eval-LM4-2026-05-10T22:05:10"
+    },
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "workout",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 3,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1185,
+          "completionTokens": 499
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1266,
+          "completionTokens": 799
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": false,
+          "score": 0,
+          "reason": "template[1].name missing",
+          "failureReason": 1,
+          "promptTokens": 1246,
+          "completionTokens": 1599
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1085,
+          "completionTokens": 302
+        }
+      ],
+      "totalTokens": 7981,
+      "durationMs": 14916,
+      "evalId": "eval-Xtk-2026-05-10T22:05:25"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "workout",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1281,
+          "completionTokens": 1399
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1361,
+          "completionTokens": 1896
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1338,
+          "completionTokens": 2088
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1180,
+          "completionTokens": 605
+        }
+      ],
+      "totalTokens": 11148,
+      "durationMs": 243597,
+      "evalId": "eval-pLX-2026-05-10T22:05:40"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "workout",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1281,
+          "completionTokens": 1299
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1361,
+          "completionTokens": 1714
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1338,
+          "completionTokens": 2526
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1180,
+          "completionTokens": 630
+        }
+      ],
+      "totalTokens": 11329,
+      "durationMs": 195849,
+      "evalId": "eval-dQs-2026-05-10T22:09:44"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "workout",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1281,
+          "completionTokens": 857
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1361,
+          "completionTokens": 1589
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1338,
+          "completionTokens": 3207
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1180,
+          "completionTokens": 651
+        }
+      ],
+      "totalTokens": 11464,
+      "durationMs": 268258,
+      "evalId": "eval-Ij6-2026-05-10T22:13:00"
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "workout",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 2,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": false,
+          "score": 0,
+          "reason": "templates is not an array (and no refusal field)",
+          "failureReason": 1,
+          "promptTokens": 1185,
+          "completionTokens": 812
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1266,
+          "completionTokens": 1325
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": false,
+          "score": 0,
+          "reason": "templates is not an array (and no refusal field)",
+          "failureReason": 1,
+          "promptTokens": 1246,
+          "completionTokens": 989
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1085,
+          "completionTokens": 236
+        }
+      ],
+      "totalTokens": 8144,
+      "durationMs": 12488,
+      "evalId": "eval-sEa-2026-05-10T22:17:28"
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "workout",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 2,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": false,
+          "score": 0,
+          "reason": "templates is not an array (and no refusal field)",
+          "failureReason": 1,
+          "promptTokens": 1185,
+          "completionTokens": 770
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1266,
+          "completionTokens": 1057
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1246,
+          "completionTokens": 1475
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to generate JSON with one template, containing exactly 1 exercise. targetMuscles biceps. Use existingExercises list. Choose one exercise name matching exactly, case-insensitive. Provide targetSets 3..4, reps 8..12, rest 60..120. Provide note maybe null. Template name and descriptio",
+          "failureReason": 1,
+          "promptTokens": 1085,
+          "completionTokens": 4096
+        }
+      ],
+      "totalTokens": 12180,
+      "durationMs": 30974,
+      "evalId": "eval-zK6-2026-05-10T22:17:40"
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "workout",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 2,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": false,
+          "score": 0,
+          "reason": "templates is not an array (and no refusal field)",
+          "failureReason": 1,
+          "promptTokens": 1185,
+          "completionTokens": 836
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1266,
+          "completionTokens": 1175
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": false,
+          "score": 0,
+          "reason": "templates is not an array (and no refusal field)",
+          "failureReason": 1,
+          "promptTokens": 1246,
+          "completionTokens": 1761
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1085,
+          "completionTokens": 285
+        }
+      ],
+      "totalTokens": 8839,
+      "durationMs": 34506,
+      "evalId": "eval-19n-2026-05-10T22:18:11"
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "workout",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 0,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": false,
+          "score": 0,
+          "reason": "",
+          "failureReason": 2
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": false,
+          "score": 0,
+          "reason": "",
+          "failureReason": 2
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": false,
+          "score": 0,
+          "reason": "",
+          "failureReason": 2
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": false,
+          "score": 0,
+          "reason": "",
+          "failureReason": 2
+        }
+      ],
+      "totalTokens": 0,
+      "durationMs": 2088,
+      "evalId": "eval-n3L-2026-05-10T22:18:45"
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "workout",
+      "rep": 2,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "workout",
+      "rep": 3,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "workout",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1150,
+          "completionTokens": 342
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1229,
+          "completionTokens": 893
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1206,
+          "completionTokens": 838
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1048,
+          "completionTokens": 113
+        }
+      ],
+      "totalTokens": 6819,
+      "durationMs": 20774,
+      "evalId": "eval-XQh-2026-05-10T22:18:47"
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "workout",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1150,
+          "completionTokens": 343
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1229,
+          "completionTokens": 875
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1206,
+          "completionTokens": 866
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1048,
+          "completionTokens": 117
+        }
+      ],
+      "totalTokens": 6834,
+      "durationMs": 21445,
+      "evalId": "eval-15I-2026-05-10T22:19:08"
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "workout",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1150,
+          "completionTokens": 340
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1229,
+          "completionTokens": 871
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1206,
+          "completionTokens": 873
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1048,
+          "completionTokens": 118
+        }
+      ],
+      "totalTokens": 6835,
+      "durationMs": 53245,
+      "evalId": "eval-nMn-2026-05-10T22:19:30"
+    }
+  ],
+  "summary": [
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 3,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 3,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 3.3333333333333335,
+      "stdev": 0.4714045207910317,
+      "consistencyScore": 2.8619288125423017,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 2,
+          "fail": 1,
+          "reasons": [
+            "r2: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to produce JSON with templates array of length 1 as templatesExpected=1. exerciseCount=5. All targetMuscles: chest, shoulders. So we need 5 exercises covering chest and shoulders? Should we include chest and shoulder exercises. We can mix. Must use existing exercises only. No inlin"
+          ]
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 2,
+          "fail": 1,
+          "reasons": [
+            "r3: template[1].name missing"
+          ]
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 4,
+      "stdev": 0,
+      "consistencyScore": 4,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 2,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 2,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 2,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 2,
+      "stdev": 0,
+      "consistencyScore": 2,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 0,
+          "fail": 3,
+          "reasons": [
+            "r1: templates is not an array (and no refusal field)",
+            "r2: templates is not an array (and no refusal field)",
+            "r3: templates is not an array (and no refusal field)"
+          ]
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 1,
+          "fail": 2,
+          "reasons": [
+            "r1: templates is not an array (and no refusal field)",
+            "r3: templates is not an array (and no refusal field)"
+          ]
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 2,
+          "fail": 1,
+          "reasons": [
+            "r2: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to generate JSON with one template, containing exactly 1 exercise. targetMuscles biceps. Use existingExercises list. Choose one exercise name matching exactly, case-insensitive. Provide targetSets 3..4, reps 8..12, rest 60..120. Provide note maybe null. Template name and descriptio"
+          ]
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 0,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "skipped": true
+        },
+        {
+          "rep": 3,
+          "skipped": true
+        }
+      ],
+      "mean": 0,
+      "stdev": 0,
+      "consistencyScore": 0,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: "
+          ]
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: "
+          ]
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: "
+          ]
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: "
+          ]
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 4,
+      "stdev": 0,
+      "consistencyScore": 4,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        }
+      },
+      "total": 4
+    }
+  ],
+  "generatedAt": "2026-05-10T22:04:45.106Z",
+  "totalTokens": 108781
+}

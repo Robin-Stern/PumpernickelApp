@@ -127,3 +127,62 @@ Based on the failure patterns above (do **not** apply these without re-running t
 - 3 reps per `(model, suite)` is enough to distinguish "perfect" from "flickery" but doesn't bound the long tail of 1-in-50 failures. Gemma's 12/12 here is encouraging but not a guarantee.
 - All variance numbers are stdev of pass *count* (raw integer 0–4), not pass *rate*. Multiply by 25 to convert to percentage points.
 - The `gpt-oss-20b` recipe and `Qwen3-235B` recipe rows are short because the broken-model guard halted them after rep 1's 0/4. The pattern was structural enough that more reps wouldn't have changed the conclusion.
+
+---
+
+# B.1 — Workout-Prompt Wrapper-Restatement (2026-05-11)
+
+## Edit applied
+
+Commit `54167d7` appended two sentences to the `## Final reminder` block in `shared/src/commonMain/resources/workout-system-prompt.md`:
+
+> The top-level shape is always `{ "templates": [...], "inlineNewExercises": [...] }`.
+> Even if `templatesExpected = 1`, `templates` MUST still be an array containing one object — NEVER a bare template object.
+
+Goal: fix `gpt-oss-120b`'s "templates is not an array" failure mode (baseline: 2.67/4 mean, hit `templates is not an array` on UPPER_LOWER 2/3 + single-template 1/3).
+
+## Re-eval (workout suite × 5 models × 3 reps, 108,781 tokens)
+
+Aggregate: `runs/aggregate-B1.json`.
+
+| Model | Baseline | B.1 | Δ mean | Δ stdev | Verdict |
+|---|---|---|---|---|---|
+| `openai/gpt-oss-20b` | 3.00 (σ 0.82) | **3.33** (σ 0.47) | **+0.33** | **-0.35** | improved |
+| `google/gemma-4-31B-it` | 4.00 (σ 0.00) | 4.00 (σ 0.00) | 0 | 0 | unchanged (already perfect) |
+| `openai/gpt-oss-120b` | 2.67 (σ 0.47) | **2.00** (σ 0.00) | **-0.67** | -0.47 | **REGRESSED** |
+| `meta-llama/Llama-4-Maverick…FP8` | n/a (503) | n/a (503) | — | — | still unreachable on Together serverless |
+| `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | 4.00 (σ 0.00) | 4.00 (σ 0.00) | 0 | 0 | unchanged (perfect) |
+
+### Per-test breakdown vs. baseline (workout) — only changed cells shown
+
+| Test | gpt-oss-20b | gpt-oss-120b |
+|---|---|---|
+| `single template · 5 ex · chest+shoulders` | 1/3 → 3/3 ✓ | **1/3 → 0/3 ✗** ⚠️ |
+| `Push/Pull/Legs · 4 per template` | 2/3 → 2/3 | 3/3 → 3/3 |
+| `Upper/Lower · 6 per template` | 3/3 → 3/3 | 1/3 → 1/3 |
+| `minimal · 1 exercise · biceps` | 3/3 → 2/3 (one JSON-parse fail, see below) | 2/3 → 2/3 |
+
+## What the regression actually looks like
+
+The targeted failure (`templates is not an array`) **did not move**:
+- UPPER_LOWER on gpt-oss-120b: still fails 2/3 (unchanged).
+- Single-template on gpt-oss-120b: was 1/3 failures → now **3/3 failures**. All three runs report exactly `templates is not an array (and no refusal field)` — the model still emits a bare template object at the top level.
+
+Plausible mechanism: the added sentence explicitly names `templatesExpected = 1` as the danger case. For a reasoning model that pattern-matches phrases from the system prompt into its "thinking" trace, the call-out makes it MORE likely to dwell on the single-template branch, decide that's "the important shape," and emit it directly. The intended de-biasing turned into a salience prime.
+
+Counter-evidence: `gpt-oss-20b` improved (3.00 → 3.33) on the same prompt, including 3/3 on single-template (vs. 1/3 baseline). So the new wording *helps* some models and *hurts* others. The 120b-specific regression isn't fully explained by salience alone — could also be ordinary variance compounded by Together's serverless temperature today (see Gemma latency note below).
+
+## Side observations
+
+- **Gemma 4 31B latency spike on Together today:** ~196–268s per run (vs. ~9–14s in baseline). Pass rate unaffected (4/4 every time). Likely Together's serverless tier was congested at 22:09–22:17 UTC on 2026-05-11; not prompt-related.
+- **Llama 4 Maverick still 503-ing.** Outage at minimum 25h+ now.
+- **One JSON-parse failure on gpt-oss-20b minimal-biceps in rep 2.** Same `Thinking:` truncation pattern as baseline recipe runs — reasoning trace eats the budget on what should be a trivial 1-exercise template. Not a prompt issue; this is the structural max_tokens issue called out for B.3.
+
+## Conclusion — verdict on B.1 edit
+
+**Mixed-to-negative.** The edit did not fix the targeted `gpt-oss-120b` failure mode, and it made the simple-case fail rate worse on that model. The production model (`gemma-4-31B-it`) is unaffected — still 12/12 — so end users running the default config see no change. But the eval-driven hypothesis ("restate the wrapper at the end fixes 120b") does not hold.
+
+Three reasonable next moves:
+1. **Revert `54167d7`.** B.1 was wrong; move on to B.2 (recipe worked-example).
+2. **Try a different formulation in B.1b** that doesn't name the dangerous case explicitly. E.g. front-load the wrapper restatement near the schema example rather than appending it at the end; or use only the first new sentence (drop the "Even if templatesExpected = 1" call-out).
+3. **Accept and proceed.** 120b isn't a recommended production model anyway (Gemma is). If we're not shipping 120b, the regression is academic.
