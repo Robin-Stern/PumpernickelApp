@@ -186,3 +186,80 @@ Three reasonable next moves:
 1. **Revert `54167d7`.** B.1 was wrong; move on to B.2 (recipe worked-example).
 2. **Try a different formulation in B.1b** that doesn't name the dangerous case explicitly. E.g. front-load the wrapper restatement near the schema example rather than appending it at the end; or use only the first new sentence (drop the "Even if templatesExpected = 1" call-out).
 3. **Accept and proceed.** 120b isn't a recommended production model anyway (Gemma is). If we're not shipping 120b, the regression is academic.
+
+**Resolution:** option 1 chosen. Commit `54167d7` reverted in `501c31d`. The workout prompt is back to baseline.
+
+---
+
+# B.2 — Recipe Worked-Example for Macro Arithmetic (2026-05-11)
+
+## Edit applied
+
+Commit `380d8d2` inserted a new `## Worked example — hitting the macro target` section into `shared/src/commonMain/resources/recipe-system-prompt.md`, between the existing `## Composition guidance` and `## Refusal` sections. The example demonstrates one full iteration for `remaining = { kcal: 1100, protein: 55g }`:
+
+> 1. First draft with 4 ingredients (Hähnchenbrust 200g + Reis 200g + Brokkoli 150g + Olivenöl 10g) → sum (729 kcal, 71.6g protein)
+> 2. Tolerance check: kcal short by 34% → off-target
+> 3. Adjustment: bump Reis to 550g → +455 kcal
+> 4. Re-sum (1068.9 kcal, 59.35g protein) → both inside ±10% ✓
+>
+> Closing rule: "Calculate, check, adjust until both kcal AND protein land inside ±10%. Don't settle for 'close enough.'"
+
+Goal: address Llama-3.3-70B-Turbo's macro-arithmetic weakness (baseline 0.33/4 mean — produced sensible recipes but macros off-target by >15%) and Qwen3-235B's mode collapse (baseline 0/4 — emitted the same Hähnchen-Reis-Bowl regardless of target).
+
+## Re-eval (recipe suite, 5 standard models × 3 reps + Llama-3.3 × 3 reps, 220k + ~90k = ~310k tokens)
+
+Aggregate: `runs/aggregate-B2.json` (standard 5 models) and `runs/recipe-llama33-B2-r{1,2,3}.json` (Llama-3.3 separately).
+
+| Model | Baseline | B.2 | Δ mean | Δ stdev | Verdict |
+|---|---|---|---|---|---|
+| `openai/gpt-oss-20b` | 0.00* (σ 0.00) | 0.67 (σ 0.94) | +0.67 | +0.94 | improved but unstable |
+| `google/gemma-4-31B-it` | 4.00 (σ 0.00) | **4.00** (σ 0.00) | 0 | 0 | **unchanged — production model still perfect** ✓ |
+| `openai/gpt-oss-120b` | 2.67 (σ 0.47) | 2.67 (σ 0.47) | 0 | 0 | unchanged |
+| `meta-llama/Llama-4-Maverick…FP8` | n/a (503) | n/a (503) | — | — | still 503 |
+| `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | 0.00* (σ 0.00) | **2.00** (σ 0.00) | **+2.00** | 0 | **major improvement** ✓ |
+| `meta-llama/Llama-3.3-70B-Instruct-Turbo` | 0.33 (σ 0.47) | **1.67** (σ 0.47) | **+1.33** | 0 | **major improvement on B.2's primary target** ✓ |
+
+*The `0.00*` for `gpt-oss-20b` and `Qwen` in the baseline column reflects rep-1-only data (the broken-model guard halted further runs in the original sweep). The Δ for those rows is conservative.
+
+### Per-test breakdown — recipe, B.2 vs. baseline (only models with movement shown)
+
+| Test | gpt-oss-20b | Qwen3-235B | Llama-3.3-70B |
+|---|---|---|---|
+| `small · 600 kcal` | 0/1 → 1/3 | 0/1 → 0/3 | 0/3 → 0/3 |
+| `medium · 1100 kcal` | 0/1 → 1/3 | 0/1 → **3/3** ✓ | 0/3 → **3/3** ✓ |
+| `large · 2000 kcal` | 0/1 → 0/3 | 0/1 → 0/3 | 0/3 → 0/3 |
+| `high protein · 800 kcal` | 0/1 → 0/3 | 0/1 → **3/3** ✓ | 1/3 → 2/3 |
+
+## What worked (and what the data tells us about the mechanism)
+
+**The `1100 kcal` test went from 0/3 to 3/3 on both Qwen and Llama-3.3.** That's not a coincidence — `1100 kcal` is the exact target value used in the worked-example block. Models learned the pattern shown to them. The `high protein · 800 kcal` test also flipped to 3/3 on Qwen and 2/3 on Llama-3.3 — proximity (in target magnitude and protein focus) seems to be enough for transfer.
+
+**The `600 kcal` and `2000 kcal` extremes stayed broken.** Looking at the failure reasons:
+
+- Llama-3.3 `small 600 kcal`: still gets protein 37–47g vs target 30g — closer than baseline (47g) but still over the 15% tolerance.
+- Llama-3.3 `large 2000 kcal`: still undershoots kcal (1354–1410 vs 2000) — same direction as baseline (1258), only slightly closer.
+- Qwen `small/large`: same protein-over / kcal-under pattern.
+
+The worked-example uses *middle-of-the-range* numbers (1100 kcal, 55g protein) and didn't transfer well to ends of the range. The models are doing one-shot pattern matching, not generalized arithmetic.
+
+## What didn't change
+
+`gpt-oss-120b` is unchanged (2.67/4 both before and after). Its remaining failures are still "Thinking: ..." truncation on the medium/large recipe targets — a structural max_tokens issue, not a prompt-content issue. B.3 (max_tokens tuning for reasoning models) is the planned fix.
+
+`gpt-oss-20b` improved from "always 0" to "sometimes 1–2/4" but the stdev jumped to 0.94 (the highest in this run). Same root cause as 120b — reasoning trace eats the budget — and the longer recipe prompt (now with the worked example) makes the budget pressure marginally worse. Don't read the +0.67 as a real fix; the variance says it's mostly noise around the same structural failure.
+
+## What's notable about the Llama-3.3 result
+
+Llama-3.3-70B was **the primary target** of B.2 — the only model from the baseline that produced valid recipes with wrong macros (the "macro arithmetic weakness" failure mode #4). Going from 0.33 to 1.67 (5× improvement) on that exact failure mode is the strongest single-edit signal we've measured. The pattern is also clean: the test case whose target matched the worked example transferred cleanly; the extremes didn't.
+
+This validates the hypothesis from the original report (recommendation #2 — "Add an explicit worked example") in a way the B.1 hypothesis did not.
+
+## Side note — Together latency
+
+Gemma 4 31B took 195–600s per recipe run today (vs. ~14s for workout last sweep). Same model, same prompt structure, just heavier traffic on Together's serverless tier this evening. Pass rate unaffected (4/4 every run). For production: prefer paid/dedicated endpoints if response latency matters; the consumer experience would be miserable on the current serverless tier at this hour.
+
+## Verdict on B.2 edit
+
+**Keep the edit.** Gemma is unaffected (production-safe), Qwen and Llama-3.3 both improved on their target failure modes, gpt-oss-20b shows directional improvement, and no model regressed. The `~310k` tokens spent on B.2 measurement were a clear positive return.
+
+Next: B.3 (reasoning-model max_tokens tuning to fix the `Thinking:` truncation on gpt-oss-*) and B.4 (refusal-hook formulation).
