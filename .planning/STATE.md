@@ -30,7 +30,7 @@ Phase: 18 (ai-features-f6-workout-generation-f8-meal-generation-byok-op) — EXE
 Plan: 1 of 10
 Branch: `feature/workouts` @ `985884c`
 Status: Executing Phase 18
-Last activity: 2026-05-10 -- Completed quick task 260510-w9h: AI provider default swap to gemma-4-31B-it
+Last activity: 2026-05-10 -- Completed quick task 260510-wgs: iOS picker model suggestions aligned with eval evidence
 
 Progress: [██████████] 100%
 
@@ -142,6 +142,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260506-0hk | fix iOS Progress Gallery tile layout — tiles render offscreen-left with date label clipped (visual checkpoint pending) | 2026-05-05 | db2812e | [260506-0hk-fix-ios-progress-gallery-tile-layout-til](./quick/260506-0hk-fix-ios-progress-gallery-tile-layout-til/) |
 | 260506-pf3 | iOS Progress Gallery photo viewer prompts for passcode instead of Face ID (visual UAT pending) | 2026-05-06 | abb61f5 | [260506-pf3-ios-progress-gallery-photo-viewer-prompt](./quick/260506-pf3-ios-progress-gallery-photo-viewer-prompt/) |
 | 260510-w9h | Swap Together preset default + error-msg recommendations to google/gemma-4-31B-it (eval-driven) | 2026-05-10 | b643711 | [260510-w9h-app-defaults-f-r-ai-provider-von-openai-](./quick/260510-w9h-app-defaults-f-r-ai-provider-von-openai-/) |
+| 260510-wgs | Align iOS AISettingsView model-suggestion notes with eval evidence (Together/OpenRouter/Groq) | 2026-05-10 | 7d7962a | [260510-wgs-ios-aisettingsview-model-suggestions-an-](./quick/260510-wgs-ios-aisettingsview-model-suggestions-an-/) |
 
 ## Session Continuity
 
