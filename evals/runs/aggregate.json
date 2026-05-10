@@ -1,0 +1,1986 @@
+{
+  "runs": [
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "workout",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 2,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": false,
+          "score": 0,
+          "reason": "templates is not an array (and no refusal field)",
+          "failureReason": 1,
+          "promptTokens": 1138,
+          "completionTokens": 490
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to produce JSON with templates length 3. Each template's exercises length must equal 4. So 3 templates each with 4 exercises. We have to select based on split style PUSH_PULL_LEGS. So first template is PUSH. Second PULL. Third LEGS.\n\nWe need to include target muscles: chest, should",
+          "failureReason": 1,
+          "promptTokens": 1219,
+          "completionTokens": 4096
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1199,
+          "completionTokens": 1923
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1038,
+          "completionTokens": 265
+        }
+      ],
+      "totalTokens": 11368,
+      "durationMs": 31465,
+      "evalId": "eval-Jz5-2026-05-10T20:27:24"
+    },
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "workout",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 3,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": false,
+          "score": 0,
+          "reason": "templates is not an array (and no refusal field)",
+          "failureReason": 1,
+          "promptTokens": 1138,
+          "completionTokens": 428
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1219,
+          "completionTokens": 954
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1199,
+          "completionTokens": 1822
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1038,
+          "completionTokens": 394
+        }
+      ],
+      "totalTokens": 8192,
+      "durationMs": 14945,
+      "evalId": "eval-L6g-2026-05-10T20:27:56"
+    },
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "workout",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1138,
+          "completionTokens": 477
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1219,
+          "completionTokens": 995
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1199,
+          "completionTokens": 2914
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1038,
+          "completionTokens": 343
+        }
+      ],
+      "totalTokens": 9323,
+      "durationMs": 27433,
+      "evalId": "eval-6SN-2026-05-10T20:28:11"
+    },
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "recipe",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 0,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to produce a recipe that uses exactly the remaining calorie budget around 600 kcal ±10% (i.e., 540-660). Protein must be within ±10% of 30g (27-33). Fat 18g ±10%? Not required but best-effort. Carbs 80 ±10% (72-88). Sugar 20 ±10% (18-22). We must create one recipe. Use typical ingr",
+          "failureReason": 1,
+          "promptTokens": 1662,
+          "completionTokens": 4096
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to generate a recipe that uses up the entire remaining kcal 1100 ±10% => 990-1210. Also protein 55 ±10% => 49.5-60.5. Also satisfy fat 32 ±10% => 28.8-35.2. Carbs 140 ±10% => 126-154. Sugar 30 ±10% => 27-33.\n\nWe must produce one recipe with ingredients and steps. Use one protein so",
+          "failureReason": 1,
+          "promptTokens": 1663,
+          "completionTokens": 4096
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to generate recipe macros within ±10% of remaining values: remaining kcal 2000 ±200 => 1800-2200. protein 100 ±10 => 90-110. Fat 60 ±6 => 54-66. Carbs 250 ±25 => 225-275. Sugar 40 ±4 => 36-44.\n\nWe must produce one recipe. Use composition guidance.\n\nWe need to pick proteins: maybe c",
+          "failureReason": 1,
+          "promptTokens": 1663,
+          "completionTokens": 4096
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need a single recipe whose macros sum within ±10% of remaining. remaining kcal 800, protein 80g, fat 12g, carbs 80g, sugar 15g.\n\nWe need to design ingredients. Use one protein source. Let's pick \"Lachsfilet\" 208 kcal, 20 protein, 13 fat, 0 carbs, 0 sugar. But fat 13 > fat budget 12. Too",
+          "failureReason": 1,
+          "promptTokens": 1662,
+          "completionTokens": 4096
+        }
+      ],
+      "totalTokens": 23034,
+      "durationMs": 39582,
+      "evalId": "eval-OS1-2026-05-10T20:28:38"
+    },
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "recipe",
+      "rep": 2,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "recipe",
+      "rep": 3,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "workout",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1229,
+          "completionTokens": 1021
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1309,
+          "completionTokens": 1843
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1286,
+          "completionTokens": 2729
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1128,
+          "completionTokens": 588
+        }
+      ],
+      "totalTokens": 11133,
+      "durationMs": 46845,
+      "evalId": "eval-nXF-2026-05-10T20:29:18"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "workout",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1229,
+          "completionTokens": 932
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1309,
+          "completionTokens": 1449
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1286,
+          "completionTokens": 2533
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1128,
+          "completionTokens": 481
+        }
+      ],
+      "totalTokens": 10347,
+      "durationMs": 45972,
+      "evalId": "eval-wP2-2026-05-10T20:30:05"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "workout",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1229,
+          "completionTokens": 1360
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1309,
+          "completionTokens": 1864
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1286,
+          "completionTokens": 3522
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1128,
+          "completionTokens": 449
+        }
+      ],
+      "totalTokens": 12147,
+      "durationMs": 64649,
+      "evalId": "eval-bYF-2026-05-10T20:30:51"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "recipe",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1880,
+          "completionTokens": 2566
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1882,
+          "completionTokens": 2001
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1883,
+          "completionTokens": 2647
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1880,
+          "completionTokens": 3548
+        }
+      ],
+      "totalTokens": 18287,
+      "durationMs": 50335,
+      "evalId": "eval-EK3-2026-05-10T20:31:55"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "recipe",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1880,
+          "completionTokens": 2698
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1882,
+          "completionTokens": 2586
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1883,
+          "completionTokens": 2698
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1880,
+          "completionTokens": 2664
+        }
+      ],
+      "totalTokens": 18171,
+      "durationMs": 44244,
+      "evalId": "eval-NGw-2026-05-10T20:32:46"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "recipe",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1880,
+          "completionTokens": 2844
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1882,
+          "completionTokens": 2298
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1883,
+          "completionTokens": 2925
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1880,
+          "completionTokens": 3198
+        }
+      ],
+      "totalTokens": 18790,
+      "durationMs": 49580,
+      "evalId": "eval-550-2026-05-10T20:33:30"
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "workout",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 3,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to generate a JSON with templates array length 1, each with 5 exercises. Must match targetMuscles chest, shoulders. Use existingExercises names exactly (case-insensitive). Provide targetSets 3..4, targetReps 8..12, restPeriodSec 60..120. Provide notes maybe null. No inline new exer",
+          "failureReason": 1,
+          "promptTokens": 1138,
+          "completionTokens": 4096
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1219,
+          "completionTokens": 1091
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1199,
+          "completionTokens": 2165
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1038,
+          "completionTokens": 379
+        }
+      ],
+      "totalTokens": 12325,
+      "durationMs": 101825,
+      "evalId": "eval-92q-2026-05-10T20:34:19"
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "workout",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 3,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1138,
+          "completionTokens": 783
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1219,
+          "completionTokens": 1445
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": false,
+          "score": 0,
+          "reason": "templates is not an array (and no refusal field)",
+          "failureReason": 1,
+          "promptTokens": 1199,
+          "completionTokens": 1890
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1038,
+          "completionTokens": 4096
+        }
+      ],
+      "totalTokens": 12808,
+      "durationMs": 99564,
+      "evalId": "eval-wkJ-2026-05-10T20:36:01"
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "workout",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 2,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1138,
+          "completionTokens": 681
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1219,
+          "completionTokens": 1393
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": false,
+          "score": 0,
+          "reason": "templates is not an array (and no refusal field)",
+          "failureReason": 1,
+          "promptTokens": 1199,
+          "completionTokens": 843
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": false,
+          "score": 0,
+          "reason": "templates is not an array (and no refusal field)",
+          "failureReason": 1,
+          "promptTokens": 1038,
+          "completionTokens": 343
+        }
+      ],
+      "totalTokens": 7854,
+      "durationMs": 28531,
+      "evalId": "eval-FmB-2026-05-10T20:37:41"
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "recipe",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 3,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1662,
+          "completionTokens": 3363
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "recipe.name missing",
+          "failureReason": 1,
+          "promptTokens": 1663,
+          "completionTokens": 2893
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1663,
+          "completionTokens": 2333
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1662,
+          "completionTokens": 3496
+        }
+      ],
+      "totalTokens": 18735,
+      "durationMs": 27174,
+      "evalId": "eval-giR-2026-05-10T20:38:10"
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "recipe",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 3,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1662,
+          "completionTokens": 4031
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1663,
+          "completionTokens": 3986
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to create a recipe that uses the remaining budget: 2000 kcal and 100g protein, etc. Must be within ±10% for kcal and protein. So kcal target: 2000 ±200 => 1800-2200. Protein target: 100 ±10 => 90-110g.\n\nWe need to choose ingredients and amounts.\n\nWe must output JSON with name, ingr",
+          "failureReason": 1,
+          "promptTokens": 1663,
+          "completionTokens": 4096
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1662,
+          "completionTokens": 2600
+        }
+      ],
+      "totalTokens": 21363,
+      "durationMs": 28131,
+      "evalId": "eval-hpp-2026-05-10T20:38:37"
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "recipe",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 2,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1662,
+          "completionTokens": 1932
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to generate a recipe that uses remaining budget: kcal 1100 +/-10% (i.e., 990-1210), protein 55g +/-10% (49.5-60.5g). Fat and carbs are best-effort. Use ingredients from catalog with per-100g values. Build around ONE protein source to match protein. Need protein ~55g.\n\nLet's conside",
+          "failureReason": 1,
+          "promptTokens": 1663,
+          "completionTokens": 4096
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to create a recipe that uses the remaining budget: 2000 kcal, 100g protein, 60g fat, 250g carbs, 40g sugar. Must be within ±10% for kcal and protein. So kcal target between 1800 and 2200, protein between 90 and 110g.\n\nWe can pick ingredients to sum near those macros.\n\nWe need to ou",
+          "failureReason": 1,
+          "promptTokens": 1663,
+          "completionTokens": 4096
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1662,
+          "completionTokens": 4026
+        }
+      ],
+      "totalTokens": 20800,
+      "durationMs": 27551,
+      "evalId": "eval-n1d-2026-05-10T20:39:05"
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "workout",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 0,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": false,
+          "score": 0,
+          "reason": "",
+          "failureReason": 2
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": false,
+          "score": 0,
+          "reason": "",
+          "failureReason": 2
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": false,
+          "score": 0,
+          "reason": "",
+          "failureReason": 2
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": false,
+          "score": 0,
+          "reason": "",
+          "failureReason": 2
+        }
+      ],
+      "totalTokens": 0,
+      "durationMs": 1609,
+      "evalId": "eval-VK3-2026-05-10T20:39:32"
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "workout",
+      "rep": 2,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "workout",
+      "rep": 3,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "recipe",
+      "rep": 1,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "recipe",
+      "rep": 2,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "recipe",
+      "rep": 3,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "workout",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1102,
+          "completionTokens": 371
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1181,
+          "completionTokens": 886
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1158,
+          "completionTokens": 855
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1000,
+          "completionTokens": 117
+        }
+      ],
+      "totalTokens": 6670,
+      "durationMs": 26270,
+      "evalId": "eval-nj9-2026-05-10T20:39:34"
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "workout",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1102,
+          "completionTokens": 342
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1181,
+          "completionTokens": 903
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1158,
+          "completionTokens": 868
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1000,
+          "completionTokens": 118
+        }
+      ],
+      "totalTokens": 6672,
+      "durationMs": 27948,
+      "evalId": "eval-puF-2026-05-10T20:40:00"
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "workout",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1102,
+          "completionTokens": 371
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1181,
+          "completionTokens": 871
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1158,
+          "completionTokens": 819
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 1000,
+          "completionTokens": 119
+        }
+      ],
+      "totalTokens": 6621,
+      "durationMs": 20627,
+      "evalId": "eval-IWs-2026-05-10T20:40:28"
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "recipe",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 0,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "kcal off-target: 731 vs 600 (>15%)",
+          "failureReason": 1,
+          "promptTokens": 1728,
+          "completionTokens": 558
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "protein off-target: 73g vs 55g (>15%)",
+          "failureReason": 1,
+          "promptTokens": 1730,
+          "completionTokens": 556
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "kcal off-target: 1461 vs 2000 (>15%)",
+          "failureReason": 1,
+          "promptTokens": 1731,
+          "completionTokens": 551
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "protein off-target: 59g vs 80g (>15%)",
+          "failureReason": 1,
+          "promptTokens": 1728,
+          "completionTokens": 566
+        }
+      ],
+      "totalTokens": 9148,
+      "durationMs": 22405,
+      "evalId": "eval-saV-2026-05-10T20:40:49"
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "recipe",
+      "rep": 2,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "recipe",
+      "rep": 3,
+      "skipped": true,
+      "reason": "model marked broken in earlier rep"
+    },
+    {
+      "modelId": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "suite": "workout",
+      "rep": 1,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        }
+      ],
+      "totalTokens": 6453,
+      "durationMs": 22227
+    },
+    {
+      "modelId": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "suite": "workout",
+      "rep": 2,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        }
+      ],
+      "totalTokens": 6358,
+      "durationMs": 16064
+    },
+    {
+      "modelId": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "suite": "workout",
+      "rep": 3,
+      "error": false,
+      "passed": 4,
+      "total": 4,
+      "tests": [
+        {
+          "description": "single template · 5 exercises · chest+shoulders",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        },
+        {
+          "description": "Push/Pull/Legs split · 4 per template · full body",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        },
+        {
+          "description": "Upper/Lower split · 6 per template",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        },
+        {
+          "description": "minimal · 1 exercise · biceps",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        }
+      ],
+      "totalTokens": 6377,
+      "durationMs": 14891
+    },
+    {
+      "modelId": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "suite": "recipe",
+      "rep": 1,
+      "error": false,
+      "passed": 1,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "protein off-target: 47g vs 30g (>15%)"
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "protein off-target: 75g vs 55g (>15%)"
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "kcal off-target: 1258 vs 2000 (>15%)"
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed"
+        }
+      ],
+      "totalTokens": 8647,
+      "durationMs": 18659
+    },
+    {
+      "modelId": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "suite": "recipe",
+      "rep": 2,
+      "error": false,
+      "passed": 0,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "protein off-target: 48g vs 30g (>15%)"
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "protein off-target: 75g vs 55g (>15%)"
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "kcal off-target: 1323 vs 2000 (>15%)"
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "kcal off-target: 957 vs 800 (>15%)"
+        }
+      ],
+      "totalTokens": 8649,
+      "durationMs": 17051
+    },
+    {
+      "modelId": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "suite": "recipe",
+      "rep": 3,
+      "error": false,
+      "passed": 0,
+      "total": 4,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "protein off-target: 56g vs 30g (>15%)"
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "kcal off-target: 874 vs 1100 (>15%)"
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "kcal off-target: 1321 vs 2000 (>15%)"
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": false,
+          "score": 0,
+          "reason": "kcal off-target: 940 vs 800 (>15%)"
+        }
+      ],
+      "totalTokens": 8638,
+      "durationMs": 18570
+    }
+  ],
+  "summary": [
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 2,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 3,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 3,
+      "stdev": 0.816496580927726,
+      "consistencyScore": 2.1835034190722737,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 1,
+          "fail": 2,
+          "reasons": [
+            "r1: templates is not an array (and no refusal field)",
+            "r2: templates is not an array (and no refusal field)"
+          ]
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 2,
+          "fail": 1,
+          "reasons": [
+            "r1: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to produce JSON with templates length 3. Each template's exercises length must equal 4. So 3 templates each with 4 exercises. We have to select based on split style PUSH_PULL_LEGS. So first template is PUSH. Second PULL. Third LEGS.\n\nWe need to include target muscles: chest, should"
+          ]
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "openai/gpt-oss-20b",
+      "suite": "recipe",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 0,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "skipped": true
+        },
+        {
+          "rep": 3,
+          "skipped": true
+        }
+      ],
+      "mean": 0,
+      "stdev": 0,
+      "consistencyScore": 0,
+      "perTest": {
+        "small remaining · breakfast portion · 600 kcal": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to produce a recipe that uses exactly the remaining calorie budget around 600 kcal ±10% (i.e., 540-660). Protein must be within ±10% of 30g (27-33). Fat 18g ±10%? Not required but best-effort. Carbs 80 ±10% (72-88). Sugar 20 ±10% (18-22). We must create one recipe. Use typical ingr"
+          ]
+        },
+        "medium remaining · standard meal · 1100 kcal": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to generate a recipe that uses up the entire remaining kcal 1100 ±10% => 990-1210. Also protein 55 ±10% => 49.5-60.5. Also satisfy fat 32 ±10% => 28.8-35.2. Carbs 140 ±10% => 126-154. Sugar 30 ±10% => 27-33.\n\nWe must produce one recipe with ingredients and steps. Use one protein so"
+          ]
+        },
+        "large remaining · bulk meal · 2000 kcal": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to generate recipe macros within ±10% of remaining values: remaining kcal 2000 ±200 => 1800-2200. protein 100 ±10 => 90-110. Fat 60 ±6 => 54-66. Carbs 250 ±25 => 225-275. Sugar 40 ±4 => 36-44.\n\nWe must produce one recipe. Use composition guidance.\n\nWe need to pick proteins: maybe c"
+          ]
+        },
+        "high protein · low fat · 800 kcal": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need a single recipe whose macros sum within ±10% of remaining. remaining kcal 800, protein 80g, fat 12g, carbs 80g, sugar 15g.\n\nWe need to design ingredients. Use one protein source. Let's pick \"Lachsfilet\" 208 kcal, 20 protein, 13 fat, 0 carbs, 0 sugar. But fat 13 > fat budget 12. Too"
+          ]
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 4,
+      "stdev": 0,
+      "consistencyScore": 4,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "recipe",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 4,
+      "stdev": 0,
+      "consistencyScore": 4,
+      "perTest": {
+        "small remaining · breakfast portion · 600 kcal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "medium remaining · standard meal · 1100 kcal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "large remaining · bulk meal · 2000 kcal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "high protein · low fat · 800 kcal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 3,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 3,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 2,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 2.6666666666666665,
+      "stdev": 0.4714045207910317,
+      "consistencyScore": 2.1952621458756347,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 2,
+          "fail": 1,
+          "reasons": [
+            "r1: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to generate a JSON with templates array length 1, each with 5 exercises. Must match targetMuscles chest, shoulders. Use existingExercises names exactly (case-insensitive). Provide targetSets 3..4, targetReps 8..12, restPeriodSec 60..120. Provide notes maybe null. No inline new exer"
+          ]
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 1,
+          "fail": 2,
+          "reasons": [
+            "r2: templates is not an array (and no refusal field)",
+            "r3: templates is not an array (and no refusal field)"
+          ]
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 2,
+          "fail": 1,
+          "reasons": [
+            "r3: templates is not an array (and no refusal field)"
+          ]
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "openai/gpt-oss-120b",
+      "suite": "recipe",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 3,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 3,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 2,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 2.6666666666666665,
+      "stdev": 0.4714045207910317,
+      "consistencyScore": 2.1952621458756347,
+      "perTest": {
+        "small remaining · breakfast portion · 600 kcal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "medium remaining · standard meal · 1100 kcal": {
+          "pass": 1,
+          "fail": 2,
+          "reasons": [
+            "r1: recipe.name missing",
+            "r3: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to generate a recipe that uses remaining budget: kcal 1100 +/-10% (i.e., 990-1210), protein 55g +/-10% (49.5-60.5g). Fat and carbs are best-effort. Use ingredients from catalog with per-100g values. Build around ONE protein source to match protein. Need protein ~55g.\n\nLet's conside"
+          ]
+        },
+        "large remaining · bulk meal · 2000 kcal": {
+          "pass": 1,
+          "fail": 2,
+          "reasons": [
+            "r2: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to create a recipe that uses the remaining budget: 2000 kcal and 100g protein, etc. Must be within ±10% for kcal and protein. So kcal target: 2000 ±200 => 1800-2200. Protein target: 100 ±10 => 90-110g.\n\nWe need to choose ingredients and amounts.\n\nWe must output JSON with name, ingr",
+            "r3: JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw output:\nThinking: We need to create a recipe that uses the remaining budget: 2000 kcal, 100g protein, 60g fat, 250g carbs, 40g sugar. Must be within ±10% for kcal and protein. So kcal target between 1800 and 2200, protein between 90 and 110g.\n\nWe can pick ingredients to sum near those macros.\n\nWe need to ou"
+          ]
+        },
+        "high protein · low fat · 800 kcal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 0,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "skipped": true
+        },
+        {
+          "rep": 3,
+          "skipped": true
+        }
+      ],
+      "mean": 0,
+      "stdev": 0,
+      "consistencyScore": 0,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: "
+          ]
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: "
+          ]
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: "
+          ]
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: "
+          ]
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      "suite": "recipe",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "skipped": true
+        },
+        {
+          "rep": 2,
+          "skipped": true
+        },
+        {
+          "rep": 3,
+          "skipped": true
+        }
+      ],
+      "mean": 0,
+      "stdev": 0,
+      "consistencyScore": 0,
+      "perTest": {},
+      "total": 0
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 4,
+      "stdev": 0,
+      "consistencyScore": 4,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "Qwen/Qwen3-235B-A22B-Instruct-2507-tput",
+      "suite": "recipe",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 0,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "skipped": true
+        },
+        {
+          "rep": 3,
+          "skipped": true
+        }
+      ],
+      "mean": 0,
+      "stdev": 0,
+      "consistencyScore": 0,
+      "perTest": {
+        "small remaining · breakfast portion · 600 kcal": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: kcal off-target: 731 vs 600 (>15%)"
+          ]
+        },
+        "medium remaining · standard meal · 1100 kcal": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: protein off-target: 73g vs 55g (>15%)"
+          ]
+        },
+        "large remaining · bulk meal · 2000 kcal": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: kcal off-target: 1461 vs 2000 (>15%)"
+          ]
+        },
+        "high protein · low fat · 800 kcal": {
+          "pass": 0,
+          "fail": 1,
+          "reasons": [
+            "r1: protein off-target: 59g vs 80g (>15%)"
+          ]
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "suite": "workout",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 4,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 4,
+      "stdev": 0,
+      "consistencyScore": 4,
+      "perTest": {
+        "single template · 5 exercises · chest+shoulders": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Push/Pull/Legs split · 4 per template · full body": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "Upper/Lower split · 6 per template": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "minimal · 1 exercise · biceps": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        }
+      },
+      "total": 4
+    },
+    {
+      "modelId": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      "suite": "recipe",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 1,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 0,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 0,
+          "total": 4,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 0.3333333333333333,
+      "stdev": 0.4714045207910317,
+      "consistencyScore": -0.13807118745769836,
+      "perTest": {
+        "small remaining · breakfast portion · 600 kcal": {
+          "pass": 0,
+          "fail": 3,
+          "reasons": [
+            "r1: protein off-target: 47g vs 30g (>15%)",
+            "r2: protein off-target: 48g vs 30g (>15%)",
+            "r3: protein off-target: 56g vs 30g (>15%)"
+          ]
+        },
+        "medium remaining · standard meal · 1100 kcal": {
+          "pass": 0,
+          "fail": 3,
+          "reasons": [
+            "r1: protein off-target: 75g vs 55g (>15%)",
+            "r2: protein off-target: 75g vs 55g (>15%)",
+            "r3: kcal off-target: 874 vs 1100 (>15%)"
+          ]
+        },
+        "large remaining · bulk meal · 2000 kcal": {
+          "pass": 0,
+          "fail": 3,
+          "reasons": [
+            "r1: kcal off-target: 1258 vs 2000 (>15%)",
+            "r2: kcal off-target: 1323 vs 2000 (>15%)",
+            "r3: kcal off-target: 1321 vs 2000 (>15%)"
+          ]
+        },
+        "high protein · low fat · 800 kcal": {
+          "pass": 1,
+          "fail": 2,
+          "reasons": [
+            "r2: kcal off-target: 957 vs 800 (>15%)",
+            "r3: kcal off-target: 940 vs 800 (>15%)"
+          ]
+        }
+      },
+      "total": 4
+    }
+  ],
+  "generatedAt": "2026-05-10T20:27:24.114Z",
+  "totalTokens": 308910
+}

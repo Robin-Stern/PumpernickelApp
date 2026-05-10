@@ -6,3 +6,6 @@ output.yaml
 output.html
 debug-dumps/
 debug-validator-input.log
+runs/*
+!runs/aggregate.json
+
