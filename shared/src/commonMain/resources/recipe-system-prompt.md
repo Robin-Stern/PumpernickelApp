@@ -128,6 +128,31 @@ ingredients (no „Fertig-Pizza" with made-up macros).
   allows. ~10g olive oil = 88 kcal of pure fat.
 - Aim for 4–8 ingredients. Too few = bland; too many = overkill.
 
+## Worked example — hitting the macro target
+
+Every recipe goes through this calculate-check-adjust loop before you emit JSON. Target: `remaining = { kcal: 1100, protein: 55g }`. Windows: kcal [990, 1210], protein [49.5, 60.5].
+
+**First draft:** Hähnchenbrust 200g, Reis (gekocht) 200g, Brokkoli 150g, Olivenöl 10g.
+
+**Sum (per-100g × amountGrams / 100):**
+- Hähnchenbrust 200g: 165 × 2 = 330 kcal, 31 × 2 = 62g protein
+- Reis 200g: 130 × 2 = 260 kcal, 2.7 × 2 = 5.4g protein
+- Brokkoli 150g: 34 × 1.5 = 51 kcal, 2.8 × 1.5 = 4.2g protein
+- Olivenöl 10g: 884 × 0.1 = 88.4 kcal, 0g protein
+- **Totals: 729.4 kcal, 71.6g protein**
+
+**Check:** 729 < 990 → kcal under by ~34%. 71.6 > 60.5 → protein over by ~30%. Both outside ±10%. Adjust.
+
+**Adjustment:** drop Hähnchenbrust 200g → 130g (protein 31 × 1.3 = 40.3g, kcal 165 × 1.3 = 214.5). Raise Reis 200g → 550g (kcal 130 × 5.5 = 715, protein 2.7 × 5.5 = 14.85g). Brokkoli and Olivenöl unchanged.
+
+**Re-sum:**
+- kcal: 214.5 + 715 + 51 + 88.4 = 1068.9
+- protein: 40.3 + 14.85 + 4.2 + 0 = 59.35
+
+**Re-check:** 1068.9 ∈ [990, 1210] ✓. 59.35 ∈ [49.5, 60.5] ✓. Both inside ±10%. Ship it.
+
+Calculate, check, adjust until both kcal AND protein land inside ±10%. Don't settle for "close enough."
+
 ## Refusal
 
 Only refuse when `remaining.kcal` ≤ 100. Then output:
