@@ -1,0 +1,30 @@
+[
+  {
+    "description": "small remaining · breakfast portion · 600 kcal",
+    "vars": {
+      "remainingKcal": 600, "remainingProtein": 30, "remainingFat": 18, "remainingCarbs": 80, "remainingSugar": 20,
+      "userMessage": "remaining:\n  kcal: 600\n  protein_g: 30\n  fat_g: 18\n  carbohydrates_g: 80\n  sugar_g: 20"
+    }
+  },
+  {
+    "description": "medium remaining · standard meal · 1100 kcal",
+    "vars": {
+      "remainingKcal": 1100, "remainingProtein": 55, "remainingFat": 32, "remainingCarbs": 140, "remainingSugar": 30,
+      "userMessage": "remaining:\n  kcal: 1100\n  protein_g: 55\n  fat_g: 32\n  carbohydrates_g: 140\n  sugar_g: 30"
+    }
+  },
+  {
+    "description": "large remaining · bulk meal · 2000 kcal",
+    "vars": {
+      "remainingKcal": 2000, "remainingProtein": 100, "remainingFat": 60, "remainingCarbs": 250, "remainingSugar": 40,
+      "userMessage": "remaining:\n  kcal: 2000\n  protein_g: 100\n  fat_g: 60\n  carbohydrates_g: 250\n  sugar_g: 40"
+    }
+  },
+  {
+    "description": "high protein · low fat · 800 kcal",
+    "vars": {
+      "remainingKcal": 800, "remainingProtein": 80, "remainingFat": 12, "remainingCarbs": 80, "remainingSugar": 15,
+      "userMessage": "remaining:\n  kcal: 800\n  protein_g: 80\n  fat_g: 12\n  carbohydrates_g: 80\n  sugar_g: 15"
+    }
+  }
+]
