@@ -7,10 +7,10 @@
 //   - context: { vars: { templatesExpected, exerciseCount, ... } }
 // Returns: { pass: boolean, score?: number, reason?: string }
 
-// Strip markdown fences, then extract the first balanced {...} object.
-// Models often emit reasoning prose followed by the actual JSON; this
-// finds the JSON regardless of where it is in the response. If no balanced
-// object is found, returns the original (parse will then fail loudly).
+// Strip markdown fences, then extract the LAST balanced {...} object.
+// Reasoning models often quote partial JSON examples ({"refusal":...} from
+// the prompt) inside their thinking trace; the actual final answer is the
+// last `{...}` block. Returns the longest balanced object found.
 function extractJsonObject(raw) {
   let t = raw.trim();
   if (t.startsWith("```")) {
@@ -22,25 +22,35 @@ function extractJsonObject(raw) {
     }
   }
 
-  const start = t.indexOf("{");
-  if (start < 0) return t;
-
+  // Walk from the end: find the matching `{` for the last `}`.
+  // Use bracket-counting in reverse, tracking strings.
+  const blocks = [];
   let depth = 0;
+  let openIdx = -1;
   let inString = false;
   let escape = false;
-  for (let i = start; i < t.length; i++) {
+  for (let i = 0; i < t.length; i++) {
     const ch = t[i];
     if (escape) { escape = false; continue; }
     if (ch === "\\" && inString) { escape = true; continue; }
     if (ch === '"') { inString = !inString; continue; }
     if (inString) continue;
-    if (ch === "{") depth++;
-    else if (ch === "}") {
+    if (ch === "{") {
+      if (depth === 0) openIdx = i;
+      depth++;
+    } else if (ch === "}") {
       depth--;
-      if (depth === 0) return t.slice(start, i + 1);
+      if (depth === 0 && openIdx >= 0) {
+        blocks.push(t.slice(openIdx, i + 1));
+        openIdx = -1;
+      }
+      if (depth < 0) depth = 0;
     }
   }
-  return t.slice(start);
+  if (blocks.length === 0) return t;
+  // Pick the longest block — that's almost always the actual answer
+  // (a quoted refusal example is short, the answer with templates/ingredients is long).
+  return blocks.sort((a, b) => b.length - a.length)[0];
 }
 
 const ALLOWED_MUSCLES = new Set([
@@ -49,58 +59,63 @@ const ALLOWED_MUSCLES = new Set([
   "obliques","lower back"
 ]);
 
-module.exports = function (output, { vars }) {
-  const cleaned = extractJsonObject(output);
+module.exports = function (output, ctx) {
+  const vars = ctx && ctx.vars ? ctx.vars : {};
+  const cleaned = extractJsonObject(String(output));
   let parsed;
   try { parsed = JSON.parse(cleaned); }
   catch (e) {
     return {
       pass: false,
-      reason: `JSON parse failed: ${e.message}\n\nFirst 300 chars of raw output:\n${output.slice(0, 300)}`
+      score: 0,
+      reason: `JSON parse failed: ${e.message}\n\nFirst 300 chars of raw output:\n${String(output).slice(0, 300)}`
     };
   }
 
+  if (parsed.refusal) {
+    return { pass: false, score: 0, reason: `LLM refused: ${parsed.refusal}` };
+  }
   if (!Array.isArray(parsed.templates)) {
-    return { pass: false, reason: "templates is not an array" };
+    return { pass: false, score: 0, reason: "templates is not an array (and no refusal field)" };
   }
   if (parsed.templates.length !== vars.templatesExpected) {
-    return { pass: false, reason: `expected ${vars.templatesExpected} templates, got ${parsed.templates.length}` };
+    return { pass: false, score: 0, reason: `expected ${vars.templatesExpected} templates, got ${parsed.templates.length}` };
   }
   for (const [i, t] of parsed.templates.entries()) {
-    if (!t.name || typeof t.name !== "string") return { pass: false, reason: `template[${i}].name missing` };
+    if (!t.name || typeof t.name !== "string") return { pass: false, score: 0, reason: `template[${i}].name missing` };
     if (!Array.isArray(t.exercises) || t.exercises.length === 0) {
-      return { pass: false, reason: `template[${i}].exercises empty` };
+      return { pass: false, score: 0, reason: `template[${i}].exercises empty` };
     }
     if (t.exercises.length !== vars.exerciseCount) {
-      return { pass: false, reason: `template[${i}] has ${t.exercises.length} exercises, expected ${vars.exerciseCount}` };
+      return { pass: false, score: 0, reason: `template[${i}] has ${t.exercises.length} exercises, expected ${vars.exerciseCount}` };
     }
     for (const [j, e] of t.exercises.entries()) {
-      if (!e.exerciseName) return { pass: false, reason: `template[${i}].exercises[${j}].exerciseName missing` };
+      if (!e.exerciseName) return { pass: false, score: 0, reason: `template[${i}].exercises[${j}].exerciseName missing` };
       if (!(e.targetSets >= 1 && e.targetSets <= 10))
-        return { pass: false, reason: `targetSets ${e.targetSets} out of 1..10 (template ${i}, ex ${j})` };
+        return { pass: false, score: 0, reason: `targetSets ${e.targetSets} out of 1..10 (template ${i}, ex ${j})` };
       if (!(e.targetReps >= 1 && e.targetReps <= 50))
-        return { pass: false, reason: `targetReps ${e.targetReps} out of 1..50 (template ${i}, ex ${j})` };
+        return { pass: false, score: 0, reason: `targetReps ${e.targetReps} out of 1..50 (template ${i}, ex ${j})` };
       if (!(e.restPeriodSec >= 0 && e.restPeriodSec <= 600))
-        return { pass: false, reason: `restPeriodSec ${e.restPeriodSec} out of 0..600 (template ${i}, ex ${j})` };
+        return { pass: false, score: 0, reason: `restPeriodSec ${e.restPeriodSec} out of 0..600 (template ${i}, ex ${j})` };
     }
   }
 
   if (parsed.inlineNewExercises) {
     if (!Array.isArray(parsed.inlineNewExercises)) {
-      return { pass: false, reason: "inlineNewExercises is not an array" };
+      return { pass: false, score: 0, reason: "inlineNewExercises is not an array" };
     }
     for (const [k, ex] of parsed.inlineNewExercises.entries()) {
-      if (!ex.name) return { pass: false, reason: `inlineNewExercises[${k}].name missing` };
+      if (!ex.name) return { pass: false, score: 0, reason: `inlineNewExercises[${k}].name missing` };
       if (!Array.isArray(ex.primaryMuscles) || ex.primaryMuscles.length === 0)
-        return { pass: false, reason: `inlineNewExercises[${k}].primaryMuscles empty` };
+        return { pass: false, score: 0, reason: `inlineNewExercises[${k}].primaryMuscles empty` };
       for (const m of ex.primaryMuscles) {
         if (!ALLOWED_MUSCLES.has(m))
-          return { pass: false, reason: `inlineNewExercises[${k}] unknown muscle: ${m}` };
+          return { pass: false, score: 0, reason: `inlineNewExercises[${k}] unknown muscle: ${m}` };
       }
       if (!Array.isArray(ex.instructions) || ex.instructions.length === 0)
-        return { pass: false, reason: `inlineNewExercises[${k}].instructions empty` };
+        return { pass: false, score: 0, reason: `inlineNewExercises[${k}].instructions empty` };
     }
   }
 
-  return { pass: true };
+  return { pass: true, score: 1, reason: "all checks passed" };
 };

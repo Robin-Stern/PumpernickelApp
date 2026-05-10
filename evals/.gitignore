@@ -4,3 +4,5 @@ prompts/
 output.json
 output.yaml
 output.html
+debug-dumps/
+debug-validator-input.log

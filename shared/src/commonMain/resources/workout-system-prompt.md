@@ -44,7 +44,6 @@ inline-exercise `instructions`) are in `{locale}`. JSON keys stay English.
 - Each template's `exercises.length` MUST equal `exerciseCount` from the user
   message exactly.
 - `targetSets` ∈ 3..4. `targetReps` ∈ 8..12. `restPeriodSec` ∈ 60..120.
-- Max 8 working sets per primary muscle group across one template.
 - `exerciseName` MUST exactly match the `name` of an item in
   `existingExercises` (case-insensitive) OR an entry you emit in
   `inlineNewExercises`. Do NOT invent names that have no match.
