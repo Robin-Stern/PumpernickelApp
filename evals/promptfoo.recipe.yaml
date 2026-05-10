@@ -20,6 +20,6 @@ providers:
 defaultTest:
   assert:
     - type: javascript
-      value: file://./cases/recipe-validator.js
+      value: file://./cases/recipe-validator.cjs
 
 tests: file://./cases/recipe.json

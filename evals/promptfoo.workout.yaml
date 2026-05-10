@@ -23,6 +23,6 @@ providers:
 defaultTest:
   assert:
     - type: javascript
-      value: file://./cases/workout-validator.js
+      value: file://./cases/workout-validator.cjs
 
 tests: file://./cases/workout.json
