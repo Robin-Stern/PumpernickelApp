@@ -28,20 +28,55 @@ not perfect results.
 
 ## Models to test
 
-In this exact order (so token budget runs out on the cheapest first):
+Verified against Together's live serverless catalog as of **2026-05-10**
+(see `https://www.together.ai/models` and
+`https://docs.together.ai/docs/serverless-models`). Older lineups (Llama-3.x,
+Gemma 2/3, Qwen 2.5) are deprecated or not in the serverless tier — do NOT
+substitute them.
+
+In this exact order (cheapest/smallest first, so token budget burns from
+the bottom):
 
 ```yaml
-- togetherai:openai/gpt-oss-20b           # free baseline (~3-5 sec/call)
-- togetherai:google/gemma-2-27b-it        # cheap, stable Gemma
-- togetherai:google/gemma-3-27b-it        # newer Gemma
-- togetherai:google/gemma-4-31B-it        # largest Gemma — user bought tokens for this
-- togetherai:meta-llama/Llama-3.3-70B-Instruct-Turbo
+- togetherai:openai/gpt-oss-20b                                  # free baseline, reasoning, ~20B
+- togetherai:google/gemma-4-31B-it                               # 31B, instruct — user bought tokens for this
+- togetherai:openai/gpt-oss-120b                                 # 120B reasoning — A/B against the 20b sibling
+- togetherai:meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8   # Llama 4 MoE (~400B sparse), instruct
+- togetherai:Qwen/Qwen3-235B-A22B-Instruct-2507-tput             # 235B MoE, pure instruct (no reasoning trace)
 ```
 
-Drop DeepSeek-V3 from the prior config — too slow on free tier and
-already known to time out. If you find a model consistently broken
-(refuses everything / parses 0/4) after run 1, log it and skip
-remaining repetitions to save tokens.
+**Why this set, given the eval target (deterministic JSON output):**
+- `gpt-oss-20b` and `gpt-oss-120b` — both are **reasoning models** (emit a
+  thinking trace before the answer). Bracket-matcher in the validators
+  handles this. Comparing 20b vs 120b directly tells us if scale fixes
+  prompt-following bugs (the UPPER_LOWER → 6 templates failure).
+- `gemma-4-31B-it` — pure instruct, no reasoning trace. Should be the
+  most consistent if the prompt is clear; if it underperforms the
+  reasoning models, that's a prompt issue.
+- `Llama-4-Maverick-17B-128E-Instruct-FP8` — current-gen Llama flagship
+  (replaces the deprecated Llama-3.3-70B-Instruct-Turbo I had earlier).
+  17B active params, 128 experts, ~400B sparse total.
+- `Qwen3-235B-A22B-Instruct-2507-tput` — Qwen3 instruct (NOT thinking
+  variant). Strong on structured output. The `-tput` suffix is the
+  throughput-optimized endpoint (~22B active per token).
+
+**Models considered and skipped — and why:**
+- `google/gemma-2-27b-it`, `google/gemma-3-27b-it` — superseded by
+  gemma-4-31B. Gemma 3 is still listed but we have direct access to 4.
+- `meta-llama/Llama-3.3-70B-Instruct-Turbo` — superseded by Llama 4.
+- `deepseek-ai/DeepSeek-V4-Pro`, `DeepSeek-R1` — reasoning models, very
+  slow on free/serverless, prior session confirmed timeouts.
+- `Qwen/Qwen2.5-7B-Instruct-Turbo` — too small, prior session showed
+  reasoning loops.
+- `moonshotai/Kimi-K2.6` (1T), `zai-org/GLM-5` (744B), `Qwen3.5-397B-A17B`
+  — capable but expensive. Add as a stretch goal if the first 5 finish
+  cleanly and the user wants more data.
+- `MiniMaxAI/MiniMax-M2.7`, `deepcogito/cogito-v2-1-671b`,
+  `nvidia/Nemotron-3-Super` — interesting but less proven on
+  strict-JSON tasks. Out of scope for this run.
+
+If you find a model consistently broken (refuses everything / parses 0/4)
+after run 1, log it and skip remaining repetitions to save tokens.
 
 ## Repository state — what already works
 
@@ -223,5 +258,11 @@ Commit with message:
 - The user's original request: *"versuche mit dem gemma 4 31b und ein
   paar versch modellen, dann reflektieren welches modell konsistente
   ergebnisse erzielt"*. Reflection > raw numbers.
+- **Don't trust hardcoded model lists** (including the one above). Before
+  starting, sanity-check each ID with a one-shot call:
+  `curl -sS -H "Authorization: Bearer $TOGETHER_API_KEY" \
+   https://api.together.xyz/v1/models | jq -r '.[].id' | grep -i <name>`.
+  If a listed ID returns 404 on first eval call, replace it from the
+  live catalog rather than skipping.
 
 Good luck.
