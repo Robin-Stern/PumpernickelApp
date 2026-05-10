@@ -1,13 +1,42 @@
 #!/usr/bin/env node
 // Multi-model consistency sweep.
 // Runs each (model × suite × rep) via promptfoo, captures per-test pass/reason,
-// writes raw per-run JSON + an aggregated runs/aggregate.json.
+// writes raw per-run JSON + an aggregated summary (default: runs/aggregate).
 //
 // Required env: TOGETHER_API_KEY
-// Run from evals/: node multi-model.mjs
+//
+// Usage (run from evals/):
+//   node multi-model.mjs                                 # full sweep: 5 models × 2 suites × 3 reps
+//   node multi-model.mjs --smoke                         # 1 model × 1 suite × 1 rep
+//   node multi-model.mjs --suite workout                 # workout suite only
+//   node multi-model.mjs --models gpt-oss-20b,maverick   # comma-list substring match
+//   node multi-model.mjs --reps 1                        # one rep per (model, suite)
+//   node multi-model.mjs --output /tmp/sweep.json        # custom aggregate path
+// Notes:
+//   - --smoke overrides --suite/--models/--reps (compat with prior behavior)
+//   - --output only affects the aggregate file; per-run JSON paths are unchanged
 
 import { spawnSync } from 'node:child_process';
 import { writeFileSync, readFileSync, mkdirSync, existsSync, unlinkSync } from 'node:fs';
+import { dirname } from 'node:path';
+
+function parseArgs(argv) {
+  const out = { smoke: false, suite: undefined, output: undefined, models: undefined, reps: undefined, unknownFlags: [] };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--smoke')       { out.smoke = true; }
+    else if (a === '--suite')  { out.suite  = argv[++i]; }
+    else if (a === '--output') { out.output = argv[++i]; }
+    else if (a === '--models') { out.models = (argv[++i] ?? '').split(',').map((s) => s.trim()).filter(Boolean); }
+    else if (a === '--reps') {
+      const n = Number.parseInt(argv[++i], 10);
+      if (Number.isFinite(n) && n > 0) out.reps = n;
+      else console.error(`[warn] --reps requires a positive integer; falling back to default`);
+    }
+    else { out.unknownFlags.push(a); }
+  }
+  return out;
+}
 
 const MODELS = [
   'openai/gpt-oss-20b',
@@ -35,12 +64,33 @@ const SUITES = [
 const REPS = 3;
 const RUN_TIMEOUT_MS = 10 * 60 * 1000;
 
-const SMOKE = process.argv.includes('--smoke');
-const ACTIVE_MODELS = SMOKE ? MODELS.slice(0, 1) : MODELS;
-const ACTIVE_SUITES = SMOKE ? SUITES.slice(0, 1) : SUITES;
-const ACTIVE_REPS = SMOKE ? 1 : REPS;
+const args = parseArgs(process.argv.slice(2));
+for (const f of args.unknownFlags) console.error(`[warn] unknown flag: ${f}`);
+
+const SMOKE = args.smoke;
+const OUTPUT_PATH = args.output ?? 'runs/aggregate.json';
+
+function filterModels(needles) {
+  for (const n of needles) {
+    if (!MODELS.some((m) => m.toLowerCase().includes(n.toLowerCase()))) {
+      console.error(`[warn] --models entry matched zero models: ${n}`);
+    }
+  }
+  return MODELS.filter((m) => needles.some((n) => m.toLowerCase().includes(n.toLowerCase())));
+}
+
+const ACTIVE_MODELS = SMOKE ? MODELS.slice(0, 1) : (args.models ? filterModels(args.models) : MODELS);
+const ACTIVE_SUITES = SMOKE ? SUITES.slice(0, 1)
+  : args.suite === 'workout' ? SUITES.filter((s) => s.name === 'workout')
+  : args.suite === 'recipe'  ? SUITES.filter((s) => s.name === 'recipe')
+  : SUITES; // 'both' or undefined
+const ACTIVE_REPS = SMOKE ? 1 : (args.reps ?? REPS);
+
+if (ACTIVE_MODELS.length === 0) { console.error('[error] --models filter matched no models'); process.exit(1); }
+if (ACTIVE_SUITES.length === 0) { console.error(`[error] --suite filter matched no suites (got: ${args.suite})`); process.exit(1); }
 
 mkdirSync('runs', { recursive: true });
+mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
 
 const safeId = (m) => m.replace(/[\/.]/g, '_');
 
@@ -89,13 +139,9 @@ function runOne(suite, modelId, rep, brokenModels) {
   // Only treat as error if no output file was written.
   if (!existsSync(outPath)) {
     return {
-      skipped: false,
-      error: true,
-      stderr: (proc.stderr || '').slice(-1000),
-      stdout: (proc.stdout || '').slice(-500),
-      exitCode: proc.status,
-      signal: proc.signal,
-      durationMs,
+      skipped: false, error: true,
+      stderr: (proc.stderr || '').slice(-1000), stdout: (proc.stdout || '').slice(-500),
+      exitCode: proc.status, signal: proc.signal, durationMs,
     };
   }
   const raw = JSON.parse(readFileSync(outPath, 'utf-8'));
@@ -114,16 +160,7 @@ function runOne(suite, modelId, rep, brokenModels) {
   const passed = tests.filter((t) => t.success).length;
   const total = tests.length;
   const totalTokens = raw.results?.stats?.tokenUsage?.total ?? 0;
-  return {
-    skipped: false,
-    error: false,
-    passed,
-    total,
-    tests,
-    totalTokens,
-    durationMs,
-    evalId: raw.evalId,
-  };
+  return { skipped: false, error: false, passed, total, tests, totalTokens, durationMs, evalId: raw.evalId };
 }
 
 function meanAndStdev(values) {
@@ -159,7 +196,7 @@ for (const modelId of ACTIVE_MODELS) {
         log(`    !!! 0/${result.total} on rep 1 — marking ${modelId} as broken, skipping remaining reps`);
         brokenModels.add(modelId);
       }
-      writeFileSync('runs/aggregate.json', JSON.stringify(aggregate, null, 2));
+      writeFileSync(OUTPUT_PATH, JSON.stringify(aggregate, null, 2));
     }
     const passed = runs.filter((r) => !r.skipped && !r.error).map((r) => r.passed);
     const total = runs.find((r) => r.total)?.total || 0;
@@ -188,7 +225,7 @@ for (const modelId of ACTIVE_MODELS) {
       total,
     });
     log(`=== ${modelId} | ${suite.name}: mean ${mean.toFixed(2)}/${total}, stdev ${stdev.toFixed(2)}, score ${(mean - stdev).toFixed(2)}`);
-    writeFileSync('runs/aggregate.json', JSON.stringify(aggregate, null, 2));
+    writeFileSync(OUTPUT_PATH, JSON.stringify(aggregate, null, 2));
   }
 }
 
@@ -196,7 +233,7 @@ aggregate.totalTokens = aggregate.runs.reduce(
   (a, r) => a + (r.totalTokens || 0),
   0,
 );
-writeFileSync('runs/aggregate.json', JSON.stringify(aggregate, null, 2));
+writeFileSync(OUTPUT_PATH, JSON.stringify(aggregate, null, 2));
 
 log('=== DONE ===');
 log(`Total tokens: ${aggregate.totalTokens}`);

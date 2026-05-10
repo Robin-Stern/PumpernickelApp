@@ -101,3 +101,6 @@ loading on a stated injury), respond with:
 
 Output ONLY the JSON object above. No reasoning. No explanation. No
 markdown. Just `{...}`.
+
+The top-level shape is always `{ "templates": [...], "inlineNewExercises": [...] }`.
+Even if `templatesExpected = 1`, `templates` MUST still be an array containing one object — NEVER a bare template object.
