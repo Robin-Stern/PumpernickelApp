@@ -234,7 +234,7 @@ class WorkoutAiUseCase(
         if (content.isBlank()) {
             throw AiError.SchemaInvalid(
                 "LLM returned empty content. Modell hat vermutlich nur Reasoning produziert oder existiert nicht. " +
-                "Wechsle zu openai/gpt-oss-20b in den KI-Einstellungen."
+                "Wechsle zu google/gemma-4-31B-it in den KI-Einstellungen."
             )
         }
         val cleaned = stripCodeFences(content)
@@ -259,11 +259,11 @@ class WorkoutAiUseCase(
             val reasoningExcerpt = message.reasoning?.takeIf { it.isNotBlank() }
             val msg = if (reasoningExcerpt != null) {
                 "Reasoning-Modell hat 4096 Tokens nur für Gedanken verbraucht und keine Antwort geliefert. " +
-                "Wechsle in den KI-Einstellungen zu einem Nicht-Reasoning-Modell wie openai/gpt-oss-20b.\n\n" +
+                "Wechsle in den KI-Einstellungen zu einem Nicht-Reasoning-Modell wie google/gemma-4-31B-it.\n\n" +
                 "Gedanken-Auszug: ${reasoningExcerpt.take(300).replace("\n", " ")}…"
             } else {
                 "LLM returned empty content. Modell existiert vermutlich nicht oder lieferte nur tool_calls. " +
-                "Wechsle in den KI-Einstellungen zu openai/gpt-oss-20b."
+                "Wechsle in den KI-Einstellungen zu google/gemma-4-31B-it."
             }
             throw AiError.SchemaInvalid(msg)
         }
