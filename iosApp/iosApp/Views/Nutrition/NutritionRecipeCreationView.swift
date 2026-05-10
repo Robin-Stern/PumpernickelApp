@@ -15,6 +15,7 @@ struct NutritionRecipeCreationView: View {
         ingredients: [], totals: RecipeMacros(calories: 0, protein: 0, fat: 0, carbs: 0, sugar: 0),
         errorMessage: nil, editingRecipeId: nil, editingIsFavorite: false
     )
+    @State private var showBarcodeScanner = false
     @Environment(\.dismiss) private var dismiss
     @FocusState private var focusedField: Bool
 
@@ -32,12 +33,24 @@ struct NutritionRecipeCreationView: View {
             }
 
             Section("Lebensmittel suchen") {
-                TextField("Suchen…", text: Binding(
-                    get: { state.searchQuery },
-                    set: { viewModel.onEvent(event: RecipeCreationEventOnSearchQueryChanged(value: $0)) }
-                ))
-                .submitLabel(.done)
-                .focused($focusedField)
+                HStack {
+                    TextField("Suchen…", text: Binding(
+                        get: { state.searchQuery },
+                        set: { viewModel.onEvent(event: RecipeCreationEventOnSearchQueryChanged(value: $0)) }
+                    ))
+                    .submitLabel(.done)
+                    .focused($focusedField)
+
+                    Button {
+                        focusedField = false
+                        showBarcodeScanner = true
+                    } label: {
+                        Image(systemName: "barcode.viewfinder")
+                            .font(.title3)
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Barcode scannen")
+                }
 
                 ForEach(state.searchResults, id: \.id) { food in
                     Button {
@@ -139,6 +152,12 @@ struct NutritionRecipeCreationView: View {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
                 Button("Fertig") { focusedField = false }
+            }
+        }
+        .fullScreenCover(isPresented: $showBarcodeScanner) {
+            BarcodeScannerView { barcode in
+                showBarcodeScanner = false
+                viewModel.onEvent(event: RecipeCreationEventOnBarcodeScanned(barcode: barcode))
             }
         }
         .task {
