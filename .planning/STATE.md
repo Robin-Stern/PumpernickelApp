@@ -30,7 +30,7 @@ Phase: 18 (ai-features-f6-workout-generation-f8-meal-generation-byok-op) — EXE
 Plan: 1 of 10
 Branch: `feature/workouts` @ `985884c`
 Status: Executing Phase 18
-Last activity: 2026-05-11 -- Completed quick task 260510-x7o: B.1.code workout prompt wrapper restatement + eval helper CLI flags
+Last activity: 2026-05-11 -- Completed quick task 260511-117: B.2.code recipe worked-example for macro arithmetic
 
 Progress: [██████████] 100%
 
@@ -143,7 +143,8 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260506-pf3 | iOS Progress Gallery photo viewer prompts for passcode instead of Face ID (visual UAT pending) | 2026-05-06 | abb61f5 | [260506-pf3-ios-progress-gallery-photo-viewer-prompt](./quick/260506-pf3-ios-progress-gallery-photo-viewer-prompt/) |
 | 260510-w9h | Swap Together preset default + error-msg recommendations to google/gemma-4-31B-it (eval-driven) | 2026-05-10 | b643711 | [260510-w9h-app-defaults-f-r-ai-provider-von-openai-](./quick/260510-w9h-app-defaults-f-r-ai-provider-von-openai-/) |
 | 260510-wgs | Align iOS AISettingsView model-suggestion notes with eval evidence (Together/OpenRouter/Groq) | 2026-05-10 | 7d7962a | [260510-wgs-ios-aisettingsview-model-suggestions-an-](./quick/260510-wgs-ios-aisettingsview-model-suggestions-an-/) |
-| 260510-x7o | B.1.code: workout-prompt array-wrapper restatement + multi-model.mjs CLI flags for targeted re-runs | 2026-05-11 | df71e85 | [260510-x7o-b-1-code-workout-prompt-wrapper-restatem](./quick/260510-x7o-b-1-code-workout-prompt-wrapper-restatem/) |
+| 260510-x7o | B.1.code: workout-prompt array-wrapper restatement + multi-model.mjs CLI flags for targeted re-runs (prompt edit later reverted in 501c31d — see B.1 delta in MULTI-MODEL-RESULTS.md) | 2026-05-11 | df71e85 | [260510-x7o-b-1-code-workout-prompt-wrapper-restatem](./quick/260510-x7o-b-1-code-workout-prompt-wrapper-restatem/) |
+| 260511-117 | B.2.code: add worked-example macro arithmetic section to recipe-system-prompt.md (target: Llama-3.3 arithmetic + Qwen mode-collapse failure modes) | 2026-05-11 | 380d8d2 | [260511-117-b-2-code-recipe-prompt-mit-worked-exampl](./quick/260511-117-b-2-code-recipe-prompt-mit-worked-exampl/) |
 
 ## Session Continuity
 
