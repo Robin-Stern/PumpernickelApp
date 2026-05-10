@@ -345,9 +345,11 @@ private extension AISettingsView {
         ],
         "together": [
             ModelSuggestion(name: "openai/gpt-oss-20b", note: "Kostenlos · empfohlen"),
-            ModelSuggestion(name: "meta-llama/Llama-3.3-70B-Instruct-Turbo", note: "Stark, allround"),
-            ModelSuggestion(name: "deepseek-ai/DeepSeek-V3", note: "Stark bei Code/Logik"),
-            ModelSuggestion(name: "Qwen/Qwen2.5-72B-Instruct-Turbo", note: "Mehrsprachig")
+            ModelSuggestion(name: "google/gemma-3-27b-it", note: "Google Gemma 3 · neu"),
+            ModelSuggestion(name: "google/gemma-2-27b-it", note: "Google Gemma 2 · stabil"),
+            ModelSuggestion(name: "google/gemma-2-9b-it", note: "Google Gemma 2 · klein/schnell"),
+            ModelSuggestion(name: "meta-llama/Llama-3.3-70B-Instruct-Turbo", note: "Llama · stark allround"),
+            ModelSuggestion(name: "deepseek-ai/DeepSeek-V3", note: "DeepSeek · Code/Logik")
         ],
         "openrouter": [
             ModelSuggestion(name: "openai/gpt-oss-20b:free", note: "Kostenlos · empfohlen"),
