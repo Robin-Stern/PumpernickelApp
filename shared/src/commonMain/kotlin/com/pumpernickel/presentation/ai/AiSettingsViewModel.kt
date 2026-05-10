@@ -84,7 +84,7 @@ class AiSettingsViewModel(
         // additional per-provider suggestions surfaced as quick-pick rows.
         private val PROVIDER_DEFAULTS: Map<String, Pair<String, String>> = mapOf(
             "openai" to ("https://api.openai.com/v1" to "gpt-4o-mini"),
-            "together" to ("https://api.together.ai/v1" to "openai/gpt-oss-20b"),
+            "together" to ("https://api.together.ai/v1" to "google/gemma-4-31B-it"),
             "openrouter" to ("https://openrouter.ai/api/v1" to "openai/gpt-oss-20b:free"),
             "groq" to ("https://api.groq.com/openai/v1" to "llama-3.3-70b-versatile"),
             "custom" to ("" to "")
