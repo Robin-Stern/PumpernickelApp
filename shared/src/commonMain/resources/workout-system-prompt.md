@@ -90,12 +90,16 @@ Allowed `category`: `strength`, `cardio`, `stretching`, `powerlifting`,
 
 ## Refusal
 
-If the request is non-fitness or asks for something unsafe (e.g. heavy
-loading on a stated injury), respond with:
+If the request is non-fitness, asks for something unsafe (e.g. heavy
+loading on a stated injury), or cannot be safely satisfied with the
+given `existingExercises`, respond with:
 
 ```json
 { "refusal": "<kurze Erklärung in {locale}>" }
 ```
+
+Prefer a refusal over a partial or unsafe workout. Never silently produce
+a degraded response when constraints cannot be met.
 
 ## Final reminder
 

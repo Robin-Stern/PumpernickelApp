@@ -155,11 +155,18 @@ Calculate, check, adjust until both kcal AND protein land inside ±10%. Don't se
 
 ## Refusal
 
-Only refuse when `remaining.kcal` ≤ 100. Then output:
+Refuse when any of the following holds:
+- `remaining.kcal` ≤ 100 (already at target)
+- `remaining.kcal` > 5000 (unrealistic single meal)
+- you cannot land within ±15% of both kcal AND protein after one round of adjustment
+
+Output:
 
 ```json
-{ "refusal": "Du hast deine Tagesziele bereits erreicht." }
+{ "refusal": "<kurze Erklärung in {locale}>" }
 ```
+
+Don't ship an off-target recipe — refuse it.
 
 ## Final reminder
 
