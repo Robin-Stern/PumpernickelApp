@@ -22,6 +22,7 @@ import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.WorkoutRepositoryImpl
 import com.pumpernickel.domain.nutrition.AddFoodUseCase
+import com.pumpernickel.domain.workout.GetUndertrainedMusclesUseCase
 import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
 import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
 import com.pumpernickel.domain.nutrition.DeleteConsumptionUseCase
@@ -107,6 +108,7 @@ val sharedModule = module {
     single { LoadConsumptionsForDateUseCase(get()) }
     single { DeleteConsumptionUseCase(get()) }
     single { CalculateDailyMacrosUseCase() }
+    single { GetUndertrainedMusclesUseCase(get(), get()) }
 
     // ViewModels -- Workout
     viewModel { ExerciseCatalogViewModel(get()) }
@@ -114,7 +116,7 @@ val sharedModule = module {
     viewModel { CreateExerciseViewModel(get()) }
     viewModel { TemplateListViewModel(get()) }
     viewModel { TemplateEditorViewModel(get(), get()) }
-    viewModel { WorkoutSessionViewModel(get(), get(), get(), get(), get()) }
+    viewModel { WorkoutSessionViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { WorkoutHistoryViewModel(get(), get()) }
     viewModel { SettingsViewModel(get()) }
     viewModel { OverviewViewModel(get(), get(), get(), get(), get(), get(), get()) }

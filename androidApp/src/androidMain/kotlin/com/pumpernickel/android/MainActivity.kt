@@ -12,9 +12,9 @@ import androidx.fragment.app.FragmentActivity
 import com.pumpernickel.android.ui.navigation.MainScreen
 import com.pumpernickel.android.ui.screens.TutorialOverlay
 import com.pumpernickel.android.ui.theme.PumpernickelTheme
-import com.pumpernickel.domain.progresspic.BiometricGateActivityHolder
-import com.pumpernickel.domain.progresspic.PhotoCaptureLauncherActivityHolder
-import com.pumpernickel.domain.progresspic.PhotoCaptureLauncherHost
+import com.pumpernickel.feature.biometric.BiometricGateActivityHolder
+import com.pumpernickel.feature.photo.PhotoCaptureLauncherActivityHolder
+import com.pumpernickel.feature.photo.PhotoCaptureLauncherHost
 import com.pumpernickel.presentation.settings.SettingsViewModel
 import org.koin.compose.viewmodel.koinViewModel
 

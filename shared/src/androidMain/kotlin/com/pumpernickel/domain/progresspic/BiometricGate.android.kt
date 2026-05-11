@@ -4,34 +4,13 @@ import android.content.Context
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
+import com.pumpernickel.feature.biometric.BiometricGateActivityHolder
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-
-/**
- * Holder set by the host activity (MainActivity) at onCreate / onResume.
- * The Koin actual reads from this holder to call BiometricPrompt.
- *
- * Plan 17-08 binds [PhotoVault], [PhotoCaptureLauncher], [BiometricGate] in
- * PlatformModule.android.kt. Plan 17-05's MainActivity onCreate calls
- * [BiometricGateActivityHolder.attach(this)] after swapping the MainActivity
- * superclass to androidx.fragment.app.FragmentActivity (BiometricPrompt
- * requires FragmentActivity — ComponentActivity is NOT one).
- */
-object BiometricGateActivityHolder {
-    @Volatile
-    var current: FragmentActivity? = null
-        private set
-
-    fun attach(activity: FragmentActivity) { current = activity }
-    fun detach(activity: FragmentActivity) {
-        if (current === activity) current = null
-    }
-}
 
 /**
  * Android-side actual for [BiometricGate]. Uses androidx.biometric.BiometricPrompt

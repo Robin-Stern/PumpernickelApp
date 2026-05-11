@@ -44,6 +44,7 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.androidx.biometric)
+            implementation(libs.play.services.location)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

@@ -10,6 +10,8 @@ import com.pumpernickel.domain.gamification.XpFormula
 import com.pumpernickel.domain.location.GeoPoint
 import com.pumpernickel.domain.location.LocationProvider
 import com.pumpernickel.domain.model.CompletedExercise
+import com.pumpernickel.domain.model.MuscleGroup
+import com.pumpernickel.domain.workout.GetUndertrainedMusclesUseCase
 import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
 import com.pumpernickel.domain.model.SessionExercise
@@ -72,7 +74,8 @@ class WorkoutSessionViewModel(
     private val templateRepository: TemplateRepository,
     private val settingsRepository: SettingsRepository,
     private val gamificationEngine: GamificationEngine,
-    private val locationProvider: LocationProvider
+    private val locationProvider: LocationProvider,
+    private val getUndertrainedMuscles: GetUndertrainedMusclesUseCase
 ) : ViewModel() {
 
     private val _sessionState = MutableStateFlow<WorkoutSessionState>(WorkoutSessionState.Idle)
@@ -86,6 +89,10 @@ class WorkoutSessionViewModel(
     private val _hasActiveSession = MutableStateFlow(false)
     @NativeCoroutinesState
     val hasActiveSession: StateFlow<Boolean> = _hasActiveSession.asStateFlow()
+
+    private val _undertrainedMuscles = MutableStateFlow<List<MuscleGroup>>(emptyList())
+    @NativeCoroutinesState
+    val undertrainedMuscles: StateFlow<List<MuscleGroup>> = _undertrainedMuscles.asStateFlow()
 
     // Previous performance keyed by exerciseId (HIST-04, D-08, D-09)
     private val _previousPerformance = MutableStateFlow<Map<String, CompletedExercise>>(emptyMap())
@@ -187,6 +194,11 @@ class WorkoutSessionViewModel(
             _preFill.value = computePreFill(exercises[0], 0)
             _hasActiveSession.value = true
             startElapsedTicker()
+
+            // Check for undertrained muscles (only muscles with prior history)
+            viewModelScope.launch {
+                _undertrainedMuscles.value = getUndertrainedMuscles()
+            }
         }
     }
 
@@ -637,6 +649,7 @@ class WorkoutSessionViewModel(
             _sessionState.value = WorkoutSessionState.Idle
             _previousPerformance.value = emptyMap()
             _personalBest.value = emptyMap()
+            _undertrainedMuscles.value = emptyList()
             templateOriginalIndices.clear()
         }
     }

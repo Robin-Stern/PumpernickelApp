@@ -1,4 +1,4 @@
-package com.pumpernickel.data.location
+package com.pumpernickel.feature.location
 
 import android.Manifest
 import android.annotation.SuppressLint

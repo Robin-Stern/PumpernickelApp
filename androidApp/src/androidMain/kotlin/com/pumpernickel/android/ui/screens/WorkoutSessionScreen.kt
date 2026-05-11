@@ -57,6 +57,7 @@ import com.pumpernickel.android.ui.components.ProgressPicturePromptCard
 import com.pumpernickel.android.ui.components.RepsPicker
 import com.pumpernickel.android.ui.components.WeightPicker
 import com.pumpernickel.domain.model.CompletedExercise
+import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.SessionExercise
 import com.pumpernickel.domain.model.WeightUnit
 import com.pumpernickel.presentation.workout.RestState
@@ -77,11 +78,13 @@ fun WorkoutSessionScreen(
     val previousPerformance by viewModel.previousPerformance.collectAsState()
     val personalBest by viewModel.personalBest.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
+    val undertrainedMuscles by viewModel.undertrainedMuscles.collectAsState()
 
     var selectedReps by remember { mutableIntStateOf(0) }
     var selectedWeightKgX10 by remember { mutableIntStateOf(0) }
     var selectedRir by remember { mutableIntStateOf(2) }
     var showAbandonDialog by remember { mutableStateOf(false) }
+    var showUndertrainedDialog by remember { mutableStateOf(false) }
     var showExerciseOverview by remember { mutableStateOf(false) }
     var showSetInput by remember { mutableStateOf(false) }
 
@@ -99,9 +102,21 @@ fun WorkoutSessionScreen(
         selectedWeightKgX10 = snapToWeightStep(preFill.weightKgX10)
     }
 
+    // Show undertrained hint once when the list is first populated
+    LaunchedEffect(undertrainedMuscles) {
+        if (undertrainedMuscles.isNotEmpty()) showUndertrainedDialog = true
+    }
+
     // Start workout on first composition
     LaunchedEffect(Unit) {
         viewModel.startWorkout(templateId)
+    }
+
+    if (showUndertrainedDialog) {
+        UndertrainedMusclesDialog(
+            muscles = undertrainedMuscles,
+            onDismiss = { showUndertrainedDialog = false }
+        )
     }
 
     when (val state = sessionState) {
@@ -1221,4 +1236,36 @@ private fun RirSelector(
             }
         }
     }
+}
+
+@Composable
+private fun UndertrainedMusclesDialog(
+    muscles: List<MuscleGroup>,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Vernachlässigte Muskeln") },
+        text = {
+            Column {
+                Text(
+                    text = "Diese Muskelgruppen wurden in den letzten 7 Tagen kaum oder gar nicht trainiert:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                muscles.forEach { muscle ->
+                    Text(
+                        text = "• ${muscle.displayName}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("OK")
+            }
+        }
+    )
 }
