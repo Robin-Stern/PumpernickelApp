@@ -26,5 +26,19 @@
       "remainingKcal": 800, "remainingProtein": 80, "remainingFat": 12, "remainingCarbs": 80, "remainingSugar": 15,
       "userMessage": "remaining:\n  kcal: 800\n  protein_g: 80\n  fat_g: 12\n  carbohydrates_g: 80\n  sugar_g: 15"
     }
+  },
+  {
+    "description": "impossibly low remaining kcal · expect refusal",
+    "vars": {
+      "expectRefusal": true,
+      "userMessage": "remaining:\n  kcal: 50\n  protein_g: 5\n  fat_g: 1\n  carbohydrates_g: 7\n  sugar_g: 2"
+    }
+  },
+  {
+    "description": "impossibly high remaining kcal · expect refusal",
+    "vars": {
+      "expectRefusal": true,
+      "userMessage": "remaining:\n  kcal: 20000\n  protein_g: 800\n  fat_g: 600\n  carbohydrates_g: 2000\n  sugar_g: 400"
+    }
   }
 ]
