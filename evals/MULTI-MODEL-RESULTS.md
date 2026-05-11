@@ -263,3 +263,68 @@ Gemma 4 31B took 195–600s per recipe run today (vs. ~14s for workout last swee
 **Keep the edit.** Gemma is unaffected (production-safe), Qwen and Llama-3.3 both improved on their target failure modes, gpt-oss-20b shows directional improvement, and no model regressed. The `~310k` tokens spent on B.2 measurement were a clear positive return.
 
 Next: B.3 (reasoning-model max_tokens tuning to fix the `Thinking:` truncation on gpt-oss-*) and B.4 (refusal-hook formulation).
+
+---
+
+# B.3 — max_tokens Tuning for Reasoning Models (2026-05-11)
+
+## Experiment
+
+Test whether doubling `max_tokens` (4096 → 8192) fixes the `Thinking:` truncation that causes `gpt-oss-20b` and `gpt-oss-120b` to never emit JSON on recipe prompts. **This is a config experiment, not a prompt edit** — if it works, we'd ship the higher max_tokens in the eval config (and document it for users who pick reasoning models in the app's AI settings). If it doesn't work, we ship nothing and finalize the "don't use reasoning models for recipe" recommendation.
+
+Single temp YAML, both gpt-oss models, recipe suite × 3 reps, max_tokens=8192. ~155k tokens spent.
+
+## Result (raw)
+
+Aggregate: `runs/aggregate-B3.json`.
+
+| Model | Baseline (4k) | B.2 (4k, worked-example) | B.3 (8k, worked-example) | Δ vs B.2 |
+|---|---|---|---|---|
+| `gpt-oss-20b` | 0.00 | 0.67 (σ 0.94) | **0.33** (σ 0.47) | -0.34 (regressed) |
+| `gpt-oss-120b` | 2.67 (σ 0.47) | 2.67 (σ 0.47) | **2.67** (σ 1.25) | mean unchanged, variance UP |
+
+(B.3 score from `count_passes / 3`. Per-rep: 20b = 1/4, 0/4, 0/4 → mean 0.33. 120b = 1/4, 4/4, 3/4 → mean 2.67.)
+
+## What actually changed
+
+**`Thinking:` truncation IS partially fixed.** At 8k tokens, both models more often *reach* the JSON emission stage. Looking at completion-token usage on 20b failures:
+- rep 1 medium-recipe failure: 6981 completion tokens
+- rep 2 small-recipe failure: 4933 completion tokens
+
+So the budget pressure is real and 8k gives more room. The bracket-matcher *does* find a `{...}` block on most 8k runs (vs. baseline where most outputs ended mid-Thinking).
+
+**But a new failure mode emerged: `recipe.name missing`.** Most 8k failures are now structural-schema, not token-truncation. The model emits JSON like:
+
+```json
+{
+  "ingredients": [...],
+  "steps": [...]
+}
+```
+
+— missing the top-level `"name"` field that's required by the recipe schema. Looking at the actual response (cleaned up), the model produces a syntactically valid JSON object that's just *wrong shape*.
+
+Hypothesis for why: at 4k, the model never finishes thinking, so it never starts JSON. At 8k, it starts JSON but in a hurry — and the worked-example block (B.2 edit) ended without showing a full JSON output, only an arithmetic worksheet. The model's last-impression schema reference is the worked-example's text, not the schema example block at the top of the prompt.
+
+**`gpt-oss-120b` rep 2 hit 4/4 perfect** — the first time any reasoning model has passed all 4 recipe tests in a row in any sweep. So 8k *can* work for 120b — but variance is now σ 1.25 (vs. 0.47 baseline / 0.47 B.2), and reps 1+3 were mostly broken on the schema issue. The "best run" is encouraging; the average and reliability are not.
+
+**`gpt-oss-20b` is actively worse.** Mean 0.33 < B.2's 0.67. At 8k it has even more rope to hang itself on schema drift.
+
+## Verdict on B.3
+
+**Don't ship the config change.** Doubling max_tokens trades one structural failure (token starvation) for another (schema drift). Net pass rate is flat or negative. The single best-run-of-the-day (120b rep 2 at 4/4) is a hopeful signal but not a reliable production behavior.
+
+Stick with the original report's recommendation #3: **don't use reasoning models for recipe.** Gemma 4 31B remains the only model that's reliably 4/4 on this prompt, and the app's default is correctly pointed at Gemma (quick task `260510-w9h`).
+
+### Not tested
+
+The original recommendation mentioned `reasoning: { effort: "low" }` as a third option. Skipped here because:
+- The 8k experiment already showed schema-compliance is the new bottleneck — saving tokens on reasoning won't fix that.
+- Production model is Gemma, which doesn't have this issue at all.
+- ~150k tokens already spent on B.3. Diminishing returns.
+
+If a future user must use a reasoning model for cost/availability reasons, the path forward is: bump max_tokens AND add an explicit "name field is required at top level" reminder in the prompt. Untested but the structural mechanism makes sense.
+
+### What B.3 confirmed about the eval-driven loop
+
+The original report (pre-B.1) said "either bump to max_tokens: 8192+, set reasoning effort low, or just don't use reasoning models." It listed three options without ranking them. B.3 turned that into a measured ordering: bumping max_tokens *does* fix the named failure (Thinking truncation), it just exposes a different failure (schema drift). That's a more useful piece of guidance than the original speculation — the hypothesis was right *and* the consequence was unintended *and* both got documented because we measured.
