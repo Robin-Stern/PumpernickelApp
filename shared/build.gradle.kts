@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.androidKotlinMultiplatform)
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.room)
     alias(libs.plugins.kotlinx.serialization)
@@ -8,7 +8,11 @@ plugins {
 }
 
 kotlin {
-    androidTarget()
+    android {
+        namespace = "com.pumpernickel.shared"
+        compileSdk = 35
+        minSdk = 26
+    }
 
     listOf(
         iosArm64(),
@@ -36,35 +40,16 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.json)
         }
-        androidMain.dependencies {
+androidMain.dependencies {
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.androidx.biometric)
             // Phase 18 — BYOK EncryptedSharedPreferences (REQ-AI-06 / T-18-04-01).
             implementation(libs.androidx.security.crypto)
+            implementation(libs.play-services-location)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
-        }
-    }
-}
-
-android {
-    namespace = "com.pumpernickel.shared"
-    compileSdk = 35
-
-    defaultConfig {
-        minSdk = 26
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    sourceSets {
-        getByName("main") {
-            assets.srcDirs("src/commonMain/resources")
         }
     }
 }

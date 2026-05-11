@@ -1,9 +1,5 @@
 package com.pumpernickel.android.ui.screens
 
-import android.content.Context
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -25,7 +21,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -73,21 +68,6 @@ private fun UnlockDialog(
     event: UnlockEvent,
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
-
-    // D-19 haptic on first composition of a new event (LaunchedEffect keyed
-    // on the event identity ensures exactly one haptic per unlock).
-    LaunchedEffect(event) {
-        @Suppress("DEPRECATION")
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator?.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator?.vibrate(50)
-        }
-    }
-
     val (icon, title, flavour) = when (event) {
         is UnlockEvent.RankPromotion -> Triple(
             Icons.Filled.MilitaryTech,

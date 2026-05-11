@@ -1,40 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
-}
-
-kotlin {
-    androidTarget()
-
-    sourceSets {
-        androidMain.dependencies {
-            implementation(project(":shared"))
-            implementation(libs.koin.android)
-            implementation(libs.koin.compose.viewmodel)
-            implementation(libs.kotlinx.serialization.json)
-            implementation(libs.compose.ui)
-            implementation(libs.compose.ui.tooling.preview)
-            implementation(libs.compose.material3)
-            implementation(libs.compose.foundation)
-            implementation(libs.compose.runtime)
-            implementation(libs.compose.material.icons.extended)
-            implementation(libs.activity.compose)
-            implementation(libs.navigation.compose)
-            implementation(libs.camerax.camera2)
-            implementation(libs.camerax.lifecycle)
-            implementation(libs.camerax.view)
-            implementation(libs.mlkit.barcode)
-            implementation(libs.androidx.biometric)
-            implementation(libs.kotlinx.datetime)
-            implementation("com.google.guava:guava:33.4.0-android")
-        }
-    }
-}
-
-dependencies {
-    implementation(platform(libs.compose.bom))
 }
 
 android {
@@ -49,6 +16,12 @@ android {
         versionName = "1.0"
     }
 
+    sourceSets["main"].apply {
+        manifest.srcFile("src/androidMain/AndroidManifest.xml")
+        kotlin.srcDirs("src/androidMain/kotlin")
+        res.srcDirs("src/androidMain/res")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -57,4 +30,27 @@ android {
     buildFeatures {
         compose = true
     }
+}
+
+dependencies {
+    implementation(platform(libs.compose.bom))
+    implementation(project(":shared"))
+    implementation(libs.koin.android)
+    implementation(libs.koin.compose.viewmodel)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.activity.compose)
+    implementation(libs.navigation.compose)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+    implementation(libs.mlkit.barcode)
+    implementation(libs.androidx.biometric)
+    implementation(libs.kotlinx.datetime)
+    implementation("com.google.guava:guava:33.4.0-android")
 }

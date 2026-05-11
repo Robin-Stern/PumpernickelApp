@@ -169,6 +169,10 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 
 
 
+## Open Discussion Points
+
+- **Error Handling Strategie**: Aktuell werden Fehler (z.B. OpenFoodFacts nicht erreichbar) als einfacher Text in der UI angezeigt. Zu diskutieren: einheitliche App-weite Error-Handling-Strategie — z.B. Snackbar, Retry-Button, oder differenziertes Fehlertyp-Handling (Netzwerkfehler vs. kein Ergebnis vs. Server-Fehler).
+
 <!-- GSD:profile-start -->
 ## Developer Profile
 

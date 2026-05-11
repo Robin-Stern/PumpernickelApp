@@ -22,6 +22,7 @@ import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.WorkoutRepositoryImpl
 import com.pumpernickel.domain.nutrition.AddFoodUseCase
+import com.pumpernickel.domain.workout.GetUndertrainedMusclesUseCase
 import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
 import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
 import com.pumpernickel.domain.nutrition.DeleteConsumptionUseCase
@@ -30,6 +31,7 @@ import com.pumpernickel.domain.nutrition.LoadConsumptionsForDateUseCase
 import com.pumpernickel.domain.nutrition.LoadFoodsUseCase
 import com.pumpernickel.domain.nutrition.LogConsumptionUseCase
 import com.pumpernickel.domain.nutrition.LookupBarcodeUseCase
+import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
 import com.pumpernickel.domain.nutrition.UpdateFoodUseCase
 import com.pumpernickel.domain.nutrition.ValidateFoodInputUseCase
 import com.pumpernickel.presentation.exercises.CreateExerciseViewModel
@@ -102,10 +104,12 @@ val sharedModule = module {
     single { DeleteFoodUseCase(get()) }
     single { CalculateRecipeMacrosUseCase() }
     single { LookupBarcodeUseCase(get(), get()) }
+    single { SearchFoodsRemoteUseCase(get()) }
     single { LogConsumptionUseCase(get()) }
     single { LoadConsumptionsForDateUseCase(get()) }
     single { DeleteConsumptionUseCase(get()) }
     single { CalculateDailyMacrosUseCase() }
+    single { GetUndertrainedMusclesUseCase(get(), get()) }
 
     // ViewModels -- Workout
     viewModel { ExerciseCatalogViewModel(get()) }
@@ -113,13 +117,13 @@ val sharedModule = module {
     viewModel { CreateExerciseViewModel(get()) }
     viewModel { TemplateListViewModel(get()) }
     viewModel { TemplateEditorViewModel(get(), get()) }
-    viewModel { WorkoutSessionViewModel(get(), get(), get(), get()) }
+    viewModel { WorkoutSessionViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { WorkoutHistoryViewModel(get(), get()) }
     viewModel { SettingsViewModel(get()) }
     viewModel { OverviewViewModel(get(), get(), get(), get(), get(), get(), get()) }
 
     // ViewModels -- Nutrition
-    viewModel { FoodEntryViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { FoodEntryViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { RecipeListViewModel(get(), get()) }
     viewModel { RecipeCreationViewModel(get(), get(), get()) }
     viewModel { DailyLogViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }

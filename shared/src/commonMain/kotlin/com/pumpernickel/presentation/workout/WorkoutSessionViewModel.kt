@@ -6,7 +6,12 @@ import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.domain.gamification.GamificationEngine
+import com.pumpernickel.domain.gamification.XpFormula
+import com.pumpernickel.domain.location.GeoPoint
+import com.pumpernickel.domain.location.LocationProvider
 import com.pumpernickel.domain.model.CompletedExercise
+import com.pumpernickel.domain.model.MuscleGroup
+import com.pumpernickel.domain.workout.GetUndertrainedMusclesUseCase
 import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
 import com.pumpernickel.domain.model.SessionExercise
@@ -68,7 +73,9 @@ class WorkoutSessionViewModel(
     private val workoutRepository: WorkoutRepository,
     private val templateRepository: TemplateRepository,
     private val settingsRepository: SettingsRepository,
-    private val gamificationEngine: GamificationEngine
+    private val gamificationEngine: GamificationEngine,
+    private val locationProvider: LocationProvider,
+    private val getUndertrainedMuscles: GetUndertrainedMusclesUseCase
 ) : ViewModel() {
 
     private val _sessionState = MutableStateFlow<WorkoutSessionState>(WorkoutSessionState.Idle)
@@ -82,6 +89,10 @@ class WorkoutSessionViewModel(
     private val _hasActiveSession = MutableStateFlow(false)
     @NativeCoroutinesState
     val hasActiveSession: StateFlow<Boolean> = _hasActiveSession.asStateFlow()
+
+    private val _undertrainedMuscles = MutableStateFlow<List<MuscleGroup>>(emptyList())
+    @NativeCoroutinesState
+    val undertrainedMuscles: StateFlow<List<MuscleGroup>> = _undertrainedMuscles.asStateFlow()
 
     // Previous performance keyed by exerciseId (HIST-04, D-08, D-09)
     private val _previousPerformance = MutableStateFlow<Map<String, CompletedExercise>>(emptyMap())
@@ -106,6 +117,9 @@ class WorkoutSessionViewModel(
 
     private var timerJob: Job? = null
     private var elapsedJob: Job? = null
+    private var inactivityJob: Job? = null
+    private var locationJob: Job? = null
+    private var gymLocation: GeoPoint? = null
     private var templateOriginalIndices: MutableList<Int> = mutableListOf()
 
     // -- Public methods --
@@ -180,6 +194,11 @@ class WorkoutSessionViewModel(
             _preFill.value = computePreFill(exercises[0], 0)
             _hasActiveSession.value = true
             startElapsedTicker()
+
+            // Check for undertrained muscles (only muscles with prior history)
+            viewModelScope.launch {
+                _undertrainedMuscles.value = getUndertrainedMuscles()
+            }
         }
     }
 
@@ -360,6 +379,17 @@ class WorkoutSessionViewModel(
             if (restPeriodSec > 0) {
                 startRestTimer(restPeriodSec)
             }
+
+            // Reset inactivity timer — user is still active in the gym
+            startInactivityTimer(active.startTimeMillis)
+
+            // Capture gym reference location on first set of each session
+            if (gymLocation == null) {
+                locationJob?.cancel()
+                locationJob = viewModelScope.launch {
+                    gymLocation = locationProvider.getCurrentLocation()
+                }
+            }
         }
     }
 
@@ -517,6 +547,9 @@ class WorkoutSessionViewModel(
 
             timerJob?.cancel()
             elapsedJob?.cancel()
+            inactivityJob?.cancel()
+            locationJob?.cancel()
+            gymLocation = null
 
             val endTimeMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
             val durationMillis = endTimeMillis - active.startTimeMillis
@@ -608,11 +641,15 @@ class WorkoutSessionViewModel(
         viewModelScope.launch {
             timerJob?.cancel()
             elapsedJob?.cancel()
+            inactivityJob?.cancel()
+            locationJob?.cancel()
+            gymLocation = null
             workoutRepository.clearActiveSession()
             _hasActiveSession.value = false
             _sessionState.value = WorkoutSessionState.Idle
             _previousPerformance.value = emptyMap()
             _personalBest.value = emptyMap()
+            _undertrainedMuscles.value = emptyList()
             templateOriginalIndices.clear()
         }
     }
@@ -728,6 +765,30 @@ class WorkoutSessionViewModel(
             while (true) {
                 delay(1000L)
                 _elapsedSeconds.value++
+            }
+        }
+    }
+
+    /**
+     * Starts a 10-minute inactivity watchdog. If no set is completed before the
+     * timer fires, the user has likely left the gym — deduct XP as penalty (F5).
+     * Cancelled on every set completion, enterReview(), and discardWorkout().
+     */
+    private fun startInactivityTimer(sessionStartMillis: Long) {
+        inactivityJob?.cancel()
+        inactivityJob = viewModelScope.launch {
+            delay(XpFormula.INACTIVITY_TIMEOUT_SECONDS * 1000L)
+            if (_sessionState.value !is WorkoutSessionState.Active) return@launch
+
+            val current = if (gymLocation != null) locationProvider.getCurrentLocation() else null
+            try {
+                gamificationEngine.onInactivityPenalty(
+                    sessionStartMillis = sessionStartMillis,
+                    gymRef = gymLocation,
+                    current = current
+                )
+            } catch (t: Throwable) {
+                println("GamificationEngine.onInactivityPenalty failed: ${t.message}")
             }
         }
     }

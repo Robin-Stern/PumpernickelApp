@@ -13,6 +13,7 @@ object EventKeys {
     const val SOURCE_STREAK_WORKOUT: String = "streak_workout"
     const val SOURCE_STREAK_NUTRITION: String = "streak_nutrition"
     const val SOURCE_ACHIEVEMENT: String = "achievement"
+    const val SOURCE_INACTIVITY: String = "inactivity"
 
     fun workout(workoutId: Long): String = "workout:$workoutId"
 
@@ -31,6 +32,10 @@ object EventKeys {
         "streak:nutrition:$threshold:$runStartEpochDay"
 
     fun achievement(achievementId: String): String = "achievement:$achievementId"
+
+    /** Unique per occurrence — timestamp prevents deduplication so repeated penalties are allowed. */
+    fun inactivityPenalty(sessionStartMillis: Long, atMillis: Long): String =
+        "inactivity:$sessionStartMillis:$atMillis"
 
     /**
      * Parse a `pr:<exerciseId>:<workoutId>` event key back into its components.
