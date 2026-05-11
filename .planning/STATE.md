@@ -30,7 +30,7 @@ Phase: 18 (ai-features-f6-workout-generation-f8-meal-generation-byok-op) — EXE
 Plan: 1 of 10
 Branch: `feature/workouts` @ `985884c`
 Status: Executing Phase 18
-Last activity: 2026-05-11 -- Completed quick task 260511-1h7: didactic eval-harness explainer for presentation
+Last activity: 2026-05-11 -- Completed quick task 260511-gff: B.4.code refusal-path measurable infrastructure
 
 Progress: [██████████] 100%
 
@@ -146,6 +146,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260510-x7o | B.1.code: workout-prompt array-wrapper restatement + multi-model.mjs CLI flags for targeted re-runs (prompt edit later reverted in 501c31d — see B.1 delta in MULTI-MODEL-RESULTS.md) | 2026-05-11 | df71e85 | [260510-x7o-b-1-code-workout-prompt-wrapper-restatem](./quick/260510-x7o-b-1-code-workout-prompt-wrapper-restatem/) |
 | 260511-117 | B.2.code: add worked-example macro arithmetic section to recipe-system-prompt.md (target: Llama-3.3 arithmetic + Qwen mode-collapse failure modes) | 2026-05-11 | 380d8d2 | [260511-117-b-2-code-recipe-prompt-mit-worked-exampl](./quick/260511-117-b-2-code-recipe-prompt-mit-worked-exampl/) |
 | 260511-1h7 | Didactic end-to-end explainer for eval harness (evals/PROMPT-TESTING-EXPLAINED.md, 565 lines, 9 sections + ASCII diagrams) — presentation material | 2026-05-11 | 4d1d615 | [260511-1h7-didaktische-dokumentation-des-eval-harne](./quick/260511-1h7-didaktische-dokumentation-des-eval-harne/) |
+| 260511-gff | B.4.code: refusal path measurable — validators honor expectRefusal, 2 impossible-scenario cases per suite, sharpened Refusal sections in both system prompts | 2026-05-11 | e33ef0d | [260511-gff-b-4-code-refusal-path-messbar-machen-exp](./quick/260511-gff-b-4-code-refusal-path-messbar-machen-exp/) |
 
 ## Session Continuity
 
