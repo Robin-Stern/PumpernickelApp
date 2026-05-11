@@ -72,9 +72,20 @@ module.exports = function (output, ctx) {
     };
   }
 
-  if (parsed.refusal) {
-    return { pass: false, score: 0, reason: `LLM refused: ${parsed.refusal}` };
+  // Refusal handling — runs before schema validation so refusal cases
+  // (vars.expectRefusal === true) don't trip on missing templates/etc.
+  if (parsed && typeof parsed.refusal === 'string') {
+    if (vars.expectRefusal === true) {
+      return { pass: true, score: 1, reason: `refused as expected: ${parsed.refusal.slice(0, 100)}` };
+    }
+    return { pass: false, score: 0, reason: `model refused unexpectedly: ${parsed.refusal.slice(0, 100)}` };
   }
+
+  // expectRefusal was true but no refusal field present → model failed to refuse
+  if (vars.expectRefusal === true) {
+    return { pass: false, score: 0, reason: `expected refusal but got workout response` };
+  }
+
   if (!Array.isArray(parsed.templates)) {
     return { pass: false, score: 0, reason: "templates is not an array (and no refusal field)" };
   }

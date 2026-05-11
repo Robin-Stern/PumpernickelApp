@@ -50,9 +50,20 @@ module.exports = function (output, { vars }) {
     };
   }
 
-  if (parsed.refusal) {
-    return { pass: false, score: 0, reason: `LLM refused: ${parsed.refusal}` };
+  // Refusal handling — runs before schema validation so refusal cases
+  // (vars.expectRefusal === true) don't trip on missing fields/etc.
+  if (parsed && typeof parsed.refusal === 'string') {
+    if (vars.expectRefusal === true) {
+      return { pass: true, score: 1, reason: `refused as expected: ${parsed.refusal.slice(0, 100)}` };
+    }
+    return { pass: false, score: 0, reason: `model refused unexpectedly: ${parsed.refusal.slice(0, 100)}` };
   }
+
+  // expectRefusal was true but no refusal field present → model failed to refuse
+  if (vars.expectRefusal === true) {
+    return { pass: false, score: 0, reason: `expected refusal but got recipe response` };
+  }
+
   if (!parsed.name || typeof parsed.name !== "string") {
     return { pass: false, score: 0, reason: "recipe.name missing" };
   }
