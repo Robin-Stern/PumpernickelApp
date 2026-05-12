@@ -555,6 +555,17 @@ private fun PickerSection(
             fontWeight = FontWeight.SemiBold
         )
         Spacer(modifier = Modifier.height(12.dp))
+
+        // Live consistency banner: macros vs calorie goal. Carbs = 4 kcal/g,
+        // Protein = 4 kcal/g, Fat = 9 kcal/g. Sugar is a subset of carbs so
+        // we do NOT add it here (counting it again would double-count).
+        MacroCalorieBanner(
+            kcalGoal = kcalValue,
+            proteinGrams = proteinValue,
+            carbsGrams = carbsValue,
+            fatGrams = fatValue
+        )
+        Spacer(modifier = Modifier.height(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             GoalPickerRow(
                 label = "Kalorien",
@@ -590,6 +601,73 @@ private fun PickerSection(
                 value = sugarValue,
                 onValueChange = onSugarChange,
                 displayTransform = { "$it g" }
+            )
+        }
+    }
+}
+
+/**
+ * Live-Anzeige der aus Protein/Carbs/Fat berechneten Kalorien gegen das
+ * Kalorienziel. Zucker zaehlt nicht extra mit (ist Teil der KH). Bei einer
+ * Abweichung > 10 % erscheint die Karte in der Error-Container-Farbe mit
+ * einem Hinweistext, damit der User die Inkonsistenz sieht (z. B. 300 g
+ * Protein + 300 g KH + 300 g Fett ergeben 5100 kcal — auch wenn das Ziel
+ * bei 1000 kcal liegt, lockt die App den User nicht aus, sondern warnt
+ * sichtbar).
+ */
+@Composable
+private fun MacroCalorieBanner(
+    kcalGoal: Int,
+    proteinGrams: Int,
+    carbsGrams: Int,
+    fatGrams: Int
+) {
+    val macroKcal = proteinGrams * 4 + carbsGrams * 4 + fatGrams * 9
+    val deviation = macroKcal - kcalGoal
+    val tolerance = (kcalGoal * 0.10).toInt().coerceAtLeast(50)
+    val isOff = kotlin.math.abs(deviation) > tolerance
+
+    val containerColor = if (isOff) MaterialTheme.colorScheme.errorContainer
+    else MaterialTheme.colorScheme.surfaceVariant
+    val onContainerColor = if (isOff) MaterialTheme.colorScheme.onErrorContainer
+    else MaterialTheme.colorScheme.onSurfaceVariant
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Makro-Kalorien",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = onContainerColor,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "$macroKcal kcal",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = onContainerColor
+                )
+            }
+            Text(
+                text = if (isOff) {
+                    val sign = if (deviation > 0) "+" else ""
+                    "Weicht ${sign}$deviation kcal von deinem Ziel ($kcalGoal kcal) ab. " +
+                        "Pruefe deine Makro-Verteilung — KH/Protein = 4 kcal/g, Fett = 9 kcal/g."
+                } else {
+                    "Passt zum Kalorienziel von $kcalGoal kcal."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = onContainerColor
             )
         }
     }

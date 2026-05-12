@@ -19,6 +19,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -56,27 +57,40 @@ fun DrumPicker(
 
     val listState = rememberLazyListState()
     val snapFlingBehavior = rememberSnapFlingBehavior(listState)
+    val density = LocalDensity.current
+    val itemHeightPx = with(density) { itemHeightDp.toPx() }
 
     // Scroll to the initial selected item on first composition or when selectedItem changes.
     LaunchedEffect(selectedItem) {
         val targetIndex = items.indexOf(selectedItem)
         if (targetIndex >= 0) {
-            listState.scrollToItem(targetIndex + spacerCount)
+            listState.scrollToItem(targetIndex)
         }
     }
 
-    // Detect when scrolling has stopped and report the centred item.
+    // When scrolling stops, round to the *nearest* item (not just floor of
+    // firstVisibleItemIndex) and animate the offset to zero so the row ends
+    // perfectly between the two centre dividers. Without this, a slow finger
+    // release (no fling) leaves the item half-aligned and the previous
+    // version always rounded down — that caused the "snapped to the row
+    // above" complaint.
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrollInProgress }
             .filter { !it }
             .collect {
-                val centreIndex = listState.firstVisibleItemIndex + spacerCount - spacerCount
-                // firstVisibleItemIndex is 0-based over the full list including spacers.
-                // Subtract spacerCount to get the real items index.
-                val realIndex = listState.firstVisibleItemIndex
-                if (realIndex in items.indices) {
-                    onItemSelected(items[realIndex])
+                val first = listState.firstVisibleItemIndex
+                val offset = listState.firstVisibleItemScrollOffset
+                // Round half-up: if we've scrolled past 50 % of the row,
+                // the next row is closer to the centre slot.
+                val targetIndex = if (offset > itemHeightPx / 2f) first + 1 else first
+                val realIndex = targetIndex.coerceIn(0, items.lastIndex)
+                if (offset != 0) {
+                    // animateScrollToItem re-triggers isScrollInProgress; the
+                    // next collect emission will already have offset == 0
+                    // and skip this branch, so there's no infinite loop.
+                    listState.animateScrollToItem(realIndex)
                 }
+                onItemSelected(items[realIndex])
             }
     }
 
