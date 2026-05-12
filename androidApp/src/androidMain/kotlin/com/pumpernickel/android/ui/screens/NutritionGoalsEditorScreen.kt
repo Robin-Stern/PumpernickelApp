@@ -704,9 +704,13 @@ private fun GoalPickerRow(
                 items = items,
                 selectedItem = value,
                 onItemSelected = onValueChange,
-                modifier = Modifier
-                    .width(180.dp)
-                    .height(160.dp),
+                // Width is constrained, height is left at the DrumPicker's
+                // intrinsic value (itemHeightDp × visibleItemCount = 200dp).
+                // Overriding the height would desync the two centre dividers
+                // (which are positioned relative to the intrinsic height) from
+                // the LazyColumn's visual slots — the selected number would
+                // appear to sit on top of a divider instead of between them.
+                modifier = Modifier.width(180.dp),
                 label = "",
                 displayTransform = displayTransform
             )
