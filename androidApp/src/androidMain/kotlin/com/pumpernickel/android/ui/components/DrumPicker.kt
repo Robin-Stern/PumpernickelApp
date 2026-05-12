@@ -2,23 +2,18 @@ package com.pumpernickel.android.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,18 +22,7 @@ import com.pumpernickel.domain.model.WeightUnit
 import kotlinx.coroutines.flow.filter
 
 /**
- * A drum/wheel picker composable that mimics iOS UIPickerView(.wheel) scroll behavior.
- *
- * Supports fling momentum with snap-to-item, visual feedback (highlighted center item,
- * faded items above/below), and a selection callback.
- *
- * @param items The list of integer values to display.
- * @param selectedItem The initially selected value (must be in [items]).
- * @param onItemSelected Called when the user settles on a new value after scrolling.
- * @param modifier Optional modifier for the outer Column.
- * @param label Optional label text displayed above the picker.
- * @param displayTransform Converts a raw integer item to a display string.
- * @param visibleItemCount Number of items visible at once (must be odd). Default 5.
+ * Optimized wheel picker that minimizes recompositions and matches iOS aesthetics.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -60,34 +44,27 @@ fun DrumPicker(
     val density = LocalDensity.current
     val itemHeightPx = with(density) { itemHeightDp.toPx() }
 
-    // Scroll to the initial selected item on first composition or when selectedItem changes.
+    // Optimization: derive center index so only affected items recompose.
+    val centerIndex by remember {
+        derivedStateOf { listState.firstVisibleItemIndex + spacerCount }
+    }
+
     LaunchedEffect(selectedItem) {
         val targetIndex = items.indexOf(selectedItem)
-        if (targetIndex >= 0) {
+        if (targetIndex >= 0 && !listState.isScrollInProgress) {
             listState.scrollToItem(targetIndex)
         }
     }
 
-    // When scrolling stops, round to the *nearest* item (not just floor of
-    // firstVisibleItemIndex) and animate the offset to zero so the row ends
-    // perfectly between the two centre dividers. Without this, a slow finger
-    // release (no fling) leaves the item half-aligned and the previous
-    // version always rounded down — that caused the "snapped to the row
-    // above" complaint.
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrollInProgress }
             .filter { !it }
             .collect {
                 val first = listState.firstVisibleItemIndex
                 val offset = listState.firstVisibleItemScrollOffset
-                // Round half-up: if we've scrolled past 50 % of the row,
-                // the next row is closer to the centre slot.
                 val targetIndex = if (offset > itemHeightPx / 2f) first + 1 else first
                 val realIndex = targetIndex.coerceIn(0, items.lastIndex)
                 if (offset != 0) {
-                    // animateScrollToItem re-triggers isScrollInProgress; the
-                    // next collect emission will already have offset == 0
-                    // and skip this branch, so there's no infinite loop.
                     listState.animateScrollToItem(realIndex)
                 }
                 onItemSelected(items[realIndex])
@@ -100,38 +77,30 @@ fun DrumPicker(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(bottom = 4.dp)
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 4.dp)
             )
         }
 
-        Box {
+        Box(contentAlignment = Alignment.Center) {
             LazyColumn(
                 state = listState,
                 flingBehavior = snapFlingBehavior,
-                modifier = Modifier
-                    .height(pickerHeightDp)
-                    .fillMaxWidth(),
+                modifier = Modifier.height(pickerHeightDp).fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Top spacer items so the first real item can scroll to the centre.
-                items(spacerCount) {
-                    Box(modifier = Modifier.height(itemHeightDp))
-                }
-
+                items(spacerCount) { Spacer(Modifier.height(itemHeightDp)) }
                 itemsIndexed(items) { index, item ->
-                    // Determine visual distance from the centre position.
-                    val centreVisibleIndex = listState.firstVisibleItemIndex + spacerCount
-                    val distance = kotlin.math.abs((index + spacerCount) - centreVisibleIndex)
-                    val alpha = maxOf(0.2f, 1f - distance * 0.3f)
-
-                    val textStyle = when (distance) {
-                        0 -> MaterialTheme.typography.headlineMedium
-                        1 -> MaterialTheme.typography.titleMedium
-                        else -> MaterialTheme.typography.bodyMedium
+                    val distance = kotlin.math.abs((index + spacerCount) - centerIndex)
+                    val alpha = when (distance) {
+                        0 -> 1f
+                        1 -> 0.6f
+                        else -> 0.3f
                     }
-                    val fontWeight = if (distance == 0) FontWeight.Bold else FontWeight.Normal
+                    val scale = when (distance) {
+                        0 -> 1.1f
+                        1 -> 0.9f
+                        else -> 0.8f
+                    }
 
                     Box(
                         contentAlignment = Alignment.Center,
@@ -142,74 +111,33 @@ fun DrumPicker(
                     ) {
                         Text(
                             text = displayTransform(item),
-                            style = textStyle,
-                            fontWeight = fontWeight,
+                            style = if (distance == 0) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
+                            fontWeight = if (distance == 0) FontWeight.Bold else FontWeight.Normal,
+                            color = if (distance == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center
                         )
                     }
                 }
-
-                // Bottom spacer items so the last real item can scroll to the centre.
-                items(spacerCount) {
-                    Box(modifier = Modifier.height(itemHeightDp))
-                }
+                items(spacerCount) { Spacer(Modifier.height(itemHeightDp)) }
             }
 
-            // Centre selection indicator lines.
-            val dividerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-            val centreTop = itemHeightDp * spacerCount
-            val centreBottom = centreTop + itemHeightDp
-
-            HorizontalDivider(
-                modifier = Modifier.padding(top = centreTop),
-                color = dividerColor
-            )
-            HorizontalDivider(
-                modifier = Modifier.padding(top = centreBottom),
-                color = dividerColor
-            )
+            // iOS-style selection indicator
+            val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            Column(modifier = Modifier.height(pickerHeightDp).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
+                HorizontalDivider(color = dividerColor)
+                Spacer(Modifier.height(itemHeightDp))
+                HorizontalDivider(color = dividerColor)
+            }
         }
     }
 }
 
-/**
- * Convenience composable for selecting a rep count (0-50).
- */
 @Composable
-fun RepsPicker(
-    selectedReps: Int,
-    onRepsSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    DrumPicker(
-        items = (0..50).toList(),
-        selectedItem = selectedReps,
-        onItemSelected = onRepsSelected,
-        modifier = modifier,
-        label = "Reps",
-        displayTransform = { it.toString() }
-    )
+fun RepsPicker(selectedReps: Int, onRepsSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+    DrumPicker(items = (0..50).toList(), selectedItem = selectedReps, onItemSelected = onRepsSelected, modifier = modifier, label = "Wdh.", displayTransform = { it.toString() })
 }
 
-/**
- * Convenience composable for selecting a weight value.
- *
- * Internally works with kgX10 integers (0-10000 in steps of 25, representing 0-1000 kg in
- * 2.5 kg increments). Display is handled by [WeightUnit.formatWeight].
- */
 @Composable
-fun WeightPicker(
-    selectedWeightKgX10: Int,
-    onWeightSelected: (Int) -> Unit,
-    weightUnit: WeightUnit,
-    modifier: Modifier = Modifier
-) {
-    DrumPicker(
-        items = (0..10000 step 25).toList(),
-        selectedItem = selectedWeightKgX10,
-        onItemSelected = onWeightSelected,
-        modifier = modifier,
-        label = "Weight (${weightUnit.label})",
-        displayTransform = { weightUnit.formatWeight(it) }
-    )
+fun WeightPicker(selectedWeightKgX10: Int, onWeightSelected: (Int) -> Unit, weightUnit: WeightUnit, modifier: Modifier = Modifier) {
+    DrumPicker(items = (0..10000 step 25).toList(), selectedItem = selectedWeightKgX10, onItemSelected = onWeightSelected, modifier = modifier, label = "Gewicht (${weightUnit.label})", displayTransform = { weightUnit.formatWeight(it) })
 }

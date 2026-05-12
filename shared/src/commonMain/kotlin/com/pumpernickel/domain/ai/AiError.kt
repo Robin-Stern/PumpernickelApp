@@ -6,6 +6,7 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.io.IOException
+import kotlinx.serialization.SerializationException
 
 /**
  * Five canonical AI error classes per D-18-08 + Cancelled sentinel for D-18-16
@@ -22,7 +23,7 @@ import kotlinx.io.IOException
  */
 sealed class AiError : Throwable() {
     object Timeout : AiError()
-    object Network : AiError()
+    data class Network(val detail: String? = null) : AiError()
     data class AuthOrQuota(val httpStatus: Int) : AiError()
     data class Provider(val httpStatus: Int) : AiError()
     data class SchemaInvalid(val detail: String) : AiError()
@@ -40,8 +41,8 @@ sealed class AiError : Throwable() {
             is ConnectTimeoutException -> Timeout
             is ClientRequestException -> AuthOrQuota(t.response.status.value)
             is ServerResponseException -> Provider(t.response.status.value)
-            is IOException -> Network
-            else -> Network // unknown transport failure — surfaces as the generic network state
+            is SerializationException -> SchemaInvalid("Malformed JSON: ${t.message}")
+            else -> Network(t.message ?: t::class.simpleName)
         }
     }
 }

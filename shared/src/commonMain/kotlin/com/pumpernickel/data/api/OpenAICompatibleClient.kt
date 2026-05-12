@@ -40,6 +40,7 @@ class OpenAICompatibleClient(
         baseUrl: String,
         request: ChatRequest
     ): ChatResponse {
+        validateUrl(baseUrl)
         val key = requireKey()
         val url = endpoint(baseUrl)
         println("[AI] POST $url model=${request.model} messages=${request.messages.size} keyLen=${key.length}")
@@ -93,6 +94,7 @@ class OpenAICompatibleClient(
         request: ChatRequest,
         onProgress: (content: String, reasoning: String) -> Unit
     ): String {
+        validateUrl(baseUrl)
         val key = requireKey()
         val url = endpoint(baseUrl)
         val streamingRequest = request.copy(stream = true)
@@ -170,6 +172,13 @@ class OpenAICompatibleClient(
     }
 
     // MARK: - shared helpers
+
+    private fun validateUrl(url: String) {
+        if (url.isBlank()) throw AiError.Network()
+        if (!url.startsWith("https://")) {
+            throw AiError.SchemaInvalid("Insecure URL rejected (must use https)")
+        }
+    }
 
     private suspend fun requireKey(): String {
         val key = keyProvider()
