@@ -274,7 +274,7 @@ struct NutritionFoodEntryView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func remoteFoodCard(_ result: SearchFoodsRemoteUseCaseRemoteFoodResult) -> some View {
+    private func remoteFoodCard(_ result: SearchFoodsRemoteUseCase.RemoteFoodResult) -> some View {
         Button {
             viewModel.onEvent(event: FoodEntryEventOnRemoteFoodSelected(result: result))
         } label: {
