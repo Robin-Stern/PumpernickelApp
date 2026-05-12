@@ -1,5 +1,6 @@
 package com.pumpernickel.android.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
@@ -183,6 +186,9 @@ fun TemplateEditorScreen(templateId: Long?, navController: NavHostController) {
                     onUpdateTargets = { sets, reps, restSec ->
                         viewModel.updateExerciseTargets(exercise.id, sets, reps, restSec)
                     },
+                    onUpdateSetReps = { setIdx, reps ->
+                        viewModel.updateSetTarget(exercise.id, setIdx, reps)
+                    },
                     onRemove = { viewModel.removeExercise(exercise.id) },
                     onMoveUp = {
                         if (index > 0) viewModel.moveExercise(index, index - 1)
@@ -205,6 +211,7 @@ private fun ExerciseTargetRow(
     index: Int,
     totalCount: Int,
     onUpdateTargets: (sets: Int, reps: Int, restSec: Int) -> Unit,
+    onUpdateSetReps: (setIndex: Int, reps: Int) -> Unit,
     onRemove: () -> Unit,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit
@@ -212,6 +219,20 @@ private fun ExerciseTargetRow(
     var setsText by remember(exercise.id) { mutableStateOf("${exercise.targetSets}") }
     var repsText by remember(exercise.id) { mutableStateOf("${exercise.targetReps}") }
     var restText by remember(exercise.id) { mutableStateOf("${exercise.restPeriodSec}") }
+
+    // Drop-set support: per-set reps mirror — iOS TemplateEditorView.swift:252-274.
+    var isExpanded by remember(exercise.id) { mutableStateOf(exercise.perSetReps != null) }
+    var perSetRepsTexts by remember(exercise.id) {
+        mutableStateOf(
+            (exercise.perSetReps ?: List(exercise.targetSets) { exercise.targetReps })
+                .map { it.toString() }
+        )
+    }
+    // Re-sync drafts when the source model changes (set count adjusted, viewModel reordered).
+    LaunchedEffect(exercise.perSetReps, exercise.targetSets, exercise.targetReps) {
+        perSetRepsTexts = (exercise.perSetReps ?: List(exercise.targetSets) { exercise.targetReps })
+            .map { it.toString() }
+    }
 
     fun commitChanges() {
         val sets = setsText.toIntOrNull() ?: exercise.targetSets
@@ -278,10 +299,11 @@ private fun ExerciseTargetRow(
             }
         }
 
-        // Inline target fields row
+        // Inline target fields row + drop-set expand toggle
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             // Sets field
             CompactTargetField(
@@ -307,6 +329,62 @@ private fun ExerciseTargetRow(
                 modifier = Modifier.width(70.dp),
                 keyboardType = KeyboardType.Number
             )
+            Spacer(modifier = Modifier.weight(1f))
+            IconButton(onClick = { isExpanded = !isExpanded }) {
+                Icon(
+                    imageVector = if (isExpanded) Icons.Filled.ExpandLess
+                    else Icons.Filled.ExpandMore,
+                    contentDescription = if (isExpanded) "Drop-Sets ausblenden"
+                    else "Drop-Sets bearbeiten",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        // Collapsible per-set reps section for drop sets.
+        AnimatedVisibility(visible = isExpanded) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, start = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                val setCount = exercise.targetSets
+                if (setCount > 0) {
+                    for (idx in 0 until setCount) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Set ${idx + 1}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.width(44.dp)
+                            )
+                            val draft = perSetRepsTexts.getOrNull(idx) ?: "0"
+                            OutlinedTextField(
+                                value = draft,
+                                onValueChange = { newValue ->
+                                    perSetRepsTexts = perSetRepsTexts.toMutableList().also { list ->
+                                        while (list.size <= idx) list.add("0")
+                                        list[idx] = newValue
+                                    }
+                                    newValue.toIntOrNull()?.let { parsed ->
+                                        onUpdateSetReps(idx, parsed)
+                                    }
+                                },
+                                label = { Text("Reps") },
+                                modifier = Modifier.width(110.dp),
+                                textStyle = MaterialTheme.typography.bodySmall.copy(textAlign = TextAlign.Center),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                singleLine = true
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

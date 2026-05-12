@@ -22,6 +22,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.FoodBank
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,9 +59,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.pumpernickel.android.R
+import com.pumpernickel.android.ui.navigation.AiMealGenRoute
 import com.pumpernickel.android.ui.navigation.NutritionFoodEntryRoute
 import com.pumpernickel.android.ui.navigation.NutritionRecipeListRoute
 import com.pumpernickel.domain.model.ConsumptionEntry
@@ -83,6 +86,16 @@ fun NutritionDailyLogScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // FoodRepository is suspend-only (no Flow), so the in-memory state.foods /
+    // state.recipes don't auto-update when a new Food/Recipe is created on a
+    // child screen. Refresh on every resume so returning from
+    // NutritionFoodEntryScreen / NutritionRecipeCreationScreen surfaces the
+    // new item without an app restart.
+    LifecycleResumeEffect(Unit) {
+        viewModel.refresh()
+        onPauseOrDispose { }
+    }
+
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -95,6 +108,9 @@ fun NutritionDailyLogScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.title_daily_log)) },
                 actions = {
+                    IconButton(onClick = { navController.navigate(AiMealGenRoute) }) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = "AI-Rezept generieren")
+                    }
                     IconButton(onClick = { navController.navigate(NutritionFoodEntryRoute) }) {
                         Icon(Icons.Default.FoodBank, contentDescription = "Lebensmittel verwalten")
                     }
