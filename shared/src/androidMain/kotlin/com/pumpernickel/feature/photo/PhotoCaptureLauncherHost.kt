@@ -1,10 +1,13 @@
 package com.pumpernickel.feature.photo
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.CompletableDeferred
 import java.io.File
@@ -53,6 +56,7 @@ class PhotoCaptureLauncherHost(
     // path — we re-open the cache file we ourselves created.
     private var pendingCameraDeferred: CompletableDeferred<File?>? = null
     private var pendingLibraryDeferred: CompletableDeferred<Uri?>? = null
+    private var pendingCameraPermissionDeferred: CompletableDeferred<Boolean>? = null
 
     private val cameraLauncher = activity.registerForActivityResult(
         ActivityResultContracts.TakePicture()
@@ -70,6 +74,17 @@ class PhotoCaptureLauncherHost(
         pendingLibraryDeferred = null
     }
 
+    // Manifest declares <uses-permission CAMERA>, so on Android 6.0+ we must
+    // grant it at runtime before launching IMAGE_CAPTURE — otherwise the system
+    // blocks the intent with "Permission Denial: starting intent { act=
+    // android.media.action.IMAGE_CAPTURE ... requires android.permission.CAMERA".
+    private val cameraPermissionLauncher = activity.registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        pendingCameraPermissionDeferred?.complete(granted)
+        pendingCameraPermissionDeferred = null
+    }
+
     /**
      * Launches the system camera. Returns the [File] inside our app cache that
      * the camera wrote to (the same File we passed via FileProvider URI), or
@@ -84,6 +99,10 @@ class PhotoCaptureLauncherHost(
      * in depth for any path that reaches the host directly.
      */
     suspend fun launchCamera(): File? {
+        // Ensure the runtime CAMERA permission is granted before launching the
+        // IMAGE_CAPTURE intent — see [cameraPermissionLauncher].
+        if (!ensureCameraPermission()) return null
+
         // M-01: cancel any prior in-flight camera capture so the previous
         // awaiter doesn't suspend forever.
         pendingCameraDeferred?.complete(null)
@@ -98,6 +117,21 @@ class PhotoCaptureLauncherHost(
         val authority = "${context.packageName}.provider"
         val contentUri = FileProvider.getUriForFile(context, authority, file)
         cameraLauncher.launch(contentUri)
+        return deferred.await()
+    }
+
+    private suspend fun ensureCameraPermission(): Boolean {
+        val alreadyGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+        if (alreadyGranted) return true
+
+        pendingCameraPermissionDeferred?.complete(false)
+        pendingCameraPermissionDeferred = null
+
+        val deferred = CompletableDeferred<Boolean>()
+        pendingCameraPermissionDeferred = deferred
+        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
         return deferred.await()
     }
 
