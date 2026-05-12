@@ -30,7 +30,7 @@ Phase: 18 (ai-features-f6-workout-generation-f8-meal-generation-byok-op) — EXE
 Plan: 1 of 10
 Branch: `feature/workouts` @ `985884c`
 Status: Executing Phase 18
-Last activity: 2026-05-12 -- Completed quick task 260512-gv9: OFF v2 search API + iOS/Android remote-search UI
+Last activity: 2026-05-12 -- Completed quick task 260512-kws: iOS Location useContents fix (unblocks iOS compile)
 
 Progress: [██████████] 100%
 
@@ -148,6 +148,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260511-1h7 | Didactic end-to-end explainer for eval harness (evals/PROMPT-TESTING-EXPLAINED.md, 565 lines, 9 sections + ASCII diagrams) — presentation material | 2026-05-11 | 4d1d615 | — | [260511-1h7-didaktische-dokumentation-des-eval-harne](./quick/260511-1h7-didaktische-dokumentation-des-eval-harne/) |
 | 260511-gff | B.4.code: refusal path measurable — validators honor expectRefusal, 2 impossible-scenario cases per suite, sharpened Refusal sections in both system prompts | 2026-05-11 | e33ef0d | — | [260511-gff-b-4-code-refusal-path-messbar-machen-exp](./quick/260511-gff-b-4-code-refusal-path-messbar-machen-exp/) |
 | 260512-gv9 | OpenFoodFacts Volltextsuche: cgi/search.pl → /api/v2/search (sort_by=popularity_key, lc=de, brand field) + iOS-UI für Remote-Suchergebnisse + Android-Brand-Label auf RemoteFoodCard | 2026-05-12 | dbb6f7e | Needs Review | [260512-gv9-volltextsuche-f-r-lebensmittel-off-v2-se](./quick/260512-gv9-volltextsuche-f-r-lebensmittel-off-v2-se/) |
+| 260512-kws | Fix iOS Build: IosLocationProvider — `CLLocationCoordinate2D` braucht `useContents { latitude; longitude }` in Kotlin/Native (pre-existing drift, durch ff044e5 entblockt und so erst sichtbar geworden) | 2026-05-12 | 6f968b3 | — | [260512-kws-fix-ios-build-ioslocationprovider-usecon](./quick/260512-kws-fix-ios-build-ioslocationprovider-usecon/) |
 
 ## Session Continuity
 
