@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,12 +32,15 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.pumpernickel.android.ui.navigation.ExerciseCatalogRoute
 import com.pumpernickel.android.ui.navigation.NutritionGoalsEditorRoute
 import com.pumpernickel.android.ui.navigation.ProgressGalleryRoute
 import com.pumpernickel.android.ui.navigation.RanksAndAchievementsRoute
@@ -87,6 +91,13 @@ fun OverviewScreen(
     val rankState by gamificationViewModel.rankState.collectAsState()
     val bannerVisible by viewModel.nutritionGoalsBannerVisible.collectAsState()
 
+    // Re-pull muscle load + macros every time this screen re-enters composition.
+    // Required because the user can finish a workout in another tab and come back —
+    // the VM's StateFlow isn't a live DB query, it's a snapshot taken at refresh().
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -126,7 +137,14 @@ fun OverviewScreen(
                 )
 
                 // ── Muscle Activity Section ──
-                MuscleActivityCard(uiState)
+                MuscleActivityCard(
+                    uiState = uiState,
+                    onMuscleTap = { group ->
+                        navController.navigate(
+                            ExerciseCatalogRoute(preselectedMuscleDbName = group.dbName)
+                        )
+                    }
+                )
 
                 // ── Progress Gallery entry (Phase 17 — D-17-10) ──
                 ProgressGalleryEntry(
@@ -161,7 +179,10 @@ fun OverviewScreen(
 // ══════════════════════════════════════════════════════════════
 
 @Composable
-private fun MuscleActivityCard(uiState: OverviewUiState) {
+private fun MuscleActivityCard(
+    uiState: OverviewUiState,
+    onMuscleTap: (MuscleGroup) -> Unit
+) {
     var showInfoDialog by remember { mutableStateOf(false) }
 
     Card(
@@ -207,12 +228,14 @@ private fun MuscleActivityCard(uiState: OverviewUiState) {
                     outlinePaths = MuscleRegionPaths.frontOutline,
                     regions = MuscleRegionPaths.frontRegions,
                     muscleLoad = uiState.muscleLoad,
+                    onMuscleTap = onMuscleTap,
                     modifier = Modifier.weight(1f)
                 )
                 OverviewAnatomyCanvas(
                     outlinePaths = MuscleRegionPaths.backOutline,
                     regions = MuscleRegionPaths.backRegions,
                     muscleLoad = uiState.muscleLoad,
+                    onMuscleTap = onMuscleTap,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -282,6 +305,7 @@ private fun OverviewAnatomyCanvas(
     outlinePaths: List<String>,
     regions: List<MuscleRegionPath>,
     muscleLoad: Map<MuscleGroup, TrainingIntensity>,
+    onMuscleTap: (MuscleGroup) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val outlineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
@@ -320,9 +344,38 @@ private fun OverviewAnatomyCanvas(
         }
     }
 
+    // Precomputed hit-test regions in pixel space. Built lazily once the canvas
+    // has measured itself, then reused across taps. Pure-Compose Path has no
+    // contains() helper, so we drop down to the Android graphics Region API,
+    // which fills the path into a pixel mask we can hit-test cheaply.
+    val hitRegions = remember(scaledRegions) {
+        scaledRegions.map { (data, path) ->
+            val androidPath = path.asAndroidPath()
+            val bounds = android.graphics.RectF().also { androidPath.computeBounds(it, true) }
+            val clip = android.graphics.Region(
+                bounds.left.toInt(),
+                bounds.top.toInt(),
+                bounds.right.toInt() + 1,
+                bounds.bottom.toInt() + 1
+            )
+            val region = android.graphics.Region().apply { setPath(androidPath, clip) }
+            data to region
+        }
+    }
+
     Canvas(
         modifier = modifier
             .aspectRatio(MuscleRegionPaths.VIEW_BOX_WIDTH / MuscleRegionPaths.VIEW_BOX_HEIGHT)
+            .pointerInput(hitRegions) {
+                detectTapGestures { offset ->
+                    val hit = hitRegions.firstOrNull { (_, region) ->
+                        region.contains(offset.x.toInt(), offset.y.toInt())
+                    }
+                    hit?.first?.groupName
+                        ?.let(MuscleGroup::fromDbName)
+                        ?.let(onMuscleTap)
+                }
+            }
     ) {
         canvasWidth = size.width
 

@@ -10,8 +10,8 @@ import com.pumpernickel.domain.gamification.XpFormula
 import com.pumpernickel.domain.location.GeoPoint
 import com.pumpernickel.domain.location.LocationProvider
 import com.pumpernickel.domain.model.CompletedExercise
-import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.workout.GetUndertrainedMusclesUseCase
+import com.pumpernickel.domain.workout.UndertrainedMuscle
 import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
 import com.pumpernickel.domain.model.SessionExercise
@@ -90,9 +90,9 @@ class WorkoutSessionViewModel(
     @NativeCoroutinesState
     val hasActiveSession: StateFlow<Boolean> = _hasActiveSession.asStateFlow()
 
-    private val _undertrainedMuscles = MutableStateFlow<List<MuscleGroup>>(emptyList())
+    private val _undertrainedMuscles = MutableStateFlow<List<UndertrainedMuscle>>(emptyList())
     @NativeCoroutinesState
-    val undertrainedMuscles: StateFlow<List<MuscleGroup>> = _undertrainedMuscles.asStateFlow()
+    val undertrainedMuscles: StateFlow<List<UndertrainedMuscle>> = _undertrainedMuscles.asStateFlow()
 
     // Previous performance keyed by exerciseId (HIST-04, D-08, D-09)
     private val _previousPerformance = MutableStateFlow<Map<String, CompletedExercise>>(emptyMap())

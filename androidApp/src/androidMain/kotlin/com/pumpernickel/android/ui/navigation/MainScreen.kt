@@ -113,6 +113,7 @@ fun MainScreen() {
                         )
                     }
                     composable<ExercisePickerRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ExercisePickerRoute>()
                         val parentEntry = remember(backStackEntry) {
                             workoutNavController.getBackStackEntry<TemplateEditorRoute>()
                         }
@@ -124,7 +125,8 @@ fun MainScreen() {
                                 editorViewModel.addExercise(id, name, muscles)
                                 workoutNavController.popBackStack()
                             },
-                            navController = workoutNavController
+                            navController = workoutNavController,
+                            preselectedMuscleDbName = route.preselectedMuscleDbName
                         )
                     }
                     composable<WorkoutSessionRoute> { backStackEntry ->
@@ -134,8 +136,12 @@ fun MainScreen() {
                             navController = workoutNavController
                         )
                     }
-                    composable<ExerciseCatalogRoute> {
-                        ExerciseCatalogScreen(navController = workoutNavController)
+                    composable<ExerciseCatalogRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ExerciseCatalogRoute>()
+                        ExerciseCatalogScreen(
+                            navController = workoutNavController,
+                            preselectedMuscleDbName = route.preselectedMuscleDbName
+                        )
                     }
                     composable<ExerciseDetailRoute> { backStackEntry ->
                         val route = backStackEntry.toRoute<ExerciseDetailRoute>()
@@ -187,6 +193,22 @@ fun MainScreen() {
                         val route = backStackEntry.toRoute<ProgressViewerRoute>()
                         ProgressViewerScreen(
                             workoutId = route.workoutId,
+                            navController = overviewNavController
+                        )
+                    }
+                    // Reached via Overview's muscle-map tap → browse exercises filtered
+                    // by the tapped MuscleGroup. Mirrored from the workout tab's registration.
+                    composable<ExerciseCatalogRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ExerciseCatalogRoute>()
+                        ExerciseCatalogScreen(
+                            navController = overviewNavController,
+                            preselectedMuscleDbName = route.preselectedMuscleDbName
+                        )
+                    }
+                    composable<ExerciseDetailRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ExerciseDetailRoute>()
+                        ExerciseDetailScreen(
+                            exerciseId = route.exerciseId,
                             navController = overviewNavController
                         )
                     }

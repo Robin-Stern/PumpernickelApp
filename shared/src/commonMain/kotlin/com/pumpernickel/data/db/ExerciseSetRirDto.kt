@@ -6,5 +6,6 @@ package com.pumpernickel.data.db
  */
 data class ExerciseSetRirDto(
     val exerciseId: String,
-    val rir: Int
+    val rir: Int,
+    val startTimeMillis: Long
 )

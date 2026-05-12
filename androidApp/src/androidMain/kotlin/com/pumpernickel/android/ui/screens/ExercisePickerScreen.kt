@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material.icons.filled.Accessibility
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,13 +46,23 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun ExercisePickerScreen(
     onExerciseSelected: (exerciseId: String, exerciseName: String, primaryMuscles: List<MuscleGroup>) -> Unit,
-    navController: NavHostController
+    navController: NavHostController,
+    preselectedMuscleDbName: String? = null
 ) {
     val viewModel: ExerciseCatalogViewModel = koinViewModel()
     val exercises by viewModel.exercises.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedMuscleGroup by viewModel.selectedMuscleGroup.collectAsState()
     var showAnatomyPicker by remember { mutableStateOf(false) }
+
+    // Apply preselected muscle group filter once on first composition (deep-link from
+    // WorkoutSession's undertrained-muscles CTA). Re-running on recomposition would
+    // overwrite user toggling, so the key is intentionally a stable value.
+    LaunchedEffect(preselectedMuscleDbName) {
+        preselectedMuscleDbName
+            ?.let(MuscleGroup::fromDbName)
+            ?.let(viewModel::onMuscleGroupSelected)
+    }
 
     Scaffold(
         topBar = {
