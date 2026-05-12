@@ -29,7 +29,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.pumpernickel.android.R
 import com.pumpernickel.android.ui.screens.AchievementGalleryScreen
+import com.pumpernickel.android.ui.screens.AiMealGenScreen
 import com.pumpernickel.android.ui.screens.AiSettingsScreen
+import com.pumpernickel.android.ui.screens.AiWorkoutGenScreen
 import com.pumpernickel.android.ui.screens.CreateExerciseScreen
 import com.pumpernickel.android.ui.screens.ExerciseCatalogScreen
 import com.pumpernickel.android.ui.screens.ExerciseDetailScreen
@@ -164,6 +166,9 @@ fun MainScreen() {
                     composable<AiSettingsRoute> {
                         AiSettingsScreen(navController = workoutNavController)
                     }
+                    composable<AiWorkoutGenRoute> {
+                        AiWorkoutGenScreen(navController = workoutNavController)
+                    }
                 }
 
                 1 -> NavHost(
@@ -220,6 +225,9 @@ fun MainScreen() {
                             listViewModel = listViewModel,
                             navController = nutritionNavController
                         )
+                    }
+                    composable<AiMealGenRoute> {
+                        AiMealGenScreen(navController = nutritionNavController)
                     }
                 }
             }

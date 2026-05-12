@@ -1,27 +1,38 @@
 package com.pumpernickel.android.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,7 +43,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -142,10 +157,30 @@ fun AiSettingsScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             )
-            Text(
-                text = if (apiKeyConfigured) "Gespeichert" else "Kein Schlüssel gespeichert",
-                style = MaterialTheme.typography.bodySmall
-            )
+            // Mirrors iOS AISettingsView.swift:115-130 — coloured status icon
+            // alongside the label so the key state is visible at a glance.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                if (apiKeyConfigured) {
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = null,
+                        tint = Color(0xFF2E7D32),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(text = "Gespeichert", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.Warning,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(text = "Kein Schlüssel gespeichert", style = MaterialTheme.typography.bodySmall)
+                }
+            }
 
             // T-18-05-04: save button disabled when keyDraft is blank — empty key never reaches SecureKeyStore
             OutlinedButton(
@@ -189,6 +224,14 @@ fun AiSettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Model suggestions per provider — mirrors iOS AISettingsView.swift:214-230.
+            ModelSuggestions(
+                onPick = { suggestion ->
+                    modelDraft = suggestion
+                    viewModel.setModel(suggestion)
+                }
+            )
+
             // T-18-05-03: save button disabled when base URL is invalid (non-HTTPS)
             OutlinedButton(
                 onClick = {
@@ -200,6 +243,98 @@ fun AiSettingsScreen(
                 enabled = !baseUrlError,
                 modifier = Modifier.fillMaxWidth()
             ) { Text("URL und Modell speichern") }
+        }
+    }
+}
+
+private data class ModelSuggestion(val name: String, val note: String)
+
+private val MODEL_SUGGESTIONS_BY_PROVIDER: List<Pair<String, List<ModelSuggestion>>> = listOf(
+    "OpenAI" to listOf(
+        ModelSuggestion("gpt-4o-mini", "günstig, schnell"),
+        ModelSuggestion("gpt-4o", "stärker, teurer"),
+        ModelSuggestion("gpt-4.1-mini", "neuer, ausgewogen")
+    ),
+    "Together.AI" to listOf(
+        ModelSuggestion("google/gemma-4-31B-it", "Default-Vorgabe"),
+        ModelSuggestion("meta-llama/Llama-3.3-70B-Instruct-Turbo", "großes Open-Modell"),
+        ModelSuggestion("Qwen/Qwen2.5-72B-Instruct-Turbo", "starke Reasoning-Leistung")
+    ),
+    "OpenRouter" to listOf(
+        ModelSuggestion("openai/gpt-oss-20b:free", "Default-Vorgabe"),
+        ModelSuggestion("anthropic/claude-3.5-sonnet", "Premium-Qualität"),
+        ModelSuggestion("google/gemini-2.0-flash-exp:free", "schnell, gratis")
+    ),
+    "Groq" to listOf(
+        ModelSuggestion("llama-3.3-70b-versatile", "Default, schnell"),
+        ModelSuggestion("llama-3.1-8b-instant", "schnell, sehr günstig")
+    )
+)
+
+@Composable
+private fun ModelSuggestions(onPick: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Vorschläge",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        MODEL_SUGGESTIONS_BY_PROVIDER.forEach { (providerLabel, suggestions) ->
+            var expanded by remember(providerLabel) { mutableStateOf(false) }
+            OutlinedCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { expanded = !expanded }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = providerLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp
+                            else Icons.Filled.KeyboardArrowDown,
+                            contentDescription = null
+                        )
+                    }
+                    AnimatedVisibility(visible = expanded) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            HorizontalDivider()
+                            suggestions.forEach { suggestion ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onPick(suggestion.name) }
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = suggestion.name,
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontFamily = FontFamily.Monospace
+                                            )
+                                        )
+                                        Text(
+                                            text = suggestion.note,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
