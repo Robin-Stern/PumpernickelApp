@@ -30,7 +30,7 @@ Phase: 18 (ai-features-f6-workout-generation-f8-meal-generation-byok-op) — EXE
 Plan: 1 of 10
 Branch: `feature/workouts` @ `985884c`
 Status: Executing Phase 18
-Last activity: 2026-05-12 -- Completed quick task 260512-lei: iOS Build endgültig grün (FoodEntryUiState init + nested Swift typename + Shared.framework rebuild)
+Last activity: 2026-05-12 -- Completed quick task 260512-lrq: register IosLocationProvider in iOS Koin module (fixes startup crash)
 
 Progress: [██████████] 100%
 
@@ -151,6 +151,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260512-kws | Fix iOS Build: IosLocationProvider — `CLLocationCoordinate2D` braucht `useContents { latitude; longitude }` in Kotlin/Native (pre-existing drift, durch ff044e5 entblockt und so erst sichtbar geworden) | 2026-05-12 | 6f968b3 | — | [260512-kws-fix-ios-build-ioslocationprovider-usecon](./quick/260512-kws-fix-ios-build-ioslocationprovider-usecon/) |
 | 260512-l79 | Fix Room schema drift: `shared/schemas/` aus `.gitignore` entfernt + 9 AutoMigration-JSONs (v2–v10) committed — Room AutoMigrations brauchen die als Build-Inputs (Worktrees/CI/fresh-clones scheiterten vorher in KSP) | 2026-05-12 | 99f52bd | — | [260512-l79-fix-room-schema-drift-untrack-schemas-co](./quick/260512-l79-fix-room-schema-drift-untrack-schemas-co/) |
 | 260512-lei | iOS Build grün: (a) FoodEntryUiState init um 3 remote-search Felder ergänzt; (b) nested data class swift name korrigiert: `SearchFoodsRemoteUseCase.RemoteFoodResult` (dotted, nicht flat — Verifier hat das initial falsche Pattern aufgedeckt); (c) Shared.framework rebuilt, exportiert `RemoteFoodResult.brand` | 2026-05-12 | 412b58d | Verified | [260512-lei-ios-build-endg-ltig-gr-n-foodentryuistat](./quick/260512-lei-ios-build-endg-ltig-gr-n-foodentryuistat/) |
+| 260512-lrq | Fix iOS Startup-Crash: `LocationProvider` in `PlatformModule.ios.kt` registriert — Android hatte das schon, iOS war seit Commit 1d33816 (Location Feature) drift; `WorkoutSessionViewModel` braucht den Provider injected, Koin warf `NoDefinitionFoundException` | 2026-05-12 | 9ef3eca | — | [260512-lrq-fix-ios-di-register-ioslocationprovider-](./quick/260512-lrq-fix-ios-di-register-ioslocationprovider-/) |
 
 ## Session Continuity
 
