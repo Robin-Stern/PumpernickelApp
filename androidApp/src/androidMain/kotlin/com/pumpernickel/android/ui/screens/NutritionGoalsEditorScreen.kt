@@ -21,8 +21,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -554,56 +556,105 @@ private fun PickerSection(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            DrumPicker(
-                items = (800..6000 step 50).toList(),
-                selectedItem = kcalValue,
-                onItemSelected = onKcalChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
+            GoalPickerRow(
                 label = "Kalorien",
+                items = (800..6000 step 50).toList(),
+                value = kcalValue,
+                onValueChange = onKcalChange,
                 displayTransform = { "$it kcal" }
             )
-            DrumPicker(
-                items = (20..400 step 5).toList(),
-                selectedItem = proteinValue,
-                onItemSelected = onProteinChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
+            GoalPickerRow(
                 label = "Protein",
+                items = (20..400 step 5).toList(),
+                value = proteinValue,
+                onValueChange = onProteinChange,
                 displayTransform = { "$it g" }
             )
-            DrumPicker(
-                items = (20..700 step 5).toList(),
-                selectedItem = carbsValue,
-                onItemSelected = onCarbsChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
+            GoalPickerRow(
                 label = "Kohlenhydrate",
+                items = (20..700 step 5).toList(),
+                value = carbsValue,
+                onValueChange = onCarbsChange,
                 displayTransform = { "$it g" }
             )
-            DrumPicker(
-                items = (10..250 step 5).toList(),
-                selectedItem = fatValue,
-                onItemSelected = onFatChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
+            GoalPickerRow(
                 label = "Fett",
+                items = (10..250 step 5).toList(),
+                value = fatValue,
+                onValueChange = onFatChange,
                 displayTransform = { "$it g" }
             )
-            DrumPicker(
-                items = (0..200 step 5).toList(),
-                selectedItem = sugarValue,
-                onItemSelected = onSugarChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
+            GoalPickerRow(
                 label = "Zucker",
+                items = (0..200 step 5).toList(),
+                value = sugarValue,
+                onValueChange = onSugarChange,
                 displayTransform = { "$it g" }
             )
+        }
+    }
+}
+
+/**
+ * Compact goal picker: schmaler DrumPicker mit Stepper-Buttons rechts. Die schmale
+ * Wheel-Spalte laesst links + rechts freien horizontalen Raum innerhalb der LazyColumn,
+ * in dem der User die Seite scrollen kann, ohne dass die nested-LazyColumn des
+ * Pickers die Geste abfaengt. Stepper triggern direkten Wert-Wechsel um einen Step
+ * im items-Range, unabhaengig von Touch-Gesten.
+ */
+@Composable
+private fun GoalPickerRow(
+    label: String,
+    items: List<Int>,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    displayTransform: (Int) -> String
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            DrumPicker(
+                items = items,
+                selectedItem = value,
+                onItemSelected = onValueChange,
+                modifier = Modifier
+                    .width(180.dp)
+                    .height(160.dp),
+                label = "",
+                displayTransform = displayTransform
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                IconButton(
+                    onClick = {
+                        val currentIdx = items.indexOf(value)
+                        val nextIdx = (currentIdx + 1).coerceAtMost(items.lastIndex)
+                        if (nextIdx != currentIdx) onValueChange(items[nextIdx])
+                    },
+                    enabled = items.indexOf(value).let { it >= 0 && it < items.lastIndex }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Erhöhen")
+                }
+                IconButton(
+                    onClick = {
+                        val currentIdx = items.indexOf(value)
+                        val prevIdx = (currentIdx - 1).coerceAtLeast(0)
+                        if (currentIdx > 0) onValueChange(items[prevIdx])
+                    },
+                    enabled = items.indexOf(value).let { it > 0 }
+                ) {
+                    Icon(Icons.Default.Remove, contentDescription = "Verringern")
+                }
+            }
         }
     }
 }
