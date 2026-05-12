@@ -30,7 +30,7 @@ Phase: 18 (ai-features-f6-workout-generation-f8-meal-generation-byok-op) — EXE
 Plan: 1 of 10
 Branch: `feature/workouts` @ `985884c`
 Status: Executing Phase 18
-Last activity: 2026-05-12 -- Completed quick task 260512-kws: iOS Location useContents fix (unblocks iOS compile)
+Last activity: 2026-05-12 -- Completed quick task 260512-l79: Room schema drift — JSONs committed, .gitignore corrected
 
 Progress: [██████████] 100%
 
@@ -149,6 +149,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260511-gff | B.4.code: refusal path measurable — validators honor expectRefusal, 2 impossible-scenario cases per suite, sharpened Refusal sections in both system prompts | 2026-05-11 | e33ef0d | — | [260511-gff-b-4-code-refusal-path-messbar-machen-exp](./quick/260511-gff-b-4-code-refusal-path-messbar-machen-exp/) |
 | 260512-gv9 | OpenFoodFacts Volltextsuche: cgi/search.pl → /api/v2/search (sort_by=popularity_key, lc=de, brand field) + iOS-UI für Remote-Suchergebnisse + Android-Brand-Label auf RemoteFoodCard | 2026-05-12 | dbb6f7e | Needs Review | [260512-gv9-volltextsuche-f-r-lebensmittel-off-v2-se](./quick/260512-gv9-volltextsuche-f-r-lebensmittel-off-v2-se/) |
 | 260512-kws | Fix iOS Build: IosLocationProvider — `CLLocationCoordinate2D` braucht `useContents { latitude; longitude }` in Kotlin/Native (pre-existing drift, durch ff044e5 entblockt und so erst sichtbar geworden) | 2026-05-12 | 6f968b3 | — | [260512-kws-fix-ios-build-ioslocationprovider-usecon](./quick/260512-kws-fix-ios-build-ioslocationprovider-usecon/) |
+| 260512-l79 | Fix Room schema drift: `shared/schemas/` aus `.gitignore` entfernt + 9 AutoMigration-JSONs (v2–v10) committed — Room AutoMigrations brauchen die als Build-Inputs (Worktrees/CI/fresh-clones scheiterten vorher in KSP) | 2026-05-12 | 99f52bd | — | [260512-l79-fix-room-schema-drift-untrack-schemas-co](./quick/260512-l79-fix-room-schema-drift-untrack-schemas-co/) |
 
 ## Session Continuity
 
