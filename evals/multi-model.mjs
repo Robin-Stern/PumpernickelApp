@@ -120,6 +120,7 @@ function runOne(suite, modelId, rep, brokenModels) {
   const cfgPath = `_sweep_${suite.name}_${safeId(modelId)}.yaml`;
   const outPath = `runs/${suite.name}-${safeId(modelId)}-r${rep}.json`;
   writeFileSync(cfgPath, buildYaml(suite, modelId));
+  try { unlinkSync(outPath); } catch {}
 
   const startedAt = Date.now();
   const proc = spawnSync(
