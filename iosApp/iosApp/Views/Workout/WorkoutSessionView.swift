@@ -45,6 +45,10 @@ struct WorkoutSessionView: View {
     // Track previous rest state for haptic trigger
     @State private var previousRestWasResting = false
 
+    // Undertrained muscles dialog
+    @State private var showUndertrainedDialog = false
+    @State private var undertrainedMuscles: [MuscleGroup] = []
+
     // Minimal set screen toggle (UX-01, D-02)
     @State private var showSetInput: Bool = false
 
@@ -138,6 +142,7 @@ struct WorkoutSessionView: View {
                 group.addTask { await observeWeightUnit() }
                 group.addTask { await observePreFill() }
                 group.addTask { await observePersonalBest() }
+                group.addTask { await observeUndertrainedMuscles() }
             }
         }
     }
@@ -291,6 +296,12 @@ struct WorkoutSessionView: View {
                 sum + ex.sets.filter { $0.isCompleted }.count
             }
             Text("Exercise \(exIdx + 1)/\(exercises.count), \(completedSetsCount) sets completed")
+        }
+        .alert("Vernachlässigte Muskeln", isPresented: $showUndertrainedDialog) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Diese Muskelgruppen wurden in den letzten 7 Tagen kaum oder gar nicht trainiert:\n\n" +
+                 undertrainedMuscles.map { "• \($0.displayName)" }.joined(separator: "\n"))
         }
     }
 
@@ -783,6 +794,19 @@ struct WorkoutSessionView: View {
             }
         } catch {
             print("Personal best observation error: \(error)")
+        }
+    }
+
+    private func observeUndertrainedMuscles() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.undertrainedMusclesFlow) {
+                if !value.isEmpty {
+                    self.undertrainedMuscles = value
+                    self.showUndertrainedDialog = true
+                }
+            }
+        } catch {
+            print("Undertrained muscles observation error: \(error)")
         }
     }
 
