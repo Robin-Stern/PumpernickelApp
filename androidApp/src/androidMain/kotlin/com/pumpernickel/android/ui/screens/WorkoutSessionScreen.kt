@@ -48,6 +48,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -119,11 +121,25 @@ fun WorkoutSessionScreen(
         )
     }
 
+    val haptics = LocalHapticFeedback.current
+
     when (val state = sessionState) {
         is WorkoutSessionState.Active -> {
             // Reset showSetInput when exercise/set changes (matching iOS onChange behavior)
             LaunchedEffect(state.currentSetIndex, state.currentExerciseIndex) {
                 showSetInput = false
+            }
+
+            // Mirror iOS WorkoutSessionView.swift:697-705 — success haptic on
+            // Resting → RestComplete transition. The ViewModel state machine
+            // guarantees RestComplete is only reached from Resting, so keying
+            // on the boolean is sufficient (and avoids re-launching every
+            // second during the countdown).
+            val isRestComplete = state.restState is RestState.RestComplete
+            LaunchedEffect(isRestComplete) {
+                if (isRestComplete) {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
             }
 
             ActiveWorkoutContent(
@@ -678,6 +694,7 @@ private fun SetInputSection(
     onCompleteSet: () -> Unit,
     isEnabled: Boolean
 ) {
+    val haptics = LocalHapticFeedback.current
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -706,7 +723,11 @@ private fun SetInputSection(
         )
 
         Button(
-            onClick = onCompleteSet,
+            onClick = {
+                // Mirror iOS WorkoutSessionView.swift:421-424 — success haptic on Complete Set.
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onCompleteSet()
+            },
             enabled = isEnabled,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
