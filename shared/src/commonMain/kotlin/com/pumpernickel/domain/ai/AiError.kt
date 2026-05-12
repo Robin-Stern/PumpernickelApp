@@ -13,7 +13,7 @@ import kotlinx.serialization.SerializationException
  * (user pressed Cancel during in-flight generation — no toast).
  *
  * Mapping (D-18-08):
- *   1. Timeout       — request exceeded 60s (D-18-16)
+ *   1. Timeout       — request exceeded 300s (D-18-16)
  *   2. Network       — DNS / connection / IO failure
  *   3. AuthOrQuota   — HTTP 4xx (invalid key, quota exhausted, malformed request)
  *   4. Provider      — HTTP 5xx (provider-side problem)

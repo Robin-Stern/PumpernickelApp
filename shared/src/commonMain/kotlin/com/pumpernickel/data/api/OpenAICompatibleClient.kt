@@ -48,7 +48,10 @@ class OpenAICompatibleClient(
             val response = client.post(url) {
                 header("Authorization", "Bearer $key")
                 contentType(ContentType.Application.Json)
-                timeout { requestTimeoutMillis = 180_000 }
+                timeout {
+                    requestTimeoutMillis = 300_000
+                    socketTimeoutMillis = 120_000
+                }
                 setBody(request)
             }
             val responseText = response.bodyAsText()
@@ -109,7 +112,10 @@ class OpenAICompatibleClient(
                 header("Authorization", "Bearer $key")
                 header("Accept", "text/event-stream")
                 contentType(ContentType.Application.Json)
-                timeout { requestTimeoutMillis = 180_000 }
+                timeout {
+                    requestTimeoutMillis = 300_000
+                    socketTimeoutMillis = 120_000
+                }
                 setBody(streamingRequest)
             }.execute { response ->
                 val statusCode = response.status.value
