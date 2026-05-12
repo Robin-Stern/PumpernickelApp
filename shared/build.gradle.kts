@@ -46,7 +46,7 @@ androidMain.dependencies {
             implementation(libs.androidx.biometric)
             // Phase 18 — BYOK EncryptedSharedPreferences (REQ-AI-06 / T-18-04-01).
             implementation(libs.androidx.security.crypto)
-            implementation(libs.play-services-location)
+            implementation(libs.play.services.location)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
