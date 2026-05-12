@@ -63,6 +63,15 @@
     <string name="label_ingredients">Zutaten:</string>
     <string name="recipe_total_calories">Gesamt: %1$d kcal</string>
     <string name="action_save_recipe">Rezept speichern</string>
+    <string name="action_update_recipe">Rezept aktualisieren</string>
+    <string name="section_recipe">Rezept</string>
+    <string name="section_search_food">Lebensmittel suchen</string>
+    <string name="section_ingredients">Zutaten</string>
+    <string name="section_totals">Gesamt</string>
+    <string name="section_nutrition_per_100">Nährwerte pro 100 g/ml</string>
+    <string name="section_unit">Einheit</string>
+    <string name="section_food">Lebensmittel</string>
+    <string name="section_saved_foods">Gespeicherte Lebensmittel</string>
     <string name="action_add_food">+ Hinzufügen</string>
 
     <!-- Main Tabs -->

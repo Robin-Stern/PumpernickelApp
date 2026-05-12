@@ -79,6 +79,9 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.pumpernickel.android.R
+import com.pumpernickel.android.ui.components.PrimaryActionButton
+import com.pumpernickel.android.ui.components.SectionCard
+import com.pumpernickel.android.ui.components.TonalActionButton
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
 import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
@@ -112,156 +115,147 @@ fun NutritionFoodEntryScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { Spacer(Modifier.height(8.dp)) }
+            item { Spacer(Modifier.height(0.dp)) }
 
+            // ── Lebensmittel ──
             item {
-                OutlinedTextField(
-                    value = uiState.name,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnNameChanged(it)) },
-                    label = { Text(stringResource(R.string.label_name)) },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true
-                )
-            }
-
-            item {
-                Text(
-                    stringResource(R.string.label_per_100_hint),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            item {
-                OutlinedTextField(
-                    value = uiState.calories,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCaloriesChanged(it)) },
-                    label = { Text(stringResource(R.string.label_calories)) },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
-            }
-
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionCard(title = stringResource(R.string.section_food)) {
                     OutlinedTextField(
-                        value = uiState.protein,
-                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnProteinChanged(it)) },
-                        label = { Text(stringResource(R.string.label_protein)) },
-                        modifier = Modifier.weight(1f), singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                    )
-                    OutlinedTextField(
-                        value = uiState.fat,
-                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnFatChanged(it)) },
-                        label = { Text(stringResource(R.string.label_fat)) },
-                        modifier = Modifier.weight(1f), singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        value = uiState.name,
+                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnNameChanged(it)) },
+                        label = { Text(stringResource(R.string.label_name)) },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true
                     )
                 }
             }
 
+            // ── Nährwerte pro 100 g/ml ──
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionCard(title = stringResource(R.string.section_nutrition_per_100)) {
                     OutlinedTextField(
-                        value = uiState.carbs,
-                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCarbsChanged(it)) },
-                        label = { Text(stringResource(R.string.label_carbs)) },
-                        modifier = Modifier.weight(1f), singleLine = true,
+                        value = uiState.calories,
+                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCaloriesChanged(it)) },
+                        label = { Text(stringResource(R.string.label_calories)) },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                     )
-                    OutlinedTextField(
-                        value = uiState.sugar,
-                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSugarChanged(it)) },
-                        label = { Text(stringResource(R.string.label_sugar)) },
-                        modifier = Modifier.weight(1f), singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                    )
-                }
-            }
-
-            item {
-                Text(
-                    stringResource(R.string.label_unit_designation),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    FoodUnit.entries.forEachIndexed { index, unit ->
-                        SegmentedButton(
-                            selected = uiState.unit == unit,
-                            onClick = { viewModel.onEvent(FoodEntryEvent.OnUnitChanged(unit)) },
-                            shape = SegmentedButtonDefaults.itemShape(index, FoodUnit.entries.size),
-                            label = { Text(stringResource(if (unit == FoodUnit.GRAM) R.string.unit_gram else R.string.unit_ml)) }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = uiState.protein,
+                            onValueChange = { viewModel.onEvent(FoodEntryEvent.OnProteinChanged(it)) },
+                            label = { Text(stringResource(R.string.label_protein)) },
+                            modifier = Modifier.weight(1f), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        )
+                        OutlinedTextField(
+                            value = uiState.fat,
+                            onValueChange = { viewModel.onEvent(FoodEntryEvent.OnFatChanged(it)) },
+                            label = { Text(stringResource(R.string.label_fat)) },
+                            modifier = Modifier.weight(1f), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = uiState.carbs,
+                            onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCarbsChanged(it)) },
+                            label = { Text(stringResource(R.string.label_carbs)) },
+                            modifier = Modifier.weight(1f), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        )
+                        OutlinedTextField(
+                            value = uiState.sugar,
+                            onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSugarChanged(it)) },
+                            label = { Text(stringResource(R.string.label_sugar)) },
+                            modifier = Modifier.weight(1f), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                         )
                     }
                 }
             }
 
+            // ── Einheit ──
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    BarcodeScannerButton(
-                        onBarcodeScanned = { viewModel.onEvent(FoodEntryEvent.OnBarcodeScanned(it)) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    if (uiState.isLookingUp) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                SectionCard(title = stringResource(R.string.section_unit)) {
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        FoodUnit.entries.forEachIndexed { index, unit ->
+                            SegmentedButton(
+                                selected = uiState.unit == unit,
+                                onClick = { viewModel.onEvent(FoodEntryEvent.OnUnitChanged(unit)) },
+                                shape = SegmentedButtonDefaults.itemShape(index, FoodUnit.entries.size),
+                                label = { Text(stringResource(if (unit == FoodUnit.GRAM) R.string.unit_gram else R.string.unit_ml)) }
+                            )
+                        }
                     }
                 }
-                if (uiState.barcode.isNotEmpty()) {
-                    Text(
-                        text = "Barcode: ${uiState.barcode}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+            }
+
+            // ── Barcode + Actions ──
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        BarcodeScannerButton(
+                            onBarcodeScanned = { viewModel.onEvent(FoodEntryEvent.OnBarcodeScanned(it)) },
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (uiState.isLookingUp) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        }
+                    }
+                    if (uiState.barcode.isNotEmpty()) {
+                        Text(
+                            text = "Barcode: ${uiState.barcode}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    uiState.errorMessage?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                    uiState.successMessage?.let {
+                        Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (isEditing) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            TonalActionButton(
+                                text = stringResource(R.string.action_cancel),
+                                onClick = { viewModel.onEvent(FoodEntryEvent.OnCancelEdit) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            PrimaryActionButton(
+                                text = stringResource(R.string.action_update),
+                                onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    } else {
+                        PrimaryActionButton(
+                            text = stringResource(R.string.action_save),
+                            onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) }
+                        )
+                    }
+                }
+            }
+
+            // ── Gespeicherte Lebensmittel ──
+            item {
+                SectionCard(title = stringResource(R.string.section_saved_foods)) {
+                    OutlinedTextField(
+                        value = uiState.searchQuery,
+                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSearchQueryChanged(it)) },
+                        label = { Text(stringResource(R.string.hint_search)) },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true
                     )
                 }
-            }
-
-            item {
-                uiState.errorMessage?.let {
-                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                }
-                uiState.successMessage?.let {
-                    Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
-                }
-                if (isEditing) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { viewModel.onEvent(FoodEntryEvent.OnCancelEdit) },
-                            modifier = Modifier.weight(1f)
-                        ) { Text(stringResource(R.string.action_cancel)) }
-                        Button(
-                            onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
-                            modifier = Modifier.weight(1f)
-                        ) { Text(stringResource(R.string.action_update)) }
-                    }
-                } else {
-                    Button(
-                        onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text(stringResource(R.string.action_save)) }
-                }
-            }
-
-            item {
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider()
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.heading_saved_foods), style = MaterialTheme.typography.titleMedium)
-            }
-
-            item {
-                OutlinedTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSearchQueryChanged(it)) },
-                    label = { Text(stringResource(R.string.hint_search)) },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true
-                )
             }
 
             if (filteredFoods.isEmpty()) {
@@ -283,14 +277,16 @@ fun NutritionFoodEntryScreen(
 
             if (uiState.searchQuery.length >= 3) {
                 item {
-                    Spacer(Modifier.height(8.dp))
-                    HorizontalDivider()
-                    Spacer(Modifier.height(8.dp))
                     Row(
+                        modifier = Modifier.padding(start = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("OpenFoodFacts", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "OpenFoodFacts",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         if (uiState.isSearchingRemote) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                         }
