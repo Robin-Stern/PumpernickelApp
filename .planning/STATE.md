@@ -30,7 +30,7 @@ Phase: 18 (ai-features-f6-workout-generation-f8-meal-generation-byok-op) — EXE
 Plan: 1 of 10
 Branch: `feature/workouts` @ `985884c`
 Status: Executing Phase 18
-Last activity: 2026-05-12 -- Completed quick task 260512-lrq: register IosLocationProvider in iOS Koin module (fixes startup crash)
+Last activity: 2026-05-12 -- Completed quick task 260512-m1x: OFF search auf cgi/search.pl + defensive HTML detection + iOS Tab-Picker UI
 
 Progress: [██████████] 100%
 
@@ -152,6 +152,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260512-l79 | Fix Room schema drift: `shared/schemas/` aus `.gitignore` entfernt + 9 AutoMigration-JSONs (v2–v10) committed — Room AutoMigrations brauchen die als Build-Inputs (Worktrees/CI/fresh-clones scheiterten vorher in KSP) | 2026-05-12 | 99f52bd | — | [260512-l79-fix-room-schema-drift-untrack-schemas-co](./quick/260512-l79-fix-room-schema-drift-untrack-schemas-co/) |
 | 260512-lei | iOS Build grün: (a) FoodEntryUiState init um 3 remote-search Felder ergänzt; (b) nested data class swift name korrigiert: `SearchFoodsRemoteUseCase.RemoteFoodResult` (dotted, nicht flat — Verifier hat das initial falsche Pattern aufgedeckt); (c) Shared.framework rebuilt, exportiert `RemoteFoodResult.brand` | 2026-05-12 | 412b58d | Verified | [260512-lei-ios-build-endg-ltig-gr-n-foodentryuistat](./quick/260512-lei-ios-build-endg-ltig-gr-n-foodentryuistat/) |
 | 260512-lrq | Fix iOS Startup-Crash: `LocationProvider` in `PlatformModule.ios.kt` registriert — Android hatte das schon, iOS war seit Commit 1d33816 (Location Feature) drift; `WorkoutSessionViewModel` braucht den Provider injected, Koin warf `NoDefinitionFoundException` | 2026-05-12 | 9ef3eca | — | [260512-lrq-fix-ios-di-register-ioslocationprovider-](./quick/260512-lrq-fix-ios-di-register-ioslocationprovider-/) |
+| 260512-m1x | OFF search: (a) zurück auf `cgi/search.pl` (v2 search ist HTTP 503 down — live verifiziert via curl); (b) defensive HTML detection vor `json.decodeFromString` — wirft IllegalStateException statt App-Crash; (c) iOS Tab-Picker [Manuell\|Suchen\|Barcode] mit Auto-Switch zu Manuell nach OFF-Tap und Barcode-Dismiss | 2026-05-12 | 24087b1 | Needs Review | [260512-m1x-off-search-cgi-search-pl-defensive-parsi](./quick/260512-m1x-off-search-cgi-search-pl-defensive-parsi/) |
 
 ## Session Continuity
 
