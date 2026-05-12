@@ -4,6 +4,7 @@ package com.pumpernickel.data.location
 
 import com.pumpernickel.domain.location.GeoPoint
 import com.pumpernickel.domain.location.LocationProvider
+import kotlinx.cinterop.useContents
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.CoreLocation.CLLocation
@@ -44,7 +45,7 @@ private class LocationDelegate : NSObject(), CLLocationManagerDelegateProtocol {
 
     override fun locationManager(manager: CLLocationManager, didUpdateLocations: List<*>) {
         val loc = didUpdateLocations.lastOrNull() as? CLLocation ?: return
-        cont?.resume(GeoPoint(loc.coordinate.latitude, loc.coordinate.longitude))
+        loc.coordinate.useContents { cont?.resume(GeoPoint(latitude, longitude)) }
         cont = null
     }
 
