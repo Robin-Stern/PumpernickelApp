@@ -84,6 +84,14 @@ struct SettingsView: View {
                         Label("KI-Einstellungen", systemImage: "sparkles")
                     }
                 }
+
+                Section("Hilfe") {
+                    Button {
+                        viewModel.setHasSeenTutorial(value: false)
+                    } label: {
+                        Label("Tutorial erneut anzeigen", systemImage: "questionmark.circle")
+                    }
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)

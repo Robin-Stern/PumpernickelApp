@@ -24,10 +24,20 @@ private struct AppRootView: View {
     private var theme = ThemeManager.shared
     private let viewModel = KoinHelper.shared.getSettingsViewModel()
 
+    @State private var hasSeenTutorial: Bool = true  // default true avoids flash on launch
+
     var body: some View {
         MainTabView()
             .preferredColorScheme(theme.colorScheme)
             .tint(.appAccent)
+            .fullScreenCover(isPresented: Binding(
+                get: { !hasSeenTutorial },
+                set: { _ in }
+            )) {
+                TutorialOverlayView {
+                    viewModel.setHasSeenTutorial(value: true)
+                }
+            }
             .task {
                 // Gamification: seed achievement_state + retroactive XP replay.
                 // Idempotent — safe to call every launch.
@@ -42,6 +52,7 @@ private struct AppRootView: View {
                 await withTaskGroup(of: Void.self) { group in
                     group.addTask { await observeTheme() }
                     group.addTask { await observeAccentColor() }
+                    group.addTask { await observeHasSeenTutorial() }
                 }
             }
     }
@@ -53,6 +64,18 @@ private struct AppRootView: View {
             }
         } catch {
             print("Theme observation error: \(error)")
+        }
+    }
+
+    private func observeHasSeenTutorial() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.hasSeenTutorialFlow) {
+                if let seen = value as? Bool {
+                    self.hasSeenTutorial = seen
+                }
+            }
+        } catch {
+            print("HasSeenTutorial observation error: \(error)")
         }
     }
 
