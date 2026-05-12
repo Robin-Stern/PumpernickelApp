@@ -256,6 +256,9 @@ fun MainScreen() {
                     composable<AiMealGenRoute> {
                         AiMealGenScreen(navController = nutritionNavController)
                     }
+                    composable<AiSettingsRoute> {
+                        AiSettingsScreen(navController = nutritionNavController)
+                    }
                 }
             }
         }
