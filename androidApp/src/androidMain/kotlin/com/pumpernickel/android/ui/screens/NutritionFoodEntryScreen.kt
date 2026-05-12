@@ -575,7 +575,21 @@ private fun RemoteFoodCard(result: SearchFoodsRemoteUseCase.RemoteFoodResult, on
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(result.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    result.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f)
+                )
+                result.brand?.let { brand ->
+                    Text(
+                        brand,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             Text(
                 "${result.calories.roundToInt()} kcal · E ${result.protein.roundToInt()}g · F ${result.fat.roundToInt()}g · KH ${result.carbs.roundToInt()}g",
                 style = MaterialTheme.typography.bodySmall,
