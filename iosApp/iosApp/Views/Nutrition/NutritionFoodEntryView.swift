@@ -22,6 +22,9 @@ struct NutritionFoodEntryView: View {
             VStack(spacing: 16) {
                 entryForm
                 savedFoodsList
+                if uiState.searchQuery.count >= 3 {
+                    remoteSearchSection
+                }
             }
             .padding()
         }
@@ -234,6 +237,67 @@ struct NutritionFoodEntryView: View {
             }
             .buttonStyle(.plain)
         }
+        .padding(12)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(10)
+    }
+
+    // MARK: - Remote Search (OpenFoodFacts)
+    private var remoteSearchSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Spacer().frame(height: 4)
+            Divider()
+            Spacer().frame(height: 4)
+            HStack(spacing: 8) {
+                Text("OpenFoodFacts").font(.headline)
+                if uiState.isSearchingRemote {
+                    ProgressView().scaleEffect(0.7)
+                }
+            }
+            if let error = uiState.remoteSearchError {
+                Text(error)
+                    .foregroundColor(.red)
+                    .font(.caption)
+            }
+            if uiState.remoteSearchError == nil && !uiState.isSearchingRemote && uiState.remoteSearchResults.isEmpty {
+                Text("Keine Ergebnisse")
+                    .foregroundColor(.secondary)
+            } else {
+                LazyVStack(spacing: 6) {
+                    ForEach(uiState.remoteSearchResults, id: \.name) { result in
+                        remoteFoodCard(result)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // TODO(framework-name): adjust generated nested type if Shared framework exports a different flat name
+    private func remoteFoodCard(_ result: SearchFoodsRemoteUseCaseRemoteFoodResult) -> some View {
+        Button {
+            viewModel.onEvent(event: FoodEntryEventOnRemoteFoodSelected(result: result))
+        } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text(result.name)
+                        .font(.body)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                    Spacer()
+                    if let brand = result.brand {
+                        Text(brand)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                Text("\(Int(result.calories.rounded())) kcal · E \(Int(result.protein.rounded()))g · F \(Int(result.fat.rounded()))g · KH \(Int(result.carbs.rounded()))g")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.plain)
         .padding(12)
         .background(Color(.secondarySystemBackground))
         .cornerRadius(10)
