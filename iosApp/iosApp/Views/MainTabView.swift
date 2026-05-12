@@ -12,6 +12,15 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             NavigationStack {
                 TemplateListView()
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            NavigationLink {
+                                AIWorkoutGenView()
+                            } label: {
+                                Image(systemName: "sparkles")
+                            }
+                        }
+                    }
             }
             .tabItem {
                 Image(systemName: "dumbbell.fill")
@@ -30,6 +39,15 @@ struct MainTabView: View {
 
             NavigationStack {
                 NutritionDailyLogView()
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            NavigationLink {
+                                AIMealGenView()
+                            } label: {
+                                Image(systemName: "sparkles")
+                            }
+                        }
+                    }
             }
             .tabItem {
                 Image(systemName: "fork.knife")

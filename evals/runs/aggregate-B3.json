@@ -1,0 +1,173 @@
+{
+  "experiment": "B.3 — max_tokens=8192 on reasoning models (gpt-oss-20b + gpt-oss-120b)",
+  "suite": "recipe",
+  "config": {
+    "max_tokens": 8192,
+    "models": [
+      "openai/gpt-oss-20b",
+      "openai/gpt-oss-120b"
+    ]
+  },
+  "reps": [
+    {
+      "rep": 1,
+      "results": [
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "reason": "protein off-target: 41g vs 30g (>15%)"
+        },
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        },
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw o"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        },
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "high protein · low fat · 800 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        },
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "high protein · low fat · 800 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        }
+      ]
+    },
+    {
+      "rep": 2,
+      "results": [
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        },
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        },
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "large remaining · bulk meal · 2000 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        },
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "high protein · low fat · 800 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "high protein · low fat · 800 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        }
+      ]
+    },
+    {
+      "rep": 3,
+      "results": [
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw o"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        },
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "medium remaining · standard meal · 1100 kcal",
+          "success": false,
+          "reason": "JSON parse failed: Unexpected token 'T', \"Thinking: \"... is not valid JSON\n\nFirst 300 chars of raw o"
+        },
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "large remaining · bulk meal · 2000 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        },
+        {
+          "model": "gpt-oss-20b-8k",
+          "test": "high protein · low fat · 800 kcal",
+          "success": false,
+          "reason": "recipe.name missing"
+        },
+        {
+          "model": "gpt-oss-120b-8k",
+          "test": "high protein · low fat · 800 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        }
+      ]
+    }
+  ],
+  "totalTokens": 154631
+}

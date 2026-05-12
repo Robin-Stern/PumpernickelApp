@@ -86,6 +86,7 @@ struct OverviewView: View {
                 group.addTask { await observeBannerVisible() }
             }
         }
+        .onAppear { viewModel.refresh() }
         .sheet(isPresented: $showEditor, onDismiss: {
             viewModel.refresh()
         }) {

@@ -1,0 +1,92 @@
+{
+  "modelId": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+  "suite": "recipe",
+  "context": "B.2 follow-up — model not in standard MODELS list, run ad-hoc via promptfoo CLI",
+  "reps": [
+    {
+      "rep": 1,
+      "passed": 2,
+      "total": 4,
+      "tokens": 10562,
+      "tests": [
+        {
+          "desc": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "reason": "protein off-target: 47g vs 30g (>15%)"
+        },
+        {
+          "desc": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        },
+        {
+          "desc": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "reason": "protein off-target: 148g vs 100g (>15%)"
+        },
+        {
+          "desc": "high protein · low fat · 800 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        }
+      ]
+    },
+    {
+      "rep": 2,
+      "passed": 2,
+      "total": 4,
+      "tokens": 10559,
+      "tests": [
+        {
+          "desc": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "reason": "protein off-target: 45g vs 30g (>15%)"
+        },
+        {
+          "desc": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        },
+        {
+          "desc": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "reason": "kcal off-target: 1410 vs 2000 (>15%)"
+        },
+        {
+          "desc": "high protein · low fat · 800 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        }
+      ]
+    },
+    {
+      "rep": 3,
+      "passed": 1,
+      "total": 4,
+      "tokens": 10633,
+      "tests": [
+        {
+          "desc": "small remaining · breakfast portion · 600 kcal",
+          "success": false,
+          "reason": "protein off-target: 37g vs 30g (>15%)"
+        },
+        {
+          "desc": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "reason": "all checks passed"
+        },
+        {
+          "desc": "large remaining · bulk meal · 2000 kcal",
+          "success": false,
+          "reason": "kcal off-target: 1354 vs 2000 (>15%)"
+        },
+        {
+          "desc": "high protein · low fat · 800 kcal",
+          "success": false,
+          "reason": "kcal off-target: 942 vs 800 (>15%)"
+        }
+      ]
+    }
+  ],
+  "totalTokens": 31754
+}

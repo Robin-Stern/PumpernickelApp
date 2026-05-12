@@ -16,5 +16,6 @@ data class ExerciseEntity(
     val images: String,          // JSON string: ["img1.jpg","img2.jpg"]
     val isCustom: Boolean = false,
     val primaryMuscles: String,  // Comma-separated: "abdominals"
-    val secondaryMuscles: String // Comma-separated: "calves,hamstrings" or ""
+    val secondaryMuscles: String, // Comma-separated: "calves,hamstrings" or ""
+    val source: String? = null  // "USER" | "AI" — null treated as USER on read (D-18-11)
 )

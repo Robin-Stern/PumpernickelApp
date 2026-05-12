@@ -19,7 +19,7 @@ interface TemplateRepository {
     fun getAllTemplates(): Flow<List<WorkoutTemplate>>
     fun getTemplateById(id: Long): Flow<WorkoutTemplate?>
     fun getTemplateExercises(templateId: Long): Flow<List<TemplateExercise>>
-    suspend fun createTemplate(name: String): Long
+    suspend fun createTemplate(name: String, source: String? = null): Long
     suspend fun updateTemplateName(id: Long, name: String)
     suspend fun deleteTemplate(id: Long)
     suspend fun addExercise(
@@ -81,13 +81,14 @@ class TemplateRepositoryImpl(
         }
     }
 
-    override suspend fun createTemplate(name: String): Long {
+    override suspend fun createTemplate(name: String, source: String?): Long {
         val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
         return templateDao.insertTemplate(
             WorkoutTemplateEntity(
                 name = name.trim(),
                 createdAt = now,
-                updatedAt = now
+                updatedAt = now,
+                source = source
             )
         )
     }

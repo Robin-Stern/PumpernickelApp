@@ -1,0 +1,28 @@
+description: Workout-AI prompt evaluation suite
+
+prompts:
+  - file://./prompts/workout-system.json
+
+# Promptfoo's native togetherai provider reads TOGETHER_API_KEY from env.
+# Add more rows to A/B compare additional models — each becomes a column
+# in the HTML viewer.
+providers:
+  - id: togetherai:openai/gpt-oss-20b
+    label: gpt-oss-20b (kostenlos)
+    config:
+      temperature: 0.7
+      max_tokens: 4096
+      response_format: { type: 'json_object' }
+  - id: togetherai:google/gemma-4-31B-it
+    label: Gemma 4 31B
+    config:
+      temperature: 0.7
+      max_tokens: 4096
+      response_format: { type: 'json_object' }
+
+defaultTest:
+  assert:
+    - type: javascript
+      value: file://./cases/workout-validator.cjs
+
+tests: file://./cases/workout.json

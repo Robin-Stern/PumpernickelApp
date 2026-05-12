@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		47884F742F78A5AC004CDDB3 /* free_exercise_db.json in Resources */ = {isa = PBXBuildFile; fileRef = 47884F732F78A5AC004CDDB3 /* free_exercise_db.json */; };
+		A11801 /* workout-system-prompt.md in Resources */ = {isa = PBXBuildFile; fileRef = B11801 /* workout-system-prompt.md */; };
+		A11802 /* recipe-system-prompt.md in Resources */ = {isa = PBXBuildFile; fileRef = B11802 /* recipe-system-prompt.md */; };
 		A10001 /* PumpernickelApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10001 /* PumpernickelApp.swift */; };
 		A10002 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10002 /* MainTabView.swift */; };
 		A10003 /* WorkoutEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003 /* WorkoutEmptyStateView.swift */; };
@@ -52,10 +54,16 @@
 		A10122 /* AchievementGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10122 /* AchievementGalleryView.swift */; };
 		A10130 /* ProgressGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10130 /* ProgressGalleryView.swift */; };
 		A10131 /* ProgressViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10131 /* ProgressViewerView.swift */; };
+		A11810 /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11810 /* AISettingsView.swift */; };
+		A11811 /* AIWorkoutGenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11811 /* AIWorkoutGenView.swift */; };
+		A11812 /* AIMealGenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11812 /* AIMealGenView.swift */; };
+		A11813 /* AIPreviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11813 /* AIPreviewSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		47884F732F78A5AC004CDDB3 /* free_exercise_db.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = free_exercise_db.json; path = ../shared/src/commonMain/resources/free_exercise_db.json; sourceTree = SOURCE_ROOT; };
+		B11801 /* workout-system-prompt.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = workout-system-prompt.md; path = ../shared/src/commonMain/resources/workout-system-prompt.md; sourceTree = SOURCE_ROOT; };
+		B11802 /* recipe-system-prompt.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = recipe-system-prompt.md; path = ../shared/src/commonMain/resources/recipe-system-prompt.md; sourceTree = SOURCE_ROOT; };
 		B10001 /* PumpernickelApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpernickelApp.swift; sourceTree = "<group>"; };
 		B10002 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		B10003 /* WorkoutEmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutEmptyStateView.swift; sourceTree = "<group>"; };
@@ -98,6 +106,10 @@
 		B10122 /* AchievementGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementGalleryView.swift; sourceTree = "<group>"; };
 		B10130 /* ProgressGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressGalleryView.swift; sourceTree = "<group>"; };
 		B10131 /* ProgressViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressViewerView.swift; sourceTree = "<group>"; };
+		B11810 /* AISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettingsView.swift; sourceTree = "<group>"; };
+		B11811 /* AIWorkoutGenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIWorkoutGenView.swift; sourceTree = "<group>"; };
+		B11812 /* AIMealGenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIMealGenView.swift; sourceTree = "<group>"; };
+		B11813 /* AIPreviewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPreviewSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +130,8 @@
 			isa = PBXGroup;
 			children = (
 				47884F732F78A5AC004CDDB3 /* free_exercise_db.json */,
+				B11801 /* workout-system-prompt.md */,
+				B11802 /* recipe-system-prompt.md */,
 				E10002 /* iosApp */,
 				E10010 /* Products */,
 			);
@@ -151,6 +165,7 @@
 				E10016 /* Nutrition */,
 				E10017 /* Overview */,
 				E10018 /* Gamification */,
+				E11810 /* AI */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -299,6 +314,17 @@
 			path = Gamification;
 			sourceTree = "<group>";
 		};
+		E11810 /* AI */ = {
+			isa = PBXGroup;
+			children = (
+				B11810 /* AISettingsView.swift */,
+				B11811 /* AIWorkoutGenView.swift */,
+				B11812 /* AIMealGenView.swift */,
+				B11813 /* AIPreviewSheet.swift */,
+			);
+			path = AI;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -371,6 +397,8 @@
 				A10006 /* Assets.xcassets in Resources */,
 				A10007 /* Preview Assets.xcassets in Resources */,
 				47884F742F78A5AC004CDDB3 /* free_exercise_db.json in Resources */,
+				A11801 /* workout-system-prompt.md in Resources */,
+				A11802 /* recipe-system-prompt.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -460,6 +488,10 @@
 				A10122 /* AchievementGalleryView.swift in Sources */,
 				A10130 /* ProgressGalleryView.swift in Sources */,
 				A10131 /* ProgressViewerView.swift in Sources */,
+				A11810 /* AISettingsView.swift in Sources */,
+				A11811 /* AIWorkoutGenView.swift in Sources */,
+				A11812 /* AIMealGenView.swift in Sources */,
+				A11813 /* AIPreviewSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -598,6 +630,9 @@
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Aufnehmen von Fortschritts-Fotos.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Fortschrittsbild entsperren.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wähle Fotos für deine Fortschritts-Galerie.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -635,6 +670,9 @@
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Aufnehmen von Fortschritts-Fotos.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Fortschrittsbild entsperren.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Wähle Fotos für deine Fortschritts-Galerie.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -17,7 +17,8 @@ activity-compose = "1.10.1"
 ktor = "3.4.2"
 camerax = "1.6.0"
 mlkit-barcode = "17.3.0"
-biometric = "1.1.0"
+biometric = "1.2.0-alpha05"
+androidx-security-crypto = "1.0.0"
 play-services-location = "21.3.0"
 
 [libraries]
@@ -52,7 +53,12 @@ camerax-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref =
 camerax-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
 mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit-barcode" }
 androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometric" }
+<<<<<<< HEAD
+androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
+||||||| dfca427
+=======
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
+>>>>>>> 9e2bde75895a38ace418eaf64c1821d4d6c5fab0
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

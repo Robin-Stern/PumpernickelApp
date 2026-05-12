@@ -1,0 +1,25 @@
+description: Recipe-AI prompt evaluation suite
+
+prompts:
+  - file://./prompts/recipe-system.json
+
+providers:
+  - id: togetherai:openai/gpt-oss-20b
+    label: gpt-oss-20b (kostenlos)
+    config:
+      temperature: 0.7
+      max_tokens: 4096
+      response_format: { type: 'json_object' }
+  - id: togetherai:google/gemma-4-31B-it
+    label: Gemma 4 31B
+    config:
+      temperature: 0.7
+      max_tokens: 4096
+      response_format: { type: 'json_object' }
+
+defaultTest:
+  assert:
+    - type: javascript
+      value: file://./cases/recipe-validator.cjs
+
+tests: file://./cases/recipe.json

@@ -40,3 +40,8 @@ import kotlinx.serialization.Serializable
 // Overview tab — Progress gallery (Phase 17)
 @Serializable data object ProgressGalleryRoute
 @Serializable data class ProgressViewerRoute(val workoutId: Long)
+
+// Phase 18 — AI Features (BYOK)
+@Serializable data object AiSettingsRoute
+@Serializable data object AiWorkoutGenRoute
+@Serializable data object AiMealGenRoute

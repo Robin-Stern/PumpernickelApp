@@ -1,0 +1,15 @@
+{
+  "name": "pumpernickel-ai-evals",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "node prepare.mjs",
+    "eval:workout": "promptfoo eval -c promptfoo.workout.yaml",
+    "eval:recipe": "promptfoo eval -c promptfoo.recipe.yaml",
+    "view": "promptfoo view"
+  },
+  "devDependencies": {
+    "promptfoo": "^0.121.11"
+  }
+}

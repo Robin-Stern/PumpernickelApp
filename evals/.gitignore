@@ -1,0 +1,11 @@
+node_modules/
+prompts/
+.promptfoo/
+output.json
+output.yaml
+output.html
+debug-dumps/
+debug-validator-input.log
+runs/*
+!runs/aggregate*.json
+

@@ -82,6 +82,7 @@ struct NutritionDailyLogView: View {
             }
         }
         .task { await observeUiState() }
+        .onAppear { viewModel.refresh() }
         .onChange(of: uiState?.pendingFood) { _, newVal in
             if newVal != nil {
                 amountText = "100"

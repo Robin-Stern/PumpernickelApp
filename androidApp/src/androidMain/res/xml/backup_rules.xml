@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
     <exclude domain="file" path="progress_pics/" />
+    <!-- Phase 18 T-18-04-03 — exclude EncryptedSharedPreferences file from legacy backup -->
+    <exclude domain="sharedpref" path="ai_secrets.xml" />
 </full-backup-content>
