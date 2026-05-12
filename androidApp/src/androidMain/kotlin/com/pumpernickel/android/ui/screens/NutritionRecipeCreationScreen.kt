@@ -50,9 +50,23 @@ import kotlin.math.roundToInt
 fun NutritionRecipeCreationScreen(
     listViewModel: RecipeListViewModel,
     navController: NavController,
+    recipeId: String? = null,
     viewModel: RecipeCreationViewModel = koinViewModel()
 ) {
     val state by viewModel.creationState.collectAsStateWithLifecycle()
+    val recipes by listViewModel.recipes.collectAsStateWithLifecycle()
+
+    // Edit-mode entry: as soon as the recipe with this id is available in the list
+    // VM's StateFlow, hand it off to the creation VM. If recipeId is null this is a
+    // "new recipe" navigation — reset() clears any stale edit state from a previous
+    // back-stack entry (e.g. opening the editor, popping, then tapping "+").
+    LaunchedEffect(recipeId, recipes) {
+        if (recipeId == null) {
+            if (state.editingRecipeId != null) viewModel.reset()
+        } else if (state.editingRecipeId != recipeId) {
+            recipes.firstOrNull { it.id == recipeId }?.let(viewModel::loadRecipe)
+        }
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.savedEvent.collect {
@@ -64,7 +78,14 @@ fun NutritionRecipeCreationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.title_new_recipe)) },
+                title = {
+                    Text(
+                        stringResource(
+                            if (state.editingRecipeId != null) R.string.title_edit_recipe
+                            else R.string.title_new_recipe
+                        )
+                    )
+                },
                 navigationIcon = {
                     TextButton(onClick = { navController.popBackStack() }) {
                         Text(stringResource(R.string.action_back))

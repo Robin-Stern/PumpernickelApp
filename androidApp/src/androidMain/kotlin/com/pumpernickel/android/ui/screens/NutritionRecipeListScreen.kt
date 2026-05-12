@@ -1,6 +1,7 @@
 package com.pumpernickel.android.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -92,7 +93,7 @@ fun NutritionRecipeListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate(NutritionRecipeCreationRoute) }) {
+            FloatingActionButton(onClick = { navController.navigate(NutritionRecipeCreationRoute()) }) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.title_new_recipe))
             }
         }
@@ -111,6 +112,11 @@ fun NutritionRecipeListScreen(
                         onDelete = {
                             if (recipe.isFavorite) favoriteDeleteCandidate = recipe
                             else viewModel.onEvent(RecipeListEvent.OnRecipeDeleted(recipe))
+                        },
+                        onEdit = {
+                            navController.navigate(
+                                NutritionRecipeCreationRoute(recipeId = recipe.id)
+                            )
                         }
                     )
                 }
@@ -122,7 +128,12 @@ fun NutritionRecipeListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RecipeSwipeCard(recipe: Recipe, viewModel: RecipeListViewModel, onDelete: () -> Unit) {
+private fun RecipeSwipeCard(
+    recipe: Recipe,
+    viewModel: RecipeListViewModel,
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
+) {
     val currentRecipe by rememberUpdatedState(recipe)
     val currentOnDelete by rememberUpdatedState(onDelete)
     val dismissState = rememberSwipeToDismissBoxState(
@@ -151,24 +162,30 @@ private fun RecipeSwipeCard(recipe: Recipe, viewModel: RecipeListViewModel, onDe
             }
         }
     ) {
-        RecipeCard(recipe = currentRecipe, viewModel = viewModel)
+        RecipeCard(recipe = currentRecipe, viewModel = viewModel, onEdit = onEdit)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RecipeCard(recipe: Recipe, viewModel: RecipeListViewModel) {
+private fun RecipeCard(recipe: Recipe, viewModel: RecipeListViewModel, onEdit: () -> Unit) {
     val macros = viewModel.calculateMacros(recipe)
     val foodMap = viewModel.foods.collectAsStateWithLifecycle().value.associateBy { it.id }
     var expanded by remember { mutableStateOf(false) }
     val totalGrams = recipe.ingredients.sumOf { it.amountGrams }.roundToInt()
 
     Card(
-        onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = if (recipe.isFavorite) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            // Header row \u2192 edit. Mirrors iOS where the name+kcal block is the
+            // NavigationLink and the ingredients toggle below is a separate button.
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onEdit),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                     if (recipe.isFavorite) Text("\u2605", color = NutritionColors.favoriteStar, style = MaterialTheme.typography.titleMedium)
                     Text(recipe.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -177,6 +194,8 @@ private fun RecipeCard(recipe: Recipe, viewModel: RecipeListViewModel) {
                     Text("${macros.calories.roundToInt()} kcal", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Text(stringResource(R.string.recipe_total_grams, totalGrams), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                Spacer(Modifier.width(4.dp))
+                Text("\u203a", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             MacroRow(protein = macros.protein, fat = macros.fat, carbs = macros.carbs, sugar = macros.sugar)
             AnimatedVisibility(visible = expanded) {
@@ -194,8 +213,10 @@ private fun RecipeCard(recipe: Recipe, viewModel: RecipeListViewModel) {
                 }
             }
             Text(
-                if (expanded) stringResource(R.string.recipe_ingredients_hide) else stringResource(R.string.recipe_ingredients_count, recipe.ingredients.size),
-                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = if (expanded) stringResource(R.string.recipe_ingredients_hide) else stringResource(R.string.recipe_ingredients_count, recipe.ingredients.size),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.clickable { expanded = !expanded }.padding(vertical = 2.dp)
             )
         }
     }

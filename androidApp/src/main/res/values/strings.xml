@@ -54,6 +54,7 @@
 
     <!-- Nutrition: Recipe Creation -->
     <string name="title_new_recipe">Neues Rezept</string>
+    <string name="title_edit_recipe">Rezept bearbeiten</string>
     <string name="action_back">← Zurück</string>
     <string name="label_recipe_name">Rezeptname *</string>
     <string name="hint_search_food">Lebensmittel suchen…</string>

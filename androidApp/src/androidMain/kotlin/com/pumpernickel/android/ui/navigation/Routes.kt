@@ -24,7 +24,7 @@ import kotlinx.serialization.Serializable
 // Nutrition tab screens
 @Serializable data object NutritionFoodEntryRoute
 @Serializable data object NutritionRecipeListRoute
-@Serializable data object NutritionRecipeCreationRoute
+@Serializable data class NutritionRecipeCreationRoute(val recipeId: String? = null)
 @Serializable data object NutritionDailyLogRoute
 
 // Gamification

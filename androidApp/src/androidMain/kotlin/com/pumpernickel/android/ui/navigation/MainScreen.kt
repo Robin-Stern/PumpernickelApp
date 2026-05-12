@@ -227,8 +227,9 @@ fun MainScreen() {
                     composable<NutritionRecipeListRoute> {
                         NutritionRecipeListScreen(navController = nutritionNavController)
                     }
-                    composable<NutritionRecipeCreationRoute> {
-                        val parentEntry = remember(it) {
+                    composable<NutritionRecipeCreationRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<NutritionRecipeCreationRoute>()
+                        val parentEntry = remember(backStackEntry) {
                             nutritionNavController.getBackStackEntry<NutritionRecipeListRoute>()
                         }
                         val listViewModel: RecipeListViewModel = koinViewModel(
@@ -236,7 +237,8 @@ fun MainScreen() {
                         )
                         NutritionRecipeCreationScreen(
                             listViewModel = listViewModel,
-                            navController = nutritionNavController
+                            navController = nutritionNavController,
+                            recipeId = route.recipeId
                         )
                     }
                 }
