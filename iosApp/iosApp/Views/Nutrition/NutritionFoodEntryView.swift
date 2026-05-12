@@ -8,7 +8,8 @@ struct NutritionFoodEntryView: View {
     @State private var uiState = FoodEntryUiState(
         name: "", calories: "", protein: "", fat: "", carbs: "", sugar: "",
         barcode: "", unit: .gram, errorMessage: nil, successMessage: nil,
-        editingFoodId: nil, searchQuery: "", isLookingUp: false, pendingLogFood: nil
+        editingFoodId: nil, searchQuery: "", isLookingUp: false, pendingLogFood: nil,
+        remoteSearchResults: [], isSearchingRemote: false, remoteSearchError: nil
     )
     @State private var filteredFoods: [Food] = []
     @State private var showBarcodeScanner = false
@@ -273,7 +274,6 @@ struct NutritionFoodEntryView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // TODO(framework-name): adjust generated nested type if Shared framework exports a different flat name
     private func remoteFoodCard(_ result: SearchFoodsRemoteUseCaseRemoteFoodResult) -> some View {
         Button {
             viewModel.onEvent(event: FoodEntryEventOnRemoteFoodSelected(result: result))
