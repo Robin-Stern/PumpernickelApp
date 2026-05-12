@@ -41,7 +41,12 @@ class SearchFoodsRemoteUseCase(private val api: OpenFoodFactsApi) {
             }
             if (results.isEmpty()) Result.Empty else Result.Success(results)
         } catch (e: Exception) {
-            Result.Error(e.message ?: "Unbekannter Fehler")
+            val msg = e.message
+            if (msg != null && msg.contains("OpenFoodFacts ist gerade nicht erreichbar")) {
+                Result.Error("OpenFoodFacts ist gerade nicht erreichbar. Versuch es später nochmal.")
+            } else {
+                Result.Error(msg ?: "Unbekannter Fehler")
+            }
         }
     }
 }
