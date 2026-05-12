@@ -424,4 +424,50 @@ Beyond the prompt+config edits, B.4 contributed:
 - Validator pattern for refusal-handling that's safe by default (no false positives on existing cases).
 - Two test-case shapes per suite that aren't covered elsewhere (out-of-domain prompts, impossible-constraint prompts).
 
+---
+
+# B.4b — Gemma Recipe Re-eval with Fixed Harness (2026-05-12)
+
+## Context
+
+B.4 Gemma recipe data was low-biased by two confounds: rep 1 inherited stale B.2 JSON
+(helper bug fixed in `31edfcd`), and reps 2–3 hit Together 503/502 errors. The reported
+B.4 mean of 4.67/6 (σ 0.47) was infrastructure noise, not model behavior. This delta
+re-runs Gemma recipe with the fixed helper to obtain clean data.
+
+## Conditions
+
+- Harness: `evals/multi-model.mjs` with stale-JSON fix (`31edfcd`)
+- Together latency: 232s / 115s / 35s per rep (high but stable — no 50x errors)
+- Aggregate: `runs/aggregate-B4b.json`
+
+## Result
+
+| Model | Suite | Rep 1 | Rep 2 | Rep 3 | Mean | σ |
+|---|---|---|---|---|---|---|
+| `google/gemma-4-31B-it` | recipe | 6/6 | 6/6 | 6/6 | **6.00** | **0.00** |
+
+**Gemma recipe is 6/6 perfect** (σ 0). The B.4 score of 4.67 was entirely a measurement
+artifact. No prompt-level regression; the B.4 refusal-section sharpening had no negative
+effect on Gemma's recipe performance.
+
+## Updated B.4 model ranking (corrected)
+
+| Model | Workout (n=6) | Recipe (n=6) |
+|---|---|---|
+| `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | **6.00** (σ 0) | 4.00 (σ 0) |
+| `google/gemma-4-31B-it` | **5.33** (σ 0.47)¹ | **6.00** (σ 0) |
+| `openai/gpt-oss-120b` | 3.67 (σ 0.47) | 3.00 (σ 0.82) |
+| `openai/gpt-oss-20b` | 5.00 (σ 0) | 2.00 (σ 0) |
+
+¹ Gemma workout σ 0.47 is real — the injury-refusal case (1/3) is genuine model behavior,
+not a measurement artifact. Only recipe was confounded.
+
+## Practical implication
+
+Gemma remains the strongest **overall** model (workout near-perfect + recipe perfect).
+Qwen3-235B is the strongest on **refusal correctness** (6/6 workout including 3/3 on
+the subtle injury case). The production default (Gemma) is correctly placed.
+Qwen3-235B's iOS picker entry (A.6) is well-supported by both B.4 and this re-eval.
+
 This is the kind of harness extension that's worth more than any single prompt edit — it changes what we can measure going forward.
