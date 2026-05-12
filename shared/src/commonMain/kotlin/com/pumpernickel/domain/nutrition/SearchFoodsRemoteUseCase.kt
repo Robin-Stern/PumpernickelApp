@@ -21,8 +21,10 @@ class SearchFoodsRemoteUseCase(private val api: OpenFoodFactsApi) {
     }
 
     suspend operator fun invoke(query: String): Result {
+        println("[SearchUC] invoke query='$query'")
         return try {
             val response = api.searchByName(query)
+            println("[SearchUC] api returned count=${response.count} products=${response.products.size}")
             val results = response.products.mapNotNull { product ->
                 val name = product.productName?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
                 val nutriments = product.nutriments ?: return@mapNotNull null
@@ -39,8 +41,10 @@ class SearchFoodsRemoteUseCase(private val api: OpenFoodFactsApi) {
                     brand = brand
                 )
             }
+            println("[SearchUC] mapped results=${results.size}")
             if (results.isEmpty()) Result.Empty else Result.Success(results)
         } catch (e: Exception) {
+            println("[SearchUC] caught ${e::class.simpleName}: ${e.message}")
             val msg = e.message
             if (msg != null && msg.contains("OpenFoodFacts ist gerade nicht erreichbar")) {
                 Result.Error("OpenFoodFacts ist gerade nicht erreichbar. Versuch es später nochmal.")
