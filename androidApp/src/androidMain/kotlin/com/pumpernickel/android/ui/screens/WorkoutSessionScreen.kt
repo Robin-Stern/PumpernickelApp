@@ -62,6 +62,11 @@ import com.pumpernickel.domain.model.CompletedExercise
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.SessionExercise
 import com.pumpernickel.domain.model.WeightUnit
+import com.pumpernickel.android.ui.navigation.ExercisePickerRoute
+import com.pumpernickel.android.ui.navigation.TemplateEditorRoute
+import com.pumpernickel.android.ui.navigation.TemplateListRoute
+import com.pumpernickel.domain.workout.UndertrainedMuscle
+import com.pumpernickel.domain.workout.UndertrainedSeverity
 import com.pumpernickel.presentation.workout.RestState
 import com.pumpernickel.presentation.workout.WorkoutSessionState
 import com.pumpernickel.presentation.workout.WorkoutSessionViewModel
@@ -117,7 +122,24 @@ fun WorkoutSessionScreen(
     if (showUndertrainedDialog) {
         UndertrainedMusclesDialog(
             muscles = undertrainedMuscles,
-            onDismiss = { showUndertrainedDialog = false }
+            onDismiss = { showUndertrainedDialog = false },
+            onAddExerciseForMuscle = { group ->
+                // CTA: abandon the freshly-started session and deep-link into the
+                // template editor's exercise picker with the muscle group preselected.
+                // popBackStack → navigate → navigate so the back stack reads
+                // TemplateList ← TemplateEditor ← ExercisePicker — required because
+                // ExercisePicker's parent ViewModel lookup uses getBackStackEntry<TemplateEditorRoute>().
+                showUndertrainedDialog = false
+                viewModel.discardWorkout()
+                navController.popBackStack(TemplateListRoute, inclusive = false)
+                navController.navigate(TemplateEditorRoute(templateId = templateId))
+                navController.navigate(
+                    ExercisePickerRoute(
+                        templateId = templateId,
+                        preselectedMuscleDbName = group.dbName
+                    )
+                )
+            }
         )
     }
 
@@ -1261,8 +1283,9 @@ private fun RirSelector(
 
 @Composable
 private fun UndertrainedMusclesDialog(
-    muscles: List<MuscleGroup>,
-    onDismiss: () -> Unit
+    muscles: List<UndertrainedMuscle>,
+    onDismiss: () -> Unit,
+    onAddExerciseForMuscle: (MuscleGroup) -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1270,23 +1293,97 @@ private fun UndertrainedMusclesDialog(
         text = {
             Column {
                 Text(
-                    text = "Diese Muskelgruppen wurden in den letzten 7 Tagen kaum oder gar nicht trainiert:",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "Diese Muskelgruppen brauchen einen neuen Trainingsreiz. " +
+                        "Bewertung basiert auf Tagen seit dem letzten qualifizierten Satz (RIR ≤ 3) " +
+                        "und der Frequenz in den letzten 28 Tagen.",
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                muscles.forEach { muscle ->
-                    Text(
-                        text = "• ${muscle.displayName}",
-                        style = MaterialTheme.typography.bodyMedium
+                muscles.forEach { item ->
+                    UndertrainedMuscleRow(
+                        item = item,
+                        onAddExercise = { onAddExerciseForMuscle(item.group) }
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("OK")
+                Text("Später")
             }
         }
     )
+}
+
+@Composable
+private fun UndertrainedMuscleRow(
+    item: UndertrainedMuscle,
+    onAddExercise: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SeverityChip(item.severity)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = item.group.displayName,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = formatRecoveryDetail(item),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        TextButton(
+            onClick = onAddExercise,
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text("Übung hinzufügen")
+        }
+    }
+}
+
+@Composable
+private fun SeverityChip(severity: UndertrainedSeverity) {
+    val (label, color) = when (severity) {
+        UndertrainedSeverity.NEEDS_ATTENTION ->
+            "Beachten" to MaterialTheme.colorScheme.tertiary
+        UndertrainedSeverity.OVERDUE ->
+            "Überfällig" to MaterialTheme.colorScheme.secondary
+        UndertrainedSeverity.NEGLECTED ->
+            "Vernachlässigt" to MaterialTheme.colorScheme.error
+    }
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = color.copy(alpha = 0.15f)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
+    }
+}
+
+private fun formatRecoveryDetail(item: UndertrainedMuscle): String {
+    val daysPart = when (val d = item.daysSinceLast) {
+        null -> "Noch kein qualifizierter Reiz"
+        0 -> "Heute zuletzt trainiert"
+        1 -> "Vor 1 Tag trainiert"
+        else -> "Vor $d Tagen trainiert"
+    }
+    val freqPart = "${formatFrequency(item.weeklyFrequency)}/Woche"
+    return "$daysPart · $freqPart"
+}
+
+private fun formatFrequency(freq: Double): String {
+    // One decimal is enough granularity for "sets per week".
+    val rounded = (freq * 10).toInt() / 10.0
+    return rounded.toString()
 }

@@ -43,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.pumpernickel.android.R
+import com.pumpernickel.android.ui.components.PrimaryActionButton
+import com.pumpernickel.android.ui.components.SectionCard
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.presentation.nutrition.RecipeCreationEvent
 import com.pumpernickel.presentation.nutrition.RecipeCreationViewModel
@@ -55,9 +57,23 @@ import kotlin.math.roundToInt
 fun NutritionRecipeCreationScreen(
     listViewModel: RecipeListViewModel,
     navController: NavController,
+    recipeId: String? = null,
     viewModel: RecipeCreationViewModel = koinViewModel()
 ) {
     val state by viewModel.creationState.collectAsStateWithLifecycle()
+    val recipes by listViewModel.recipes.collectAsStateWithLifecycle()
+
+    // Edit-mode entry: as soon as the recipe with this id is available in the list
+    // VM's StateFlow, hand it off to the creation VM. If recipeId is null this is a
+    // "new recipe" navigation — reset() clears any stale edit state from a previous
+    // back-stack entry (e.g. opening the editor, popping, then tapping "+").
+    LaunchedEffect(recipeId, recipes) {
+        if (recipeId == null) {
+            if (state.editingRecipeId != null) viewModel.reset()
+        } else if (state.editingRecipeId != recipeId) {
+            recipes.firstOrNull { it.id == recipeId }?.let(viewModel::loadRecipe)
+        }
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.savedEvent.collect {
@@ -69,7 +85,14 @@ fun NutritionRecipeCreationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.title_new_recipe)) },
+                title = {
+                    Text(
+                        stringResource(
+                            if (state.editingRecipeId != null) R.string.title_edit_recipe
+                            else R.string.title_new_recipe
+                        )
+                    )
+                },
                 navigationIcon = {
                     TextButton(onClick = { navController.popBackStack() }) {
                         Text(stringResource(R.string.action_back))
@@ -80,40 +103,56 @@ fun NutritionRecipeCreationScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { Spacer(Modifier.height(4.dp)) }
-            item {
-                OutlinedTextField(
-                    value = state.recipeName, onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnRecipeNameChanged(it)) },
-                    label = { Text(stringResource(R.string.label_recipe_name)) }, modifier = Modifier.fillMaxWidth(), singleLine = true
-                )
-            }
-            item {
-                OutlinedTextField(
-                    value = state.searchQuery, onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnSearchQueryChanged(it)) },
-                    label = { Text(stringResource(R.string.hint_search_food)) }, modifier = Modifier.fillMaxWidth(), singleLine = true
-                )
-            }
-            item {
-                BarcodeScannerButton(
-                    onBarcodeScanned = { viewModel.onEvent(RecipeCreationEvent.OnBarcodeScanned(it)) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            item { Spacer(Modifier.height(0.dp)) }
 
-            if (state.searchResults.isNotEmpty()) {
-                item {
-                    Text(
-                        stringResource(if (state.searchQuery.isBlank()) R.string.label_recently_added else R.string.label_search_results),
-                        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
+            // \u2500\u2500 Rezept \u2500\u2500
+            item {
+                SectionCard(title = stringResource(R.string.section_recipe)) {
+                    OutlinedTextField(
+                        value = state.recipeName,
+                        onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnRecipeNameChanged(it)) },
+                        label = { Text(stringResource(R.string.label_recipe_name)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
                 }
+            }
+
+            // \u2500\u2500 Lebensmittel suchen \u2500\u2500
+            item {
+                SectionCard(title = stringResource(R.string.section_search_food)) {
+                    OutlinedTextField(
+                        value = state.searchQuery,
+                        onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnSearchQueryChanged(it)) },
+                        label = { Text(stringResource(R.string.hint_search_food)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    BarcodeScannerButton(
+                        onBarcodeScanned = { viewModel.onEvent(RecipeCreationEvent.OnBarcodeScanned(it)) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (state.searchResults.isNotEmpty()) {
+                        Text(
+                            stringResource(
+                                if (state.searchQuery.isBlank()) R.string.label_recently_added
+                                else R.string.label_search_results
+                            ),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            if (state.searchResults.isNotEmpty()) {
                 items(state.searchResults, key = { it.id }) { food ->
                     FoodSwipeToAddItem(food = food, onSelected = { viewModel.onEvent(RecipeCreationEvent.OnFoodSelected(food)) })
                 }
             }
 
+            // \u2500\u2500 Zutaten \u2500\u2500
             if (state.ingredients.isNotEmpty()) {
                 item { Spacer(Modifier.height(4.dp)); Text(stringResource(R.string.label_ingredients), style = MaterialTheme.typography.labelLarge) }
                 items(state.ingredients.size) { index ->
@@ -159,19 +198,46 @@ fun NutritionRecipeCreationScreen(
                         TextButton(onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientRemoved(index)) }) { Text("\u2715") }
                     }
                 }
+
+                // \u2500\u2500 Gesamt \u2500\u2500
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(stringResource(R.string.recipe_total_calories, state.totals.calories.roundToInt()), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        MacroRow(protein = state.totals.protein, fat = state.totals.fat, carbs = state.totals.carbs, sugar = state.totals.sugar)
+                    SectionCard(title = stringResource(R.string.section_totals)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                stringResource(R.string.recipe_total_calories, state.totals.calories.roundToInt()),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            MacroRow(
+                                protein = state.totals.protein,
+                                fat = state.totals.fat,
+                                carbs = state.totals.carbs,
+                                sugar = state.totals.sugar
+                            )
+                        }
                     }
                 }
             }
 
+            // \u2500\u2500 Action \u2500\u2500
             item {
-                state.errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-                Spacer(Modifier.height(4.dp))
-                Button(onClick = { viewModel.onEvent(RecipeCreationEvent.OnSaveClicked) }, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.action_save_recipe))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    state.errorMessage?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                    PrimaryActionButton(
+                        text = stringResource(
+                            if (state.editingRecipeId != null) R.string.action_update_recipe
+                            else R.string.action_save_recipe
+                        ),
+                        onClick = { viewModel.onEvent(RecipeCreationEvent.OnSaveClicked) }
+                    )
                 }
             }
             item { Spacer(Modifier.height(16.dp)) }

@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,12 +50,21 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExerciseCatalogScreen(navController: NavHostController) {
+fun ExerciseCatalogScreen(
+    navController: NavHostController,
+    preselectedMuscleDbName: String? = null
+) {
     val viewModel: ExerciseCatalogViewModel = koinViewModel()
     val exercises by viewModel.exercises.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedMuscleGroup by viewModel.selectedMuscleGroup.collectAsState()
     var showAnatomyPicker by remember { mutableStateOf(false) }
+
+    LaunchedEffect(preselectedMuscleDbName) {
+        preselectedMuscleDbName
+            ?.let(MuscleGroup::fromDbName)
+            ?.let(viewModel::onMuscleGroupSelected)
+    }
 
     Scaffold(
         topBar = {
