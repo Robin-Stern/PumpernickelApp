@@ -27,6 +27,9 @@ struct OverviewRankStrip: View {
                 // Defensive — should never hit because RankState is a closed sealed class.
                 unrankedContent
             }
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
