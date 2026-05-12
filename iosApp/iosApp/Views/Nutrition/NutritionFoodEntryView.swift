@@ -3,7 +3,7 @@ import Shared
 import KMPNativeCoroutinesAsync
 
 struct NutritionFoodEntryView: View {
-    private let viewModel = KoinHelper.shared.getFoodEntryViewModel()
+    @State private var viewModel = KoinHelper.shared.getFoodEntryViewModel()
 
     private enum InputMode { case manual, search, barcode }
 
