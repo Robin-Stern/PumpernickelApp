@@ -5,6 +5,8 @@ import KMPNativeCoroutinesAsync
 struct NutritionFoodEntryView: View {
     private let viewModel = KoinHelper.shared.getFoodEntryViewModel()
 
+    private enum InputMode { case manual, search, barcode }
+
     @State private var uiState = FoodEntryUiState(
         name: "", calories: "", protein: "", fat: "", carbs: "", sugar: "",
         barcode: "", unit: .gram, errorMessage: nil, successMessage: nil,
@@ -15,16 +17,28 @@ struct NutritionFoodEntryView: View {
     @State private var showBarcodeScanner = false
     @State private var showLogDialog = false
     @State private var logAmountText = "100"
+    @State private var inputMode: InputMode = .manual
 
     @FocusState private var focusedField: Bool
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                entryForm
-                savedFoodsList
-                if uiState.searchQuery.count >= 3 {
-                    remoteSearchSection
+                Picker("Eingabemodus", selection: $inputMode) {
+                    Text("Manuell").tag(InputMode.manual)
+                    Text("Suchen").tag(InputMode.search)
+                    Text("Barcode").tag(InputMode.barcode)
+                }
+                .pickerStyle(.segmented)
+
+                switch inputMode {
+                case .manual:
+                    entryForm
+                    savedFoodsList
+                case .search:
+                    onlineSearchSection
+                case .barcode:
+                    barcodeSection
                 }
             }
             .padding()
@@ -38,7 +52,9 @@ struct NutritionFoodEntryView: View {
                 Button("Fertig") { focusedField = false }
             }
         }
-        .fullScreenCover(isPresented: $showBarcodeScanner) {
+        .fullScreenCover(isPresented: $showBarcodeScanner, onDismiss: {
+            inputMode = .manual
+        }) {
             BarcodeScannerView { barcode in
                 showBarcodeScanner = false
                 viewModel.onEvent(event: FoodEntryEventOnBarcodeScanned(barcode: barcode))
@@ -112,26 +128,14 @@ struct NutritionFoodEntryView: View {
                 }
             }
 
-            HStack(spacing: 12) {
-                Button {
-                    showBarcodeScanner = true
-                } label: {
-                    Label("Barcode", systemImage: "barcode.viewfinder")
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44)
-                        .background(Color(.tertiarySystemBackground))
-                        .cornerRadius(10)
+            if uiState.editingFoodId != nil {
+                Button("Abbrechen") {
+                    viewModel.onEvent(event: FoodEntryEventOnCancelEdit.shared)
                 }
-
-                if uiState.editingFoodId != nil {
-                    Button("Abbrechen") {
-                        viewModel.onEvent(event: FoodEntryEventOnCancelEdit.shared)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .background(Color(.tertiarySystemBackground))
-                    .cornerRadius(10)
-                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+                .background(Color(.tertiarySystemBackground))
+                .cornerRadius(10)
             }
 
             Button {
@@ -243,26 +247,34 @@ struct NutritionFoodEntryView: View {
         .cornerRadius(10)
     }
 
-    // MARK: - Remote Search (OpenFoodFacts)
-    private var remoteSearchSection: some View {
+    // MARK: - Online Search (OpenFoodFacts)
+    private var onlineSearchSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Spacer().frame(height: 4)
-            Divider()
-            Spacer().frame(height: 4)
+            Text("Lebensmittel in OpenFoodFacts suchen")
+                .font(.headline)
+
             HStack(spacing: 8) {
-                Text("OpenFoodFacts").font(.headline)
-                if uiState.isSearchingRemote {
-                    ProgressView().scaleEffect(0.7)
-                }
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                TextField("Suchen", text: Binding(
+                    get: { uiState.searchQuery },
+                    set: { viewModel.onEvent(event: FoodEntryEventOnSearchQueryChanged(value: $0)) }
+                ))
+                .textFieldStyle(.roundedBorder)
+                .submitLabel(.search)
+                .focused($focusedField)
+            }
+
+            if uiState.isSearchingRemote {
+                HStack { ProgressView(); Text("Suche…").foregroundColor(.secondary) }
             }
             if let error = uiState.remoteSearchError {
-                Text(error)
-                    .foregroundColor(.red)
-                    .font(.caption)
+                Text(error).foregroundColor(.red).font(.caption)
             }
-            if uiState.remoteSearchError == nil && !uiState.isSearchingRemote && uiState.remoteSearchResults.isEmpty {
-                Text("Keine Ergebnisse")
-                    .foregroundColor(.secondary)
+            if uiState.searchQuery.count < 3 {
+                Text("Mindestens 3 Zeichen eingeben.").foregroundColor(.secondary).font(.caption)
+            } else if uiState.remoteSearchError == nil && !uiState.isSearchingRemote && uiState.remoteSearchResults.isEmpty {
+                Text("Keine Ergebnisse").foregroundColor(.secondary)
             } else {
                 LazyVStack(spacing: 6) {
                     ForEach(uiState.remoteSearchResults, id: \.name) { result in
@@ -274,9 +286,41 @@ struct NutritionFoodEntryView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // MARK: - Barcode Section
+    private var barcodeSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Per Barcode hinzufügen")
+                .font(.headline)
+
+            Button {
+                showBarcodeScanner = true
+            } label: {
+                Label("Barcode scannen", systemImage: "barcode.viewfinder")
+                    .font(.body.weight(.semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Color.appAccent)
+                    .cornerRadius(12)
+            }
+
+            if uiState.isLookingUp {
+                HStack {
+                    ProgressView()
+                    Text("Wird gesucht…").foregroundColor(.secondary)
+                }
+            }
+            if let error = uiState.errorMessage {
+                Text(error).foregroundColor(.red).font(.caption)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private func remoteFoodCard(_ result: SearchFoodsRemoteUseCase.RemoteFoodResult) -> some View {
         Button {
             viewModel.onEvent(event: FoodEntryEventOnRemoteFoodSelected(result: result))
+            inputMode = .manual
         } label: {
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
