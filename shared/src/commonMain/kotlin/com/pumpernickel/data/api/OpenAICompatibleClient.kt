@@ -127,7 +127,7 @@ class OpenAICompatibleClient(
 
                 val channel = response.bodyAsChannel()
                 while (!channel.isClosedForRead) {
-                    val line = channel.readUTF8Line() ?: break
+                    val line = channel.readLine() ?: break
                     if (line.isBlank()) continue
                     if (!line.startsWith("data:")) continue
 

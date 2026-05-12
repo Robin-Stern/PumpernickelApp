@@ -9,9 +9,10 @@ import com.pumpernickel.domain.location.GeoPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.datetime.Instant
+import kotlinx.coroutines.flow.update
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
+
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -205,7 +206,7 @@ class GamificationEngine(
             // Live path: query Room for the current PBs for affected exercises.
             val ids = perExerciseMax.keys.toList()
             if (ids.isEmpty()) emptyMap()
-            else completedWorkoutDao.getPersonalBests(ids).associate { dto -> dto.exerciseId to (dto.maxWeightKgX10 ?: 0) }
+            else completedWorkoutDao.getPersonalBests(ids).associate { dto -> dto.exerciseId to dto.maxWeightKgX10 }
         }
 
         for ((exerciseId, maxInSession) in perExerciseMax) {
@@ -414,7 +415,7 @@ class GamificationEngine(
             .filter { (_, entries) -> NutritionGoalDayPolicy.isGoalDay(entries, goals) }
             .keys
             .mapNotNull { isoDate ->
-                runCatching { LocalDate.parse(isoDate).toEpochDays().toLong() }.getOrNull()
+                runCatching { LocalDate.parse(isoDate).toEpochDays() }.getOrNull()
             }
         val longestNutritionStreak = StreakCalculator.longestStreak(goalDayEpochDays).currentLength
 

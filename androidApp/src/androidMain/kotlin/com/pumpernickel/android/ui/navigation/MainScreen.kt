@@ -57,7 +57,7 @@ import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 enum class TopLevelTab(
-    @StringRes val labelRes: Int,
+    @param:StringRes val labelRes: Int,
     val icon: ImageVector,
 ) {
     WORKOUT(R.string.tab_workout, Icons.Filled.FitnessCenter),

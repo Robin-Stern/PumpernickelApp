@@ -439,7 +439,6 @@ class WorkoutSessionViewModel(
             _sessionState.value = when (currentState) {
                 is WorkoutSessionState.Active -> currentState.copy(exercises = updatedExercises)
                 is WorkoutSessionState.Reviewing -> currentState.copy(exercises = updatedExercises)
-                else -> return@launch
             }
         }
     }

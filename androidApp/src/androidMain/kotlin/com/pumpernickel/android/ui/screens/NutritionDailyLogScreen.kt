@@ -79,9 +79,9 @@ import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
 import com.pumpernickel.domain.model.macros
 import com.pumpernickel.presentation.nutrition.DailyLogViewModel
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.roundToInt
 
