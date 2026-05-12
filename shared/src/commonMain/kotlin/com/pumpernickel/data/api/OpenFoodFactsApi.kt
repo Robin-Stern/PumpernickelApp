@@ -19,13 +19,12 @@ class OpenFoodFactsApi(private val client: HttpClient) {
     }
 
     suspend fun searchByName(query: String, pageSize: Int = 20): OpenFoodFactsSearchResponse {
-        val responseText = client.get("https://world.openfoodfacts.org/cgi/search.pl") {
+        val responseText = client.get("https://world.openfoodfacts.org/api/v2/search") {
             header("User-Agent", "PumpernickelApp/1.0 (Android/iOS; contact@pumpernickel.app)")
             parameter("search_terms", query)
-            parameter("search_simple", "1")
-            parameter("action", "process")
-            parameter("json", "1")
-            parameter("fields", "product_name,nutriments")
+            parameter("fields", "product_name,brands,nutriments")
+            parameter("sort_by", "popularity_key")
+            parameter("lc", "de")
             parameter("page_size", pageSize.toString())
         }.bodyAsText()
         return json.decodeFromString(responseText)
