@@ -1,10 +1,11 @@
 ---
 phase: 19
 slug: geofencing-workout-enforcement
-status: draft
+status: approved
 shadcn_initialized: false
 preset: not applicable
 created: 2026-05-13
+reviewed_at: 2026-05-13
 language: de-DE
 platforms: [iOS, Android]
 ---
@@ -356,11 +357,11 @@ Permission-State changes mid-workout (rare):
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS — 5 Notification-Trigger × 2 Lines, 3 Confirm-Dialog-Varianten, 2 Permission-Banner-Varianten, Detail-Sheet 3 Sections, Status-Chip 4 Labels, alle in Deutsch
-- [ ] Dimension 2 Visuals: PASS — 4 Chip-States farb-kodiert, Banner-Pattern aus `NutritionGoalsBanner` 1:1, Rationale-Sheet folgt `TutorialOverlayView`-Komposition, kein neuer Visual-Stil
-- [ ] Dimension 3 Color: PASS — alle semantischen Tokens, keine Hardcoded-Hex, Accent-Reserved-Liste explizit, Warning + Destructive separat
-- [ ] Dimension 4 Typography: PASS — keine neuen Roles, monospaced-digit für Grace-Countdown begründet (Layout-Jitter), 2 Weights (regular + semibold)
-- [ ] Dimension 5 Spacing: PASS — 4-pt-Skala, alle Werte aus bestehenden Patterns, keine neuen Spacing-Tokens
-- [ ] Dimension 6 Registry Safety: PASS — keine Drittanbieter-Libraries, nur Material 3 + SwiftUI
+- [x] Dimension 1 Copywriting: PASS — 5 Notification-Trigger × 2 Lines, 3 Confirm-Dialog-Varianten, 2 Permission-Banner-Varianten, Detail-Sheet 3 Sections, Status-Chip 4 Labels, alle in Deutsch
+- [x] Dimension 2 Visuals: PASS — 4 Chip-States farb-kodiert, Banner-Pattern aus `NutritionGoalsBanner` 1:1, Rationale-Sheet folgt `TutorialOverlayView`-Komposition, kein neuer Visual-Stil
+- [x] Dimension 3 Color: PASS — alle semantischen Tokens, keine Hardcoded-Hex, Accent-Reserved-Liste explizit, Warning + Destructive separat
+- [x] Dimension 4 Typography: PASS — keine neuen Roles, monospaced-digit für Grace-Countdown begründet (Layout-Jitter), 2 Weights (regular + semibold)
+- [x] Dimension 5 Spacing: PASS — 4-pt-Skala, alle Werte aus bestehenden Patterns, keine neuen Spacing-Tokens
+- [x] Dimension 6 Registry Safety: PASS — keine Drittanbieter-Libraries, nur Material 3 + SwiftUI
 
-**Approval:** pending
+**Approval:** approved 2026-05-13 (gsd-ui-checker, all 6 dimensions PASS)
