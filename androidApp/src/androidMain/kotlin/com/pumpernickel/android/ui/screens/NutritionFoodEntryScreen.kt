@@ -5,7 +5,9 @@ import android.content.pm.PackageManager
 import android.util.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
@@ -15,6 +17,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.foundation.layout.Box
@@ -62,7 +65,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -523,6 +529,7 @@ private fun CameraPreview(onBarcodeDetected: (String) -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     var detected by remember { mutableStateOf(false) }
+    val haptics = LocalHapticFeedback.current
 
     val scannerOptions = remember {
         BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8).build()
@@ -530,37 +537,74 @@ private fun CameraPreview(onBarcodeDetected: (String) -> Unit) {
     val scanner = remember { BarcodeScanning.getClient(scannerOptions) }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
 
+    // Hoisted out of the AndroidView factory so the tap-to-focus pointerInput
+    // and the haptic side-effect can reference them after composition.
+    val previewView = remember { PreviewView(context) }
+    var camera by remember { mutableStateOf<Camera?>(null) }
+
     DisposableEffect(Unit) {
         onDispose { scanner.close(); analysisExecutor.shutdown() }
     }
 
-    AndroidView(
-        factory = { ctx ->
-            val previewView = PreviewView(ctx)
-            cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
-                val resolutionSelector = ResolutionSelector.Builder()
-                    .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
-                    .build()
-                val imageAnalysis = ImageAnalysis.Builder()
-                    .setResolutionSelector(resolutionSelector)
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
-                    processImage(imageProxy, scanner) { barcode ->
-                        if (!detected) { detected = true; onBarcodeDetected(barcode) }
-                    }
+    // Mirror iOS BarcodeScannerView.swift:232 — vibrate once when the first
+    // barcode is recognised. Driven off `detected` so the call lands on the
+    // composition (main) thread rather than the analyzer executor.
+    LaunchedEffect(detected) {
+        if (detected) {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            // Mirror iOS BarcodeScannerView.swift:156-180 — tap anywhere on the
+            // preview to refocus + re-meter exposure. PreviewView's metering
+            // point factory handles the view→sensor coordinate transform.
+            .pointerInput(Unit) {
+                detectTapGestures { offset ->
+                    val cam = camera ?: return@detectTapGestures
+                    val point = previewView.meteringPointFactory.createPoint(offset.x, offset.y)
+                    val action = FocusMeteringAction.Builder(
+                        point,
+                        FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE
+                    ).build()
+                    runCatching { cam.cameraControl.startFocusAndMetering(action) }
                 }
-                try {
-                    cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalysis)
-                } catch (_: Exception) {}
-            }, ContextCompat.getMainExecutor(ctx))
-            previewView
-        },
-        modifier = Modifier.fillMaxSize()
-    )
+            }
+    ) {
+        AndroidView(
+            factory = {
+                cameraProviderFuture.addListener({
+                    val cameraProvider = cameraProviderFuture.get()
+                    val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
+                    val resolutionSelector = ResolutionSelector.Builder()
+                        .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
+                        .build()
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setResolutionSelector(resolutionSelector)
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                    imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
+                        processImage(imageProxy, scanner) { barcode ->
+                            if (!detected) { detected = true; onBarcodeDetected(barcode) }
+                        }
+                    }
+                    try {
+                        cameraProvider.unbindAll()
+                        camera = cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            preview,
+                            imageAnalysis
+                        )
+                    } catch (_: Exception) {}
+                }, ContextCompat.getMainExecutor(context))
+                previewView
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
 @Composable

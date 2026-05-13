@@ -40,6 +40,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.pumpernickel.android.ui.components.CalorieRing
+import com.pumpernickel.android.ui.components.MacroRingItem
+import com.pumpernickel.android.ui.components.CalorieRingColor
+import com.pumpernickel.android.ui.components.ProteinRingColor
+import com.pumpernickel.android.ui.components.CarbRingColor
+import com.pumpernickel.android.ui.components.FatRingColor
+import com.pumpernickel.android.ui.components.SugarRingColor
 import com.pumpernickel.android.ui.navigation.ExerciseCatalogRoute
 import com.pumpernickel.android.ui.navigation.NutritionGoalsEditorRoute
 import com.pumpernickel.android.ui.navigation.ProgressGalleryRoute
@@ -70,16 +78,6 @@ private fun intensityColor(intensity: TrainingIntensity): Color = when (intensit
     TrainingIntensity.HIGH -> IntensityHigh
 }
 
-// ── Ring colors ──
-
-private val CalorieRingColor = Color(0xFFFF6B6B)
-private val ProteinRingColor = Color(0xFF4FC3F7)
-private val CarbRingColor = Color(0xFFFFD54F)
-private val FatRingColor = Color(0xFFFF8A65)
-private val SugarRingColor = Color(0xFFBA68C8)
-
-// ── Main Screen ──
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
@@ -94,8 +92,9 @@ fun OverviewScreen(
     // Re-pull muscle load + macros every time this screen re-enters composition.
     // Required because the user can finish a workout in another tab and come back —
     // the VM's StateFlow isn't a live DB query, it's a snapshot taken at refresh().
-    LaunchedEffect(Unit) {
+    LifecycleResumeEffect(Unit) {
         viewModel.refresh()
+        onPauseOrDispose { }
     }
 
     Scaffold(
@@ -479,137 +478,6 @@ private fun NutritionRingsCard(uiState: OverviewUiState, onEditClick: () -> Unit
                 )
             }
         }
-    }
-}
-
-// ── Calorie ring (large, centered with text) ──
-
-@Composable
-private fun CalorieRing(
-    current: Double,
-    goal: Double,
-    modifier: Modifier = Modifier
-) {
-    val progress = if (goal > 0) (current / goal).toFloat().coerceIn(0f, 1.5f) else 0f
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(durationMillis = 800),
-        label = "calorie_progress"
-    )
-
-    Box(contentAlignment = Alignment.Center, modifier = modifier) {
-        Canvas(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-            val strokeWidth = 16.dp.toPx()
-            val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
-            val topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
-
-            // Background track
-            drawArc(
-                color = CalorieRingColor.copy(alpha = 0.15f),
-                startAngle = -90f,
-                sweepAngle = 360f,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
-
-            // Progress arc
-            drawArc(
-                color = CalorieRingColor,
-                startAngle = -90f,
-                sweepAngle = animatedProgress * 360f,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = current.toInt().toString(),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = CalorieRingColor
-            )
-            Text(
-                text = "/ ${goal.toInt()} kcal",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-// ── Macro ring item (small ring + label) ──
-
-@Composable
-private fun MacroRingItem(
-    label: String,
-    current: Double,
-    goal: Double,
-    unit: String,
-    color: Color
-) {
-    val progress = if (goal > 0) (current / goal).toFloat().coerceIn(0f, 1.5f) else 0f
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(durationMillis = 800),
-        label = "${label}_progress"
-    )
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(64.dp)) {
-            Canvas(modifier = Modifier.fillMaxSize().padding(4.dp)) {
-                val strokeWidth = 6.dp.toPx()
-                val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
-                val topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
-
-                // Background track
-                drawArc(
-                    color = color.copy(alpha = 0.15f),
-                    startAngle = -90f,
-                    sweepAngle = 360f,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = arcSize,
-                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-                )
-
-                // Progress arc
-                drawArc(
-                    color = color,
-                    startAngle = -90f,
-                    sweepAngle = animatedProgress * 360f,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = arcSize,
-                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-                )
-            }
-
-            Text(
-                text = "${current.toInt()}",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = "${current.toInt()}/${goal.toInt()}$unit",
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
     }
 }
 

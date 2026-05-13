@@ -14,8 +14,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -148,44 +154,48 @@ fun NutritionRecipeCreationScreen(
 
             // \u2500\u2500 Zutaten \u2500\u2500
             if (state.ingredients.isNotEmpty()) {
-                item {
-                    SectionCard(title = stringResource(R.string.section_ingredients)) {
-                        state.ingredients.forEachIndexed { index, entry ->
-                            val amount = entry.amountGrams.toDoubleOrNull() ?: 0.0
-                            val factor = amount / 100.0
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(entry.food.name, fontWeight = FontWeight.Medium)
-                                    Text(
-                                        "${(entry.food.calories * factor).roundToInt()} kcal",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    MacroRow(
-                                        protein = entry.food.protein * factor,
-                                        fat = entry.food.fat * factor,
-                                        carbs = entry.food.carbohydrates * factor,
-                                        sugar = entry.food.sugar * factor
-                                    )
-                                }
-                                Spacer(Modifier.width(8.dp))
-                                OutlinedTextField(
-                                    value = entry.amountGrams,
-                                    onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnIngredientAmountChanged(index, it)) },
-                                    label = { Text(entry.food.unit.label) },
-                                    modifier = Modifier.width(90.dp),
-                                    singleLine = true,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                                )
-                                Spacer(Modifier.width(4.dp))
-                                TextButton(onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientRemoved(index)) }) {
-                                    Text("\u2715", color = MaterialTheme.colorScheme.error)
-                                }
-                            }
+                item { Spacer(Modifier.height(4.dp)); Text(stringResource(R.string.label_ingredients), style = MaterialTheme.typography.labelLarge) }
+                items(state.ingredients.size) { index ->
+                    val entry = state.ingredients[index]
+                    val amount = entry.amountGrams.toDoubleOrNull() ?: 0.0
+                    val factor = amount / 100.0
+                    val totalIngredients = state.ingredients.size
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(entry.food.name, fontWeight = FontWeight.Medium)
+                            Text("${(entry.food.calories * factor).roundToInt()} kcal", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            MacroRow(protein = entry.food.protein * factor, fat = entry.food.fat * factor, carbs = entry.food.carbohydrates * factor, sugar = entry.food.sugar * factor)
                         }
+                        Spacer(Modifier.width(8.dp))
+                        OutlinedTextField(
+                            value = entry.amountGrams, onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnIngredientAmountChanged(index, it)) },
+                            label = { Text(entry.food.unit.label) }, modifier = Modifier.width(90.dp), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        )
+                        // Reorder controls \u2014 mirror iOS NutritionRecipeCreationView.swift:101-107.
+                        IconButton(
+                            onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientMoved(index, index - 1)) },
+                            enabled = index > 0
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.KeyboardArrowUp,
+                                contentDescription = "Zutat nach oben",
+                                tint = if (index > 0) MaterialTheme.colorScheme.onSurface
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                            )
+                        }
+                        IconButton(
+                            onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientMoved(index, index + 1)) },
+                            enabled = index < totalIngredients - 1
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.KeyboardArrowDown,
+                                contentDescription = "Zutat nach unten",
+                                tint = if (index < totalIngredients - 1) MaterialTheme.colorScheme.onSurface
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                            )
+                        }
+                        TextButton(onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientRemoved(index)) }) { Text("\u2715") }
                     }
                 }
 

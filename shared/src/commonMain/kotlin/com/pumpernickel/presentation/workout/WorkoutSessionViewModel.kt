@@ -191,7 +191,9 @@ class WorkoutSessionViewModel(
                 startTimeMillis = now
             )
             // Emit initial pre-fill for first set of first exercise (ENTRY-05)
-            _preFill.value = computePreFill(exercises[0], 0)
+            if (exercises.isNotEmpty()) {
+                _preFill.value = computePreFill(exercises[0], 0)
+            }
             _hasActiveSession.value = true
             startElapsedTicker()
 
@@ -437,7 +439,6 @@ class WorkoutSessionViewModel(
             _sessionState.value = when (currentState) {
                 is WorkoutSessionState.Active -> currentState.copy(exercises = updatedExercises)
                 is WorkoutSessionState.Reviewing -> currentState.copy(exercises = updatedExercises)
-                else -> return@launch
             }
         }
     }

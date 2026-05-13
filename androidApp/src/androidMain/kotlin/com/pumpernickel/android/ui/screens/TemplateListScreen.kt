@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
@@ -45,6 +46,7 @@ import androidx.navigation.NavHostController
 import com.pumpernickel.android.R
 import com.pumpernickel.android.ui.navigation.AchievementGalleryRoute
 import com.pumpernickel.android.ui.navigation.AiSettingsRoute
+import com.pumpernickel.android.ui.navigation.AiWorkoutGenRoute
 import com.pumpernickel.android.ui.navigation.TemplateEditorRoute
 import com.pumpernickel.android.ui.navigation.WorkoutHistoryListRoute
 import com.pumpernickel.android.ui.navigation.WorkoutSessionRoute
@@ -75,6 +77,12 @@ fun TemplateListScreen(navController: NavHostController) {
                     }
                 },
                 actions = {
+                    IconButton(onClick = { navController.navigate(AiWorkoutGenRoute) }) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = "AI-Workout generieren"
+                        )
+                    }
                     IconButton(onClick = { showSettingsSheet = true }) {
                         Icon(
                             imageVector = Icons.Default.Settings,

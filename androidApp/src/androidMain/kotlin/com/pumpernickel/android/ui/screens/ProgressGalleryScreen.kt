@@ -253,7 +253,7 @@ private fun formatGermanShortDate(epochMillis: Long): String {
         "Jan.", "Feb.", "März", "Apr.", "Mai", "Juni",
         "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."
     )
-    return "${ldt.dayOfMonth}. ${months[ldt.monthNumber - 1]}"
+    return "${ldt.day}. ${months[ldt.month.ordinal]}"
 }
 
 /**

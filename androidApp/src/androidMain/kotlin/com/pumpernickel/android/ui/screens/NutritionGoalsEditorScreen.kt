@@ -21,36 +21,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,11 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.pumpernickel.android.ui.components.DrumPicker
-import com.pumpernickel.domain.model.ActivityLevel
-import com.pumpernickel.domain.model.NutritionGoals
-import com.pumpernickel.domain.model.Sex
-import com.pumpernickel.domain.model.UserPhysicalStats
+import com.pumpernickel.android.ui.components.*
+import com.pumpernickel.domain.model.*
 import com.pumpernickel.domain.nutrition.MacroSplit
 import com.pumpernickel.domain.nutrition.TdeeCalculator
 import com.pumpernickel.presentation.overview.OverviewViewModel
@@ -71,7 +45,6 @@ import org.koin.compose.viewmodel.koinViewModel
 
 private enum class SuggestionType { CUT, MAINTAIN, BULK }
 
-// Activity tier labels (D-16-05)
 private val activityLabels: Map<ActivityLevel, String> = mapOf(
     ActivityLevel.SEDENTARY to "Bürojob / kaum Bewegung",
     ActivityLevel.LIGHTLY_ACTIVE to "Leicht aktiv (1–3×/Woche)",
@@ -89,8 +62,6 @@ fun NutritionGoalsEditorScreen(
     val storedStats by viewModel.userPhysicalStats.collectAsState()
     val storedGoals by viewModel.nutritionGoals.collectAsState()
 
-    // Stats inputs — placeholder defaults; seeded once from the first non-null
-    // userPhysicalStats emission via LaunchedEffect below (Gap 2 / WR-03 fix).
     var weightText by remember { mutableStateOf("80") }
     var heightText by remember { mutableStateOf("180") }
     var ageText by remember { mutableStateOf("30") }
@@ -98,8 +69,6 @@ fun NutritionGoalsEditorScreen(
     var activity by remember { mutableStateOf(ActivityLevel.MODERATELY_ACTIVE) }
     var statsExpanded by remember { mutableStateOf(true) }
 
-    // Picker state — defaults from NutritionGoals defaults; seeded once from
-    // first storedGoals emission via LaunchedEffect below.
     var kcalValue by remember { mutableStateOf(2500) }
     var proteinValue by remember { mutableStateOf(150) }
     var carbsValue by remember { mutableStateOf(300) }
@@ -107,9 +76,6 @@ fun NutritionGoalsEditorScreen(
     var sugarValue by remember { mutableStateOf(50) }
 
     var selectedSuggestion by remember { mutableStateOf<SuggestionType?>(null) }
-
-    // One-shot initialization guards (WR-03 / Gap 2). Survives configuration
-    // changes because rememberSaveable persists across recomposition + rotation.
     var statsInitialized by rememberSaveable { mutableStateOf(false) }
     var goalsInitialized by rememberSaveable { mutableStateOf(false) }
 
@@ -120,7 +86,7 @@ fun NutritionGoalsEditorScreen(
             ageText = storedStats!!.age.toString()
             sex = storedStats!!.sex
             activity = storedStats!!.activityLevel
-            statsExpanded = false  // collapse when stats already stored (D-16-09)
+            statsExpanded = false
             statsInitialized = true
         }
     }
@@ -136,7 +102,6 @@ fun NutritionGoalsEditorScreen(
         }
     }
 
-    // Live-computed suggestions based on current stats inputs
     val currentStatsForCalc by remember {
         derivedStateOf {
             val w = weightText.toDoubleOrNull() ?: 80.0
@@ -168,7 +133,6 @@ fun NutritionGoalsEditorScreen(
         ) {
             item { Spacer(modifier = Modifier.height(8.dp)) }
 
-            // Section 1 — Stats (collapsible)
             item {
                 StatsSection(
                     expanded = statsExpanded,
@@ -186,7 +150,6 @@ fun NutritionGoalsEditorScreen(
                 )
             }
 
-            // Section 2 — Suggestion cards
             item {
                 SuggestionRow(
                     suggestions = suggestions,
@@ -207,7 +170,6 @@ fun NutritionGoalsEditorScreen(
                 )
             }
 
-            // Section 3 — DrumPickers
             item {
                 PickerSection(
                     kcalValue = kcalValue,
@@ -223,7 +185,6 @@ fun NutritionGoalsEditorScreen(
                 )
             }
 
-            // Save button
             item {
                 Button(
                     onClick = {
@@ -247,118 +208,49 @@ fun NutritionGoalsEditorScreen(
                         navController.popBackStack()
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Ziele speichern")
                 }
             }
-
             item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }
 
-// ── Stats Section (collapsible) ──
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StatsSection(
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    weightText: String,
-    onWeightChange: (String) -> Unit,
-    heightText: String,
-    onHeightChange: (String) -> Unit,
-    ageText: String,
-    onAgeChange: (String) -> Unit,
-    sex: Sex,
-    onSexChange: (Sex) -> Unit,
-    activity: ActivityLevel,
-    onActivityChange: (ActivityLevel) -> Unit
+    expanded: Boolean, onToggle: () -> Unit,
+    weightText: String, onWeightChange: (String) -> Unit,
+    heightText: String, onHeightChange: (String) -> Unit,
+    ageText: String, onAgeChange: (String) -> Unit,
+    sex: Sex, onSexChange: (Sex) -> Unit,
+    activity: ActivityLevel, onActivityChange: (ActivityLevel) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header row with collapse toggle
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Meine Stats",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
-                )
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "Meine Stats", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 IconButton(onClick = onToggle) {
-                    Icon(
-                        imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (expanded) "Einklappen" else "Ausklappen"
-                    )
+                    Icon(imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null)
                 }
             }
-
             AnimatedVisibility(visible = expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Spacer(modifier = Modifier.height(4.dp))
-
-                    OutlinedTextField(
-                        value = weightText,
-                        onValueChange = onWeightChange,
-                        label = { Text("Gewicht (kg)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-
-                    OutlinedTextField(
-                        value = heightText,
-                        onValueChange = onHeightChange,
-                        label = { Text("Körpergröße (cm)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-
-                    OutlinedTextField(
-                        value = ageText,
-                        onValueChange = onAgeChange,
-                        label = { Text("Alter") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-
-                    // Sex selector — SingleChoiceSegmentedButtonRow (exactly one selected)
+                    OutlinedTextField(weightText, onWeightChange, label = { Text("Gewicht (kg)") }, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                    OutlinedTextField(heightText, onHeightChange, label = { Text("Körpergröße (cm)") }, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                    OutlinedTextField(ageText, onAgeChange, label = { Text("Alter") }, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                            onClick = { onSexChange(Sex.MALE) },
-                            selected = sex == Sex.MALE
-                        ) {
-                            Text("Männlich")
-                        }
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                            onClick = { onSexChange(Sex.FEMALE) },
-                            selected = sex == Sex.FEMALE
-                        ) {
-                            Text("Weiblich")
-                        }
+                        SegmentedButton(onClick = { onSexChange(Sex.MALE) }, selected = sex == Sex.MALE, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text("Männlich") }
+                        SegmentedButton(onClick = { onSexChange(Sex.FEMALE) }, selected = sex == Sex.FEMALE, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text("Weiblich") }
                     }
-
-                    // Activity level dropdown
-                    ActivityDropdown(
-                        selected = activity,
-                        onSelected = onActivityChange
-                    )
+                    ActivityDropdown(activity, onActivityChange)
                 }
             }
         }
@@ -367,148 +259,44 @@ private fun StatsSection(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ActivityDropdown(
-    selected: ActivityLevel,
-    onSelected: (ActivityLevel) -> Unit
-) {
+private fun ActivityDropdown(selected: ActivityLevel, onSelected: (ActivityLevel) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it }
-    ) {
-        OutlinedTextField(
-            value = activityLabels[selected] ?: selected.name,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Aktivitätslevel") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
+    ExposedDropdownMenuBox(expanded, { expanded = it }) {
+        OutlinedTextField(activityLabels[selected] ?: selected.name, {}, readOnly = true, label = { Text("Aktivitätslevel") }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }, modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable))
+        ExposedDropdownMenu(expanded, { expanded = false }) {
             ActivityLevel.entries.forEach { level ->
-                DropdownMenuItem(
-                    text = { Text(activityLabels[level] ?: level.name) },
-                    onClick = {
-                        onSelected(level)
-                        expanded = false
-                    }
-                )
+                DropdownMenuItem({ Text(activityLabels[level] ?: level.name) }, { onSelected(level); expanded = false })
             }
         }
     }
 }
 
-// ── Suggestion Row ──
-
 @Composable
-private fun SuggestionRow(
-    suggestions: com.pumpernickel.domain.nutrition.TdeeSuggestions,
-    selected: SuggestionType?,
-    onSelect: (SuggestionType) -> Unit
-) {
+private fun SuggestionRow(suggestions: com.pumpernickel.domain.nutrition.TdeeSuggestions, selected: SuggestionType?, onSelect: (SuggestionType) -> Unit) {
     Column {
-        Text(
-            text = "Vorschlag berechnen",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            SuggestionCard(
-                title = "Defizit",
-                subtitle = "−500 kcal",
-                split = suggestions.cut,
-                isSelected = selected == SuggestionType.CUT,
-                onClick = { onSelect(SuggestionType.CUT) },
-                modifier = Modifier.weight(1f)
-            )
-            SuggestionCard(
-                title = "Erhalt",
-                subtitle = "TDEE",
-                split = suggestions.maintain,
-                isSelected = selected == SuggestionType.MAINTAIN,
-                onClick = { onSelect(SuggestionType.MAINTAIN) },
-                modifier = Modifier.weight(1f)
-            )
-            SuggestionCard(
-                title = "Aufbau",
-                subtitle = "+300 kcal",
-                split = suggestions.bulk,
-                isSelected = selected == SuggestionType.BULK,
-                onClick = { onSelect(SuggestionType.BULK) },
-                modifier = Modifier.weight(1f)
-            )
+        Text("Vorschlag berechnen", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SuggestionCard("Defizit", "−500 kcal", suggestions.cut, selected == SuggestionType.CUT, { onSelect(SuggestionType.CUT) }, Modifier.weight(1f))
+            SuggestionCard("Erhalt", "TDEE", suggestions.maintain, selected == SuggestionType.MAINTAIN, { onSelect(SuggestionType.MAINTAIN) }, Modifier.weight(1f))
+            SuggestionCard("Aufbau", "+300 kcal", suggestions.bulk, selected == SuggestionType.BULK, { onSelect(SuggestionType.BULK) }, Modifier.weight(1f))
         }
     }
 }
 
-// ── Suggestion Card ──
-
-private val SuggestionCalorieColor = Color(0xFFFF6B6B)
-private val SuggestionProteinColor = Color(0xFF4FC3F7)
-private val SuggestionCarbColor = Color(0xFFFFD54F)
-private val SuggestionFatColor = Color(0xFFFF8A65)
-private val SuggestionSugarColor = Color(0xFFBA68C8)
-
 @Composable
-private fun SuggestionCard(
-    title: String,
-    subtitle: String,
-    split: MacroSplit,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val borderModifier = if (isSelected) {
-        modifier
-            .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-    } else {
-        modifier.clip(RoundedCornerShape(12.dp))
-    }
-    val containerColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-    }
-
-    Card(
-        modifier = borderModifier.clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "${split.kcal} kcal",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = SuggestionCalorieColor
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            MacroDotRow("P ${split.proteinG}g", SuggestionProteinColor)
-            MacroDotRow("K ${split.carbsG}g", SuggestionCarbColor)
-            MacroDotRow("F ${split.fatG}g", SuggestionFatColor)
-            MacroDotRow("Z ${split.sugarG}g", SuggestionSugarColor)
+private fun SuggestionCard(title: String, subtitle: String, split: MacroSplit, isSelected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    Card(modifier.clickable(onClick = onClick).then(if (isSelected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp)) else Modifier), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor)) {
+        Column(Modifier.padding(12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(4.dp))
+            Text("${split.kcal} kcal", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = CalorieRingColor)
+            Spacer(Modifier.height(4.dp))
+            MacroDotRow("P ${split.proteinG}g", ProteinRingColor)
+            MacroDotRow("K ${split.carbsG}g", CarbRingColor)
+            MacroDotRow("F ${split.fatG}g", FatRingColor)
         }
     }
 }
@@ -516,94 +304,128 @@ private fun SuggestionCard(
 @Composable
 private fun MacroDotRow(label: String, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(color)
+        Box(Modifier.size(8.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun PickerSection(
+    kcalValue: Int, onKcalChange: (Int) -> Unit,
+    proteinValue: Int, onProteinChange: (Int) -> Unit,
+    carbsValue: Int, onCarbsChange: (Int) -> Unit,
+    fatValue: Int, onFatChange: (Int) -> Unit,
+    sugarValue: Int, onSugarChange: (Int) -> Unit
+) {
+    Column {
+        Text("Zielwerte anpassen", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(12.dp))
+
+        // Large Calorie Picker
+        GoalPickerRow(
+            label = "Kalorien (kcal)",
+            items = (800..6000 step 50).toList(),
+            value = kcalValue,
+            onValueChange = onKcalChange,
+            displayTransform = { "$it" }
         )
-        Spacer(modifier = Modifier.width(4.dp))
+
+        Spacer(Modifier.height(16.dp))
+
+        // Compact Macro Pickers in a Row (Matching iOS Design)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            CompactGoalPicker(
+                label = "Protein",
+                items = (20..400 step 5).toList(),
+                value = proteinValue,
+                onValueChange = onProteinChange,
+                modifier = Modifier.weight(1f)
+            )
+            CompactGoalPicker(
+                label = "Kohlenh.",
+                items = (20..700 step 5).toList(),
+                value = carbsValue,
+                onValueChange = onCarbsChange,
+                modifier = Modifier.weight(1f)
+            )
+            CompactGoalPicker(
+                label = "Fett",
+                items = (10..250 step 5).toList(),
+                value = fatValue,
+                onValueChange = onFatChange,
+                modifier = Modifier.weight(1f)
+            )
+            CompactGoalPicker(
+                label = "Zucker",
+                items = (0..200 step 5).toList(),
+                value = sugarValue,
+                onValueChange = onSugarChange,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+        MacroCalorieBanner(kcalValue, proteinValue, carbsValue, fatValue)
+    }
+}
+
+@Composable
+private fun CompactGoalPicker(
+    label: String,
+    items: List<Int>,
+    value: Int,
+    onValueChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        DrumPicker(
+            items = items,
+            selectedItem = value,
+            onItemSelected = onValueChange,
+            modifier = Modifier.fillMaxWidth().height(120.dp),
+            label = "",
+            displayTransform = { "$it" }
         )
     }
 }
 
-// ── Picker Section ──
+@Composable
+private fun MacroCalorieBanner(kcalGoal: Int, proteinGrams: Int, carbsGrams: Int, fatGrams: Int) {
+    val macroKcal = proteinGrams * 4 + carbsGrams * 4 + fatGrams * 9
+    val deviation = macroKcal - kcalGoal
+    val isOff = kotlin.math.abs(deviation) > (kcalGoal * 0.10).toInt().coerceAtLeast(50)
+    val containerColor = if (isOff) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant
+    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Makro-Kalorien", style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+                Text("$macroKcal kcal", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            }
+            Text(if (isOff) "Weicht um ${deviation} kcal vom Ziel ab." else "Passt zum Kalorienziel.", style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
 
 @Composable
-private fun PickerSection(
-    kcalValue: Int,
-    onKcalChange: (Int) -> Unit,
-    proteinValue: Int,
-    onProteinChange: (Int) -> Unit,
-    carbsValue: Int,
-    onCarbsChange: (Int) -> Unit,
-    fatValue: Int,
-    onFatChange: (Int) -> Unit,
-    sugarValue: Int,
-    onSugarChange: (Int) -> Unit
-) {
-    Column {
-        Text(
-            text = "Zielwerte anpassen",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            DrumPicker(
-                items = (800..6000 step 50).toList(),
-                selectedItem = kcalValue,
-                onItemSelected = onKcalChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                label = "Kalorien",
-                displayTransform = { "$it kcal" }
-            )
-            DrumPicker(
-                items = (20..400 step 5).toList(),
-                selectedItem = proteinValue,
-                onItemSelected = onProteinChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                label = "Protein",
-                displayTransform = { "$it g" }
-            )
-            DrumPicker(
-                items = (20..700 step 5).toList(),
-                selectedItem = carbsValue,
-                onItemSelected = onCarbsChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                label = "Kohlenhydrate",
-                displayTransform = { "$it g" }
-            )
-            DrumPicker(
-                items = (10..250 step 5).toList(),
-                selectedItem = fatValue,
-                onItemSelected = onFatChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                label = "Fett",
-                displayTransform = { "$it g" }
-            )
-            DrumPicker(
-                items = (0..200 step 5).toList(),
-                selectedItem = sugarValue,
-                onItemSelected = onSugarChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                label = "Zucker",
-                displayTransform = { "$it g" }
-            )
+private fun GoalPickerRow(label: String, items: List<Int>, value: Int, onValueChange: (Int) -> Unit, displayTransform: (Int) -> String) {
+    Column(Modifier.fillMaxWidth()) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+            DrumPicker(items, value, onValueChange, Modifier.fillMaxWidth().height(120.dp), "", displayTransform)
         }
     }
 }
