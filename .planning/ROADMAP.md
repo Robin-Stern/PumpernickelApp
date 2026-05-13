@@ -311,10 +311,17 @@ Plans:
 - Geofence-Trigger: erstes geloggtes Set vs. erste N Sets vs. konfigurierbar
 - Monthly Reset: Kalendermonat oder rolling 30-day window?
 
-**Goal:** [To be planned]
-**Requirements:** TBD (vermutlich neue REQ-WO-* Einträge — Anti-Quit-Mechanik gehört nicht in REQUIREMENTS-v1.5.md, könnte eigenes REQUIREMENTS-anti-quit.md werden)
-**Depends on:** Phase 18, Phase 15 (XP-System)
-**Plans:** 0 plans
+**Goal:** Geofence-gated workout enforcement — the first logged set anchors a 50m geofence at the user's current location via native OS region monitoring (CLCircularRegion / GeofencingClient). Leaving the zone without using the explicit "Workout beenden" button triggers a 5-minute grace period; if the user does not return, the workout auto-saves as `abandoned=true` (volume-XP still awarded), a staffeled XP penalty (-50 to -200 per `XpFormula.geofenceExitPenalty`) is applied, and a local notification is posted. The 10-minute F5 inactivity timer is fully removed (replaced, not added). Users get 2 Early Exits per calendar month (D-19-07) that bypass the penalty when invoked via the explicit menu action. UI surfaces a 4-state status chip during Active state plus a Settings "Workout Enforcement" row + detail sheet.
+
+**Requirements:** D-19-01 through D-19-16 (tracked via CONTEXT.md decision IDs; no formal REQ-* IDs in REQUIREMENTS.md per planning_context note).
+**Depends on:** Phase 18 (AI features), Phase 15 (XP-System), post-v1.5 LocationProvider abstraction.
+**Plans:** 7 plans (4 waves)
 
 Plans:
-- [ ] TBD (run `/gsd-discuss-phase 19` dann `/gsd-plan-phase 19`)
+- [ ] 19-01-PLAN.md — Wave 1: commonMain interfaces + XP-constants refactor (GeofenceProvider, PermissionController, EarlyExitTracker, geofence penalty constants, F5 removal)
+- [ ] 19-02-PLAN.md — Wave 1: Room schema v10→v11 (abandoned flag) + WorkoutRepository.saveAbandonedWorkout
+- [ ] 19-03-PLAN.md — Wave 2: iOS platform impls (IosGeofenceProvider, IosPermissionController, AppDelegate cold-start, Info.plist UIBackgroundModes + privacy strings)
+- [ ] 19-04-PLAN.md — Wave 2: Android platform impls (AndroidGeofenceProvider, BroadcastReceiver, AndroidPermissionController, AndroidManifest permissions)
+- [ ] 19-05-PLAN.md — Wave 3: WorkoutSessionViewModel integration (geofence lifecycle, grace timer, Early-Exit flow) + processAbandonedWorkout
+- [ ] 19-06-PLAN.md — Wave 4: iOS UI (chip, rationale sheet, banners, early-exit dialog, Settings detail view, notifications) + visual UAT
+- [ ] 19-07-PLAN.md — Wave 4: Android UI (chip, rationale sheet, banners, early-exit dialog, Settings detail sheet, notifications) + visual UAT
