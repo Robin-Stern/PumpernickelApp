@@ -13,19 +13,9 @@ import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
 import com.pumpernickel.domain.nutrition.UpdateFoodUseCase
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
-
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.FlowPreview
 
 data class FoodEntryUiState(
     val name: String = "",
@@ -67,6 +57,7 @@ sealed interface FoodEntryEvent {
     data object ClearMessages : FoodEntryEvent
 }
 
+@OptIn(FlowPreview::class)
 class FoodEntryViewModel(
     private val loadFoods: LoadFoodsUseCase,
     private val addFood: AddFoodUseCase,
@@ -91,7 +82,6 @@ class FoodEntryViewModel(
         else foods.filter { it.name.contains(state.searchQuery.trim(), ignoreCase = true) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    @OptIn(FlowPreview::class)
     init {
         viewModelScope.launch { _foods.value = loadFoods() }
         viewModelScope.launch {

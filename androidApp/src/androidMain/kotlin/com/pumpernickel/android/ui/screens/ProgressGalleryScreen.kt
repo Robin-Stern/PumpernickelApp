@@ -51,9 +51,9 @@ import com.pumpernickel.domain.progresspic.PhotoVault
 import com.pumpernickel.domain.progresspic.ProgressGalleryTile
 import com.pumpernickel.presentation.progresspic.NavEvent
 import com.pumpernickel.presentation.progresspic.ProgressGalleryViewModel
+import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -253,7 +253,7 @@ private fun formatGermanShortDate(epochMillis: Long): String {
         "Jan.", "Feb.", "März", "Apr.", "Mai", "Juni",
         "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."
     )
-    return "${ldt.day}. ${months[ldt.month - 1]}"
+    return "${ldt.day}. ${months[ldt.month.ordinal]}"
 }
 
 /**

@@ -4,7 +4,7 @@ import com.pumpernickel.data.repository.FoodRepository
 import com.pumpernickel.domain.model.ConsumptionEntry
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlin.time.Instant
+import kotlinx.datetime.Instant
 import kotlinx.datetime.toLocalDateTime
 
 class LoadConsumptionsForDateUseCase(

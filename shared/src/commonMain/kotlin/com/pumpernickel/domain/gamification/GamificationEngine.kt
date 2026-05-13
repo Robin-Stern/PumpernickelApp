@@ -9,8 +9,9 @@ import com.pumpernickel.domain.location.GeoPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlin.time.Instant
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 
 import kotlinx.datetime.TimeZone
