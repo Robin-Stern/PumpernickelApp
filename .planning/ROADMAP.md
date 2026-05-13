@@ -289,3 +289,32 @@ Plans:
 - Schema-invalid LLM responses surface a clear error and never write partial data.
 - BYOK key is stored in Keychain (iOS) / EncryptedSharedPreferences (Android), never in DataStore plaintext.
 - Phase 15 gamification, Phase 16 nutrition goals, and Phase 17 progress-pic flows continue to work unchanged.
+
+### Phase 19: Geofencing-basierte Workout-Enforcement (XP-Strafe bei vorzeitigem Verlassen, Early-Exits-Budget)
+
+**Premise:** Klassischer Gym-Drop-Out — User startet Plan, macht die Hälfte, geht heim. Geofencing erzwingt das Durchhalten: erstes geloggtes Set fixiert die aktuelle Position als Trainingsort, ein ~50m-Geofence wird gesetzt, die App pollt alle ~2min ob der User noch drin ist. Verlässt er die Zone ohne das Workout sauber zu beenden, wird das Workout abgebrochen und XP abgezogen (Vorschlag: -100 bis -200, finale Höhe in Discuss). Eskape-Hatch: 2 "Early Exits" pro Monat erlauben sauberes Verkürzen ohne Strafe — monatliches Reset.
+
+**Scope:**
+- Cross-platform iOS + Android (Compose Multiplatform shared logic; Platform-spezifische Location/Notification APIs via expect/actual)
+- Permissions-Flow für Location-Always-Allow (inkl. graceful Degradation bei Verweigerung)
+- Push-Notification als Warnung beim Verlassen der Zone
+- UI: Geofence-Status-Indikator im Workout-Flow + Early-Exits-Counter in Settings
+- Background-Behavior — App muss auch im Hintergrund prüfen können
+- Integration in bestehendes XP-System (Phase 15) für Penalty + Early-Exit-Tracking
+- Wiederverwendung der bereits existierenden `LocationProvider`-Abstraktion (commonMain) und `IosLocationProvider` / `AndroidLocationProvider`
+
+**Offene Designfragen (für /gsd-discuss-phase 19):**
+- Exakte XP-Strafe (-100 vs -200 vs gestaffelt nach Workout-Länge)
+- Polling alle 2min vs. native Geofence-Events (CLCircularRegion bzw. GeofencingClient `addGeofences`)
+- Verhalten bei verweigerter Location-Permission (Feature deaktivieren? Soft-Warning? Phasenweise Eskalation?)
+- Background-Mode-Strategie iOS (Significant-Change vs. Continuous Updates) + Android (Foreground Service?)
+- Geofence-Trigger: erstes geloggtes Set vs. erste N Sets vs. konfigurierbar
+- Monthly Reset: Kalendermonat oder rolling 30-day window?
+
+**Goal:** [To be planned]
+**Requirements:** TBD (vermutlich neue REQ-WO-* Einträge — Anti-Quit-Mechanik gehört nicht in REQUIREMENTS-v1.5.md, könnte eigenes REQUIREMENTS-anti-quit.md werden)
+**Depends on:** Phase 18, Phase 15 (XP-System)
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run `/gsd-discuss-phase 19` dann `/gsd-plan-phase 19`)
