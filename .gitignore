@@ -29,6 +29,9 @@ shared/schemas/
 # Agent/CLI
 .claude/
 
+# GSD agent worktrees (local-only, never commit)
+.claude/worktrees/
+
 # SQLite
 *.db
 *.db-shm
