@@ -35,6 +35,9 @@
     <string name="action_update">Aktualisieren</string>
     <string name="action_save">Speichern</string>
     <string name="action_delete">Löschen</string>
+    <string name="confirm_delete_entry">Möchtest du diesen Eintrag wirklich löschen?</string>
+    <string name="confirm_delete_food">Möchtest du dieses Lebensmittel wirklich löschen?</string>
+    <string name="confirm_delete_recipe">Möchtest du dieses Rezept wirklich löschen?</string>
     <string name="heading_saved_foods">Gespeicherte Lebensmittel</string>
     <string name="hint_search">Suchen…</string>
     <string name="msg_no_foods">Noch keine Lebensmittel gespeichert.</string>

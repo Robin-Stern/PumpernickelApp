@@ -319,9 +319,32 @@ private fun NutritionSummaryCard(state: com.pumpernickel.presentation.nutrition.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EntrySwipeCard(entry: ConsumptionEntry, onDelete: () -> Unit) {
-    val dismissState = rememberSwipeToDismissBoxState()
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) onDelete()
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) showConfirmDialog = true
+            false
+        }
+    )
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text(stringResource(R.string.action_delete)) },
+            text = { Text(stringResource(R.string.confirm_delete_entry)) },
+            confirmButton = {
+                Button(
+                    onClick = { showConfirmDialog = false; onDelete() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.Black)
+                ) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
     val m = entry.macros()
     SwipeToDismissBox(

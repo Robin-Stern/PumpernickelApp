@@ -21,6 +21,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -137,16 +139,40 @@ private fun RecipeSwipeCard(
 ) {
     val currentRecipe by rememberUpdatedState(recipe)
     val currentOnDelete by rememberUpdatedState(onDelete)
+    var showConfirmDialog by remember { mutableStateOf(false) }
     val dismissState = rememberSwipeToDismissBoxState(
         positionalThreshold = { it * 0.3f },
         confirmValueChange = { value ->
             when (value) {
                 SwipeToDismissBoxValue.StartToEnd -> { viewModel.onEvent(RecipeListEvent.OnRecipeFavoriteToggled(currentRecipe)); false }
-                SwipeToDismissBoxValue.EndToStart -> { currentOnDelete(); !currentRecipe.isFavorite }
+                SwipeToDismissBoxValue.EndToStart -> { showConfirmDialog = true; false }
                 else -> false
             }
         }
     )
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text(stringResource(R.string.action_delete_recipe)) },
+            text = { Text(stringResource(R.string.confirm_delete_recipe)) },
+            confirmButton = {
+                Button(
+                    onClick = { showConfirmDialog = false; currentOnDelete() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red,
+                        contentColor = Color.Black
+                    )
+                ) {
+                    Text(stringResource(R.string.action_delete_recipe))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
