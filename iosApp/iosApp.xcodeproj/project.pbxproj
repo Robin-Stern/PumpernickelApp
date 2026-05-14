@@ -45,6 +45,10 @@
 		A10104 /* NutritionRecipeCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10104 /* NutritionRecipeCreationView.swift */; };
 		A10105 /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10105 /* BarcodeScannerView.swift */; };
 		A10110 /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10110 /* OverviewView.swift */; };
+		68C7E602B72D2ACCFA53C0EF /* NutritionGoalsEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53FEB17CFAAB339866E7BF48 /* NutritionGoalsEditorView.swift */; };
+		A10120 /* OverviewRankStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10120 /* OverviewRankStrip.swift */; };
+		A10121 /* UnlockModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10121 /* UnlockModalView.swift */; };
+		A10122 /* AchievementGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10122 /* AchievementGalleryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -84,6 +88,10 @@
 		B10104 /* NutritionRecipeCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionRecipeCreationView.swift; sourceTree = "<group>"; };
 		B10105 /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
 		B10110 /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
+		53FEB17CFAAB339866E7BF48 /* NutritionGoalsEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionGoalsEditorView.swift; sourceTree = "<group>"; };
+		B10120 /* OverviewRankStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewRankStrip.swift; sourceTree = "<group>"; };
+		B10121 /* UnlockModalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockModalView.swift; sourceTree = "<group>"; };
+		B10122 /* AchievementGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementGalleryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -136,6 +144,7 @@
 				E10013 /* Settings */,
 				E10016 /* Nutrition */,
 				E10017 /* Overview */,
+				E10018 /* Gamification */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -249,14 +258,6 @@
 			path = Theme;
 			sourceTree = "<group>";
 		};
-		E10017 /* Overview */ = {
-			isa = PBXGroup;
-			children = (
-				B10110 /* OverviewView.swift */,
-			);
-			path = Overview;
-			sourceTree = "<group>";
-		};
 		E10016 /* Nutrition */ = {
 			isa = PBXGroup;
 			children = (
@@ -268,6 +269,25 @@
 				B10105 /* BarcodeScannerView.swift */,
 			);
 			path = Nutrition;
+			sourceTree = "<group>";
+		};
+		E10017 /* Overview */ = {
+			isa = PBXGroup;
+			children = (
+				B10110 /* OverviewView.swift */,
+				53FEB17CFAAB339866E7BF48 /* NutritionGoalsEditorView.swift */,
+				B10120 /* OverviewRankStrip.swift */,
+			);
+			path = Overview;
+			sourceTree = "<group>";
+		};
+		E10018 /* Gamification */ = {
+			isa = PBXGroup;
+			children = (
+				B10121 /* UnlockModalView.swift */,
+				B10122 /* AchievementGalleryView.swift */,
+			);
+			path = Gamification;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -424,6 +444,10 @@
 				A10104 /* NutritionRecipeCreationView.swift in Sources */,
 				A10105 /* BarcodeScannerView.swift in Sources */,
 				A10110 /* OverviewView.swift in Sources */,
+				68C7E602B72D2ACCFA53C0EF /* NutritionGoalsEditorView.swift in Sources */,
+				A10120 /* OverviewRankStrip.swift in Sources */,
+				A10121 /* UnlockModalView.swift in Sources */,
+				A10122 /* AchievementGalleryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

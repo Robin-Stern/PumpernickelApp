@@ -49,6 +49,9 @@ interface NutritionDao {
     @Query("SELECT * FROM consumption_entries ORDER BY timestampMillis DESC")
     suspend fun getAllConsumptions(): List<ConsumptionEntryEntity>
 
+    @Query("SELECT * FROM consumption_entries ORDER BY timestampMillis ASC")
+    suspend fun getAllEntries(): List<ConsumptionEntryEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertConsumption(entry: ConsumptionEntryEntity)
 

@@ -24,6 +24,9 @@ private struct AppRootView: View {
             .preferredColorScheme(theme.colorScheme)
             .tint(.appAccent)
             .task {
+                // Gamification: seed achievement_state + retroactive XP replay.
+                // Idempotent — safe to call every launch.
+                GamificationStartupIos.shared.trigger()
                 await withTaskGroup(of: Void.self) { group in
                     group.addTask { await observeTheme() }
                     group.addTask { await observeAccentColor() }

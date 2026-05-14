@@ -20,15 +20,11 @@ iosApp/Pods/
 iosApp/.symlinks/
 iosApp/Flutter/
 
+# Xcode user state (per-user IDE state, not source)
+**/xcuserdata/
+
 # Room schemas (generated)
 shared/schemas/
 
-# Agent/CLI
-.claude/
-.kotlin/
-*.db
-*.db-shm
-*.db-wal
-
-# Xcode
-xcuserdata/
+# GSD agent worktrees (local-only, never commit)
+.claude/worktrees/

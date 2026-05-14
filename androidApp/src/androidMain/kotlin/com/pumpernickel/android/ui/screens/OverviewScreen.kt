@@ -1,15 +1,23 @@
 package com.pumpernickel.android.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,11 +35,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import com.pumpernickel.android.ui.navigation.NutritionGoalsEditorRoute
+import com.pumpernickel.android.ui.navigation.RanksAndAchievementsRoute
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.MuscleRegionPath
 import com.pumpernickel.domain.model.MuscleRegionPaths
 import com.pumpernickel.domain.model.NutritionGoals
 import com.pumpernickel.domain.model.RecipeMacros
+import com.pumpernickel.domain.gamification.RankState
+import com.pumpernickel.presentation.gamification.GamificationViewModel
 import com.pumpernickel.presentation.overview.OverviewUiState
 import com.pumpernickel.presentation.overview.OverviewViewModel
 import com.pumpernickel.presentation.overview.TrainingIntensity
@@ -64,13 +77,13 @@ private val SugarRingColor = Color(0xFFBA68C8)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
-    viewModel: OverviewViewModel = koinViewModel()
+    navController: NavHostController,
+    viewModel: OverviewViewModel = koinViewModel(),
+    gamificationViewModel: GamificationViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.refresh()
-    }
+    val rankState by gamificationViewModel.rankState.collectAsState()
+    val bannerVisible by viewModel.nutritionGoalsBannerVisible.collectAsState()
 
     Scaffold(
         topBar = {
@@ -104,11 +117,31 @@ fun OverviewScreen(
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // ── Rank Strip (D-18) ──
+                OverviewRankStrip(
+                    rankState = rankState,
+                    onTap = { navController.navigate(RanksAndAchievementsRoute) }
+                )
+
                 // ── Muscle Activity Section ──
                 MuscleActivityCard(uiState)
 
+                // ── Nutrition Goals Banner (D-16-13) ──
+                AnimatedVisibility(
+                    visible = bannerVisible,
+                    exit = slideOutVertically() + fadeOut(animationSpec = tween(300))
+                ) {
+                    NutritionGoalsBanner(
+                        onTap = { navController.navigate(NutritionGoalsEditorRoute) },
+                        onDismiss = { viewModel.dismissBanner() }
+                    )
+                }
+
                 // ── Nutrition Rings Section ──
-                NutritionRingsCard(uiState)
+                NutritionRingsCard(
+                    uiState = uiState,
+                    onEditClick = { navController.navigate(NutritionGoalsEditorRoute) }
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -303,7 +336,7 @@ private fun OverviewAnatomyCanvas(
 // ══════════════════════════════════════════════════════════════
 
 @Composable
-private fun NutritionRingsCard(uiState: OverviewUiState) {
+private fun NutritionRingsCard(uiState: OverviewUiState, onEditClick: () -> Unit) {
     val macros = uiState.todayMacros
     val goals = uiState.nutritionGoals
 
@@ -318,11 +351,28 @@ private fun NutritionRingsCard(uiState: OverviewUiState) {
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Ernährung · Heute",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "Ernährung · Heute",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(
+                    onClick = onEditClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Ziele bearbeiten",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(20.dp))
 
             // Main calorie ring
@@ -500,5 +550,63 @@ private fun MacroRingItem(
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// Nutrition Goals Banner (D-16-13)
+// ══════════════════════════════════════════════════════════════
+
+@Composable
+private fun NutritionGoalsBanner(
+    onTap: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onTap() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Outlined.TrackChanges,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Persönliche Ziele setzen",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "Berechne deinen Tagesbedarf und passe deine Makros an.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Banner ausblenden",
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
     }
 }

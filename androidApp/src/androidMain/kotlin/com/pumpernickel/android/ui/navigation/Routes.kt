@@ -23,3 +23,13 @@ import kotlinx.serialization.Serializable
 @Serializable data object NutritionRecipeListRoute
 @Serializable data object NutritionRecipeCreationRoute
 @Serializable data object NutritionDailyLogRoute
+
+// Gamification
+@Serializable data object AchievementGalleryRoute
+
+// Overview tab — Ranks & Achievements Browser (Phase 15.1)
+@Serializable data object OverviewRootRoute
+@Serializable data object RanksAndAchievementsRoute
+
+// Overview tab — Nutrition Goals Editor (Phase 16)
+@Serializable data object NutritionGoalsEditorRoute
