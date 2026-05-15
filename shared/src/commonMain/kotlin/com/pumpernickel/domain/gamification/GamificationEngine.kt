@@ -90,6 +90,44 @@ class GamificationEngine(
         )
     }
 
+    // ---------- Phase 19: abandoned workout volume XP (D-19-14) ----------
+
+    /**
+     * D-19-14 — award workout-volume XP for an abandoned workout. Sibling
+     * to onWorkoutSaved but intentionally limited:
+     *   - awards SOURCE_WORKOUT volume XP via XpFormula.workoutXp (matches normal flow)
+     *   - DOES NOT detect PRs (Claude's-Discretion call per CONTEXT: abandoning =
+     *     intent to bail; PR rewards would defeat the disincentive)
+     *   - DOES NOT fire streak checks (the workout broke the streak by ending
+     *     early — same reasoning as PR)
+     *   - DOES NOT fire achievement / rank evaluations (same)
+     *
+     * Idempotent via the existing (source, eventKey) ledger dedupe.
+     * Called from WorkoutSessionViewModel.handleGeofenceExitGraceExpired().
+     */
+    suspend fun processAbandonedWorkout(workoutId: Long) {
+        val nowMillis = currentTimeMillis()
+        val exercises = completedWorkoutDao.getExercisesForWorkout(workoutId)
+        val sets = exercises.flatMap { ex -> completedWorkoutDao.getSetsForExercise(ex.id) }
+        val xpInputs = sets.map {
+            WorkoutSetInput(actualReps = it.actualReps, actualWeightKgX10 = it.actualWeightKgX10)
+        }
+        val workoutXp = XpFormula.workoutXp(xpInputs)
+        if (workoutXp <= 0) return
+
+        gamificationRepo.awardXp(
+            source = EventKeys.SOURCE_WORKOUT,
+            eventKey = EventKeys.workout(workoutId),
+            amount = workoutXp,
+            awardedAtMillis = nowMillis,
+            retroactive = false
+        )
+        // Intentionally NO checkRankPromotion / runAchievementAndRankChecks —
+        // an abandoned workout's volume contribution is recorded, but the
+        // gamification surface (unlocks, streaks, rank promotions) does not
+        // celebrate the abandonment.
+    }
+
     // ---------- D-22: nutrition goal-day evaluation ----------
 
     /**
