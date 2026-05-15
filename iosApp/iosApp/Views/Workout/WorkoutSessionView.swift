@@ -2,6 +2,7 @@ import SwiftUI
 import Shared
 import KMPNativeCoroutinesAsync
 import UIKit
+import UserNotifications
 
 // Fix side-by-side wheel picker touch overlap (ENTRY-01, ENTRY-02)
 // Source: swiftuirecipes.com/blog/multi-column-wheel-picker-in-swiftui
@@ -17,6 +18,7 @@ struct WorkoutSessionView: View {
     var isResume: Bool = false
 
     @State private var viewModel = KoinHelper.shared.getWorkoutSessionViewModel()
+    private let permissionController = KoinHelper.shared.getPermissionController()
 
     @Environment(\.dismiss) private var dismiss
 
@@ -48,6 +50,19 @@ struct WorkoutSessionView: View {
     // Undertrained muscles dialog
     @State private var showUndertrainedDialog = false
     @State private var undertrainedMuscles: [MuscleGroup] = []
+
+    // Phase 19 state
+    @State private var geofenceState: GeofenceUiState = GeofenceUiState.Inactive.shared
+    @State private var earlyExitBudget: EarlyExitBudget? = nil
+    @State private var locationPermissionStatus: LocationPermissionStatus = .notDetermined
+    @State private var showRationaleSheet = false
+    // WARN-19-2 fix — per-launch persistence via @AppStorage (UserDefaults-backed).
+    // Cleared on cold-start by AppDelegate so each app launch shows the rationale
+    // once per workout-try, matching UI-SPEC's "once per session" semantics.
+    @AppStorage("workout.geofence.rationale_shown_session") private var hasShownRationaleThisSession = false
+    @State private var showEarlyExitDialog = false
+    @State private var earlyExitDialogConfig: EarlyExitDialogConfig? = nil
+    @State private var wasInGracePeriod = false           // for re-enter notification
 
     // Minimal set screen toggle (UX-01, D-02)
     @State private var showSetInput: Bool = false
@@ -143,6 +158,19 @@ struct WorkoutSessionView: View {
                 group.addTask { await observePreFill() }
                 group.addTask { await observePersonalBest() }
                 group.addTask { await observeUndertrainedMuscles() }
+                group.addTask { await observeGeofenceState() }
+                group.addTask { await observeEarlyExitBudget() }
+                group.addTask { await refreshPermissionStatusOnAppear() }
+                group.addTask {
+                    // D-19-09: show rationale once per session if status != ALWAYS
+                    try? await Task.sleep(nanoseconds: 500_000_000)   // 0.5s for VM to settle
+                    if !hasShownRationaleThisSession && locationPermissionStatus != .always {
+                        await MainActor.run {
+                            showRationaleSheet = true
+                            hasShownRationaleThisSession = true
+                        }
+                    }
+                }
             }
         }
     }
@@ -159,6 +187,13 @@ struct WorkoutSessionView: View {
 
         ScrollView {
             VStack(spacing: 20) {
+                // D-19-10 / D-19-11 — persistent permission banner above header
+                if locationPermissionStatus == .whenInUse {
+                    PermissionBanner(variant: .whenInUseOnly)
+                } else if locationPermissionStatus == .denied || locationPermissionStatus == .restricted {
+                    PermissionBanner(variant: .denied)
+                }
+
                 // Header section (WORK-06, WORK-08)
                 headerSection(
                     active: active,
@@ -251,6 +286,9 @@ struct WorkoutSessionView: View {
                 .accessibilityLabel("Close workout")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
+                GeofenceStatusChip(state: geofenceState)
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
                     Button {
                         viewModel.skipExercise()
@@ -269,6 +307,28 @@ struct WorkoutSessionView: View {
                         viewModel.enterReview()
                     } label: {
                         Label("Finish Workout", systemImage: "checkmark.circle")
+                    }
+
+                    Button {
+                        let allDone = active.exercises.allSatisfy { ex in ex.sets.allSatisfy { $0.isCompleted } }
+                        if allDone {
+                            viewModel.enterReview()
+                        } else {
+                            let planned = active.exercises.reduce(0) { $0 + Int($1.targetSets) }
+                            let logged = active.exercises.reduce(0) { sum, ex in sum + ex.sets.filter({ $0.isCompleted }).count }
+                            let missed = max(0, planned - logged)
+                            let penaltyRaw = missed * 10
+                            let penalty = min(200, max(50, penaltyRaw))
+                            let budget = self.earlyExitBudget
+                            earlyExitDialogConfig = EarlyExitDialogConfig(
+                                total: 2,
+                                remaining: Int(budget?.remaining ?? 0),
+                                penaltyXp: penalty
+                            )
+                            showEarlyExitDialog = true
+                        }
+                    } label: {
+                        Label("Workout beenden", systemImage: "xmark.circle")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -302,6 +362,48 @@ struct WorkoutSessionView: View {
         } message: {
             Text("Diese Muskelgruppen wurden in den letzten 7 Tagen kaum oder gar nicht trainiert:\n\n" +
                  undertrainedMuscles.map { "• \($0.displayName)" }.joined(separator: "\n"))
+        }
+        .sheet(isPresented: $showRationaleSheet) {
+            PermissionRationaleSheet(
+                onActivate: {
+                    Task {
+                        _ = try? await asyncFunction(for: permissionController.requestWhenInUse())
+                        let status = try? await asyncFunction(for: permissionController.currentLocationStatus())
+                        if let status { self.locationPermissionStatus = status }
+                        // WARN-19-1 fix — request notifications UNCONDITIONALLY after the
+                        // first location grant resolves (useful even for .whenInUse state).
+                        _ = try? await asyncFunction(for: permissionController.requestNotifications())
+                        // D-19-09 — Always-Allow can only be requested AFTER WhenInUse on iOS.
+                        if status == .whenInUse {
+                            _ = try? await asyncFunction(for: permissionController.requestAlways())
+                            let after = try? await asyncFunction(for: permissionController.currentLocationStatus())
+                            if let after { self.locationPermissionStatus = after }
+                        }
+                    }
+                },
+                onLater: { /* no-op — sheet dismisses */ }
+            )
+        }
+        .confirmationDialog(
+            earlyExitDialogConfig?.title ?? "",
+            isPresented: $showEarlyExitDialog,
+            titleVisibility: .visible,
+            presenting: earlyExitDialogConfig
+        ) { cfg in
+            Button(cfg.primaryButtonLabel, role: cfg.primaryButtonRole) {
+                let result = viewModel.requestEarlyExit()
+                // Post notification matching the path taken.
+                let center = UNUserNotificationCenter.current()
+                if cfg.hasBudget {
+                    center.postGeofenceNotification(.earlyExitWithBudget(remainingAfter: cfg.remaining - 1))
+                } else {
+                    center.postGeofenceNotification(.earlyExitWithPenalty(penaltyXp: cfg.penaltyXp))
+                }
+                _ = result   // VM has already transitioned to Finished via async path
+            }
+            Button("Abbrechen", role: .cancel) { }
+        } message: { cfg in
+            Text(cfg.message)
         }
     }
 
@@ -723,6 +825,64 @@ struct WorkoutSessionView: View {
     }
 
     // MARK: - Flow Observation
+
+    private func observeGeofenceState() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.geofenceStateFlow) {
+                handleGeofenceStateChange(old: self.geofenceState, new: value)
+                self.geofenceState = value
+            }
+        } catch {
+            print("geofence state observation error: \(error)")
+        }
+    }
+
+    private func observeEarlyExitBudget() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.earlyExitBudgetFlow) {
+                self.earlyExitBudget = value
+            }
+        } catch {
+            print("earlyExit budget observation error: \(error)")
+        }
+    }
+
+    @MainActor
+    private func refreshPermissionStatusOnAppear() async {
+        do {
+            let status = try await asyncFunction(for: permissionController.currentLocationStatus())
+            self.locationPermissionStatus = status
+        } catch {
+            self.locationPermissionStatus = .notDetermined
+        }
+    }
+
+    private func handleGeofenceStateChange(old: GeofenceUiState, new: GeofenceUiState) {
+        // D-19-15 notification triggers.
+        let center = UNUserNotificationCenter.current()
+        switch new {
+        case is GeofenceUiState.GracePeriod:
+            if !(old is GeofenceUiState.GracePeriod) {
+                // Just entered grace
+                center.postGeofenceNotification(.exitDetected)
+                wasInGracePeriod = true
+            }
+        case is GeofenceUiState.InZone:
+            if wasInGracePeriod {
+                center.postGeofenceNotification(.reEntered)
+                wasInGracePeriod = false
+            }
+        case is GeofenceUiState.Exited:
+            // Grace period expired — post the grace-expired notification.
+            let active = sessionState as? WorkoutSessionState.Active
+            let logged = active?.exercises.reduce(0) { sum, ex in sum + ex.sets.filter({ $0.isCompleted }).count } ?? 0
+            let planned = active?.exercises.reduce(0) { $0 + Int($1.targetSets) } ?? 0
+            let missed = max(0, planned - logged)
+            let penalty = min(200, max(50, missed * 10))
+            center.postGeofenceNotification(.graceExpired(loggedSets: logged, penaltyXp: penalty))
+        default: break
+        }
+    }
 
     private func observeSessionState() async {
         do {

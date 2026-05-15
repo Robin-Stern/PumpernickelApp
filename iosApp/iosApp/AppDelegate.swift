@@ -18,6 +18,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        // Phase 19 WARN-19-2 fix — clear the per-session rationale flag on cold-start
+        // so the rationale sheet shows once per app launch (UI-SPEC: "once per workout-try").
+        // The @AppStorage("workout.geofence.rationale_shown_session") binding in
+        // WorkoutSessionView reads this same UserDefaults key.
+        UserDefaults.standard.set(false, forKey: "workout.geofence.rationale_shown_session")
+
         // 1. Koin must be up before anything else touches the shared graph.
         KoinInitIosKt.doInitKoinIos()
 
