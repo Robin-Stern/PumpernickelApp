@@ -76,6 +76,15 @@ struct SettingsView: View {
                     }
                 }
 
+                // D-19-16: Workout Enforcement settings (Phase 19).
+                Section("Training") {
+                    NavigationLink {
+                        WorkoutEnforcementDetailView()
+                    } label: {
+                        Label("Workout Enforcement", systemImage: "location.circle.fill")
+                    }
+                }
+
                 // D-18-05: BYOK AI configuration reachable from Settings.
                 Section("AI") {
                     NavigationLink {
