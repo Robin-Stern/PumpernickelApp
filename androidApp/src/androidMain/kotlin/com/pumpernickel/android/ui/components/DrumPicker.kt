@@ -53,10 +53,19 @@ fun DrumPicker(
         }
     }
 
+    // Initialization and Sync
+    var isInitialScroll by remember { mutableStateOf(true) }
+
     LaunchedEffect(selectedItem) {
         val targetIndex = items.indexOf(selectedItem)
         if (targetIndex >= 0 && !listState.isScrollInProgress) {
-            listState.scrollToItem(targetIndex)
+            if (isInitialScroll) {
+                delay(100) // Small buffer for initial layout
+                listState.scrollToItem(targetIndex)
+                isInitialScroll = false
+            } else {
+                listState.animateScrollToItem(targetIndex)
+            }
         }
     }
 
@@ -64,7 +73,9 @@ fun DrumPicker(
         snapshotFlow { listState.isScrollInProgress }
             .filter { !it }
             .collect {
-                onItemSelected(items[centerIndex.coerceIn(0, items.lastIndex)])
+                if (!isInitialScroll) {
+                    onItemSelected(items[centerIndex.coerceIn(0, items.lastIndex)])
+                }
             }
     }
 

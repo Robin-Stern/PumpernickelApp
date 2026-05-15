@@ -69,15 +69,14 @@ fun NutritionGoalsEditorScreen(
     var activity by remember { mutableStateOf(ActivityLevel.MODERATELY_ACTIVE) }
     var statsExpanded by remember { mutableStateOf(true) }
 
-    var kcalValue by remember { mutableStateOf(2500) }
-    var proteinValue by remember { mutableStateOf(150) }
-    var carbsValue by remember { mutableStateOf(300) }
-    var fatValue by remember { mutableStateOf(80) }
-    var sugarValue by remember { mutableStateOf(50) }
+    var kcalValue by remember { mutableStateOf(0) }
+    var proteinValue by remember { mutableStateOf(0) }
+    var carbsValue by remember { mutableStateOf(0) }
+    var fatValue by remember { mutableStateOf(0) }
+    var sugarValue by remember { mutableStateOf(0) }
 
     var selectedSuggestion by remember { mutableStateOf<SuggestionType?>(null) }
     var statsInitialized by rememberSaveable { mutableStateOf(false) }
-    var goalsInitialized by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(storedStats) {
         if (!statsInitialized && storedStats != null) {
@@ -92,14 +91,11 @@ fun NutritionGoalsEditorScreen(
     }
 
     LaunchedEffect(storedGoals) {
-        if (!goalsInitialized) {
-            kcalValue = storedGoals.calorieGoal
-            proteinValue = storedGoals.proteinGoal
-            carbsValue = storedGoals.carbGoal
-            fatValue = storedGoals.fatGoal
-            sugarValue = storedGoals.sugarGoal
-            goalsInitialized = true
-        }
+        kcalValue = storedGoals.calorieGoal
+        proteinValue = storedGoals.proteinGoal
+        carbsValue = storedGoals.carbGoal
+        fatValue = storedGoals.fatGoal
+        sugarValue = storedGoals.sugarGoal
     }
 
     val currentStatsForCalc by remember {
