@@ -5,7 +5,6 @@ import com.pumpernickel.data.db.ExerciseDao
 import com.pumpernickel.data.db.NutritionDao
 import com.pumpernickel.data.repository.GamificationRepository
 import com.pumpernickel.data.repository.SettingsRepository
-import com.pumpernickel.domain.location.GeoPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -52,34 +51,40 @@ class GamificationEngine(
         runAchievementAndRankChecks(nowMillis = nowMillis)
     }
 
-    // ---------- F5: inactivity penalty ----------
+    // ---------- Phase 19: geofence-exit penalty (replaces F5 inactivity path per D-19-06) ----------
 
     /**
-     * Called from WorkoutSessionViewModel when the inactivity timer fires.
-     * Decides whether the user has left the gym based on GPS and only then
-     * deducts XP. All location business logic lives here, not in the ViewModel.
+     * Called from WorkoutSessionViewModel when the 5-minute re-entry grace
+     * period elapses without the user re-entering the gym zone (D-19-05, D-19-15).
      *
-     * Penalty fires when:
-     *   - gymRef is null (no GPS reference captured — permission denied or first set not yet logged)
-     *   - current is null (no GPS fix at timer time)
-     *   - distance from gymRef to current exceeds GYM_RADIUS_METERS
+     * Awards a staffeled penalty via XpFormula.geofenceExitPenalty(planned, logged):
+     *   range -50 to -200 XP, capped at minimum even if all sets are logged.
+     *
+     * Idempotent via (source, eventKey) ledger dedupe — re-firing the same
+     * (workoutId, exitTimeMillis) pair is a no-op (handles cold-start race
+     * conditions per D-19-04). The workoutId here is the active session's
+     * `startTimeMillis` (the canonical per-workout id pre-save).
+     *
+     * @param workoutId active session's startTimeMillis (BLOCKER-19-4: NOT the
+     *                  CompletedWorkout.id; ActiveSessionEntity.id is a singleton)
+     * @param exitTimeMillis timestamp the OS reported the EXIT event (used in
+     *                       the eventKey for uniqueness)
+     * @param plannedSetCount sum of targetSetCount across the workout's template
+     *                        exercises (read by the VM before calling)
+     * @param loggedSetCount number of sets the user logged before exit
      */
-    suspend fun onInactivityPenalty(
-        sessionStartMillis: Long,
-        gymRef: GeoPoint?,
-        current: GeoPoint?
+    suspend fun onGeofenceExitPenalty(
+        workoutId: Long,
+        exitTimeMillis: Long,
+        plannedSetCount: Int,
+        loggedSetCount: Int
     ) {
-        val leftGym = gymRef == null
-            || current == null
-            || gymRef.distanceMetersTo(current) > XpFormula.GYM_RADIUS_METERS
-
-        if (!leftGym) return
-
+        val penalty = XpFormula.geofenceExitPenalty(plannedSetCount, loggedSetCount)
         val nowMillis = currentTimeMillis()
         gamificationRepo.awardXp(
-            source = EventKeys.SOURCE_INACTIVITY,
-            eventKey = EventKeys.inactivityPenalty(sessionStartMillis, nowMillis),
-            amount = -XpFormula.INACTIVITY_PENALTY_XP,
+            source = EventKeys.SOURCE_GEOFENCE_EXIT,
+            eventKey = EventKeys.geofenceExit(workoutId, exitTimeMillis),
+            amount = penalty,
             awardedAtMillis = nowMillis,
             retroactive = false
         )

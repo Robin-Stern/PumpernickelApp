@@ -14,6 +14,7 @@ object EventKeys {
     const val SOURCE_STREAK_NUTRITION: String = "streak_nutrition"
     const val SOURCE_ACHIEVEMENT: String = "achievement"
     const val SOURCE_INACTIVITY: String = "inactivity"
+    const val SOURCE_GEOFENCE_EXIT: String = "geofence_exit"
 
     fun workout(workoutId: Long): String = "workout:$workoutId"
 
@@ -36,6 +37,17 @@ object EventKeys {
     /** Unique per occurrence — timestamp prevents deduplication so repeated penalties are allowed. */
     fun inactivityPenalty(sessionStartMillis: Long, atMillis: Long): String =
         "inactivity:$sessionStartMillis:$atMillis"
+
+    /**
+     * D-19-06 — unique event key per geofence-exit penalty.
+     * `workoutId` differentiates penalties across workouts (per BLOCKER-19-4 fix:
+     * pass the active session's `startTimeMillis` — the canonical per-workout id
+     * since ActiveSessionEntity.id is a singleton =1). `exitTimeMillis`
+     * disambiguates re-exits within the same workout (rare, e.g. re-entered
+     * during grace then exited again — both penalties should land).
+     */
+    fun geofenceExit(workoutId: Long, exitTimeMillis: Long): String =
+        "geofence_exit:$workoutId:$exitTimeMillis"
 
     /**
      * Parse a `pr:<exerciseId>:<workoutId>` event key back into its components.
