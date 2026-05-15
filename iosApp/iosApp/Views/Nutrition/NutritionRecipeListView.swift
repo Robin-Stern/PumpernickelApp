@@ -8,6 +8,8 @@ struct NutritionRecipeListView: View {
     @State private var recipes: [Recipe] = []
     @State private var foods: [Food] = []
     @State private var expandedRecipeIds: Set<String> = []
+    @State private var recipeToDelete: Recipe?
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         Group {
@@ -24,6 +26,14 @@ struct NutritionRecipeListView: View {
                     Image(systemName: "plus")
                 }
             }
+        }
+        .alert("Rezept löschen?", isPresented: $showDeleteConfirmation, presenting: recipeToDelete) { recipe in
+            Button("Löschen", role: .destructive) {
+                viewModel.onEvent(event: RecipeListEventOnRecipeDeleted(recipe: recipe))
+            }
+            Button("Abbrechen", role: .cancel) {}
+        } message: { recipe in
+            Text("Möchtest du das Rezept '\(recipe.name)' wirklich löschen?")
         }
         .task {
             await withTaskGroup(of: Void.self) { group in
@@ -54,12 +64,14 @@ struct NutritionRecipeListView: View {
             ForEach(recipes, id: \.id) { recipe in
                 recipeCard(recipe: recipe)
                     .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            viewModel.onEvent(event: RecipeListEventOnRecipeDeleted(recipe: recipe))
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button {
+                            recipeToDelete = recipe
+                            showDeleteConfirmation = true
                         } label: {
                             Label("Löschen", systemImage: "trash")
                         }
+                        .tint(.red)
                     }
                     .swipeActions(edge: .leading) {
                         Button {

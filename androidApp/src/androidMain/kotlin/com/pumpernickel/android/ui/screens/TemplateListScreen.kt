@@ -123,6 +123,7 @@ fun TemplateListScreen(navController: NavHostController) {
             ) {
                 items(templates, key = { it.id }) { template ->
                     val dismissState = rememberSwipeToDismissBoxState(
+                        positionalThreshold = { it * 0.5f },
                         confirmValueChange = { dismissValue ->
                             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
                                 templateToDelete = template

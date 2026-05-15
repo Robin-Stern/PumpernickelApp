@@ -383,6 +383,7 @@ private fun LogAmountDialog(food: Food, onConfirm: (Double) -> Unit, onDismiss: 
 private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) {
     var showConfirmDialog by remember { mutableStateOf(false) }
     val dismissState = rememberSwipeToDismissBoxState(
+        positionalThreshold = { it * 0.5f },
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) showConfirmDialog = true
             false

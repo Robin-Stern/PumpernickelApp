@@ -69,15 +69,14 @@ fun NutritionGoalsEditorScreen(
     var activity by remember { mutableStateOf(ActivityLevel.MODERATELY_ACTIVE) }
     var statsExpanded by remember { mutableStateOf(true) }
 
-    var kcalValue by remember { mutableStateOf(2500) }
-    var proteinValue by remember { mutableStateOf(150) }
-    var carbsValue by remember { mutableStateOf(300) }
-    var fatValue by remember { mutableStateOf(80) }
-    var sugarValue by remember { mutableStateOf(50) }
+    var kcalValue by remember { mutableStateOf(0) }
+    var proteinValue by remember { mutableStateOf(0) }
+    var carbsValue by remember { mutableStateOf(0) }
+    var fatValue by remember { mutableStateOf(0) }
+    var sugarValue by remember { mutableStateOf(0) }
 
     var selectedSuggestion by remember { mutableStateOf<SuggestionType?>(null) }
     var statsInitialized by rememberSaveable { mutableStateOf(false) }
-    var goalsInitialized by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(storedStats) {
         if (!statsInitialized && storedStats != null) {
@@ -92,14 +91,11 @@ fun NutritionGoalsEditorScreen(
     }
 
     LaunchedEffect(storedGoals) {
-        if (!goalsInitialized) {
-            kcalValue = storedGoals.calorieGoal
-            proteinValue = storedGoals.proteinGoal
-            carbsValue = storedGoals.carbGoal
-            fatValue = storedGoals.fatGoal
-            sugarValue = storedGoals.sugarGoal
-            goalsInitialized = true
-        }
+        kcalValue = storedGoals.calorieGoal
+        proteinValue = storedGoals.proteinGoal
+        carbsValue = storedGoals.carbGoal
+        fatValue = storedGoals.fatGoal
+        sugarValue = storedGoals.sugarGoal
     }
 
     val currentStatsForCalc by remember {
@@ -343,28 +339,32 @@ private fun PickerSection(
                 items = (20..400 step 5).toList(),
                 value = proteinValue,
                 onValueChange = onProteinChange,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                visibleItemCount = 3
             )
             CompactGoalPicker(
                 label = "Kohlenh.",
                 items = (20..700 step 5).toList(),
                 value = carbsValue,
                 onValueChange = onCarbsChange,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                visibleItemCount = 3
             )
             CompactGoalPicker(
                 label = "Fett",
                 items = (10..250 step 5).toList(),
                 value = fatValue,
                 onValueChange = onFatChange,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                visibleItemCount = 3
             )
             CompactGoalPicker(
                 label = "Zucker",
                 items = (0..200 step 5).toList(),
                 value = sugarValue,
                 onValueChange = onSugarChange,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                visibleItemCount = 3
             )
         }
 
@@ -379,7 +379,8 @@ private fun CompactGoalPicker(
     items: List<Int>,
     value: Int,
     onValueChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    visibleItemCount: Int = 5
 ) {
     Column(
         modifier = modifier,
@@ -396,9 +397,10 @@ private fun CompactGoalPicker(
             items = items,
             selectedItem = value,
             onItemSelected = onValueChange,
-            modifier = Modifier.fillMaxWidth().height(120.dp),
+            modifier = Modifier.fillMaxWidth(),
             label = "",
-            displayTransform = { "$it" }
+            displayTransform = { "$it" },
+            visibleItemCount = visibleItemCount
         )
     }
 }
@@ -425,7 +427,7 @@ private fun GoalPickerRow(label: String, items: List<Int>, value: Int, onValueCh
     Column(Modifier.fillMaxWidth()) {
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            DrumPicker(items, value, onValueChange, Modifier.fillMaxWidth().height(120.dp), "", displayTransform)
+            DrumPicker(items, value, onValueChange, Modifier.fillMaxWidth(), "", displayTransform)
         }
     }
 }

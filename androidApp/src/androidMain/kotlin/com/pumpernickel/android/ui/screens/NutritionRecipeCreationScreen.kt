@@ -249,7 +249,7 @@ fun NutritionRecipeCreationScreen(
 @Composable
 private fun FoodSwipeToAddItem(food: Food, onSelected: () -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState(
-        positionalThreshold = { it * 0.3f },
+        positionalThreshold = { it * 0.5f },
         confirmValueChange = { if (it == SwipeToDismissBoxValue.StartToEnd) onSelected(); false }
     )
     SwipeToDismissBox(

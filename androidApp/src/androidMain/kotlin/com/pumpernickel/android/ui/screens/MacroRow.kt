@@ -3,6 +3,7 @@ package com.pumpernickel.android.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -72,6 +73,12 @@ private fun MacroChip(label: String, value: Double, color: Color) {
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Box(modifier = Modifier.size(8.dp).background(color, CircleShape))
-        Text("$label ${value.roundToInt()}g", style = MaterialTheme.typography.labelSmall, color = color)
+        Text(
+            text = "$label ${value.roundToInt()}g",
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            maxLines = 1,
+            softWrap = false
+        )
     }
 }

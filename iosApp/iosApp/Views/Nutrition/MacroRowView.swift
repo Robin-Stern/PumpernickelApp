@@ -19,6 +19,8 @@ struct MacroRowView: View {
         Text("\(label) \(Int(value.rounded()))g")
             .font(.caption.weight(.semibold))
             .foregroundColor(color)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(color.opacity(0.12))

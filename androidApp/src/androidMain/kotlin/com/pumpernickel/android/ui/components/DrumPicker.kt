@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pumpernickel.domain.model.WeightUnit
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 
 /**
@@ -44,15 +45,28 @@ fun DrumPicker(
     val density = LocalDensity.current
     val itemHeightPx = with(density) { itemHeightDp.toPx() }
 
-    // Optimization: derive center index so only affected items recompose.
+    // Optimization: derive center index based on exact scroll position
     val centerIndex by remember {
-        derivedStateOf { listState.firstVisibleItemIndex + spacerCount }
+        derivedStateOf {
+            val offset = listState.firstVisibleItemScrollOffset
+            val first = listState.firstVisibleItemIndex
+            if (offset > itemHeightPx / 2f) first + 1 else first
+        }
     }
+
+    // Initialization and Sync
+    var isInitialScroll by remember { mutableStateOf(true) }
 
     LaunchedEffect(selectedItem) {
         val targetIndex = items.indexOf(selectedItem)
         if (targetIndex >= 0 && !listState.isScrollInProgress) {
-            listState.scrollToItem(targetIndex)
+            if (isInitialScroll) {
+                delay(100) // Small buffer for initial layout
+                listState.scrollToItem(targetIndex)
+                isInitialScroll = false
+            } else {
+                listState.animateScrollToItem(targetIndex)
+            }
         }
     }
 
@@ -60,14 +74,9 @@ fun DrumPicker(
         snapshotFlow { listState.isScrollInProgress }
             .filter { !it }
             .collect {
-                val first = listState.firstVisibleItemIndex
-                val offset = listState.firstVisibleItemScrollOffset
-                val targetIndex = if (offset > itemHeightPx / 2f) first + 1 else first
-                val realIndex = targetIndex.coerceIn(0, items.lastIndex)
-                if (offset != 0) {
-                    listState.animateScrollToItem(realIndex)
+                if (!isInitialScroll) {
+                    onItemSelected(items[centerIndex.coerceIn(0, items.lastIndex)])
                 }
-                onItemSelected(items[realIndex])
             }
     }
 
@@ -81,25 +90,20 @@ fun DrumPicker(
             )
         }
 
-        Box(contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.height(pickerHeightDp), contentAlignment = Alignment.Center) {
             LazyColumn(
                 state = listState,
                 flingBehavior = snapFlingBehavior,
-                modifier = Modifier.height(pickerHeightDp).fillMaxWidth(),
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 items(spacerCount) { Spacer(Modifier.height(itemHeightDp)) }
                 itemsIndexed(items) { index, item ->
-                    val distance = kotlin.math.abs((index + spacerCount) - centerIndex)
+                    val distance = kotlin.math.abs(index - centerIndex)
                     val alpha = when (distance) {
                         0 -> 1f
                         1 -> 0.6f
                         else -> 0.3f
-                    }
-                    val scale = when (distance) {
-                        0 -> 1.1f
-                        1 -> 0.9f
-                        else -> 0.8f
                     }
 
                     Box(
@@ -123,7 +127,7 @@ fun DrumPicker(
 
             // iOS-style selection indicator
             val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            Column(modifier = Modifier.height(pickerHeightDp).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
+            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
                 HorizontalDivider(color = dividerColor)
                 Spacer(Modifier.height(itemHeightDp))
                 HorizontalDivider(color = dividerColor)

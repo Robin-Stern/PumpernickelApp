@@ -64,21 +64,27 @@ fun NutritionRecipeListScreen(
     viewModel: RecipeListViewModel = koinViewModel()
 ) {
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
-    var favoriteDeleteCandidate by remember { mutableStateOf<Recipe?>(null) }
+    var recipeToDelete by remember { mutableStateOf<Recipe?>(null) }
 
-    favoriteDeleteCandidate?.let { recipe ->
+    recipeToDelete?.let { recipe ->
         AlertDialog(
-            onDismissRequest = { favoriteDeleteCandidate = null },
-            title = { Text(recipe.name) },
-            text = { Text(stringResource(R.string.dialog_recipe_action_prompt)) },
+            onDismissRequest = { recipeToDelete = null },
+            title = { Text(stringResource(R.string.action_delete_recipe)) },
+            text = { Text(stringResource(R.string.confirm_delete_recipe)) },
             confirmButton = {
-                TextButton(onClick = { viewModel.onEvent(RecipeListEvent.OnRecipeDeleted(recipe)); favoriteDeleteCandidate = null }) {
-                    Text(stringResource(R.string.action_delete_recipe), color = MaterialTheme.colorScheme.error)
+                Button(
+                    onClick = {
+                        viewModel.onEvent(RecipeListEvent.OnRecipeDeleted(recipe))
+                        recipeToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.Black)
+                ) {
+                    Text(stringResource(R.string.action_delete))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onEvent(RecipeListEvent.OnRecipeFavoriteToggled(recipe)); favoriteDeleteCandidate = null }) {
-                    Text(stringResource(R.string.action_remove_favorite))
+                TextButton(onClick = { recipeToDelete = null }) {
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -113,8 +119,7 @@ fun NutritionRecipeListScreen(
                     RecipeSwipeCard(
                         recipe = recipe, viewModel = viewModel,
                         onDelete = {
-                            if (recipe.isFavorite) favoriteDeleteCandidate = recipe
-                            else viewModel.onEvent(RecipeListEvent.OnRecipeDeleted(recipe))
+                            recipeToDelete = recipe
                         },
                         onEdit = {
                             navController.navigate(
@@ -139,40 +144,16 @@ private fun RecipeSwipeCard(
 ) {
     val currentRecipe by rememberUpdatedState(recipe)
     val currentOnDelete by rememberUpdatedState(onDelete)
-    var showConfirmDialog by remember { mutableStateOf(false) }
     val dismissState = rememberSwipeToDismissBoxState(
-        positionalThreshold = { it * 0.3f },
+        positionalThreshold = { it * 0.5f },
         confirmValueChange = { value ->
             when (value) {
                 SwipeToDismissBoxValue.StartToEnd -> { viewModel.onEvent(RecipeListEvent.OnRecipeFavoriteToggled(currentRecipe)); false }
-                SwipeToDismissBoxValue.EndToStart -> {
-                    if (currentRecipe.isFavorite) { currentOnDelete(); false }
-                    else { showConfirmDialog = true; false }
-                }
+                SwipeToDismissBoxValue.EndToStart -> { currentOnDelete(); false }
                 else -> false
             }
         }
     )
-    if (showConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showConfirmDialog = false },
-            title = { Text(stringResource(R.string.action_delete_recipe)) },
-            text = { Text(stringResource(R.string.confirm_delete_recipe)) },
-            confirmButton = {
-                Button(
-                    onClick = { showConfirmDialog = false; currentOnDelete() },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
-                ) {
-                    Text(stringResource(R.string.action_delete_recipe))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showConfirmDialog = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            }
-        )
-    }
     val nutColors = nutritionColors()
     SwipeToDismissBox(
         state = dismissState,
