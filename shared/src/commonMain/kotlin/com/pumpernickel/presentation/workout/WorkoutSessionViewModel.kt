@@ -117,7 +117,6 @@ class WorkoutSessionViewModel(
 
     private var timerJob: Job? = null
     private var elapsedJob: Job? = null
-    private var inactivityJob: Job? = null
     private var locationJob: Job? = null
     private var gymLocation: GeoPoint? = null
     private var templateOriginalIndices: MutableList<Int> = mutableListOf()
@@ -380,9 +379,6 @@ class WorkoutSessionViewModel(
                 startRestTimer(restPeriodSec)
             }
 
-            // Reset inactivity timer — user is still active in the gym
-            startInactivityTimer(active.startTimeMillis)
-
             // Capture gym reference location on first set of each session
             if (gymLocation == null) {
                 locationJob?.cancel()
@@ -547,7 +543,6 @@ class WorkoutSessionViewModel(
 
             timerJob?.cancel()
             elapsedJob?.cancel()
-            inactivityJob?.cancel()
             locationJob?.cancel()
             gymLocation = null
 
@@ -641,7 +636,6 @@ class WorkoutSessionViewModel(
         viewModelScope.launch {
             timerJob?.cancel()
             elapsedJob?.cancel()
-            inactivityJob?.cancel()
             locationJob?.cancel()
             gymLocation = null
             workoutRepository.clearActiveSession()
@@ -765,30 +759,6 @@ class WorkoutSessionViewModel(
             while (true) {
                 delay(1000L)
                 _elapsedSeconds.value++
-            }
-        }
-    }
-
-    /**
-     * Starts a 10-minute inactivity watchdog. If no set is completed before the
-     * timer fires, the user has likely left the gym — deduct XP as penalty (F5).
-     * Cancelled on every set completion, enterReview(), and discardWorkout().
-     */
-    private fun startInactivityTimer(sessionStartMillis: Long) {
-        inactivityJob?.cancel()
-        inactivityJob = viewModelScope.launch {
-            delay(XpFormula.INACTIVITY_TIMEOUT_SECONDS * 1000L)
-            if (_sessionState.value !is WorkoutSessionState.Active) return@launch
-
-            val current = if (gymLocation != null) locationProvider.getCurrentLocation() else null
-            try {
-                gamificationEngine.onInactivityPenalty(
-                    sessionStartMillis = sessionStartMillis,
-                    gymRef = gymLocation,
-                    current = current
-                )
-            } catch (t: Throwable) {
-                println("GamificationEngine.onInactivityPenalty failed: ${t.message}")
             }
         }
     }
