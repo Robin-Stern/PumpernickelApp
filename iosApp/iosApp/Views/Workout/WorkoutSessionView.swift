@@ -49,7 +49,7 @@ struct WorkoutSessionView: View {
 
     // Undertrained muscles dialog
     @State private var showUndertrainedDialog = false
-    @State private var undertrainedMuscles: [MuscleGroup] = []
+    @State private var undertrainedMuscles: [UndertrainedMuscle] = []
 
     // Phase 19 state
     @State private var geofenceState: GeofenceUiState = GeofenceUiState.Inactive.shared
@@ -361,7 +361,7 @@ struct WorkoutSessionView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Diese Muskelgruppen wurden in den letzten 7 Tagen kaum oder gar nicht trainiert:\n\n" +
-                 undertrainedMuscles.map { "• \($0.displayName)" }.joined(separator: "\n"))
+                 undertrainedMuscles.map { "• \($0.group.displayName)" }.joined(separator: "\n"))
         }
         .sheet(isPresented: $showRationaleSheet) {
             PermissionRationaleSheet(

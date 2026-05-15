@@ -1,15 +1,24 @@
 import SwiftUI
 import Shared
 import KMPNativeCoroutinesAsync
+import KMPNativeCoroutinesCore
 import UIKit
 
 /// D-19-16 — Settings detail screen for Phase 19. Three sections:
 ///   1) "So funktioniert's" — feature explanation
 ///   2) "Status" — current permission state + Settings deep-link
 ///   3) "Early Exits diesen Monat" — used/budget + next-reset date
+///
+/// Budget data is sourced from WorkoutSessionViewModel.earlyExitBudgetFlow
+/// (a @NativeCoroutinesState-annotated StateFlow) rather than directly from
+/// EarlyExitTracker.budget (whose raw Kotlinx_coroutines_coreFlow requires a
+/// Gradle framework rebuild to gain NativeCoroutines export). Both observe the
+/// same SettingsRepository.earlyExits DataStore stream — identical data.
 struct WorkoutEnforcementDetailView: View {
     private let permissionController = KoinHelper.shared.getPermissionController()
-    private let earlyExitTracker = KoinHelper.shared.getEarlyExitTracker()
+    // Use WorkoutSessionViewModel to source earlyExitBudget — it exposes the same
+    // SettingsRepository.earlyExits stream via @NativeCoroutinesState (earlyExitBudgetFlow).
+    private let sessionViewModel = KoinHelper.shared.getWorkoutSessionViewModel()
 
     @State private var status: LocationPermissionStatus = .notDetermined
     @State private var budget: EarlyExitBudget? = nil
@@ -77,14 +86,17 @@ struct WorkoutEnforcementDetailView: View {
 
     @MainActor
     private func refreshStatus() async {
-        let value = try? await asyncFunction(for: permissionController.currentLocationStatus())
+        // suspend fun bridges directly to Swift async (Swift concurrency bridge).
+        let value = try? await permissionController.currentLocationStatus()
         if let value { self.status = value }
     }
 
     @MainActor
     private func observeBudget() async {
+        // earlyExitBudgetFlow is @NativeCoroutinesState on WorkoutSessionViewModel —
+        // reliable NativeFlow export without requiring a Gradle framework rebuild.
         do {
-            for try await value in asyncSequence(for: earlyExitTracker.budget) {
+            for try await value in asyncSequence(for: sessionViewModel.earlyExitBudgetFlow) {
                 self.budget = value
             }
         } catch {
