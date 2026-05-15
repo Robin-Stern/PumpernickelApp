@@ -13,6 +13,7 @@ import com.pumpernickel.android.ui.navigation.MainScreen
 import com.pumpernickel.android.ui.screens.TutorialOverlay
 import com.pumpernickel.android.ui.theme.PumpernickelTheme
 import com.pumpernickel.feature.biometric.BiometricGateActivityHolder
+import com.pumpernickel.feature.permissions.PermissionActivityHolder
 import com.pumpernickel.feature.photo.PhotoCaptureLauncherActivityHolder
 import com.pumpernickel.feature.photo.PhotoCaptureLauncherHost
 import com.pumpernickel.presentation.settings.SettingsViewModel
@@ -31,6 +32,8 @@ class MainActivity : FragmentActivity() {
         // PhotoCaptureLauncherHost.<init> calls registerForActivityResult,
         // which requires the Activity to be in CREATED (not yet STARTED).
         BiometricGateActivityHolder.attach(this)
+        // Phase 19 — permission launchers MUST register before setContent.
+        PermissionActivityHolder.attach(this)
         photoCaptureHost = PhotoCaptureLauncherHost(activity = this, context = applicationContext)
         PhotoCaptureLauncherActivityHolder.attach(photoCaptureHost)
 
@@ -59,6 +62,7 @@ class MainActivity : FragmentActivity() {
         // Detach FIRST so any in-flight reads of the holder during teardown
         // don't see a stale reference to a destroyed Activity.
         BiometricGateActivityHolder.detach(this)
+        PermissionActivityHolder.detach()
         PhotoCaptureLauncherActivityHolder.detach(photoCaptureHost)
         super.onDestroy()
     }
