@@ -14,27 +14,27 @@ User-visible strings (`name`, ingredient food `name`, `steps`) are in
   "ingredients": [
     {
       "food": {
-        "name": "Hähnchenbrust",
-        "calories": 165,
-        "protein": 31,
-        "fat": 3.6,
+        "name": "Hähnchenbrust (roh)",
+        "calories": 120,
+        "protein": 24,
+        "fat": 1.2,
         "carbohydrates": 0,
         "sugar": 0,
         "unit": "GRAM"
       },
-      "amountGrams": 200
+      "amountGrams": 150
     },
     {
       "food": {
-        "name": "Reis (gekocht)",
-        "calories": 130,
-        "protein": 2.7,
-        "fat": 0.3,
-        "carbohydrates": 28,
-        "sugar": 0,
+        "name": "Reis (roh)",
+        "calories": 350,
+        "protein": 7,
+        "fat": 0.6,
+        "carbohydrates": 77,
+        "sugar": 0.1,
         "unit": "GRAM"
       },
-      "amountGrams": 200
+      "amountGrams": 100
     },
     {
       "food": {
@@ -80,6 +80,9 @@ User-visible strings (`name`, ingredient food `name`, `steps`) are in
   sugar are best-effort.
 - Each `food` provides per-100g (or per-100ml if `unit="MILLILITER"`)
   values. The app re-multiplies by `amountGrams / 100`.
+- ALWAYS use RAW WEIGHTS (roh) for all ingredients (e.g., 100g raw rice instead of 250g cooked rice). 
+  Users weigh ingredients BEFORE cooking. 
+  Append „(roh)" to names of foods usually weighed raw (meat, rice, pasta, etc.).
 - `sugar` ≤ `carbohydrates` always.
 - All macro numbers ≥ 0.
 - `unit` is `GRAM` or `MILLILITER` (uppercase, exactly).
@@ -89,19 +92,19 @@ User-visible strings (`name`, ingredient food `name`, `steps`) are in
 
 | food | kcal | protein | fat | carbs | sugar |
 |---|---|---|---|---|---|
-| Hähnchenbrust | 165 | 31 | 3.6 | 0 | 0 |
+| Hähnchenbrust (roh) | 120 | 24 | 1.2 | 0 | 0 |
 | Magerquark | 67 | 12 | 0.3 | 4 | 4 |
 | Eier (ganz) | 155 | 13 | 11 | 1.1 | 1.1 |
-| Lachsfilet | 208 | 20 | 13 | 0 | 0 |
+| Lachsfilet (roh) | 208 | 20 | 13 | 0 | 0 |
 | Thunfisch in Wasser | 116 | 26 | 1 | 0 | 0 |
-| Rinderhack 5% | 137 | 21 | 5 | 0 | 0 |
+| Rinderhack 5% (roh) | 137 | 21 | 5 | 0 | 0 |
 | Tofu | 76 | 8 | 4.8 | 1.9 | 0.6 |
-| Reis (gekocht) | 130 | 2.7 | 0.3 | 28 | 0 |
+| Reis (roh) | 350 | 7 | 0.6 | 77 | 0.1 |
 | Haferflocken | 379 | 13 | 7 | 68 | 1 |
-| Vollkornnudeln (gekocht) | 124 | 5 | 1 | 25 | 0.6 |
-| Süßkartoffel (gekocht) | 86 | 1.6 | 0.1 | 20 | 4.2 |
+| Vollkornnudeln (roh) | 330 | 13 | 2 | 63 | 0.6 |
+| Süßkartoffel (roh) | 86 | 1.6 | 0.1 | 20 | 4.2 |
 | Vollkornbrot | 247 | 13 | 4 | 41 | 5 |
-| Kartoffeln (gekocht) | 87 | 1.9 | 0.1 | 20 | 0.9 |
+| Kartoffeln (roh) | 77 | 2 | 0.1 | 17 | 0.9 |
 | Brokkoli | 34 | 2.8 | 0.4 | 7 | 1.7 |
 | Spinat | 23 | 2.9 | 0.4 | 3.6 | 0.4 |
 | Zucchini | 17 | 1.2 | 0.3 | 3.1 | 2.5 |
@@ -132,24 +135,24 @@ ingredients (no „Fertig-Pizza" with made-up macros).
 
 Every recipe goes through this calculate-check-adjust loop before you emit JSON. Target: `remaining = { kcal: 1100, protein: 55g }`. Windows: kcal [990, 1210], protein [49.5, 60.5].
 
-**First draft:** Hähnchenbrust 200g, Reis (gekocht) 200g, Brokkoli 150g, Olivenöl 10g.
+**First draft:** Hähnchenbrust (roh) 200g, Reis (roh) 100g, Brokkoli 150g, Olivenöl 10g.
 
 **Sum (per-100g × amountGrams / 100):**
-- Hähnchenbrust 200g: 165 × 2 = 330 kcal, 31 × 2 = 62g protein
-- Reis 200g: 130 × 2 = 260 kcal, 2.7 × 2 = 5.4g protein
+- Hähnchenbrust (roh) 200g: 120 × 2 = 240 kcal, 24 × 2 = 48g protein
+- Reis (roh) 100g: 350 × 1 = 350 kcal, 7 × 1 = 7g protein
 - Brokkoli 150g: 34 × 1.5 = 51 kcal, 2.8 × 1.5 = 4.2g protein
 - Olivenöl 10g: 884 × 0.1 = 88.4 kcal, 0g protein
-- **Totals: 729.4 kcal, 71.6g protein**
+- **Totals: 729.4 kcal, 59.2g protein**
 
-**Check:** 729 < 990 → kcal under by ~34%. 71.6 > 60.5 → protein over by ~30%. Both outside ±10%. Adjust.
+**Check:** 729.4 < 990 → kcal under by ~26%. 59.2 ∈ [49.5, 60.5] → protein matches target. Need more calories without adding too much protein. Adjust.
 
-**Adjustment:** drop Hähnchenbrust 200g → 130g (protein 31 × 1.3 = 40.3g, kcal 165 × 1.3 = 214.5). Raise Reis 200g → 550g (kcal 130 × 5.5 = 715, protein 2.7 × 5.5 = 14.85g). Brokkoli and Olivenöl unchanged.
+**Adjustment:** raise Reis (roh) 100g → 200g (kcal 350 × 2 = 700, protein 7 × 2 = 14g). To stay within protein window, drop Hähnchenbrust (roh) 200g → 160g (kcal 120 × 1.6 = 192, protein 24 × 1.6 = 38.4g). Brokkoli and Olivenöl unchanged.
 
 **Re-sum:**
-- kcal: 214.5 + 715 + 51 + 88.4 = 1068.9
-- protein: 40.3 + 14.85 + 4.2 + 0 = 59.35
+- kcal: 192 + 700 + 51 + 88.4 = 1031.4
+- protein: 38.4 + 14 + 4.2 + 0 = 56.6
 
-**Re-check:** 1068.9 ∈ [990, 1210] ✓. 59.35 ∈ [49.5, 60.5] ✓. Both inside ±10%. Ship it.
+**Re-check:** 1031.4 ∈ [990, 1210] ✓. 56.6 ∈ [49.5, 60.5] ✓. Both inside ±10%. Ship it.
 
 Calculate, check, adjust until both kcal AND protein land inside ±10%. Don't settle for "close enough."
 
