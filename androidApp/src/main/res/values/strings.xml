@@ -97,4 +97,54 @@
 
     <!-- Daily Log Actions -->
     <string name="action_add_entry_short">Eintragen</string>
+
+    <!-- Phase 19 — Geofencing-based Workout Enforcement -->
+    <string name="geofence_chip_in_zone">In Zone</string>
+    <string name="geofence_chip_grace">Grace %1$s</string>
+    <string name="geofence_chip_inactive">Inaktiv</string>
+    <string name="geofence_chip_exited">Zone verlassen</string>
+
+    <string name="geofence_rationale_title">Workout Enforcement aktivieren?</string>
+    <string name="geofence_rationale_body">Damit dein Workout auch zählt wenn du das Handy weglegst, brauchen wir Standortzugriff im Hintergrund. Wir tracken nur den ~50m-Radius um dein Gym während aktiver Workouts.</string>
+    <string name="geofence_rationale_android_note">Android fragt nach Standort-Zugriff und in einem zweiten Schritt nach Hintergrund-Erlaubnis.</string>
+    <string name="geofence_rationale_activate">Aktivieren</string>
+    <string name="geofence_rationale_later">Später</string>
+
+    <string name="geofence_banner_wiu_title">Enforcement nur im Vordergrund</string>
+    <string name="geofence_banner_wiu_body">Workout-Enforcement ist nur aktiv, solange die App geöffnet ist. Tippen für vollen Zugriff.</string>
+    <string name="geofence_banner_denied_title">Enforcement nicht aktiv</string>
+    <string name="geofence_banner_denied_body">Standortzugriff fehlt. Tippen für Einstellungen.</string>
+
+    <string name="early_exit_menu_label">Workout beenden</string>
+    <string name="early_exit_dialog_title_budget">Workout frühzeitig beenden?</string>
+    <string name="early_exit_dialog_title_penalty">Workout abbrechen?</string>
+    <string name="early_exit_dialog_body_budget">Verbraucht 1 von %1$d Early Exits diesen Monat.</string>
+    <string name="early_exit_dialog_body_penalty">Du hast diesen Monat keine Early Exits mehr. Frühzeitiges Beenden kostet %1$d XP. Fortsetzen?</string>
+    <string name="early_exit_dialog_primary_budget">Frühzeitig beenden</string>
+    <string name="early_exit_dialog_primary_penalty">Trotzdem beenden</string>
+    <string name="early_exit_dialog_cancel">Abbrechen</string>
+
+    <string name="settings_training_section">Training</string>
+    <string name="settings_workout_enforcement">Workout Enforcement</string>
+    <string name="settings_workout_enforcement_subtitle">Diesen Monat: %1$d von %2$d Early Exits genutzt — Reset am 1. %3$s</string>
+    <string name="workout_enforcement_detail_how_title">So funktioniert\'s</string>
+    <string name="workout_enforcement_detail_how_body">Sobald du dein erstes Set loggst, setzen wir einen ~50m-Radius um deinen Standort. Verlässt du diesen Bereich vor Workout-Ende, wird das Workout abgebrochen und es gibt einen XP-Abzug.</string>
+    <string name="workout_enforcement_detail_status_title">Status</string>
+    <string name="workout_enforcement_detail_status_always">Hintergrund-Standortzugriff erlaubt</string>
+    <string name="workout_enforcement_detail_status_wiu">Nur Zugriff im Vordergrund — Enforcement eingeschränkt</string>
+    <string name="workout_enforcement_detail_status_denied">Standortzugriff nicht erlaubt — Enforcement deaktiviert</string>
+    <string name="workout_enforcement_detail_open_settings">In Einstellungen ändern</string>
+    <string name="workout_enforcement_detail_early_exits_title">Early Exits diesen Monat</string>
+    <string name="workout_enforcement_detail_early_exits_body">%1$d von %2$d genutzt — Reset am 1. %3$s</string>
+
+    <string name="geofence_notification_exit_title">Du hast die Zone verlassen</string>
+    <string name="geofence_notification_exit_body">5 Minuten um zurückzukommen, sonst wird das Workout abgebrochen.</string>
+    <string name="geofence_notification_reenter_title">Workout läuft weiter</string>
+    <string name="geofence_notification_reenter_body">Willkommen zurück. Weiter geht\'s.</string>
+    <string name="geofence_notification_grace_expired_title">Workout beendet</string>
+    <string name="geofence_notification_grace_expired_body">Du hast die Trainingszone verlassen. %1$d Sätze wurden gespeichert, %2$d XP abgezogen.</string>
+    <string name="geofence_notification_early_exit_budget_body">Early Exit genutzt — kein XP-Abzug. Verbleibend diesen Monat: %1$d.</string>
+    <string name="geofence_notification_early_exit_penalty_body">%1$d XP abgezogen für vorzeitiges Beenden.</string>
+    <string name="geofence_channel_name">Workout Enforcement</string>
+    <string name="geofence_channel_desc">Hinweise zum Verlassen der Trainingszone</string>
 </resources>
