@@ -145,7 +145,10 @@ private fun RecipeSwipeCard(
         confirmValueChange = { value ->
             when (value) {
                 SwipeToDismissBoxValue.StartToEnd -> { viewModel.onEvent(RecipeListEvent.OnRecipeFavoriteToggled(currentRecipe)); false }
-                SwipeToDismissBoxValue.EndToStart -> { showConfirmDialog = true; false }
+                SwipeToDismissBoxValue.EndToStart -> {
+                    if (currentRecipe.isFavorite) { currentOnDelete(); false }
+                    else { showConfirmDialog = true; false }
+                }
                 else -> false
             }
         }
@@ -158,10 +161,7 @@ private fun RecipeSwipeCard(
             confirmButton = {
                 Button(
                     onClick = { showConfirmDialog = false; currentOnDelete() },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Red,
-                        contentColor = Color.Black
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
                 ) {
                     Text(stringResource(R.string.action_delete_recipe))
                 }

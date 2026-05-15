@@ -63,6 +63,7 @@
     <string name="hint_search_food">Lebensmittel suchen…</string>
     <string name="label_recently_added">Zuletzt hinzugefügt</string>
     <string name="label_search_results">Suchergebnisse</string>
+    <string name="label_searching_remote">Suche bei OpenFoodFacts…</string>
     <string name="label_ingredients">Zutaten:</string>
     <string name="recipe_total_calories">Gesamt: %1$d kcal</string>
     <string name="action_save_recipe">Rezept speichern</string>

@@ -32,6 +32,7 @@ import com.pumpernickel.domain.nutrition.LoadFoodsUseCase
 import com.pumpernickel.domain.nutrition.LogConsumptionUseCase
 import com.pumpernickel.domain.nutrition.LookupBarcodeUseCase
 import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
+import com.pumpernickel.domain.nutrition.SelectFoodUseCase
 import com.pumpernickel.domain.nutrition.UpdateFoodUseCase
 import com.pumpernickel.domain.nutrition.ValidateFoodInputUseCase
 import com.pumpernickel.presentation.exercises.CreateExerciseViewModel
@@ -105,6 +106,7 @@ val sharedModule = module {
     single { CalculateRecipeMacrosUseCase() }
     single { LookupBarcodeUseCase(get(), get()) }
     single { SearchFoodsRemoteUseCase(get()) }
+    single { SelectFoodUseCase(get()) }
     single { LogConsumptionUseCase(get()) }
     single { LoadConsumptionsForDateUseCase(get()) }
     single { DeleteConsumptionUseCase(get()) }
@@ -125,7 +127,7 @@ val sharedModule = module {
     // ViewModels -- Nutrition
     viewModel { FoodEntryViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { RecipeListViewModel(get(), get()) }
-    viewModel { RecipeCreationViewModel(get(), get(), get()) }
+    viewModel { RecipeCreationViewModel(get(), get(), get(), get(), get()) }
     viewModel { DailyLogViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 }
 

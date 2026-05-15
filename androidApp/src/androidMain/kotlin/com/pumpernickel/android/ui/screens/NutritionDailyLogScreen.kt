@@ -334,7 +334,7 @@ private fun EntrySwipeCard(entry: ConsumptionEntry, onDelete: () -> Unit) {
             confirmButton = {
                 Button(
                     onClick = { showConfirmDialog = false; onDelete() },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.Black)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
                 ) {
                     Text(stringResource(R.string.action_delete))
                 }
