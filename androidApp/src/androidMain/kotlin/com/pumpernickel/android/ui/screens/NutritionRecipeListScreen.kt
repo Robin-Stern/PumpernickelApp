@@ -173,12 +173,13 @@ private fun RecipeSwipeCard(
             }
         )
     }
+    val nutColors = nutritionColors()
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
             val direction = dismissState.targetValue
             val (bg, label, alignment) = when (direction) {
-                SwipeToDismissBoxValue.StartToEnd -> Triple(NutritionColors.favoriteBackground, stringResource(R.string.action_favorite), Alignment.CenterStart)
+                SwipeToDismissBoxValue.StartToEnd -> Triple(nutColors.favoriteBackground, stringResource(R.string.action_favorite), Alignment.CenterStart)
                 SwipeToDismissBoxValue.EndToStart -> Triple(MaterialTheme.colorScheme.errorContainer, stringResource(R.string.action_delete_recipe), Alignment.CenterEnd)
                 else -> Triple(Color.Transparent, "", Alignment.Center)
             }
@@ -220,7 +221,7 @@ private fun RecipeCard(recipe: Recipe, viewModel: RecipeListViewModel, onEdit: (
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    if (recipe.isFavorite) Text("\u2605", color = NutritionColors.favoriteStar, style = MaterialTheme.typography.titleMedium)
+                    if (recipe.isFavorite) Text("\u2605", color = nutritionColors().favoriteStar, style = MaterialTheme.typography.titleMedium)
                     Text(recipe.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
                 Column(horizontalAlignment = Alignment.End) {

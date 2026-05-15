@@ -160,67 +160,61 @@ fun NutritionRecipeCreationScreen(
                     val amount = entry.amountGrams.toDoubleOrNull() ?: 0.0
                     val factor = amount / 100.0
                     val totalIngredients = state.ingredients.size
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(entry.food.name, fontWeight = FontWeight.Medium)
-                            Text("${(entry.food.calories * factor).roundToInt()} kcal", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            MacroRow(protein = entry.food.protein * factor, fat = entry.food.fat * factor, carbs = entry.food.carbohydrates * factor, sugar = entry.food.sugar * factor)
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        OutlinedTextField(
-                            value = entry.amountGrams, onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnIngredientAmountChanged(index, it)) },
-                            label = { Text(entry.food.unit.label) }, modifier = Modifier.width(90.dp), singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                        )
-                        // Reorder controls \u2014 mirror iOS NutritionRecipeCreationView.swift:101-107.
-                        IconButton(
-                            onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientMoved(index, index - 1)) },
-                            enabled = index > 0
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.KeyboardArrowUp,
-                                contentDescription = "Zutat nach oben",
-                                tint = if (index > 0) MaterialTheme.colorScheme.onSurface
-                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(entry.food.name, fontWeight = FontWeight.Medium)
+                                Text("${(entry.food.calories * factor).roundToInt()} kcal", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            OutlinedTextField(
+                                value = entry.amountGrams, onValueChange = { viewModel.onEvent(RecipeCreationEvent.OnIngredientAmountChanged(index, it)) },
+                                label = { Text(entry.food.unit.label) }, modifier = Modifier.width(90.dp), singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                             )
+                            IconButton(
+                                onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientMoved(index, index - 1)) },
+                                enabled = index > 0
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.KeyboardArrowUp,
+                                    contentDescription = "Zutat nach oben",
+                                    tint = if (index > 0) MaterialTheme.colorScheme.onSurface
+                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                )
+                            }
+                            IconButton(
+                                onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientMoved(index, index + 1)) },
+                                enabled = index < totalIngredients - 1
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.KeyboardArrowDown,
+                                    contentDescription = "Zutat nach unten",
+                                    tint = if (index < totalIngredients - 1) MaterialTheme.colorScheme.onSurface
+                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                )
+                            }
+                            TextButton(onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientRemoved(index)) }) { Text("\u2715") }
                         }
-                        IconButton(
-                            onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientMoved(index, index + 1)) },
-                            enabled = index < totalIngredients - 1
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.KeyboardArrowDown,
-                                contentDescription = "Zutat nach unten",
-                                tint = if (index < totalIngredients - 1) MaterialTheme.colorScheme.onSurface
-                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                            )
-                        }
-                        TextButton(onClick = { viewModel.onEvent(RecipeCreationEvent.OnIngredientRemoved(index)) }) { Text("\u2715") }
+                        MacroRow(protein = entry.food.protein * factor, fat = entry.food.fat * factor, carbs = entry.food.carbohydrates * factor, sugar = entry.food.sugar * factor)
                     }
                 }
 
                 // \u2500\u2500 Gesamt \u2500\u2500
                 item {
                     SectionCard(title = stringResource(R.string.section_totals)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                stringResource(R.string.recipe_total_calories, state.totals.calories.roundToInt()),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            MacroRow(
-                                protein = state.totals.protein,
-                                fat = state.totals.fat,
-                                carbs = state.totals.carbs,
-                                sugar = state.totals.sugar
-                            )
-                        }
+                        Text(
+                            stringResource(R.string.recipe_total_calories, state.totals.calories.roundToInt()),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        MacroRow(
+                            protein = state.totals.protein,
+                            fat = state.totals.fat,
+                            carbs = state.totals.carbs,
+                            sugar = state.totals.sugar
+                        )
                     }
                 }
             }
