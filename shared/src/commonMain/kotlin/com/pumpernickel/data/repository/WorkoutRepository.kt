@@ -36,6 +36,19 @@ interface WorkoutRepository {
      */
     suspend fun saveCompletedWorkout(workout: CompletedWorkout): Long
 
+    /**
+     * D-19-14 — Persist a workout that was auto-aborted by Phase 19's geofence
+     * grace-period timeout. Sets `abandoned = true` on the row so history UI and
+     * future analytics can distinguish from normal completions. Returns the new
+     * workoutId so the caller (GamificationEngine.processAbandonedWorkout from
+     * Wave 3) can award volume-XP via the standard ledger flow.
+     *
+     * Mirrors saveCompletedWorkout exactly except for the abandoned flag — the
+     * caller must populate `workout.exercises` with only the sets that were
+     * actually logged before the exit.
+     */
+    suspend fun saveAbandonedWorkout(workout: CompletedWorkout): Long
+
     // History queries (HIST-01, HIST-02, HIST-03, HIST-04)
     fun getWorkoutSummaries(): Flow<List<WorkoutSummary>>
     suspend fun getWorkoutDetail(workoutId: Long): CompletedWorkout?
@@ -180,7 +193,44 @@ class WorkoutRepositoryImpl(
                 name = workout.name,
                 startTimeMillis = workout.startTimeMillis,
                 endTimeMillis = workout.endTimeMillis,
-                durationMillis = workout.durationMillis
+                durationMillis = workout.durationMillis,
+                abandoned = false
+            )
+        )
+        for (exercise in workout.exercises) {
+            val exerciseId = completedWorkoutDao.insertExercise(
+                CompletedWorkoutExerciseEntity(
+                    workoutId = workoutId,
+                    exerciseId = exercise.exerciseId,
+                    exerciseName = exercise.exerciseName,
+                    exerciseOrder = exercise.exerciseOrder
+                )
+            )
+            val setEntities = exercise.sets.map { set ->
+                CompletedWorkoutSetEntity(
+                    workoutExerciseId = exerciseId,
+                    setIndex = set.setIndex,
+                    actualReps = set.actualReps,
+                    actualWeightKgX10 = set.actualWeightKgX10,
+                    rir = set.rir
+                )
+            }
+            if (setEntities.isNotEmpty()) {
+                completedWorkoutDao.insertSets(setEntities)
+            }
+        }
+        return workoutId
+    }
+
+    override suspend fun saveAbandonedWorkout(workout: CompletedWorkout): Long {
+        val workoutId = completedWorkoutDao.insertWorkout(
+            CompletedWorkoutEntity(
+                templateId = workout.templateId,
+                name = workout.name,
+                startTimeMillis = workout.startTimeMillis,
+                endTimeMillis = workout.endTimeMillis,
+                durationMillis = workout.durationMillis,
+                abandoned = true
             )
         )
         for (exercise in workout.exercises) {
