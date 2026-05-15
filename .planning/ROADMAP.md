@@ -315,7 +315,7 @@ Plans:
 
 **Requirements:** D-19-01 through D-19-16 (tracked via CONTEXT.md decision IDs; no formal REQ-* IDs in REQUIREMENTS.md per planning_context note).
 **Depends on:** Phase 18 (AI features), Phase 15 (XP-System), post-v1.5 LocationProvider abstraction.
-**Plans:** 5/7 plans executed
+**Plans:** 7/7 plans complete
 
 Plans:
 - [x] 19-01-PLAN.md — Wave 1: commonMain interfaces + XP-constants refactor (GeofenceProvider, PermissionController, EarlyExitTracker, geofence penalty constants, F5 removal)
@@ -323,5 +323,5 @@ Plans:
 - [x] 19-03-PLAN.md — Wave 2: iOS platform impls (IosGeofenceProvider, IosPermissionController, AppDelegate cold-start, Info.plist UIBackgroundModes + privacy strings)
 - [x] 19-04-PLAN.md — Wave 2: Android platform impls (AndroidGeofenceProvider, BroadcastReceiver, AndroidPermissionController, AndroidManifest permissions)
 - [x] 19-05-PLAN.md — Wave 3: WorkoutSessionViewModel integration (geofence lifecycle, grace timer, Early-Exit flow) + processAbandonedWorkout
-- [ ] 19-06-PLAN.md — Wave 4: iOS UI (chip, rationale sheet, banners, early-exit dialog, Settings detail view, notifications) + visual UAT
-- [ ] 19-07-PLAN.md — Wave 4: Android UI (chip, rationale sheet, banners, early-exit dialog, Settings detail sheet, notifications) + visual UAT
+- [x] 19-06-PLAN.md — Wave 4: iOS UI (chip, rationale sheet, banners, early-exit dialog, Settings detail view, notifications) + visual UAT
+- [x] 19-07-PLAN.md — Wave 4: Android UI (chip, rationale sheet, banners, early-exit dialog, Settings detail sheet, notifications) + visual UAT
