@@ -345,6 +345,7 @@ private extension AISettingsView {
         ],
         "together": [
             ModelSuggestion(name: "google/gemma-4-31B-it", note: "Empfohlen · 12/12 in Eval"),
+            ModelSuggestion(name: "Qwen/Qwen3-235B-A22B-Instruct-2507-tput", note: "Stärkstes Refusal · 6/6 Workout in Eval"),
             ModelSuggestion(name: "openai/gpt-oss-20b", note: "Kostenlos · Reasoning · Recipe unzuverlässig"),
             ModelSuggestion(name: "google/gemma-3-27b-it", note: "Vorgänger · Gemma 4 bevorzugen"),
             ModelSuggestion(name: "google/gemma-2-27b-it", note: "Veraltet · Gemma 4 bevorzugen"),

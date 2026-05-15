@@ -1,0 +1,276 @@
+{
+  "runs": [
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "recipe",
+      "rep": 1,
+      "skipped": false,
+      "error": false,
+      "passed": 6,
+      "total": 6,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2604,
+          "completionTokens": 2248
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2606,
+          "completionTokens": 2489
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2607,
+          "completionTokens": 1988
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2604,
+          "completionTokens": 3078
+        },
+        {
+          "description": "impossibly low remaining kcal · expect refusal",
+          "success": true,
+          "score": 1,
+          "reason": "refused as expected: Die verbleibenden Kalorien sind zu gering, um eine vollständige Mahlzeit zu generieren.",
+          "failureReason": 0,
+          "promptTokens": 2599,
+          "completionTokens": 133
+        },
+        {
+          "description": "impossibly high remaining kcal · expect refusal",
+          "success": true,
+          "score": 1,
+          "reason": "refused as expected: Die Kalorienmenge ist für eine einzelne Mahlzeit unrealistisch hoch.",
+          "failureReason": 0,
+          "promptTokens": 2611,
+          "completionTokens": 185
+        }
+      ],
+      "totalTokens": 25752,
+      "durationMs": 232519,
+      "evalId": "eval-Lnl-2026-05-12T08:18:23"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "recipe",
+      "rep": 2,
+      "skipped": false,
+      "error": false,
+      "passed": 6,
+      "total": 6,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2604,
+          "completionTokens": 2314
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2606,
+          "completionTokens": 2696
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2607,
+          "completionTokens": 1939
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2604,
+          "completionTokens": 2147
+        },
+        {
+          "description": "impossibly low remaining kcal · expect refusal",
+          "success": true,
+          "score": 1,
+          "reason": "refused as expected: Die verbleibenden Kalorien sind zu niedrig, um ein Rezept zu erstellen.",
+          "failureReason": 0,
+          "promptTokens": 2599,
+          "completionTokens": 213
+        },
+        {
+          "description": "impossibly high remaining kcal · expect refusal",
+          "success": true,
+          "score": 1,
+          "reason": "refused as expected: Die angegebene Kalorienmenge ist zu hoch für eine einzelne Mahlzeit.",
+          "failureReason": 0,
+          "promptTokens": 2611,
+          "completionTokens": 294
+        }
+      ],
+      "totalTokens": 25234,
+      "durationMs": 115304,
+      "evalId": "eval-Dup-2026-05-12T08:22:15"
+    },
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "recipe",
+      "rep": 3,
+      "skipped": false,
+      "error": false,
+      "passed": 6,
+      "total": 6,
+      "tests": [
+        {
+          "description": "small remaining · breakfast portion · 600 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2604,
+          "completionTokens": 2103
+        },
+        {
+          "description": "medium remaining · standard meal · 1100 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2606,
+          "completionTokens": 1899
+        },
+        {
+          "description": "large remaining · bulk meal · 2000 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2607,
+          "completionTokens": 1457
+        },
+        {
+          "description": "high protein · low fat · 800 kcal",
+          "success": true,
+          "score": 1,
+          "reason": "all checks passed",
+          "failureReason": 0,
+          "promptTokens": 2604,
+          "completionTokens": 1617
+        },
+        {
+          "description": "impossibly low remaining kcal · expect refusal",
+          "success": true,
+          "score": 1,
+          "reason": "refused as expected: Die verbleibenden Kalorien sind zu gering, um ein vollständiges Rezept zu erstellen.",
+          "failureReason": 0,
+          "promptTokens": 2599,
+          "completionTokens": 135
+        },
+        {
+          "description": "impossibly high remaining kcal · expect refusal",
+          "success": true,
+          "score": 1,
+          "reason": "refused as expected: Die Kalorienanzahl ist für eine einzelne Mahlzeit unrealistisch hoch.",
+          "failureReason": 0,
+          "promptTokens": 2611,
+          "completionTokens": 276
+        }
+      ],
+      "totalTokens": 23118,
+      "durationMs": 34990,
+      "evalId": "eval-bJR-2026-05-12T08:24:10"
+    }
+  ],
+  "summary": [
+    {
+      "modelId": "google/gemma-4-31B-it",
+      "suite": "recipe",
+      "reps": 3,
+      "runs": [
+        {
+          "rep": 1,
+          "passed": 6,
+          "total": 6,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 2,
+          "passed": 6,
+          "total": 6,
+          "error": false,
+          "skipped": false
+        },
+        {
+          "rep": 3,
+          "passed": 6,
+          "total": 6,
+          "error": false,
+          "skipped": false
+        }
+      ],
+      "mean": 6,
+      "stdev": 0,
+      "consistencyScore": 6,
+      "perTest": {
+        "small remaining · breakfast portion · 600 kcal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "medium remaining · standard meal · 1100 kcal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "large remaining · bulk meal · 2000 kcal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "high protein · low fat · 800 kcal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "impossibly low remaining kcal · expect refusal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        },
+        "impossibly high remaining kcal · expect refusal": {
+          "pass": 3,
+          "fail": 0,
+          "reasons": []
+        }
+      },
+      "total": 6
+    }
+  ],
+  "generatedAt": "2026-05-12T08:18:21.794Z",
+  "totalTokens": 74104
+}

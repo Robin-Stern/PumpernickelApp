@@ -24,6 +24,7 @@ data class ProductDto(
 @Serializable
 data class SearchProductDto(
     @SerialName("product_name") val productName: String? = null,
+    val brands: String? = null,
     val nutriments: NutrimentsDto? = null
 )
 

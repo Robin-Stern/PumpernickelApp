@@ -44,6 +44,7 @@ const MODELS = [
   'openai/gpt-oss-120b',
   'meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8',
   'Qwen/Qwen3-235B-A22B-Instruct-2507-tput',
+  'meta-llama/Llama-3.3-70B-Instruct-Turbo',
 ];
 
 const SUITES = [
@@ -120,6 +121,7 @@ function runOne(suite, modelId, rep, brokenModels) {
   const cfgPath = `_sweep_${suite.name}_${safeId(modelId)}.yaml`;
   const outPath = `runs/${suite.name}-${safeId(modelId)}-r${rep}.json`;
   writeFileSync(cfgPath, buildYaml(suite, modelId));
+  try { unlinkSync(outPath); } catch {}
 
   const startedAt = Date.now();
   const proc = spawnSync(

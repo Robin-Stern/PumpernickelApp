@@ -97,15 +97,22 @@ class FoodEntryViewModel(
                 .distinctUntilChanged()
                 .debounce(500)
                 .collect { query ->
+                    println("[FoodVM] debounce fired query='$query' length=${query.length}")
                     if (query.length >= 3) {
                         _uiState.update { it.copy(isSearchingRemote = true, remoteSearchError = null) }
                         when (val result = searchFoodsRemote(query)) {
-                            is SearchFoodsRemoteUseCase.Result.Success ->
+                            is SearchFoodsRemoteUseCase.Result.Success -> {
+                                println("[FoodVM] -> Success size=${result.foods.size}")
                                 _uiState.update { it.copy(remoteSearchResults = result.foods, isSearchingRemote = false) }
-                            is SearchFoodsRemoteUseCase.Result.Empty ->
+                            }
+                            is SearchFoodsRemoteUseCase.Result.Empty -> {
+                                println("[FoodVM] -> Empty")
                                 _uiState.update { it.copy(remoteSearchResults = emptyList(), isSearchingRemote = false) }
-                            is SearchFoodsRemoteUseCase.Result.Error ->
+                            }
+                            is SearchFoodsRemoteUseCase.Result.Error -> {
+                                println("[FoodVM] -> Error: ${result.message}")
                                 _uiState.update { it.copy(remoteSearchResults = emptyList(), isSearchingRemote = false, remoteSearchError = result.message) }
+                            }
                         }
                     } else {
                         _uiState.update { it.copy(remoteSearchResults = emptyList(), isSearchingRemote = false, remoteSearchError = null) }
