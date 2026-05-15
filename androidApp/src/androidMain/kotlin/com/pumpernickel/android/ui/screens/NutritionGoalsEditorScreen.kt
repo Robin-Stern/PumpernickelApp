@@ -343,28 +343,32 @@ private fun PickerSection(
                 items = (20..400 step 5).toList(),
                 value = proteinValue,
                 onValueChange = onProteinChange,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                visibleItemCount = 3
             )
             CompactGoalPicker(
                 label = "Kohlenh.",
                 items = (20..700 step 5).toList(),
                 value = carbsValue,
                 onValueChange = onCarbsChange,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                visibleItemCount = 3
             )
             CompactGoalPicker(
                 label = "Fett",
                 items = (10..250 step 5).toList(),
                 value = fatValue,
                 onValueChange = onFatChange,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                visibleItemCount = 3
             )
             CompactGoalPicker(
                 label = "Zucker",
                 items = (0..200 step 5).toList(),
                 value = sugarValue,
                 onValueChange = onSugarChange,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                visibleItemCount = 3
             )
         }
 
@@ -379,7 +383,8 @@ private fun CompactGoalPicker(
     items: List<Int>,
     value: Int,
     onValueChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    visibleItemCount: Int = 5
 ) {
     Column(
         modifier = modifier,
@@ -396,9 +401,10 @@ private fun CompactGoalPicker(
             items = items,
             selectedItem = value,
             onItemSelected = onValueChange,
-            modifier = Modifier.fillMaxWidth().height(120.dp),
+            modifier = Modifier.fillMaxWidth(),
             label = "",
-            displayTransform = { "$it" }
+            displayTransform = { "$it" },
+            visibleItemCount = visibleItemCount
         )
     }
 }
@@ -425,7 +431,7 @@ private fun GoalPickerRow(label: String, items: List<Int>, value: Int, onValueCh
     Column(Modifier.fillMaxWidth()) {
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            DrumPicker(items, value, onValueChange, Modifier.fillMaxWidth().height(120.dp), "", displayTransform)
+            DrumPicker(items, value, onValueChange, Modifier.fillMaxWidth(), "", displayTransform)
         }
     }
 }

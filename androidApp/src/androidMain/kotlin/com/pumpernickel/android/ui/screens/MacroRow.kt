@@ -56,22 +56,32 @@ fun nutritionColors(): NutritionColors {
 @Composable
 fun MacroRow(protein: Double, fat: Double, carbs: Double, sugar: Double) {
     val colors = nutritionColors()
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        MacroChip("P", protein, colors.protein)
-        MacroChip("F", fat, colors.fat)
-        MacroChip("KH", carbs, colors.carbs)
-        MacroChip("Z", sugar, colors.sugar)
+    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            MacroChip("P", protein, colors.protein, Modifier.weight(1f))
+            MacroChip("F", fat, colors.fat, Modifier.weight(1f))
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            MacroChip("KH", carbs, colors.carbs, Modifier.weight(1f))
+            MacroChip("Z", sugar, colors.sugar, Modifier.weight(1f))
+        }
     }
 }
 
 @Composable
-private fun MacroChip(label: String, value: Double, color: Color) {
+private fun MacroChip(label: String, value: Double, color: Color, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier.background(color.copy(alpha = 0.12f), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 3.dp),
+        modifier = modifier.background(color.copy(alpha = 0.12f), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Box(modifier = Modifier.size(8.dp).background(color, CircleShape))
-        Text("$label ${value.roundToInt()}g", style = MaterialTheme.typography.labelSmall, color = color)
+        Text(
+            text = "$label ${value.roundToInt()}g",
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            maxLines = 1,
+            softWrap = false
+        )
     }
 }
