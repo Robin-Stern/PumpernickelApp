@@ -59,6 +59,12 @@
 		A11811 /* AIWorkoutGenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11811 /* AIWorkoutGenView.swift */; };
 		A11812 /* AIMealGenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11812 /* AIMealGenView.swift */; };
 		A11813 /* AIPreviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11813 /* AIPreviewSheet.swift */; };
+		A19060 /* GeofenceStatusChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = B19060 /* GeofenceStatusChip.swift */; };
+		A19061 /* PermissionRationaleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B19061 /* PermissionRationaleSheet.swift */; };
+		A19062 /* PermissionBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B19062 /* PermissionBanner.swift */; };
+		A19063 /* EarlyExitConfirmDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B19063 /* EarlyExitConfirmDialog.swift */; };
+		A19064 /* NotificationCenter+Geofence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B19064 /* NotificationCenter+Geofence.swift */; };
+		A19065 /* WorkoutEnforcementDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B19065 /* WorkoutEnforcementDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -112,6 +118,12 @@
 		B11811 /* AIWorkoutGenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIWorkoutGenView.swift; sourceTree = "<group>"; };
 		B11812 /* AIMealGenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIMealGenView.swift; sourceTree = "<group>"; };
 		B11813 /* AIPreviewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPreviewSheet.swift; sourceTree = "<group>"; };
+		B19060 /* GeofenceStatusChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeofenceStatusChip.swift; sourceTree = "<group>"; };
+		B19061 /* PermissionRationaleSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionRationaleSheet.swift; sourceTree = "<group>"; };
+		B19062 /* PermissionBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionBanner.swift; sourceTree = "<group>"; };
+		B19063 /* EarlyExitConfirmDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarlyExitConfirmDialog.swift; sourceTree = "<group>"; };
+		B19064 /* NotificationCenter+Geofence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationCenter+Geofence.swift"; sourceTree = "<group>"; };
+		B19065 /* WorkoutEnforcementDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutEnforcementDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -186,6 +198,7 @@
 			isa = PBXGroup;
 			children = (
 				B10005 /* FlowObservation.swift */,
+				B19064 /* NotificationCenter+Geofence.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -246,6 +259,10 @@
 				B10063 /* ExerciseOverviewSheet.swift */,
 				B10064 /* WorkoutFinishedView.swift */,
 				B10065 /* ProgressPicturePromptCard.swift */,
+				B19060 /* GeofenceStatusChip.swift */,
+				B19061 /* PermissionRationaleSheet.swift */,
+				B19062 /* PermissionBanner.swift */,
+				B19063 /* EarlyExitConfirmDialog.swift */,
 			);
 			path = Workout;
 			sourceTree = "<group>";
@@ -263,6 +280,7 @@
 			isa = PBXGroup;
 			children = (
 				B10072 /* SettingsView.swift */,
+				B19065 /* WorkoutEnforcementDetailView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -496,6 +514,12 @@
 				A11811 /* AIWorkoutGenView.swift in Sources */,
 				A11812 /* AIMealGenView.swift in Sources */,
 				A11813 /* AIPreviewSheet.swift in Sources */,
+				A19060 /* GeofenceStatusChip.swift in Sources */,
+				A19061 /* PermissionRationaleSheet.swift in Sources */,
+				A19062 /* PermissionBanner.swift in Sources */,
+				A19063 /* EarlyExitConfirmDialog.swift in Sources */,
+				A19064 /* NotificationCenter+Geofence.swift in Sources */,
+				A19065 /* WorkoutEnforcementDetailView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
