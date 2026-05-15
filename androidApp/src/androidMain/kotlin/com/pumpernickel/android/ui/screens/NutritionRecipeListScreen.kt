@@ -149,11 +149,34 @@ private fun RecipeSwipeCard(
         confirmValueChange = { value ->
             when (value) {
                 SwipeToDismissBoxValue.StartToEnd -> { viewModel.onEvent(RecipeListEvent.OnRecipeFavoriteToggled(currentRecipe)); false }
-                SwipeToDismissBoxValue.EndToStart -> { currentOnDelete(); false }
+                SwipeToDismissBoxValue.EndToStart -> {
+                    if (currentRecipe.isFavorite) { currentOnDelete(); false }
+                    else { showConfirmDialog = true; false }
+                }
                 else -> false
             }
         }
     )
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text(stringResource(R.string.action_delete_recipe)) },
+            text = { Text(stringResource(R.string.confirm_delete_recipe)) },
+            confirmButton = {
+                Button(
+                    onClick = { showConfirmDialog = false; currentOnDelete() },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
+                ) {
+                    Text(stringResource(R.string.action_delete_recipe))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
     val nutColors = nutritionColors()
     SwipeToDismissBox(
         state = dismissState,

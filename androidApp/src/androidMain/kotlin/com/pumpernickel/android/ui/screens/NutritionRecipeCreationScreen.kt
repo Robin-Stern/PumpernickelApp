@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -134,7 +135,12 @@ fun NutritionRecipeCreationScreen(
                         onBarcodeScanned = { viewModel.onEvent(RecipeCreationEvent.OnBarcodeScanned(it)) },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    if (state.searchResults.isNotEmpty()) {
+                    if (state.isSearchingRemote) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CircularProgressIndicator(modifier = Modifier.width(16.dp).height(16.dp), strokeWidth = 2.dp)
+                            Text(stringResource(R.string.label_searching_remote), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    } else if (state.searchResults.isNotEmpty()) {
                         Text(
                             stringResource(
                                 if (state.searchQuery.isBlank()) R.string.label_recently_added

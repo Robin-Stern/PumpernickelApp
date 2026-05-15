@@ -213,7 +213,7 @@ fun TemplateListScreen(navController: NavHostController) {
                         showDeleteDialog = false
                         templateToDelete = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.Black)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
                 ) {
                     Text(stringResource(R.string.action_delete))
                 }
