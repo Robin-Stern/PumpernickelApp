@@ -19,6 +19,7 @@ import com.pumpernickel.data.repository.FoodRepositoryImpl
 import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.data.repository.TemplateRepositoryImpl
 import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.domain.geofence.PendingGeofenceExitStore
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.WorkoutRepositoryImpl
 import com.pumpernickel.domain.nutrition.AddFoodUseCase
@@ -52,6 +53,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.core.context.startKoin
 import org.koin.core.KoinApplication
@@ -88,7 +90,7 @@ val sharedModule = module {
     single<ExerciseRepository> { ExerciseRepositoryImpl(get(), get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get()) }
     single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get()) }
-    single<SettingsRepository> { SettingsRepository(get()) }
+    single<SettingsRepository> { SettingsRepository(get()) } bind PendingGeofenceExitStore::class
     single<FoodRepository> { FoodRepositoryImpl(get(), get()) }
 
     // Nutrition: API + Seeder
