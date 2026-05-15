@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -44,20 +45,34 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.pumpernickel.android.R
+import com.pumpernickel.android.notifications.GeofenceNotifications
+import com.pumpernickel.android.ui.components.EarlyExitConfirmDialog
+import com.pumpernickel.android.ui.components.EarlyExitDialogConfig
+import com.pumpernickel.android.ui.components.GeofenceStatusChip
+import com.pumpernickel.android.ui.components.PermissionBanner
+import com.pumpernickel.android.ui.components.PermissionBannerVariant
+import com.pumpernickel.android.ui.components.PermissionRationaleSheet
 import com.pumpernickel.android.ui.components.ProgressPicturePromptCard
 import com.pumpernickel.android.ui.components.RepsPicker
 import com.pumpernickel.android.ui.components.WeightPicker
+import com.pumpernickel.domain.geofence.EarlyExitTracker
 import com.pumpernickel.domain.model.CompletedExercise
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.SessionExercise
@@ -65,11 +80,17 @@ import com.pumpernickel.domain.model.WeightUnit
 import com.pumpernickel.android.ui.navigation.ExercisePickerRoute
 import com.pumpernickel.android.ui.navigation.TemplateEditorRoute
 import com.pumpernickel.android.ui.navigation.TemplateListRoute
+import com.pumpernickel.domain.permissions.LocationPermissionStatus
+import com.pumpernickel.domain.permissions.PermissionController
 import com.pumpernickel.domain.workout.UndertrainedMuscle
 import com.pumpernickel.domain.workout.UndertrainedSeverity
+import com.pumpernickel.presentation.workout.GeofenceUiState
 import com.pumpernickel.presentation.workout.RestState
 import com.pumpernickel.presentation.workout.WorkoutSessionState
 import com.pumpernickel.presentation.workout.WorkoutSessionViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,6 +107,19 @@ fun WorkoutSessionScreen(
     val personalBest by viewModel.personalBest.collectAsState()
     val weightUnit by viewModel.weightUnit.collectAsState()
     val undertrainedMuscles by viewModel.undertrainedMuscles.collectAsState()
+
+    // Phase 19 — geofence + permission state
+    val permissionController: PermissionController = koinInject()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val geofenceState by viewModel.geofenceState.collectAsState()
+    val earlyExitBudget by viewModel.earlyExitBudget.collectAsState()
+
+    var permissionStatus by remember { mutableStateOf(LocationPermissionStatus.NOT_DETERMINED) }
+    var showRationaleSheet by remember { mutableStateOf(false) }
+    var hasShownRationaleThisSession by rememberSaveable { mutableStateOf(false) }
+    var earlyExitDialogConfig by remember { mutableStateOf<EarlyExitDialogConfig?>(null) }
 
     var selectedReps by remember { mutableIntStateOf(0) }
     var selectedWeightKgX10 by remember { mutableIntStateOf(0) }
@@ -117,6 +151,46 @@ fun WorkoutSessionScreen(
     // Start workout on first composition
     LaunchedEffect(Unit) {
         viewModel.startWorkout(templateId)
+    }
+
+    // Phase 19 — fetch/refresh permission status + trigger rationale sheet once
+    LaunchedEffect(Unit) {
+        permissionStatus = permissionController.currentLocationStatus()
+        if (!hasShownRationaleThisSession && permissionStatus != LocationPermissionStatus.ALWAYS) {
+            showRationaleSheet = true
+            hasShownRationaleThisSession = true
+        }
+    }
+
+    // Phase 19 — consolidated geofence observer (WARN-19-6 fix: single LaunchedEffect)
+    // Both transitions guarded by previous-state comparison so each notification fires exactly once.
+    LaunchedEffect(Unit) {
+        var previousGeofenceState: GeofenceUiState = GeofenceUiState.Inactive
+        snapshotFlow { geofenceState }
+            .distinctUntilChanged()
+            .collect { newState ->
+                val previous = previousGeofenceState
+                when {
+                    // ENTER grace: from non-Grace into Grace
+                    newState is GeofenceUiState.GracePeriod && previous !is GeofenceUiState.GracePeriod -> {
+                        GeofenceNotifications.postExitDetected(context)
+                    }
+                    // RE-ENTER zone: from Grace into InZone
+                    newState is GeofenceUiState.InZone && previous is GeofenceUiState.GracePeriod -> {
+                        GeofenceNotifications.postReEntered(context)
+                    }
+                    // EXIT (grace expired): from any state into Exited
+                    newState is GeofenceUiState.Exited && previous !is GeofenceUiState.Exited -> {
+                        val active = sessionState as? WorkoutSessionState.Active
+                        val planned = active?.exercises?.sumOf { it.targetSets } ?: 0
+                        val logged = active?.exercises?.sumOf { ex -> ex.sets.count { it.isCompleted } } ?: 0
+                        val missed = (planned - logged).coerceAtLeast(0)
+                        val penalty = (missed * 10).coerceIn(50, 200)
+                        GeofenceNotifications.postGraceExpired(context, logged, penalty)
+                    }
+                }
+                previousGeofenceState = newState
+            }
     }
 
     if (showUndertrainedDialog) {
@@ -203,6 +277,26 @@ fun WorkoutSessionScreen(
                     editSelectedWeightKgX10 = snapToWeightStep(weightKgX10)
                     editSelectedRir = rir
                     showEditSheet = true
+                },
+                geofenceState = geofenceState,
+                permissionStatus = permissionStatus,
+                onEarlyExitMenuClick = {
+                    val allDone = state.exercises.all { ex -> ex.sets.all { it.isCompleted } }
+                    if (allDone) {
+                        viewModel.enterReview()
+                    } else {
+                        val planned = state.exercises.sumOf { it.targetSets }
+                        val logged = state.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
+                        val penalty = ((planned - logged) * 10).coerceIn(50, 200)
+                        earlyExitDialogConfig = EarlyExitDialogConfig(
+                            totalBudget = EarlyExitTracker.EARLY_EXIT_BUDGET_PER_MONTH,
+                            remainingBeforeUse = earlyExitBudget.remaining,
+                            penaltyXp = penalty
+                        )
+                    }
+                },
+                onPermissionBannerTap = {
+                    permissionController.openAppSettings()
                 }
             )
             // Edit sheet for Active state completed sets
@@ -287,6 +381,44 @@ fun WorkoutSessionScreen(
             }
         }
     }
+
+    // Phase 19 — Rationale sheet
+    if (showRationaleSheet) {
+        PermissionRationaleSheet(
+            onActivate = {
+                scope.launch {
+                    permissionController.requestWhenInUse()
+                    val s = permissionController.currentLocationStatus()
+                    permissionStatus = s
+                    if (s == LocationPermissionStatus.WHEN_IN_USE) {
+                        permissionController.requestAlways()
+                        permissionController.requestNotifications()
+                        permissionStatus = permissionController.currentLocationStatus()
+                    }
+                    showRationaleSheet = false
+                }
+            },
+            onLater = { showRationaleSheet = false }
+        )
+    }
+
+    // Phase 19 — Early-Exit dialog
+    earlyExitDialogConfig?.let { cfg ->
+        EarlyExitConfirmDialog(
+            config = cfg,
+            onConfirm = {
+                viewModel.requestEarlyExit()
+                // Post notification matching the path
+                if (cfg.hasBudget) {
+                    GeofenceNotifications.postEarlyExitWithBudget(context, cfg.remainingBeforeUse - 1)
+                } else {
+                    GeofenceNotifications.postEarlyExitWithPenalty(context, cfg.penaltyXp)
+                }
+                earlyExitDialogConfig = null
+            },
+            onDismiss = { earlyExitDialogConfig = null }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -318,7 +450,11 @@ private fun ActiveWorkoutContent(
     onSaveReviewedWorkout: () -> Unit,
     onDiscardWorkout: () -> Unit,
     onPopBackStack: () -> Unit,
-    onEditCompletedSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int) -> Unit = { _, _, _, _, _ -> }
+    onEditCompletedSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int) -> Unit = { _, _, _, _, _ -> },
+    geofenceState: GeofenceUiState = GeofenceUiState.Inactive,
+    permissionStatus: LocationPermissionStatus = LocationPermissionStatus.NOT_DETERMINED,
+    onEarlyExitMenuClick: () -> Unit = {},
+    onPermissionBannerTap: () -> Unit = {}
 ) {
     val exercises = active.exercises
     val exIdx = active.currentExerciseIndex
@@ -347,6 +483,10 @@ private fun ActiveWorkoutContent(
                     }
                 },
                 actions = {
+                    GeofenceStatusChip(
+                        state = geofenceState,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
                     Box {
                         IconButton(onClick = { showMenu = true }) {
                             Icon(
@@ -380,6 +520,16 @@ private fun ActiveWorkoutContent(
                                     onEnterReview()
                                 }
                             )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.early_exit_menu_label)) },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Cancel, contentDescription = null)
+                                },
+                                onClick = {
+                                    showMenu = false
+                                    onEarlyExitMenuClick()
+                                }
+                            )
                         }
                     }
                 }
@@ -394,6 +544,23 @@ private fun ActiveWorkoutContent(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // Phase 19 — permission banner (above content)
+            if (permissionStatus == LocationPermissionStatus.WHEN_IN_USE) {
+                PermissionBanner(
+                    variant = PermissionBannerVariant.WHEN_IN_USE_ONLY,
+                    onTap = onPermissionBannerTap,
+                    modifier = Modifier.padding(bottom = 0.dp)
+                )
+            } else if (permissionStatus == LocationPermissionStatus.DENIED ||
+                permissionStatus == LocationPermissionStatus.RESTRICTED
+            ) {
+                PermissionBanner(
+                    variant = PermissionBannerVariant.DENIED,
+                    onTap = onPermissionBannerTap,
+                    modifier = Modifier.padding(bottom = 0.dp)
+                )
+            }
+
             // 1. Header section
             HeaderSection(
                 exercise = exercise,
