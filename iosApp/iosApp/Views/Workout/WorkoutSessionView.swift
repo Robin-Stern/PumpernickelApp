@@ -367,16 +367,16 @@ struct WorkoutSessionView: View {
             PermissionRationaleSheet(
                 onActivate: {
                     Task {
-                        _ = try? await asyncFunction(for: permissionController.requestWhenInUse())
-                        let status = try? await asyncFunction(for: permissionController.currentLocationStatus())
+                        _ = try? await permissionController.requestWhenInUse()
+                        let status = try? await permissionController.currentLocationStatus()
                         if let status { self.locationPermissionStatus = status }
                         // WARN-19-1 fix — request notifications UNCONDITIONALLY after the
                         // first location grant resolves (useful even for .whenInUse state).
-                        _ = try? await asyncFunction(for: permissionController.requestNotifications())
+                        _ = try? await permissionController.requestNotifications()
                         // D-19-09 — Always-Allow can only be requested AFTER WhenInUse on iOS.
                         if status == .whenInUse {
-                            _ = try? await asyncFunction(for: permissionController.requestAlways())
-                            let after = try? await asyncFunction(for: permissionController.currentLocationStatus())
+                            _ = try? await permissionController.requestAlways()
+                            let after = try? await permissionController.currentLocationStatus()
                             if let after { self.locationPermissionStatus = after }
                         }
                     }
@@ -850,7 +850,7 @@ struct WorkoutSessionView: View {
     @MainActor
     private func refreshPermissionStatusOnAppear() async {
         do {
-            let status = try await asyncFunction(for: permissionController.currentLocationStatus())
+            let status = try await permissionController.currentLocationStatus()
             self.locationPermissionStatus = status
         } catch {
             self.locationPermissionStatus = .notDetermined
