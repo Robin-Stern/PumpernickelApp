@@ -148,10 +148,11 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260511-117 | B.2.code: add worked-example macro arithmetic section to recipe-system-prompt.md (target: Llama-3.3 arithmetic + Qwen mode-collapse failure modes) | 2026-05-11 | 380d8d2 | [260511-117-b-2-code-recipe-prompt-mit-worked-exampl](./quick/260511-117-b-2-code-recipe-prompt-mit-worked-exampl/) |
 | 260511-1h7 | Didactic end-to-end explainer for eval harness (evals/PROMPT-TESTING-EXPLAINED.md, 565 lines, 9 sections + ASCII diagrams) — presentation material | 2026-05-11 | 4d1d615 | [260511-1h7-didaktische-dokumentation-des-eval-harne](./quick/260511-1h7-didaktische-dokumentation-des-eval-harne/) |
 | 260511-gff | B.4.code: refusal path measurable — validators honor expectRefusal, 2 impossible-scenario cases per suite, sharpened Refusal sections in both system prompts | 2026-05-11 | e33ef0d | [260511-gff-b-4-code-refusal-path-messbar-machen-exp](./quick/260511-gff-b-4-code-refusal-path-messbar-machen-exp/) |
+| 260516-nfn | Debug-GPS-Mock für Phase 19: DebugGeofenceProvider (commonMain) + build-gated Koin override (BuildConfig.DEBUG / #if DEBUG) + Debug-Panel in Settings mit Enter/Exit/Error-Trigger-Buttons — Phase-19-Flow ohne physisches Rumlaufen testbar. UAT auf Emulator/Simulator pending | 2026-05-16 | 8846475 | [260516-nfn-debug-gps-mock-f-r-phase-19-geofencing-b](./quick/260516-nfn-debug-gps-mock-f-r-phase-19-geofencing-b/) |
 
 ## Session Continuity
 
-Last session: 2026-05-13T08:08:12.749Z
-Stopped at: Phase 19 UI-SPEC approved
-Resume file: .planning/phases/19-geofencing-workout-enforcement/19-UI-SPEC.md
-Next step: `/gsd-plan-phase 15` to break Phase 15 into plans
+Last session: 2026-05-16T14:55:00.000Z
+Stopped at: Phase 19 + quick-260516-nfn implementation complete — UATs pending
+Resume file: .planning/quick/260516-nfn-debug-gps-mock-f-r-phase-19-geofencing-b/260516-nfn-SUMMARY.md
+Next step: Manuelle UAT (Phase 19 visual UAT iOS+Android + quick-260516-nfn Debug-Panel Smoke-Test) auf Emulator/Simulator/Gerät
