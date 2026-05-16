@@ -27,11 +27,16 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // 1. Koin must be up before anything else touches the shared graph.
         KoinInitIosKt.doInitKoinIos()
 
-        // 2. Force-resolve the IosGeofenceProvider singleton so its
-        //    internal location delegate is attached. This is the SAME
-        //    manager that originally `startMonitoring`'d, so iOS's
-        //    cold-start callback will reach the delegate that wrote the
-        //    region in the first place. No second manager needed.
+        // 2. DEBUG-only: replace real GeofenceProvider with manual-trigger mock for
+        //    Simulator/UAT. Must run BEFORE force-resolving the provider below so the
+        //    override binding is in place when getGeofenceProvider() is called.
+        #if DEBUG
+        KoinHelper.shared.loadDebugGeofenceOverride()
+        #endif
+
+        // 3. Force-resolve the GeofenceProvider singleton so its internal delegate is
+        //    attached. In release: resolves IosGeofenceProvider (real GPS).
+        //    In debug: resolves DebugGeofenceProvider (manual trigger, no GPS needed).
         _ = KoinHelper.shared.getGeofenceProvider()
 
         // 3. The launchOptions[.location] flag is informational — we don't

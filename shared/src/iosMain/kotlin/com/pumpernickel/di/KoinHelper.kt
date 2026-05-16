@@ -1,5 +1,7 @@
 package com.pumpernickel.di
 
+import com.pumpernickel.data.geofence.DebugGeofenceProvider
+import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.presentation.exercises.CreateExerciseViewModel
 import com.pumpernickel.presentation.exercises.ExerciseCatalogViewModel
 import com.pumpernickel.presentation.exercises.ExerciseDetailViewModel
@@ -16,6 +18,8 @@ import com.pumpernickel.domain.geofence.EarlyExitTracker
 import com.pumpernickel.domain.geofence.GeofenceProvider
 import com.pumpernickel.domain.permissions.PermissionController
 import com.pumpernickel.presentation.workout.WorkoutSessionViewModel
+import org.koin.core.context.loadKoinModules
+import org.koin.dsl.module
 import org.koin.mp.KoinPlatform
 
 object KoinHelper {
@@ -69,4 +73,31 @@ object KoinHelper {
     /** Phase 19 — exposed for Wave 4 SwiftUI Settings detail sheet. */
     fun getEarlyExitTracker(): EarlyExitTracker =
         KoinPlatform.getKoin().get()
+
+    /** Exposed for DebugGeofencePanel.swift to read the active session's regionId. */
+    fun getWorkoutRepository(): WorkoutRepository =
+        KoinPlatform.getKoin().get()
+
+    /**
+     * DEBUG-only: loads a Koin module that overrides GeofenceProvider with
+     * DebugGeofenceProvider so Phase 19 flows can be exercised on the Simulator.
+     * Called from AppDelegate ONLY inside `#if DEBUG`.
+     */
+    fun loadDebugGeofenceOverride() {
+        loadKoinModules(
+            module {
+                single<GeofenceProvider> { DebugGeofenceProvider() }
+            }
+        )
+    }
+
+    /**
+     * Returns the current GeofenceProvider cast to DebugGeofenceProvider, or null
+     * if the release binding is active. Used by DebugGeofencePanel.swift to call
+     * trigger methods.
+     */
+    fun getDebugGeofenceProvider(): DebugGeofenceProvider? {
+        val provider = KoinPlatform.getKoin().getOrNull<GeofenceProvider>()
+        return provider as? DebugGeofenceProvider
+    }
 }

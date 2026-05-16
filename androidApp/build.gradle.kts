@@ -29,6 +29,18 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+
+    buildTypes {
+        getByName("debug") {
+            isMinifyEnabled = false
+            // BuildConfig.DEBUG is true automatically for the debug build type.
+        }
+        getByName("release") {
+            isMinifyEnabled = false
+            // BuildConfig.DEBUG is false — DebugGeofenceProvider is never loaded.
+        }
     }
 }
 

@@ -135,6 +135,9 @@ val sharedModule = module {
 // appDeclaration allows platform-specific config (e.g. androidContext() on Android)
 fun initKoin(appDeclaration: KoinApplication.() -> Unit = {}) {
     startKoin {
+        // allowOverride(true) enables loadKoinModules to replace an existing binding —
+        // required for the DEBUG-only GeofenceProvider override loaded after startKoin.
+        allowOverride(true)
         appDeclaration()
         modules(sharedModule + platformModule)
     }
