@@ -85,6 +85,10 @@ struct SettingsView: View {
                     }
                 }
 
+                #if DEBUG
+                DebugGeofencePanel()
+                #endif
+
                 // D-18-05: BYOK AI configuration reachable from Settings.
                 Section("AI") {
                     NavigationLink {

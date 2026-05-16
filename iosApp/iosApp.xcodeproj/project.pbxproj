@@ -67,6 +67,7 @@
 		A19063 /* EarlyExitConfirmDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B19063 /* EarlyExitConfirmDialog.swift */; };
 		A19064 /* NotificationCenter+Geofence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B19064 /* NotificationCenter+Geofence.swift */; };
 		A19065 /* WorkoutEnforcementDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B19065 /* WorkoutEnforcementDetailView.swift */; };
+		A19070 /* DebugGeofencePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B19070 /* DebugGeofencePanel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -128,6 +129,7 @@
 		B19063 /* EarlyExitConfirmDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarlyExitConfirmDialog.swift; sourceTree = "<group>"; };
 		B19064 /* NotificationCenter+Geofence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationCenter+Geofence.swift"; sourceTree = "<group>"; };
 		B19065 /* WorkoutEnforcementDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutEnforcementDetailView.swift; sourceTree = "<group>"; };
+		B19070 /* DebugGeofencePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugGeofencePanel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -286,6 +288,7 @@
 			children = (
 				B10072 /* SettingsView.swift */,
 				B19065 /* WorkoutEnforcementDetailView.swift */,
+				B19070 /* DebugGeofencePanel.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -536,6 +539,7 @@
 				A19063 /* EarlyExitConfirmDialog.swift in Sources */,
 				A19064 /* NotificationCenter+Geofence.swift in Sources */,
 				A19065 /* WorkoutEnforcementDetailView.swift in Sources */,
+				A19070 /* DebugGeofencePanel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

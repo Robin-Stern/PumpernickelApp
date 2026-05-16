@@ -274,6 +274,11 @@ fun SettingsSheet(
                 )
             }
 
+            if (com.pumpernickel.android.BuildConfig.DEBUG) {
+                Spacer(modifier = Modifier.height(20.dp))
+                com.pumpernickel.android.ui.components.DebugGeofencePanel()
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
 
             // ── KI-Einstellungen (D-18-05) ──
