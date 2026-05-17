@@ -439,6 +439,13 @@ class WorkoutSessionViewModel(
             val currentExercise = active.exercises[exIdx]
             val nextCursor = computeNextCursor(exIdx, setIdx, active.exercises)
 
+            // D-19-13 — capture anchor + register geofence on the 1st logged set.
+            // F5 inactivity timer was removed by Plan 19-01 (D-19-06); geofence-exit replaces it.
+            // MUST run BEFORE the last-set early-return below — otherwise 1-set templates
+            // (or any path where the 1st logged set is also the last set) never register
+            // the geofence and the status chip stays "Inactive" forever.
+            maybeRegisterGeofenceForFirstSet(active)
+
             // Last set of last exercise -- auto-transition to review
             if (nextCursor.first == exIdx && nextCursor.second == setIdx) {
                 workoutRepository.updateCursor(nextCursor.first, nextCursor.second)
@@ -470,31 +477,35 @@ class WorkoutSessionViewModel(
             if (restPeriodSec > 0) {
                 startRestTimer(restPeriodSec)
             }
+        }
+    }
 
-            // D-19-13 — capture anchor + register geofence on the 1st logged set.
-            // F5 inactivity timer was removed by Plan 19-01 (D-19-06); geofence-exit replaces it.
-            if (gymLocation == null) {
-                locationJob?.cancel()
-                locationJob = viewModelScope.launch {
-                    val captured = locationProvider.getCurrentLocation()
-                    gymLocation = captured
-                    if (captured != null) {
-                        // BLOCKER-19-4: region id uses active.startTimeMillis (canonical per-workout id).
-                        // ActiveSessionEntity.id is a singleton sentinel (=1) and MUST NOT be used.
-                        val regionId = "active-workout-${active.startTimeMillis}"
-                        activeRegionId = regionId
-                        val result = geofenceProvider.register(
-                            center = captured,
-                            radiusMeters = XpFormula.GYM_RADIUS_METERS,
-                            id = regionId
-                        )
-                        if (result.isSuccess) {
-                            _geofenceState.value = GeofenceUiState.InZone
-                            startGeofenceObserver(regionId)
-                        } else {
-                            _geofenceState.value = GeofenceUiState.Inactive
-                        }
-                    }
+    /**
+     * D-19-13 — captures the user's gym anchor location once per workout (first set)
+     * and registers the 50m geofence around it. No-op on subsequent calls (gymLocation
+     * is already set).
+     */
+    private fun maybeRegisterGeofenceForFirstSet(active: WorkoutSessionState.Active) {
+        if (gymLocation != null) return
+        locationJob?.cancel()
+        locationJob = viewModelScope.launch {
+            val captured = locationProvider.getCurrentLocation()
+            gymLocation = captured
+            if (captured != null) {
+                // BLOCKER-19-4: region id uses active.startTimeMillis (canonical per-workout id).
+                // ActiveSessionEntity.id is a singleton sentinel (=1) and MUST NOT be used.
+                val regionId = "active-workout-${active.startTimeMillis}"
+                activeRegionId = regionId
+                val result = geofenceProvider.register(
+                    center = captured,
+                    radiusMeters = XpFormula.GYM_RADIUS_METERS,
+                    id = regionId
+                )
+                if (result.isSuccess) {
+                    _geofenceState.value = GeofenceUiState.InZone
+                    startGeofenceObserver(regionId)
+                } else {
+                    _geofenceState.value = GeofenceUiState.Inactive
                 }
             }
         }
