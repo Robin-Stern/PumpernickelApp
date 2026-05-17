@@ -3,6 +3,67 @@ import Shared
 import KMPNativeCoroutinesAsync
 import UIKit
 import UserNotifications
+import CoreLocation
+
+/// Swift-native bridge for CoreLocation permission. The Kotlin/Native interop for
+/// `CLLocationManager.requestWhenInUseAuthorization()` silently swallowed the call —
+/// no system dialog, no delegate callback. Implementing it natively in Swift bypasses
+/// the K/N bridge entirely. Holds the manager as a strong reference (CLLocationManager
+/// retains its delegate weakly).
+final class LocationPermissionRequester: NSObject, CLLocationManagerDelegate {
+    static let shared = LocationPermissionRequester()
+    private let manager = CLLocationManager()
+    private var pending: ((CLAuthorizationStatus) -> Void)?
+
+    override init() {
+        super.init()
+        manager.delegate = self
+    }
+
+    func currentStatus() -> CLAuthorizationStatus {
+        return manager.authorizationStatus
+    }
+
+    /// Request WhenInUse permission. Triggers the iOS system dialog if status is
+    /// `.notDetermined`. Returns the resulting status via the completion handler.
+    func requestWhenInUse(completion: @escaping (CLAuthorizationStatus) -> Void) {
+        let initial = manager.authorizationStatus
+        print("[SwiftPerm] requestWhenInUse — initial status=\(initial.rawValue) on \(Thread.isMainThread ? "Main" : "BG") thread")
+        if initial != .notDetermined {
+            print("[SwiftPerm] status already decided, returning immediately")
+            completion(initial)
+            return
+        }
+        pending = completion
+        if Thread.isMainThread {
+            print("[SwiftPerm] calling requestWhenInUseAuthorization() (main)")
+            manager.requestWhenInUseAuthorization()
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                print("[SwiftPerm] calling requestWhenInUseAuthorization() (dispatched to main)")
+                self?.manager.requestWhenInUseAuthorization()
+            }
+        }
+    }
+
+    func requestAlways(completion: @escaping (CLAuthorizationStatus) -> Void) {
+        pending = completion
+        DispatchQueue.main.async { [weak self] in
+            self?.manager.requestAlwaysAuthorization()
+        }
+    }
+
+    // iOS 14+ delegate callback
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
+        print("[SwiftPerm] locationManagerDidChangeAuthorization: status=\(status.rawValue)")
+        // Skip the initial notDetermined emission that fires on delegate-attach
+        if status == .notDetermined && pending == nil { return }
+        let cb = pending
+        pending = nil
+        cb?(status)
+    }
+}
 
 // Fix side-by-side wheel picker touch overlap (ENTRY-01, ENTRY-02)
 // Source: swiftuirecipes.com/blog/multi-column-wheel-picker-in-swiftui
@@ -370,25 +431,44 @@ struct WorkoutSessionView: View {
         .sheet(isPresented: $showRationaleSheet) {
             PermissionRationaleSheet(
                 onActivate: {
-                    print("[Rationale] onActivate tapped — launching permission Task")
-                    Task {
-                        print("[Rationale] Task: calling requestWhenInUse()")
-                        let result1 = try? await permissionController.requestWhenInUse()
-                        print("[Rationale] requestWhenInUse returned: \(String(describing: result1))")
-                        let status = try? await permissionController.currentLocationStatus()
-                        print("[Rationale] currentLocationStatus after whenInUse: \(String(describing: status))")
-                        if let status { self.locationPermissionStatus = status }
-                        // WARN-19-1 fix — request notifications UNCONDITIONALLY after the
-                        // first location grant resolves (useful even for .whenInUse state).
-                        let notifResult = try? await permissionController.requestNotifications()
-                        print("[Rationale] requestNotifications returned: \(String(describing: notifResult))")
-                        // D-19-09 — Always-Allow can only be requested AFTER WhenInUse on iOS.
-                        if status == .whenInUse {
-                            print("[Rationale] status==whenInUse, escalating to Always")
-                            _ = try? await permissionController.requestAlways()
-                            let after = try? await permissionController.currentLocationStatus()
-                            print("[Rationale] currentLocationStatus after Always: \(String(describing: after))")
-                            if let after { self.locationPermissionStatus = after }
+                    print("[Rationale] onActivate tapped — using Swift-native CoreLocation bridge")
+                    // Use Swift-native LocationPermissionRequester to bypass the Kotlin/Native
+                    // ObjC bridge for CLLocationManager (which swallowed the request).
+                    LocationPermissionRequester.shared.requestWhenInUse { status in
+                        print("[Rationale] WhenInUse callback: status=\(status.rawValue)")
+                        // Map to shared LocationPermissionStatus
+                        let mapped: LocationPermissionStatus = {
+                            switch status {
+                            case .authorizedAlways: return .always
+                            case .authorizedWhenInUse: return .whenInUse
+                            case .denied: return .denied
+                            case .restricted: return .restricted
+                            default: return .notDetermined
+                            }
+                        }()
+                        self.locationPermissionStatus = mapped
+                        // After location resolves, request notifications via Kotlin (UNUserNotificationCenter
+                        // works fine through K/N) — independent of CoreLocation bridge issue.
+                        Task {
+                            let notifResult = try? await permissionController.requestNotifications()
+                            print("[Rationale] requestNotifications returned: \(String(describing: notifResult))")
+                        }
+                        // D-19-09 — escalate to Always only after WhenInUse is granted.
+                        if status == .authorizedWhenInUse {
+                            print("[Rationale] WhenInUse granted, escalating to Always")
+                            LocationPermissionRequester.shared.requestAlways { after in
+                                print("[Rationale] Always callback: status=\(after.rawValue)")
+                                let mappedAfter: LocationPermissionStatus = {
+                                    switch after {
+                                    case .authorizedAlways: return .always
+                                    case .authorizedWhenInUse: return .whenInUse
+                                    case .denied: return .denied
+                                    case .restricted: return .restricted
+                                    default: return .notDetermined
+                                    }
+                                }()
+                                self.locationPermissionStatus = mappedAfter
+                            }
                         }
                     }
                 },
