@@ -11,7 +11,7 @@ struct NutritionRecipeCreationView: View {
     }
 
     @State private var state = RecipeCreationUiState(
-        recipeName: "", searchQuery: "", searchResults: [],
+        recipeName: "", searchQuery: "", searchResults: [], isSearchingRemote: false,
         ingredients: [], totals: RecipeMacros(calories: 0, protein: 0, fat: 0, carbs: 0, sugar: 0),
         errorMessage: nil, editingRecipeId: nil, editingIsFavorite: false
     )
@@ -52,14 +52,17 @@ struct NutritionRecipeCreationView: View {
                     .accessibilityLabel("Barcode scannen")
                 }
 
-                ForEach(state.searchResults, id: \.id) { food in
+                ForEach(Array(state.searchResults.enumerated()), id: \.offset) { _, item in
                     Button {
-                        viewModel.onEvent(event: RecipeCreationEventOnFoodSelected(food: food))
+                        viewModel.onEvent(event: RecipeCreationEventOnFoodSelected(food: item.food))
                     } label: {
                         HStack {
                             VStack(alignment: .leading) {
-                                Text(food.name).foregroundColor(.primary)
-                                Text("\(Int(food.calories.rounded())) kcal/100g")
+                                Text(item.food.name).foregroundColor(.primary)
+                                if let brand = item.brand {
+                                    Text(brand).font(.caption2).foregroundColor(.secondary)
+                                }
+                                Text("\(Int(item.food.calories.rounded())) kcal/100g")
                                     .font(.caption).foregroundColor(.secondary)
                             }
                             Spacer()
