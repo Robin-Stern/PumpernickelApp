@@ -18,10 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -131,7 +129,6 @@ fun WorkoutSessionScreen(
     var selectedReps by remember { mutableIntStateOf(0) }
     var selectedWeightKgX10 by remember { mutableIntStateOf(0) }
     var selectedRir by remember { mutableIntStateOf(2) }
-    var showAbandonDialog by remember { mutableStateOf(false) }
     var showUndertrainedDialog by remember { mutableStateOf(false) }
     var showExerciseOverview by remember { mutableStateOf(false) }
     var showSetInput by remember { mutableStateOf(false) }
@@ -252,7 +249,6 @@ fun WorkoutSessionScreen(
                 selectedWeightKgX10 = selectedWeightKgX10,
                 selectedRir = selectedRir,
                 showSetInput = showSetInput,
-                showAbandonDialog = showAbandonDialog,
                 showExerciseOverview = showExerciseOverview,
                 previousPerformance = previousPerformance,
                 personalBest = personalBest,
@@ -261,7 +257,6 @@ fun WorkoutSessionScreen(
                 onWeightChanged = { selectedWeightKgX10 = it },
                 onRirChanged = { selectedRir = it },
                 onShowSetInput = { showSetInput = it },
-                onShowAbandonDialog = { showAbandonDialog = it },
                 onShowExerciseOverview = { showExerciseOverview = it },
                 onCompleteSet = { reps, weight, rir ->
                     viewModel.completeSet(reps, weight, rir)
@@ -272,10 +267,6 @@ fun WorkoutSessionScreen(
                 onReorderExercise = { from, to -> viewModel.reorderExercise(from, to) },
                 onEnterReview = { viewModel.enterReview() },
                 onSaveReviewedWorkout = { viewModel.saveReviewedWorkout() },
-                onDiscardWorkout = {
-                    viewModel.discardWorkout()
-                    navController.popBackStack()
-                },
                 onPopBackStack = { navController.popBackStack() },
                 onEditCompletedSet = { exIdx, setIdx, reps, weightKgX10, rir ->
                     editExerciseIndex = exIdx
@@ -437,7 +428,6 @@ private fun ActiveWorkoutContent(
     selectedWeightKgX10: Int,
     selectedRir: Int,
     showSetInput: Boolean,
-    showAbandonDialog: Boolean,
     showExerciseOverview: Boolean,
     previousPerformance: Map<String, CompletedExercise>,
     personalBest: Map<String, Int>,
@@ -446,7 +436,6 @@ private fun ActiveWorkoutContent(
     onWeightChanged: (Int) -> Unit,
     onRirChanged: (Int) -> Unit,
     onShowSetInput: (Boolean) -> Unit,
-    onShowAbandonDialog: (Boolean) -> Unit,
     onShowExerciseOverview: (Boolean) -> Unit,
     onCompleteSet: (Int, Int, Int) -> Unit,
     onSkipRest: () -> Unit,
@@ -455,7 +444,6 @@ private fun ActiveWorkoutContent(
     onReorderExercise: (Int, Int) -> Unit,
     onEnterReview: () -> Unit,
     onSaveReviewedWorkout: () -> Unit,
-    onDiscardWorkout: () -> Unit,
     onPopBackStack: () -> Unit,
     onEditCompletedSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int) -> Unit = { _, _, _, _, _ -> },
     geofenceState: GeofenceUiState = GeofenceUiState.Inactive,
@@ -482,26 +470,17 @@ private fun ActiveWorkoutContent(
         topBar = {
             TopAppBar(
                 title = { Text(active.templateName) },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        val hasCompletedSets = exercises.any { ex -> ex.sets.any { it.isCompleted } }
-                        if (hasCompletedSets) {
-                            onShowAbandonDialog(true)
-                        } else {
-                            onDiscardWorkout()
-                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close workout"
-                        )
-                    }
-                },
                 actions = {
                     GeofenceStatusChip(
                         state = geofenceState,
                         modifier = Modifier.padding(end = 8.dp)
                     )
+                    IconButton(onClick = onEarlyExitMenuClick) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = stringResource(R.string.early_exit_menu_label)
+                        )
+                    }
                     Box {
                         IconButton(onClick = { showMenu = true }) {
                             Icon(
@@ -526,23 +505,6 @@ private fun ActiveWorkoutContent(
                                 onClick = {
                                     showMenu = false
                                     onShowExerciseOverview(true)
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Finish Workout") },
-                                onClick = {
-                                    showMenu = false
-                                    onEnterReview()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.early_exit_menu_label)) },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.Cancel, contentDescription = null)
-                                },
-                                onClick = {
-                                    showMenu = false
-                                    onEarlyExitMenuClick()
                                 }
                             )
                         }
@@ -670,41 +632,6 @@ private fun ActiveWorkoutContent(
                 }
             }
         }
-    }
-
-    // Abandon dialog (D-13, D-14, D-15)
-    if (showAbandonDialog) {
-        val completedSetsCount = active.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
-        AlertDialog(
-            onDismissRequest = { onShowAbandonDialog(false) },
-            title = { Text("Abandon Workout?") },
-            text = {
-                Text(
-                    "Exercise ${active.currentExerciseIndex + 1}/${active.exercises.size}, " +
-                        "$completedSetsCount sets completed"
-                )
-            },
-            confirmButton = {
-                Button(onClick = {
-                    onEnterReview()
-                    onSaveReviewedWorkout()
-                    onPopBackStack()
-                    onShowAbandonDialog(false)
-                }) { Text("Save & Exit") }
-            },
-            dismissButton = {
-                Row {
-                    TextButton(onClick = { onShowAbandonDialog(false) }) { Text("Cancel") }
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = {
-                        onDiscardWorkout()
-                        onShowAbandonDialog(false)
-                    }) {
-                        Text("Discard", color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            }
-        )
     }
 
     // Exercise overview sheet (D-09)
