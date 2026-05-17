@@ -12,12 +12,25 @@ import CoreLocation
 /// retains its delegate weakly).
 final class LocationPermissionRequester: NSObject, CLLocationManagerDelegate {
     static let shared = LocationPermissionRequester()
-    private let manager = CLLocationManager()
+    private let manager: CLLocationManager
     private var pending: ((CLAuthorizationStatus) -> Void)?
 
     override init() {
+        // CLLocationManager MUST be created on a thread with a runloop (main thread).
+        // Force main-thread init even if .shared is first touched from a BG context.
+        if Thread.isMainThread {
+            self.manager = CLLocationManager()
+        } else {
+            self.manager = DispatchQueue.main.sync { CLLocationManager() }
+        }
         super.init()
-        manager.delegate = self
+        if Thread.isMainThread {
+            manager.delegate = self
+        } else {
+            DispatchQueue.main.sync { manager.delegate = self }
+        }
+        let servicesEnabled = CLLocationManager.locationServicesEnabled()
+        print("[SwiftPerm] init — locationServicesEnabled=\(servicesEnabled) initialStatus=\(manager.authorizationStatus.rawValue) thread=\(Thread.isMainThread ? "Main" : "BG")")
     }
 
     func currentStatus() -> CLAuthorizationStatus {
@@ -28,21 +41,16 @@ final class LocationPermissionRequester: NSObject, CLLocationManagerDelegate {
     /// `.notDetermined`. Returns the resulting status via the completion handler.
     func requestWhenInUse(completion: @escaping (CLAuthorizationStatus) -> Void) {
         let initial = manager.authorizationStatus
-        print("[SwiftPerm] requestWhenInUse — initial status=\(initial.rawValue) on \(Thread.isMainThread ? "Main" : "BG") thread")
+        print("[SwiftPerm] requestWhenInUse — initial status=\(initial.rawValue) servicesEnabled=\(CLLocationManager.locationServicesEnabled())")
         if initial != .notDetermined {
             print("[SwiftPerm] status already decided, returning immediately")
             completion(initial)
             return
         }
         pending = completion
-        if Thread.isMainThread {
-            print("[SwiftPerm] calling requestWhenInUseAuthorization() (main)")
-            manager.requestWhenInUseAuthorization()
-        } else {
-            DispatchQueue.main.async { [weak self] in
-                print("[SwiftPerm] calling requestWhenInUseAuthorization() (dispatched to main)")
-                self?.manager.requestWhenInUseAuthorization()
-            }
+        DispatchQueue.main.async { [weak self] in
+            print("[SwiftPerm] calling requestWhenInUseAuthorization() on main")
+            self?.manager.requestWhenInUseAuthorization()
         }
     }
 
@@ -53,15 +61,53 @@ final class LocationPermissionRequester: NSObject, CLLocationManagerDelegate {
         }
     }
 
-    // iOS 14+ delegate callback
+    /// Fetch a single location fix. Bypasses the Kotlin/Native bridge for
+    /// `manager.requestLocation()` (same K/N-swallow risk as the permission API).
+    func requestSingleLocation(completion: @escaping (CLLocation?) -> Void) {
+        let status = manager.authorizationStatus
+        guard status == .authorizedWhenInUse || status == .authorizedAlways else {
+            print("[SwiftPerm] requestSingleLocation: not authorized (status=\(status.rawValue)) — returning nil")
+            completion(nil)
+            return
+        }
+        pendingLocation = completion
+        DispatchQueue.main.async { [weak self] in
+            print("[SwiftPerm] calling manager.requestLocation() on main")
+            self?.manager.requestLocation()
+        }
+    }
+
+    private var pendingLocation: ((CLLocation?) -> Void)?
+
+    // iOS 14+ delegate callback — fires once on delegate-attach with current status,
+    // and again after every authorization change. We MUST skip the initial notDetermined
+    // emission to avoid consuming the pending callback before the user even sees the dialog.
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         let status = manager.authorizationStatus
         print("[SwiftPerm] locationManagerDidChangeAuthorization: status=\(status.rawValue)")
-        // Skip the initial notDetermined emission that fires on delegate-attach
-        if status == .notDetermined && pending == nil { return }
+        // notDetermined is never a real "decision" — skip and keep waiting.
+        if status == .notDetermined {
+            print("[SwiftPerm] skipping notDetermined emission")
+            return
+        }
         let cb = pending
         pending = nil
         cb?(status)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        print("[SwiftPerm] didUpdateLocations: count=\(locations.count)")
+        let loc = locations.last
+        let cb = pendingLocation
+        pendingLocation = nil
+        cb?(loc)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("[SwiftPerm] didFailWithError: \(error.localizedDescription)")
+        let cb = pendingLocation
+        pendingLocation = nil
+        cb?(nil)
     }
 }
 
@@ -117,6 +163,7 @@ struct WorkoutSessionView: View {
     @State private var earlyExitBudget: EarlyExitBudget? = nil
     @State private var locationPermissionStatus: LocationPermissionStatus = .notDetermined
     @State private var showRationaleSheet = false
+    @State private var rationaleActivatePending = false
     // WARN-19-2 fix — per-launch persistence via @AppStorage (UserDefaults-backed).
     // Cleared on cold-start by AppDelegate so each app launch shows the rationale
     // once per workout-try, matching UI-SPEC's "once per session" semantics.
@@ -428,49 +475,56 @@ struct WorkoutSessionView: View {
             Text("Diese Muskelgruppen wurden in den letzten 7 Tagen kaum oder gar nicht trainiert:\n\n" +
                  undertrainedMuscles.map { "• \($0.group.displayName)" }.joined(separator: "\n"))
         }
-        .sheet(isPresented: $showRationaleSheet) {
-            PermissionRationaleSheet(
-                onActivate: {
-                    print("[Rationale] onActivate tapped — using Swift-native CoreLocation bridge")
-                    // Use Swift-native LocationPermissionRequester to bypass the Kotlin/Native
-                    // ObjC bridge for CLLocationManager (which swallowed the request).
-                    LocationPermissionRequester.shared.requestWhenInUse { status in
-                        print("[Rationale] WhenInUse callback: status=\(status.rawValue)")
-                        // Map to shared LocationPermissionStatus
-                        let mapped: LocationPermissionStatus = {
-                            switch status {
-                            case .authorizedAlways: return .always
-                            case .authorizedWhenInUse: return .whenInUse
-                            case .denied: return .denied
-                            case .restricted: return .restricted
-                            default: return .notDetermined
-                            }
-                        }()
-                        self.locationPermissionStatus = mapped
-                        // After location resolves, request notifications via Kotlin (UNUserNotificationCenter
-                        // works fine through K/N) — independent of CoreLocation bridge issue.
-                        Task {
-                            let notifResult = try? await permissionController.requestNotifications()
-                            print("[Rationale] requestNotifications returned: \(String(describing: notifResult))")
+        .sheet(isPresented: $showRationaleSheet, onDismiss: {
+            // CRITICAL: trigger permission request AFTER sheet has dismissed.
+            // iOS will silently swallow a permission dialog request while another
+            // modal is mid-transition or still presented. The flag pattern lets
+            // SwiftUI fully tear down the rationale sheet before we ask iOS for
+            // the system dialog.
+            if rationaleActivatePending {
+                rationaleActivatePending = false
+                print("[Rationale] sheet dismissed, NOW triggering Swift-native permission request")
+                LocationPermissionRequester.shared.requestWhenInUse { status in
+                    print("[Rationale] WhenInUse callback: status=\(status.rawValue)")
+                    let mapped: LocationPermissionStatus = {
+                        switch status {
+                        case .authorizedAlways: return .always
+                        case .authorizedWhenInUse: return .whenInUse
+                        case .denied: return .denied
+                        case .restricted: return .restricted
+                        default: return .notDetermined
                         }
-                        // D-19-09 — escalate to Always only after WhenInUse is granted.
-                        if status == .authorizedWhenInUse {
-                            print("[Rationale] WhenInUse granted, escalating to Always")
-                            LocationPermissionRequester.shared.requestAlways { after in
-                                print("[Rationale] Always callback: status=\(after.rawValue)")
-                                let mappedAfter: LocationPermissionStatus = {
-                                    switch after {
-                                    case .authorizedAlways: return .always
-                                    case .authorizedWhenInUse: return .whenInUse
-                                    case .denied: return .denied
-                                    case .restricted: return .restricted
-                                    default: return .notDetermined
-                                    }
-                                }()
-                                self.locationPermissionStatus = mappedAfter
-                            }
+                    }()
+                    self.locationPermissionStatus = mapped
+                    Task {
+                        let notifResult = try? await permissionController.requestNotifications()
+                        print("[Rationale] requestNotifications returned: \(String(describing: notifResult))")
+                    }
+                    if status == .authorizedWhenInUse {
+                        print("[Rationale] WhenInUse granted, escalating to Always")
+                        LocationPermissionRequester.shared.requestAlways { after in
+                            print("[Rationale] Always callback: status=\(after.rawValue)")
+                            let mappedAfter: LocationPermissionStatus = {
+                                switch after {
+                                case .authorizedAlways: return .always
+                                case .authorizedWhenInUse: return .whenInUse
+                                case .denied: return .denied
+                                case .restricted: return .restricted
+                                default: return .notDetermined
+                                }
+                            }()
+                            self.locationPermissionStatus = mappedAfter
                         }
                     }
+                }
+            }
+        }) {
+            PermissionRationaleSheet(
+                onActivate: {
+                    print("[Rationale] onActivate tapped — flagging activate, sheet will dismiss")
+                    rationaleActivatePending = true
+                    // The sheet's Button dismiss() runs after this closure.
+                    // The .sheet onDismiss handler will trigger the actual permission request.
                 },
                 onLater: {
                     print("[Rationale] onLater tapped")

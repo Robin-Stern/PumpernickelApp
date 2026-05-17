@@ -39,7 +39,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         //    In debug: resolves DebugGeofenceProvider (manual trigger, no GPS needed).
         _ = KoinHelper.shared.getGeofenceProvider()
 
-        // 3. The launchOptions[.location] flag is informational — we don't
+        // 4. Eagerly initialize the Swift-native LocationPermissionRequester on the main
+        //    thread so its CLLocationManager is bound to a runloop-active thread BEFORE
+        //    any SwiftUI Task touches .shared from a background dispatcher.
+        //    See WorkoutSessionView.swift LocationPermissionRequester for context.
+        _ = LocationPermissionRequester.shared
+
+        // 5. The launchOptions[.location] flag is informational — we don't
         //    need to read it because the resolved provider's delegate will
         //    receive `didExitRegion` directly from iOS and forward it both
         //    to the SharedFlow and to PendingGeofenceExitStore.
