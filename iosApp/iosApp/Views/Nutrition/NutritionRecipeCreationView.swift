@@ -52,23 +52,11 @@ struct NutritionRecipeCreationView: View {
                     .accessibilityLabel("Barcode scannen")
                 }
 
-                ForEach(Array(state.searchResults.enumerated()), id: \.offset) { _, item in
+                ForEach(Array(state.searchResults.enumerated()), id: \.offset) { _, food in
                     Button {
-                        viewModel.onEvent(event: RecipeCreationEventOnFoodSelected(food: item.food))
+                        viewModel.onEvent(event: RecipeCreationEventOnFoodSelected(food: food))
                     } label: {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(item.food.name).foregroundColor(.primary)
-                                if let brand = item.brand {
-                                    Text(brand).font(.caption2).foregroundColor(.secondary)
-                                }
-                                Text("\(Int(item.food.calories.rounded())) kcal/100g")
-                                    .font(.caption).foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Image(systemName: "plus.circle")
-                                .foregroundColor(.appAccent)
-                        }
+                        SearchResultRow(food: food)
                     }
                 }
             }
@@ -196,6 +184,23 @@ struct NutritionRecipeCreationView: View {
             }
         } catch {
             print("RecipeCreation saved event error: \(error)")
+        }
+    }
+}
+
+private struct SearchResultRow: View {
+    let food: Food
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(food.name).foregroundColor(.primary)
+                Text("\(Int(food.calories.rounded())) kcal/100g")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            Spacer()
+            Image(systemName: "plus.circle")
+                .foregroundColor(.appAccent)
         }
     }
 }

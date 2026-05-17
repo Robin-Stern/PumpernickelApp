@@ -2,7 +2,7 @@ package com.pumpernickel.domain.ai
 
 import platform.Foundation.NSUUID
 import platform.UIKit.UIApplication
-import platform.UIKit.UIBackgroundTaskIdentifierInvalid
+import platform.UIKit.UIBackgroundTaskInvalid
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionBadge
 import platform.UserNotifications.UNAuthorizationOptionSound
@@ -39,7 +39,9 @@ actual class NotificationService {
 
 actual class BackgroundTaskManager {
 
-    private var uiTaskId: Long = UIBackgroundTaskIdentifierInvalid
+    // UIBackgroundTaskIdentifier is a typealias for ULong (NSUInteger). The expect-class
+    // surface uses Long for KMP-friendliness, so we convert at the boundary.
+    private var uiTaskId: ULong = UIBackgroundTaskInvalid
 
     actual fun beginTask(onExpired: () -> Unit): Long {
         uiTaskId = UIApplication.sharedApplication.beginBackgroundTaskWithExpirationHandler {
@@ -51,7 +53,7 @@ actual class BackgroundTaskManager {
         // Schedule a BGProcessingTask as a longer-lived fallback.
         // The OS decides when to run it; requires registerAiBackgroundTask() at app launch.
         AiBgTaskHolder.schedule()
-        return uiTaskId
+        return uiTaskId.toLong()
     }
 
     actual fun endTask(id: Long) {
@@ -60,9 +62,9 @@ actual class BackgroundTaskManager {
     }
 
     private fun endUiTask() {
-        if (uiTaskId != UIBackgroundTaskIdentifierInvalid) {
+        if (uiTaskId != UIBackgroundTaskInvalid) {
             UIApplication.sharedApplication.endBackgroundTask(uiTaskId)
-            uiTaskId = UIBackgroundTaskIdentifierInvalid
+            uiTaskId = UIBackgroundTaskInvalid
         }
     }
 }

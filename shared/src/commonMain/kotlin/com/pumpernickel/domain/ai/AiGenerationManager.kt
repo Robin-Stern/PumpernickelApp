@@ -23,7 +23,9 @@ class AiGenerationManager(
     private val notificationService: NotificationService,
     private val backgroundTaskManager: BackgroundTaskManager
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // Dispatchers.IO is not available in commonMain (JVM/Android only). Default works
+    // for both platforms — these are network-bound LLM calls that already suspend in Ktor.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private var currentJob: Job? = null
 
