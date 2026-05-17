@@ -973,7 +973,11 @@ class WorkoutSessionViewModel(
     private fun startGracePeriod() {
         gracePeriodJob?.cancel()
         gracePeriodJob = viewModelScope.launch {
-            var remaining = XpFormula.GEOFENCE_GRACE_PERIOD_SECONDS.toInt()
+            // D-quick-vn7 — captured once at grace-period start (later picker
+            // changes do not affect a running countdown). Default 300L returned
+            // by repo if no user preference stored.
+            val configured = settingsRepository.gracePeriodSeconds.first()
+            var remaining = configured.toInt()
             _geofenceState.value = GeofenceUiState.GracePeriod(remaining)
             while (remaining > 0) {
                 delay(1000L)

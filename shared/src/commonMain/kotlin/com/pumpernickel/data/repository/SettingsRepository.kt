@@ -33,6 +33,10 @@ class SettingsRepository(
     private val appThemeKey = stringPreferencesKey("app_theme")
     private val accentColorKey = stringPreferencesKey("accent_color")
 
+    // D-quick-vn7 — Debug-Modus toggle + configurable Geofence grace-period.
+    private val debugModeEnabledKey = booleanPreferencesKey("debug_mode_enabled")
+    private val gracePeriodSecondsKey = longPreferencesKey("grace_period_seconds")
+
     private val calorieGoalKey = stringPreferencesKey("calorie_goal")
     private val proteinGoalKey = stringPreferencesKey("protein_goal")
     private val fatGoalKey = stringPreferencesKey("fat_goal")
@@ -98,6 +102,34 @@ class SettingsRepository(
         dataStore.edit { preferences ->
             preferences[accentColorKey] = color
         }
+    }
+
+    /**
+     * D-quick-vn7 — Debug-Modus toggle. Gates the in-workout debug overlay
+     * (iOS pill + Android FAB). Defaults to true so existing users see
+     * unchanged DEBUG behavior on first launch.
+     */
+    val debugModeEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[debugModeEnabledKey] ?: true
+    }
+
+    suspend fun setDebugModeEnabled(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[debugModeEnabledKey] = enabled }
+    }
+
+    /**
+     * D-quick-vn7 — grace period (seconds) before auto-abort after geofence
+     * exit. Defaults to XpFormula.GEOFENCE_GRACE_PERIOD_SECONDS (300L) so
+     * users who never touch the picker see unchanged behavior. The constant
+     * remains the canonical default; this Flow is the source of truth for
+     * the running countdown.
+     */
+    val gracePeriodSeconds: Flow<Long> = dataStore.data.map { prefs ->
+        prefs[gracePeriodSecondsKey] ?: com.pumpernickel.domain.gamification.XpFormula.GEOFENCE_GRACE_PERIOD_SECONDS
+    }
+
+    suspend fun setGracePeriodSeconds(seconds: Long) {
+        dataStore.edit { prefs -> prefs[gracePeriodSecondsKey] = seconds }
     }
 
     val nutritionGoals: Flow<NutritionGoals> = combine(
