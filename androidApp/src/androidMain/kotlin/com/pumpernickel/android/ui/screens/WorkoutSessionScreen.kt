@@ -470,6 +470,10 @@ private fun ActiveWorkoutContent(
 
     var showMenu by remember { mutableStateOf(false) }
 
+    // D-quick-vn7 — observe the user-controllable Debug-Modus toggle to gate the FAB.
+    val settingsViewModel: com.pumpernickel.presentation.settings.SettingsViewModel = koinViewModel()
+    val debugModeEnabled by settingsViewModel.debugModeEnabled.collectAsState()
+
     // DEBUG-only in-workout geofence trigger sheet (quick-260517-pzh)
     var showDebugSheet by remember { mutableStateOf(false) }
     val debugSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
@@ -547,7 +551,8 @@ private fun ActiveWorkoutContent(
             )
         },
         floatingActionButton = {
-            if (BuildConfig.DEBUG) {
+            // D-quick-vn7 — FAB hidden when user disables Debug-Modus in Settings.
+            if (BuildConfig.DEBUG && debugModeEnabled) {
                 SmallFloatingActionButton(
                     onClick = { showDebugSheet = true },
                     containerColor = MaterialTheme.colorScheme.errorContainer,

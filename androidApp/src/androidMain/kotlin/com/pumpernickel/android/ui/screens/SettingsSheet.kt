@@ -24,13 +24,19 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -65,6 +71,9 @@ fun SettingsSheet(
     val weightUnit by viewModel.weightUnit.collectAsState()
     val appTheme by viewModel.appTheme.collectAsState()
     val accentColorKey by viewModel.accentColor.collectAsState()
+    // D-quick-vn7 — Debug-Modus toggle + Geofence grace-period picker.
+    val debugModeEnabled by viewModel.debugModeEnabled.collectAsState()
+    val gracePeriodSeconds by viewModel.gracePeriodSeconds.collectAsState()
 
     var showWorkoutEnforcementSheet by remember { mutableStateOf(false) }
 
@@ -274,9 +283,85 @@ fun SettingsSheet(
                 )
             }
 
+            // D-quick-vn7 — user-controllable Debug section (replaces the inline DebugGeofencePanel).
             if (com.pumpernickel.android.BuildConfig.DEBUG) {
                 Spacer(modifier = Modifier.height(20.dp))
-                com.pumpernickel.android.ui.components.DebugGeofencePanel()
+                Text(
+                    text = "Debug",
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Debug-Modus toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Debug-Modus",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = "Zeigt Debug-Steuerung im Workout-Screen",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = debugModeEnabled,
+                        onCheckedChange = { viewModel.setDebugModeEnabled(it) }
+                    )
+                }
+
+                // Grace-Period picker (ExposedDropdownMenuBox — 5 options, segmented row would be cramped)
+                val graceOptions = listOf(
+                    5L to "5 Sek.",
+                    10L to "10 Sek.",
+                    30L to "30 Sek.",
+                    60L to "1 Min.",
+                    300L to "5 Min."
+                )
+                var graceExpanded by remember { mutableStateOf(false) }
+                val currentLabel = graceOptions.firstOrNull { it.first == gracePeriodSeconds }?.second
+                    ?: "${gracePeriodSeconds} Sek."
+
+                ExposedDropdownMenuBox(
+                    expanded = graceExpanded,
+                    onExpandedChange = { graceExpanded = !graceExpanded },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = currentLabel,
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text("Grace-Period (Demo)") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = graceExpanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = graceExpanded,
+                        onDismissRequest = { graceExpanded = false }
+                    ) {
+                        graceOptions.forEach { (value, label) ->
+                            DropdownMenuItem(
+                                text = { Text(label) },
+                                onClick = {
+                                    viewModel.setGracePeriodSeconds(value)
+                                    graceExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
