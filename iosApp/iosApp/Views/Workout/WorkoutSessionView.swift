@@ -191,17 +191,30 @@ struct WorkoutSessionView: View {
             } else if let reviewing = sessionState as? WorkoutSessionState.Reviewing {
                 recapView(reviewing)
             } else if let finished = sessionState as? WorkoutSessionState.Finished {
-                WorkoutFinishedView(
-                    workoutName: finished.workoutName,
-                    durationMillis: finished.durationMillis,
-                    totalSets: finished.totalSets,
-                    totalExercises: finished.totalExercises,
-                    workoutId: finished.workoutId,
-                    onDone: {
-                        viewModel.resetToIdle()
-                        dismiss()
-                    }
-                )
+                if finished.abandoned {
+                    WorkoutAbortedView(
+                        workoutName: finished.workoutName,
+                        durationMillis: finished.durationMillis,
+                        loggedSets: finished.loggedSets,
+                        penaltyXp: finished.penaltyXp,
+                        onDone: {
+                            viewModel.resetToIdle()
+                            dismiss()
+                        }
+                    )
+                } else {
+                    WorkoutFinishedView(
+                        workoutName: finished.workoutName,
+                        durationMillis: finished.durationMillis,
+                        totalSets: finished.totalSets,
+                        totalExercises: finished.totalExercises,
+                        workoutId: finished.workoutId,
+                        onDone: {
+                            viewModel.resetToIdle()
+                            dismiss()
+                        }
+                    )
+                }
             } else {
                 // Idle / loading state
                 VStack(spacing: 16) {

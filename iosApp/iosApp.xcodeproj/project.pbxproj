@@ -36,6 +36,7 @@
 		A10062 /* RestTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10062 /* RestTimerView.swift */; };
 		A10063 /* ExerciseOverviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10063 /* ExerciseOverviewSheet.swift */; };
 		A10064 /* WorkoutFinishedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10064 /* WorkoutFinishedView.swift */; };
+		A10066 /* WorkoutAbortedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10066 /* WorkoutAbortedView.swift */; };
 		A10065 /* ProgressPicturePromptCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10065 /* ProgressPicturePromptCard.swift */; };
 		A10070 /* WorkoutHistoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10070 /* WorkoutHistoryListView.swift */; };
 		A10071 /* WorkoutHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10071 /* WorkoutHistoryDetailView.swift */; };
@@ -98,6 +99,7 @@
 		B10062 /* RestTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerView.swift; sourceTree = "<group>"; };
 		B10063 /* ExerciseOverviewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseOverviewSheet.swift; sourceTree = "<group>"; };
 		B10064 /* WorkoutFinishedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutFinishedView.swift; sourceTree = "<group>"; };
+		B10066 /* WorkoutAbortedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutAbortedView.swift; sourceTree = "<group>"; };
 		B10065 /* ProgressPicturePromptCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressPicturePromptCard.swift; sourceTree = "<group>"; };
 		B10070 /* WorkoutHistoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistoryListView.swift; sourceTree = "<group>"; };
 		B10071 /* WorkoutHistoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutHistoryDetailView.swift; sourceTree = "<group>"; };
@@ -265,6 +267,7 @@
 				B10062 /* RestTimerView.swift */,
 				B10063 /* ExerciseOverviewSheet.swift */,
 				B10064 /* WorkoutFinishedView.swift */,
+				B10066 /* WorkoutAbortedView.swift */,
 				B10065 /* ProgressPicturePromptCard.swift */,
 				B19060 /* GeofenceStatusChip.swift */,
 				B19061 /* PermissionRationaleSheet.swift */,
@@ -508,6 +511,7 @@
 				A10062 /* RestTimerView.swift in Sources */,
 				A10063 /* ExerciseOverviewSheet.swift in Sources */,
 				A10064 /* WorkoutFinishedView.swift in Sources */,
+				A10066 /* WorkoutAbortedView.swift in Sources */,
 				A10065 /* ProgressPicturePromptCard.swift in Sources */,
 				A10070 /* WorkoutHistoryListView.swift in Sources */,
 				A10071 /* WorkoutHistoryDetailView.swift in Sources */,
