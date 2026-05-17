@@ -36,4 +36,8 @@ actual val platformModule: Module = module {
     single<GeofenceProvider> { IosGeofenceProvider(get()) }    // takes PendingGeofenceExitStore
     single<PermissionController> { IosPermissionController() }
     single { EarlyExitTracker(get()) }   // takes SettingsRepository (already in graph)
+
+    // Async AI generation: notifications + BGTask-backed background work.
+    single { com.pumpernickel.domain.ai.NotificationService() }
+    single { com.pumpernickel.domain.ai.BackgroundTaskManager() }
 }

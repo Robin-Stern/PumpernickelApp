@@ -2,10 +2,20 @@ import SwiftUI
 import UIKit
 import Shared
 import KMPNativeCoroutinesAsync
+import CoreLocation
 
 @main
 struct PumpernickelApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    private let locationManager = CLLocationManager()
+
+    init() {
+        // BGTaskScheduler registration must happen before
+        // application(_:didFinishLaunchingWithOptions:) returns (the AppDelegate
+        // handles Koin init there). Doing it in App.init guarantees we're early enough.
+        AiBgTaskRegistrarKt.registerAiBackgroundTask()
+        locationManager.requestWhenInUseAuthorization()
+    }
 
     var body: some Scene {
         WindowGroup {
