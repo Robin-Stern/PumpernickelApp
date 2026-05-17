@@ -175,6 +175,11 @@ struct WorkoutSessionView: View {
     // Minimal set screen toggle (UX-01, D-02)
     @State private var showSetInput: Bool = false
 
+    // DEBUG-only sheet trigger for in-workout geofence mock panel (quick-260517-pzh)
+    #if DEBUG
+    @State private var showDebugGeofenceSheet: Bool = false
+    #endif
+
     // Picker value arrays
     private let repsRange = Array(0...50)
     private let weightValuesKgX10 = Array(stride(from: 0, through: 10000, by: 25))
@@ -552,6 +557,41 @@ struct WorkoutSessionView: View {
         } message: { cfg in
             Text(cfg.message)
         }
+        #if DEBUG
+        .overlay(alignment: .bottomLeading) {
+            Button(action: { showDebugGeofenceSheet = true }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "ladybug.fill")
+                    Text("DEBUG")
+                        .font(.caption.weight(.bold))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.red.opacity(0.85))
+                .foregroundColor(.white)
+                .clipShape(Capsule())
+                .shadow(radius: 3)
+            }
+            .padding(.leading, 16)
+            .padding(.bottom, 16)
+            .accessibilityLabel("Open debug geofence panel")
+        }
+        .sheet(isPresented: $showDebugGeofenceSheet) {
+            NavigationStack {
+                Form {
+                    DebugGeofencePanel()
+                }
+                .navigationTitle("Debug — Geofence")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") { showDebugGeofenceSheet = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
+        #endif
     }
 
     // MARK: - Header Section
