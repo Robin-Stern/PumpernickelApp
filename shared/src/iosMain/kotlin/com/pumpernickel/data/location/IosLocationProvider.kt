@@ -6,7 +6,9 @@ import com.pumpernickel.domain.location.GeoPoint
 import com.pumpernickel.domain.location.LocationProvider
 import kotlinx.cinterop.useContents
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import platform.CoreLocation.CLLocation
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.CLLocationManagerDelegateProtocol
@@ -41,14 +43,19 @@ private class LocationDelegate : NSObject(), CLLocationManagerDelegateProtocol {
     private var cont: CancellableContinuation<GeoPoint?>? = null
 
     suspend fun requestSingleFix(manager: CLLocationManager): GeoPoint? =
-        suspendCancellableCoroutine { c ->
-            cont = c
-            println("[LocDelegate] calling manager.requestLocation()")
-            manager.requestLocation()
-            c.invokeOnCancellation {
-                println("[LocDelegate] coroutine cancelled — stopping updates")
-                manager.stopUpdatingLocation()
-                cont = null
+        // CLLocationManager.requestLocation MUST be on main thread — same constraint as
+        // requestWhenInUseAuthorization. Without this, iOS silently swallows the call and
+        // the didUpdateLocations delegate callback never fires.
+        withContext(Dispatchers.Main) {
+            suspendCancellableCoroutine { c ->
+                cont = c
+                println("[LocDelegate] calling manager.requestLocation() (Main thread)")
+                manager.requestLocation()
+                c.invokeOnCancellation {
+                    println("[LocDelegate] coroutine cancelled — stopping updates")
+                    manager.stopUpdatingLocation()
+                    cont = null
+                }
             }
         }
 

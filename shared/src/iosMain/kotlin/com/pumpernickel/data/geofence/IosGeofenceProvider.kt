@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import platform.CoreLocation.CLCircularRegion
 import platform.CoreLocation.CLLocationCoordinate2DMake
 import platform.CoreLocation.CLLocationManager
@@ -99,18 +100,23 @@ class IosGeofenceProvider(
             notifyOnExit = true
         }
 
-        manager.startMonitoringForRegion(region)
-        // Synchronously request the current state — if the user is already
-        // inside the radius at register-time, we synthesize a single ENTER
-        // event so the chip shows "In Zone" without waiting for movement.
-        manager.requestStateForRegion(region)
+        // CLLocationManager region-monitoring APIs MUST run on main thread.
+        withContext(Dispatchers.Main) {
+            manager.startMonitoringForRegion(region)
+            // Synchronously request the current state — if the user is already
+            // inside the radius at register-time, we synthesize a single ENTER
+            // event so the chip shows "In Zone" without waiting for movement.
+            manager.requestStateForRegion(region)
+        }
         return Result.success(Unit)
     }
 
     override suspend fun unregister(id: String) {
-        @Suppress("UNCHECKED_CAST")
-        (manager.monitoredRegions as Set<CLRegion>).forEach { r ->
-            if (r.identifier == id) manager.stopMonitoringForRegion(r)
+        withContext(Dispatchers.Main) {
+            @Suppress("UNCHECKED_CAST")
+            (manager.monitoredRegions as Set<CLRegion>).forEach { r ->
+                if (r.identifier == id) manager.stopMonitoringForRegion(r)
+            }
         }
     }
 }

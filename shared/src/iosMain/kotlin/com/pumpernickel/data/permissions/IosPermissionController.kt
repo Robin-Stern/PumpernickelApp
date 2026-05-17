@@ -4,7 +4,9 @@ package com.pumpernickel.data.permissions
 
 import com.pumpernickel.domain.permissions.LocationPermissionStatus
 import com.pumpernickel.domain.permissions.PermissionController
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import platform.CoreLocation.CLAuthorizationStatus
 import platform.CoreLocation.CLLocationManager
 import platform.CoreLocation.CLLocationManagerDelegateProtocol
@@ -45,20 +47,27 @@ class IosPermissionController : PermissionController {
 
     override suspend fun requestWhenInUse(): LocationPermissionStatus {
         println("[PermController] requestWhenInUse() entry — current status=${CLLocationManager.authorizationStatus()}")
-        return suspendCancellableCoroutine { cont ->
-            delegate.onceOnAuthorizationChange { status ->
-                println("[PermController] requestWhenInUse delegate callback fired: status=$status")
-                cont.resume(toDomain(status))
+        // CLLocationManager.requestWhenInUseAuthorization MUST be called on the main thread
+        // (Apple docs). Kotlin/Native coroutines default to background dispatchers — without
+        // this withContext, iOS silently swallows the call and the system dialog never appears.
+        return withContext(Dispatchers.Main) {
+            suspendCancellableCoroutine { cont ->
+                delegate.onceOnAuthorizationChange { status ->
+                    println("[PermController] requestWhenInUse delegate callback fired: status=$status")
+                    cont.resume(toDomain(status))
+                }
+                println("[PermController] calling locationManager.requestWhenInUseAuthorization() (Main thread)")
+                locationManager.requestWhenInUseAuthorization()
             }
-            println("[PermController] calling locationManager.requestWhenInUseAuthorization()")
-            locationManager.requestWhenInUseAuthorization()
         }
     }
 
     override suspend fun requestAlways(): LocationPermissionStatus =
-        suspendCancellableCoroutine { cont ->
-            delegate.onceOnAuthorizationChange { status -> cont.resume(toDomain(status)) }
-            locationManager.requestAlwaysAuthorization()
+        withContext(Dispatchers.Main) {
+            suspendCancellableCoroutine { cont ->
+                delegate.onceOnAuthorizationChange { status -> cont.resume(toDomain(status)) }
+                locationManager.requestAlwaysAuthorization()
+            }
         }
 
     override suspend fun requestNotifications(): Boolean =
