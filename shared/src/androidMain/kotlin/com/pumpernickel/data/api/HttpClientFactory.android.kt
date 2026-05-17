@@ -16,15 +16,16 @@ actual fun createHttpClient(): HttpClient = HttpClient(OkHttp) {
         })
     }
     install(HttpTimeout) {
-        requestTimeoutMillis = 180_000
+        requestTimeoutMillis = 300_000
+        socketTimeoutMillis = 120_000
     }
     engine {
         config {
             // OkHttp defaults are 10s — much shorter than the Ktor request timeout.
             // For AI endpoints free-tier inference can run 90-150s, so all three
             // socket-level timeouts must match the Ktor ceiling.
-            readTimeout(180, TimeUnit.SECONDS)
-            writeTimeout(180, TimeUnit.SECONDS)
+            readTimeout(300, TimeUnit.SECONDS)
+            writeTimeout(300, TimeUnit.SECONDS)
             connectTimeout(30, TimeUnit.SECONDS)
         }
     }

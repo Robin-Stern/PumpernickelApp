@@ -17,6 +17,8 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -121,6 +123,7 @@ fun TemplateListScreen(navController: NavHostController) {
             ) {
                 items(templates, key = { it.id }) { template ->
                     val dismissState = rememberSwipeToDismissBoxState(
+                        positionalThreshold = { it * 0.5f },
                         confirmValueChange = { dismissValue ->
                             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
                                 templateToDelete = template
@@ -204,12 +207,13 @@ fun TemplateListScreen(navController: NavHostController) {
             title = { Text(stringResource(R.string.dialog_delete_template_title)) },
             text = { Text(stringResource(R.string.dialog_delete_template_message)) },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         templateToDelete?.let { viewModel.deleteTemplate(it.id) }
                         showDeleteDialog = false
                         templateToDelete = null
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
                 ) {
                     Text(stringResource(R.string.action_delete))
                 }

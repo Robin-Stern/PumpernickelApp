@@ -13,17 +13,9 @@ import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
 import com.pumpernickel.domain.nutrition.UpdateFoodUseCase
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.FlowPreview
 
 data class FoodEntryUiState(
     val name: String = "",
@@ -65,6 +57,7 @@ sealed interface FoodEntryEvent {
     data object ClearMessages : FoodEntryEvent
 }
 
+@OptIn(FlowPreview::class)
 class FoodEntryViewModel(
     private val loadFoods: LoadFoodsUseCase,
     private val addFood: AddFoodUseCase,
@@ -97,22 +90,15 @@ class FoodEntryViewModel(
                 .distinctUntilChanged()
                 .debounce(500)
                 .collect { query ->
-                    println("[FoodVM] debounce fired query='$query' length=${query.length}")
                     if (query.length >= 3) {
                         _uiState.update { it.copy(isSearchingRemote = true, remoteSearchError = null) }
                         when (val result = searchFoodsRemote(query)) {
-                            is SearchFoodsRemoteUseCase.Result.Success -> {
-                                println("[FoodVM] -> Success size=${result.foods.size}")
+                            is SearchFoodsRemoteUseCase.Result.Success ->
                                 _uiState.update { it.copy(remoteSearchResults = result.foods, isSearchingRemote = false) }
-                            }
-                            is SearchFoodsRemoteUseCase.Result.Empty -> {
-                                println("[FoodVM] -> Empty")
+                            is SearchFoodsRemoteUseCase.Result.Empty ->
                                 _uiState.update { it.copy(remoteSearchResults = emptyList(), isSearchingRemote = false) }
-                            }
-                            is SearchFoodsRemoteUseCase.Result.Error -> {
-                                println("[FoodVM] -> Error: ${result.message}")
+                            is SearchFoodsRemoteUseCase.Result.Error ->
                                 _uiState.update { it.copy(remoteSearchResults = emptyList(), isSearchingRemote = false, remoteSearchError = result.message) }
-                            }
                         }
                     } else {
                         _uiState.update { it.copy(remoteSearchResults = emptyList(), isSearchingRemote = false, remoteSearchError = null) }

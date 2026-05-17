@@ -26,6 +26,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -758,11 +759,11 @@ private fun RestTimerSection(
         } else {
             0f
         }
-        CircularProgressIndicator(
+        LinearProgressIndicator(
             progress = { progress },
-            color = MaterialTheme.colorScheme.primary,
+            color = if (isAlmostDone) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier.fillMaxWidth().height(8.dp)
         )
 
         TextButton(onClick = onSkip) {

@@ -23,8 +23,14 @@ iosApp/Flutter/
 # Xcode user state (per-user IDE state, not source)
 **/xcuserdata/
 
+# Room schemas (generated)
+shared/schemas/
+
 # Agent/CLI
 .claude/
+
+# GSD agent worktrees (local-only, never commit)
+.claude/worktrees/
 
 # SQLite
 *.db

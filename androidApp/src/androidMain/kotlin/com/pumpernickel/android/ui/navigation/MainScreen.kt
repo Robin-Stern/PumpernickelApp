@@ -57,7 +57,7 @@ import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 enum class TopLevelTab(
-    @StringRes val labelRes: Int,
+    @param:StringRes val labelRes: Int,
     val icon: ImageVector,
 ) {
     WORKOUT(R.string.tab_workout, Icons.Filled.FitnessCenter),
@@ -117,8 +117,11 @@ fun MainScreen() {
                     }
                     composable<ExercisePickerRoute> { backStackEntry ->
                         val route = backStackEntry.toRoute<ExercisePickerRoute>()
+                        // Provide the TemplateEditorViewModel from the parent back stack entry
+                        // so ExercisePicker can append exercises directly to the template.
                         val parentEntry = remember(backStackEntry) {
-                            workoutNavController.getBackStackEntry<TemplateEditorRoute>()
+                            runCatching { workoutNavController.getBackStackEntry<TemplateEditorRoute>() }
+                                .getOrNull() ?: backStackEntry
                         }
                         val editorViewModel: TemplateEditorViewModel = koinViewModel(
                             viewModelStoreOwner = parentEntry
@@ -252,6 +255,9 @@ fun MainScreen() {
                     }
                     composable<AiMealGenRoute> {
                         AiMealGenScreen(navController = nutritionNavController)
+                    }
+                    composable<AiSettingsRoute> {
+                        AiSettingsScreen(navController = nutritionNavController)
                     }
                 }
             }

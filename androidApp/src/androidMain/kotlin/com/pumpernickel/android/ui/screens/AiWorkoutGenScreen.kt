@@ -499,9 +499,10 @@ private fun describeError(error: AiError): ErrorCopy = when (error) {
         body = "Die KI hat zu lange gebraucht. Versuche es nochmal.",
         isAuthOrQuota = false
     )
-    AiError.Network -> ErrorCopy(
+    is AiError.Network -> ErrorCopy(
         title = "Netzwerkfehler",
-        body = "Prüfe deine Internetverbindung und versuche es nochmal.",
+        body = "Prüfe deine Internetverbindung und versuche es nochmal." +
+            if (error.detail != null) "\n\nDetails: ${error.detail}" else "",
         isAuthOrQuota = false
     )
     is AiError.AuthOrQuota -> ErrorCopy(

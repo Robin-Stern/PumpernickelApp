@@ -20,6 +20,7 @@ android {
         manifest.srcFile("src/androidMain/AndroidManifest.xml")
         kotlin.srcDirs("src/androidMain/kotlin")
         res.srcDirs("src/androidMain/res")
+        assets.srcDirs(project(":shared").file("src/commonMain/resources"))
     }
 
     compileOptions {
@@ -40,6 +41,12 @@ android {
         getByName("release") {
             isMinifyEnabled = false
             // BuildConfig.DEBUG is false — DebugGeofenceProvider is never loaded.
+        }
+    }
+
+    kotlin {
+        compilerOptions {
+            freeCompilerArgs.add("-Xexpect-actual-classes")
         }
     }
 }

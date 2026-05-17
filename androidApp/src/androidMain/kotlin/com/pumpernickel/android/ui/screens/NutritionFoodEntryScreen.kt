@@ -34,8 +34,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -54,7 +56,9 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -378,9 +382,33 @@ private fun LogAmountDialog(food: Food, onConfirm: (Double) -> Unit, onDismiss: 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) {
-    val dismissState = rememberSwipeToDismissBoxState()
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) onDelete()
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    val dismissState = rememberSwipeToDismissBoxState(
+        positionalThreshold = { it * 0.5f },
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) showConfirmDialog = true
+            false
+        }
+    )
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text(stringResource(R.string.action_delete)) },
+            text = { Text(stringResource(R.string.confirm_delete_food)) },
+            confirmButton = {
+                Button(
+                    onClick = { showConfirmDialog = false; onDelete() },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
+                ) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
     SwipeToDismissBox(
         state = dismissState, enableDismissFromStartToEnd = false,
@@ -407,7 +435,11 @@ private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) 
 // ── Barcode Scanner ──
 
 @Composable
-fun BarcodeScannerButton(onBarcodeScanned: (String) -> Unit, modifier: Modifier = Modifier) {
+fun BarcodeScannerButton(
+    onBarcodeScanned: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    showAsIcon: Boolean = false
+) {
     val context = LocalContext.current
     var showScanner by remember { mutableStateOf(false) }
     var permissionDenied by remember { mutableStateOf(false) }
@@ -416,14 +448,23 @@ fun BarcodeScannerButton(onBarcodeScanned: (String) -> Unit, modifier: Modifier 
         if (granted) { showScanner = true; permissionDenied = false } else { permissionDenied = true }
     }
 
-    Button(
-        onClick = {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                showScanner = true
-            } else { permissionLauncher.launch(Manifest.permission.CAMERA) }
-        },
-        modifier = modifier
-    ) { Text(stringResource(R.string.action_scan_barcode)) }
+    val onTap = {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+            showScanner = true
+        else permissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    if (showAsIcon) {
+        IconButton(onClick = onTap, modifier = modifier) {
+            Icon(
+                imageVector = Icons.Default.QrCodeScanner,
+                contentDescription = stringResource(R.string.action_scan_barcode),
+                tint = androidx.compose.ui.graphics.Color(0xFF1A1A1A)
+            )
+        }
+    } else {
+        Button(onClick = onTap, modifier = modifier) { Text(stringResource(R.string.action_scan_barcode)) }
+    }
 
     if (permissionDenied) {
         Text(stringResource(R.string.msg_camera_permission_denied), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -615,20 +656,13 @@ private fun RemoteFoodCard(result: SearchFoodsRemoteUseCase.RemoteFoodResult, on
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Text(result.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            result.brand?.let { brand ->
                 Text(
-                    result.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
+                    brand,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                result.brand?.let { brand ->
-                    Text(
-                        brand,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
             Text(
                 "${result.calories.roundToInt()} kcal · E ${result.protein.roundToInt()}g · F ${result.fat.roundToInt()}g · KH ${result.carbs.roundToInt()}g",

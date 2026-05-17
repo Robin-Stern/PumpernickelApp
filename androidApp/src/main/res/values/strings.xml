@@ -147,4 +147,10 @@
     <string name="geofence_notification_early_exit_penalty_body">%1$d XP abgezogen für vorzeitiges Beenden.</string>
     <string name="geofence_channel_name">Workout Enforcement</string>
     <string name="geofence_channel_desc">Hinweise zum Verlassen der Trainingszone</string>
+
+    <!-- Nutrition: delete confirmations + search -->
+    <string name="confirm_delete_entry">Möchtest du diesen Eintrag wirklich löschen?</string>
+    <string name="confirm_delete_food">Möchtest du dieses Lebensmittel wirklich löschen?</string>
+    <string name="confirm_delete_recipe">Möchtest du dieses Rezept wirklich löschen?</string>
+    <string name="label_searching_remote">Suche bei OpenFoodFacts…</string>
 </resources>
