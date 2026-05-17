@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Android Material 3 UI
-status: executing
-stopped_at: Phase 19 implementation complete — Wave 4 UATs pending (manual, physical device)
-last_updated: "2026-05-15T15:30:00.000Z"
-last_activity: 2026-05-15 -- Phase 19 all 7 plans implemented; iOS+Android visual UAT pending
+status: idle
+stopped_at: Phase 19 complete — all 7 plans + Layer A/B crash & UI follow-ups + 4 demo-prep quick-tasks; user-confirmed UAT pass 2026-05-17
+last_updated: "2026-05-17T22:00:00.000Z"
+last_activity: 2026-05-17 -- Phase 19 closure + diagnostic-prints cleanup
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 49
-  completed_plans: 47
-  percent: 96
+  completed_plans: 49
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Users can select a workout template and execute it set-by-set — logging reps, weight, and rest periods — with a clean, reliable flow
-**Current focus:** Phase 19 — geofencing-workout-enforcement
+**Current focus:** Phase 19 closed; ready for next phase or demo prep
 
 ## Current Position
 
 Milestone: v1.5 (shipped 2026-03-31)
-Phase: 19 (geofencing-workout-enforcement) — IMPLEMENTATION COMPLETE, UAT PENDING
+Phase: 19 (geofencing-workout-enforcement) — COMPLETE (UAT confirmed 2026-05-17)
 Plan: 7 of 7
-Branch: `android-ios-parity` @ `5f1d7d2`
-Status: Awaiting physical-device UAT for 19-06 (iOS, 12 steps) + 19-07 (Android, 13 steps)
-Last activity: 2026-05-17 -- Quick-Task 260517-w2f: 3 redundante End-Buttons konsolidiert zu einem kontextsensitiven "Workout beenden" (iOS + Android)
+Branch: `android-ios-parity` (ahead of `main` by ~25 commits — merge pending)
+Status: Idle. Phase 19 functional + UAT confirmed. Diagnostic prints removed.
+Last activity: 2026-05-17 -- Phase 19 closure + diagnostic-prints cleanup (quick-task 260517-x4p)
 
 Progress: [██████████] 100%
 
@@ -153,10 +153,10 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260517-ra5 | Layer B — Workout-Abort Recap-View per UI-SPEC §180: Finished state erweitert um abandoned/loggedSets/penaltyXp, neue WorkoutAbortedView (iOS) + AbortedContent (Android), branch in WorkoutSessionView/WorkoutSessionScreen. Built auf Layer A (87ff836) der Debug-Session ios-geofence-grace-expiry-crash. Manual UAT pending | 2026-05-17 | 180a915 | [260517-ra5-layer-b-workout-abort-recap-view-per-ui-](./quick/260517-ra5-layer-b-workout-abort-recap-view-per-ui-/) |
 | 260517-vn7 | Demo-Vorbereitung — Settings Debug-Modus-Toggle + konfigurierbare Grace-Period (5/10/30/60/300sec) Picker. SettingsRepository um debugModeEnabled+gracePeriodSeconds erweitert; WorkoutSessionViewModel.startGracePeriod liest dynamisch aus Repo (defaults 300L via XpFormula). iOS + Android Settings-Section, in-workout-Pille/FAB gated. Manual UAT pending | 2026-05-17 | eef64c2 | [260517-vn7-settings-debug-mode-toggle-configurable-](./quick/260517-vn7-settings-debug-mode-toggle-configurable-/) |
 | 260517-w2f | End-Button-Konsolidierung — 3 redundante Workout-End-Buttons (Abandon/Finish/Workout beenden) → 1 kontextsensitiver Trailing-Button "Workout beenden". Tap → viewModel.requestEarlyExit(); allDone-Check öffnet entweder Review-Pfad oder EarlyExitConfirmDialog (Budget/Penalty). Discard-Pfad entfällt, "Abandon Workout?" Dialog entfernt. iOS + Android. Manual UAT pending | 2026-05-17 | 0bb5c18 | [260517-w2f-end-button-konsolidierung-drei-redundant](./quick/260517-w2f-end-button-konsolidierung-drei-redundant/) |
+| 260517-x4p | Phase 19 Closure + Diagnostic-Prints Cleanup — 44 println/print-Marker (`[Geofence]`/`[LocProvider]`/`[LocDelegate]`/`[PermController]`/`[Rationale]`/`[SwiftPerm]`) aus 4 Files entfernt; FK-race-Catch-Log behalten aber Tag-Prefix gestrippt. STATE.md auf `idle`/100%, VERIFICATION.md auf `passed` mit uat_confirmed, ROADMAP Phase 19 als COMPLETE markiert | 2026-05-17 | fcc6478 | [260517-x4p-phase-19-closure-diagnostic-prints-clean](./quick/260517-x4p-phase-19-closure-diagnostic-prints-clean/) |
 
 ## Session Continuity
 
-Last session: 2026-05-16T14:55:00.000Z
-Stopped at: Phase 19 + quick-260516-nfn implementation complete — UATs pending
-Resume file: .planning/quick/260516-nfn-debug-gps-mock-f-r-phase-19-geofencing-b/260516-nfn-SUMMARY.md
-Next step: Manuelle UAT (Phase 19 visual UAT iOS+Android + quick-260516-nfn Debug-Panel Smoke-Test) auf Emulator/Simulator/Gerät
+Last session: 2026-05-17T22:00:00.000Z
+Stopped at: Phase 19 closed — UAT user-confirmed, diagnostic prints removed, all demo-prep quick-tasks shipped
+Next step: Optional — `android-ios-parity` → `main` merge; plan post-v1.0 work (e.g. Phase 20 or demo polish for university deadline)

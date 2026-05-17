@@ -316,6 +316,7 @@ Plans:
 **Requirements:** D-19-01 through D-19-16 (tracked via CONTEXT.md decision IDs; no formal REQ-* IDs in REQUIREMENTS.md per planning_context note).
 **Depends on:** Phase 18 (AI features), Phase 15 (XP-System), post-v1.5 LocationProvider abstraction.
 **Plans:** 7/7 plans complete
+**Status:** ✓ COMPLETE — UAT user-confirmed 2026-05-17 (iOS on physical device via DebugGeofenceProvider + 5sec grace; Android UAT deferred, build green). Post-verification fixes: Layer A crash-fix (87ff836), Layer B abort recap UI (8bda080/4fa6af3/f3dac66/180a915), 4 demo-prep quick-tasks (260517-pzh/vn7/w2f/x4p).
 
 Plans:
 - [x] 19-01-PLAN.md — Wave 1: commonMain interfaces + XP-constants refactor (GeofenceProvider, PermissionController, EarlyExitTracker, geofence penalty constants, F5 removal)

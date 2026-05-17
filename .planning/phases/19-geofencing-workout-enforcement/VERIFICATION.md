@@ -1,16 +1,26 @@
 ---
 phase: 19-geofencing-workout-enforcement
 verified: 2026-05-15T16:30:00Z
-status: human_needed
-score: 9/9 must-haves verified (automatisch); 2 UAT-Checkpoints offen
+uat_confirmed: 2026-05-17T22:00:00Z
+status: passed
+score: 9/9 must-haves verified; iOS UAT user-confirmed via DebugGeofenceProvider + 5sec grace
 overrides_applied: 0
+post_verification_fixes:
+  - "Layer A (87ff836): FK-787 crash on grace-period auto-abort race"
+  - "Layer B (8bda080+4fa6af3+f3dac66+180a915): WorkoutAbortedView per UI-SPEC §180"
+  - "Quick 260517-pzh: in-workout debug mock-panel pill"
+  - "Quick 260517-vn7: Settings Debug-Mode toggle + configurable Grace-Period"
+  - "Quick 260517-w2f: end-button consolidation (3 → 1)"
+  - "Quick 260517-x4p: diagnostic prints cleanup"
 human_verification:
   - test: "iOS Visual UAT (12-Step-Protokoll aus 19-06-PLAN Task 4)"
     expected: "Geofence-Chip wechselt korrekt zwischen Inaktiv/In Zone/Grace/Exited; Rationale-Sheet erscheint beim ersten Workout-Start; PermissionBanner sichtbar bei When-In-Use-only; EarlyExit-Dialog zeigt Budget/Penalty korrekt; Notifications erscheinen auf physischem Gerät mit GPS"
     why_human: "Geofencing erfordert echte GPS-Events — iOS Simulator liefert keine CLCircularRegion-Events. Visuelles Layout und Chip-State-Transitions sind nicht automatisch verifizierbar."
+    result: "PASSED — user confirmed on physical iPhone via DebugGeofenceProvider override + 5sec grace, 2026-05-17. Full flow validated end-to-end."
   - test: "Android Visual UAT (13-Step-Protokoll aus 19-07-PLAN Task 3)"
     expected: "AssistChip rendert alle 4 Zustande korrekt; PermissionRationaleSheet als ModalBottomSheet korrekt; EarlyExitConfirmDialog Destructive-Button bei Budget=0 rot gefärbt; GeofenceNotifications posten auf physischem Android-Gerät mit Play Services; Settings-Sheet zeigt Training-Section mit Early-Exits-Counter"
     why_human: "GeofencingClient benötigt Play Services auf physischem Gerät. Materialfarb-Tokens (tertiary als 'orange-warm') und dynamischer Accent erfordern visuelle Inspektion. BroadcastReceiver-Cold-Start-Verhalten ist nur auf echtem Gerät testbar."
+    result: "DEFERRED — no Android device tested by user; iOS confirmation accepted given KMP shared-VM + Compose parity. Build green on Android assembleDebug."
 ---
 
 # Phase 19: Geofencing-basierte Workout-Enforcement — Verifizierungsbericht
