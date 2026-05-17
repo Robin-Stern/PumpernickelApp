@@ -135,7 +135,6 @@ struct WorkoutSessionView: View {
     @State private var previousPerformance: [String: CompletedExercise] = [:]
     @State private var personalBest: [String: KotlinInt] = [:]
     @State private var weightUnit: WeightUnit = .kg
-    @State private var showAbandonDialog = false
 
     // Picker selections for current set (ENTRY-01, ENTRY-02)
     @State private var selectedReps: Int = 0
@@ -405,24 +404,32 @@ struct WorkoutSessionView: View {
         .navigationTitle(active.templateName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button {
-                    let hasCompletedSets = exercises.contains { ex in
-                        ex.sets.contains { $0.isCompleted }
-                    }
-                    if hasCompletedSets {
-                        showAbandonDialog = true
-                    } else {
-                        viewModel.discardWorkout()
-                        dismiss()
-                    }
-                } label: {
-                    Image(systemName: "xmark")
-                }
-                .accessibilityLabel("Close workout")
-            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 GeofenceStatusChip(state: geofenceState)
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    let allDone = active.exercises.allSatisfy { ex in ex.sets.allSatisfy { $0.isCompleted } }
+                    if allDone {
+                        viewModel.enterReview()
+                    } else {
+                        let planned = active.exercises.reduce(0) { $0 + Int($1.targetSets) }
+                        let logged = active.exercises.reduce(0) { sum, ex in sum + ex.sets.filter({ $0.isCompleted }).count }
+                        let missed = max(0, planned - logged)
+                        let penaltyRaw = missed * 10
+                        let penalty = min(200, max(50, penaltyRaw))
+                        let budget = self.earlyExitBudget
+                        earlyExitDialogConfig = EarlyExitDialogConfig(
+                            total: 2,
+                            remaining: Int(budget?.remaining ?? 0),
+                            penaltyXp: penalty
+                        )
+                        showEarlyExitDialog = true
+                    }
+                } label: {
+                    Image(systemName: "checkmark.circle")
+                }
+                .accessibilityLabel("Workout beenden")
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
@@ -438,60 +445,11 @@ struct WorkoutSessionView: View {
                     } label: {
                         Label("Exercise Overview", systemImage: "list.bullet")
                     }
-
-                    Button {
-                        viewModel.enterReview()
-                    } label: {
-                        Label("Finish Workout", systemImage: "checkmark.circle")
-                    }
-
-                    Button {
-                        let allDone = active.exercises.allSatisfy { ex in ex.sets.allSatisfy { $0.isCompleted } }
-                        if allDone {
-                            viewModel.enterReview()
-                        } else {
-                            let planned = active.exercises.reduce(0) { $0 + Int($1.targetSets) }
-                            let logged = active.exercises.reduce(0) { sum, ex in sum + ex.sets.filter({ $0.isCompleted }).count }
-                            let missed = max(0, planned - logged)
-                            let penaltyRaw = missed * 10
-                            let penalty = min(200, max(50, penaltyRaw))
-                            let budget = self.earlyExitBudget
-                            earlyExitDialogConfig = EarlyExitDialogConfig(
-                                total: 2,
-                                remaining: Int(budget?.remaining ?? 0),
-                                penaltyXp: penalty
-                            )
-                            showEarlyExitDialog = true
-                        }
-                    } label: {
-                        Label("Workout beenden", systemImage: "xmark.circle")
-                    }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .accessibilityLabel("Workout actions")
                 }
             }
-        }
-        .confirmationDialog(
-            "Abandon Workout?",
-            isPresented: $showAbandonDialog,
-            titleVisibility: .visible
-        ) {
-            Button("Save & Exit") {
-                viewModel.enterReview()
-                viewModel.saveReviewedWorkout()
-                dismiss()
-            }
-            Button("Discard", role: .destructive) {
-                viewModel.discardWorkout()
-                dismiss()
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            let completedSetsCount = exercises.reduce(0) { sum, ex in
-                sum + ex.sets.filter { $0.isCompleted }.count
-            }
-            Text("Exercise \(exIdx + 1)/\(exercises.count), \(completedSetsCount) sets completed")
         }
         .alert("Vernachlässigte Muskeln", isPresented: $showUndertrainedDialog) {
             Button("OK", role: .cancel) { }
