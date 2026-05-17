@@ -7,6 +7,9 @@ struct SettingsView: View {
     private var theme = ThemeManager.shared
 
     @State private var weightUnit: WeightUnit = .kg
+    // D-quick-vn7 — Debug-Modus toggle + Geofence grace-period picker.
+    @State private var debugModeEnabled: Bool = true
+    @State private var gracePeriodSeconds: Int64 = 300
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -86,7 +89,37 @@ struct SettingsView: View {
                 }
 
                 #if DEBUG
-                DebugGeofencePanel()
+                // D-quick-vn7 — user-controllable Debug section (replaces inline panel).
+                Section("Debug") {
+                    Toggle(isOn: Binding(
+                        get: { debugModeEnabled },
+                        set: { newValue in
+                            debugModeEnabled = newValue
+                            viewModel.setDebugModeEnabled(enabled: newValue)
+                        }
+                    )) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Debug-Modus")
+                            Text("Zeigt Debug-Steuerung im Workout-Screen")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    Picker("Grace-Period (Demo)", selection: Binding(
+                        get: { gracePeriodSeconds },
+                        set: { newValue in
+                            gracePeriodSeconds = newValue
+                            viewModel.setGracePeriodSeconds(seconds: newValue)
+                        }
+                    )) {
+                        Text("5 Sek.").tag(Int64(5))
+                        Text("10 Sek.").tag(Int64(10))
+                        Text("30 Sek.").tag(Int64(30))
+                        Text("1 Min.").tag(Int64(60))
+                        Text("5 Min.").tag(Int64(300))
+                    }
+                }
                 #endif
 
                 // D-18-05: BYOK AI configuration reachable from Settings.
@@ -120,6 +153,12 @@ struct SettingsView: View {
         .task {
             await observeWeightUnit()
         }
+        .task {
+            await observeDebugModeEnabled()
+        }
+        .task {
+            await observeGracePeriodSeconds()
+        }
     }
 
     private func observeWeightUnit() async {
@@ -129,6 +168,28 @@ struct SettingsView: View {
             }
         } catch {
             print("Settings weight unit observation error: \(error)")
+        }
+    }
+
+    // D-quick-vn7 — observe Debug-Modus toggle. StateFlow<Boolean> bridges as KotlinBoolean.
+    private func observeDebugModeEnabled() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.debugModeEnabledFlow) {
+                self.debugModeEnabled = value.boolValue
+            }
+        } catch {
+            print("Settings debug-mode observation error: \(error)")
+        }
+    }
+
+    // D-quick-vn7 — observe Geofence grace-period (seconds). StateFlow<Long> bridges as KotlinLong.
+    private func observeGracePeriodSeconds() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.gracePeriodSecondsFlow) {
+                self.gracePeriodSeconds = value.int64Value
+            }
+        } catch {
+            print("Settings grace-period observation error: \(error)")
         }
     }
 }

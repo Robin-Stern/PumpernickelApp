@@ -178,6 +178,9 @@ struct WorkoutSessionView: View {
     // DEBUG-only sheet trigger for in-workout geofence mock panel (quick-260517-pzh)
     #if DEBUG
     @State private var showDebugGeofenceSheet: Bool = false
+    // D-quick-vn7 — Debug-Modus toggle gates the in-workout debug pill.
+    @State private var debugModeEnabled: Bool = true
+    private let settingsViewModel = KoinHelper.shared.getSettingsViewModel()
     #endif
 
     // Picker value arrays
@@ -287,6 +290,9 @@ struct WorkoutSessionView: View {
                 group.addTask { await observeGeofenceState() }
                 group.addTask { await observeEarlyExitBudget() }
                 group.addTask { await refreshPermissionStatusOnAppear() }
+                #if DEBUG
+                group.addTask { await observeDebugModeEnabled() }
+                #endif
                 group.addTask {
                     // D-19-09: show rationale once per session if status != ALWAYS
                     try? await Task.sleep(nanoseconds: 500_000_000)   // 0.5s for VM to settle
@@ -572,22 +578,25 @@ struct WorkoutSessionView: View {
         }
         #if DEBUG
         .overlay(alignment: .bottomLeading) {
-            Button(action: { showDebugGeofenceSheet = true }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "ladybug.fill")
-                    Text("DEBUG")
-                        .font(.caption.weight(.bold))
+            // D-quick-vn7 — pill hidden when user disables Debug-Modus in Settings.
+            if debugModeEnabled {
+                Button(action: { showDebugGeofenceSheet = true }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "ladybug.fill")
+                        Text("DEBUG")
+                            .font(.caption.weight(.bold))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.red.opacity(0.85))
+                    .foregroundColor(.white)
+                    .clipShape(Capsule())
+                    .shadow(radius: 3)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color.red.opacity(0.85))
-                .foregroundColor(.white)
-                .clipShape(Capsule())
-                .shadow(radius: 3)
+                .padding(.leading, 16)
+                .padding(.bottom, 16)
+                .accessibilityLabel("Open debug geofence panel")
             }
-            .padding(.leading, 16)
-            .padding(.bottom, 16)
-            .accessibilityLabel("Open debug geofence panel")
         }
         .sheet(isPresented: $showDebugGeofenceSheet) {
             NavigationStack {
@@ -1115,6 +1124,19 @@ struct WorkoutSessionView: View {
             print("ElapsedSeconds observation error: \(error)")
         }
     }
+
+    #if DEBUG
+    // D-quick-vn7 — keep the in-workout debug pill in sync with the Settings toggle.
+    private func observeDebugModeEnabled() async {
+        do {
+            for try await value in asyncSequence(for: settingsViewModel.debugModeEnabledFlow) {
+                self.debugModeEnabled = value.boolValue
+            }
+        } catch {
+            print("Workout debug-mode observation error: \(error)")
+        }
+    }
+    #endif
 
     private func observePreviousPerformance() async {
         do {
