@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct WorkoutAbortedView: View {
     let workoutName: String
