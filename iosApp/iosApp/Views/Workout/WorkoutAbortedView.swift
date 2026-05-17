@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 struct WorkoutAbortedView: View {
     let workoutName: String
@@ -33,7 +32,7 @@ struct WorkoutAbortedView: View {
                     SummaryRow(label: "XP-Abzug", value: "−\(abs(Int(penaltyXp))) XP")
                 }
                 .padding()
-                .background(Color(UIColor.secondarySystemBackground))
+                .background(Color.gray.opacity(0.15))
                 .cornerRadius(16)
                 .padding(.horizontal, 32)
 
