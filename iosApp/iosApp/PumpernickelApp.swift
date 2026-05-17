@@ -9,6 +9,9 @@ struct PumpernickelApp: App {
     private let locationManager = CLLocationManager()
 
     init() {
+        // Must be called before doInitKoinIos — BGTaskScheduler registration
+        // must happen before application(_:didFinishLaunchingWithOptions:) returns.
+        AiBgTaskRegistrarKt.registerAiBackgroundTask()
         KoinInitIosKt.doInitKoinIos()
         locationManager.requestWhenInUseAuthorization()
     }

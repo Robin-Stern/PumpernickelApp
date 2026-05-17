@@ -1,9 +1,13 @@
 package com.pumpernickel.domain.ai
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 
@@ -35,10 +39,12 @@ actual class NotificationService(private val context: Context) {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
 
-        with(NotificationManagerCompat.from(context)) {
-            // notificationId is a unique int for each notification that you must define
-            notify(NOTIFICATION_ID, builder.build())
-        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+        ) return
+
+        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
     }
 
     companion object {
@@ -47,7 +53,20 @@ actual class NotificationService(private val context: Context) {
     }
 }
 
-actual class BackgroundTaskManager {
-    actual fun beginTask(): Long = 0L
-    actual fun endTask(id: Long) {}
+actual class BackgroundTaskManager(private val context: Context) {
+    actual fun beginTask(onExpired: () -> Unit): Long {
+        val intent = Intent().setClassName(context, "com.pumpernickel.android.AiGenerationService")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+        return 1L
+    }
+
+    actual fun endTask(id: Long) {
+        context.stopService(
+            Intent().setClassName(context, "com.pumpernickel.android.AiGenerationService")
+        )
+    }
 }

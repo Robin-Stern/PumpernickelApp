@@ -1,51 +1,68 @@
 package com.pumpernickel.domain.ai
 
-import platform.UserNotifications.UNUserNotificationCenter
+import platform.Foundation.NSUUID
+import platform.UIKit.UIApplication
+import platform.UIKit.UIBackgroundTaskIdentifierInvalid
+import platform.UserNotifications.UNAuthorizationOptionAlert
+import platform.UserNotifications.UNAuthorizationOptionBadge
+import platform.UserNotifications.UNAuthorizationOptionSound
 import platform.UserNotifications.UNMutableNotificationContent
 import platform.UserNotifications.UNNotificationRequest
 import platform.UserNotifications.UNTimeIntervalNotificationTrigger
-import platform.UserNotifications.UNAuthorizationOptionAlert
-import platform.UserNotifications.UNAuthorizationOptionSound
-import platform.UserNotifications.UNAuthorizationOptionBadge
-import platform.UIKit.UIApplication
-import platform.UIKit.UIBackgroundTaskIdentifierInvalid
-import platform.Foundation.NSUUID
+import platform.UserNotifications.UNUserNotificationCenter
 
 actual class NotificationService {
+
+    init {
+        // Request permission once at init instead of on every showNotification call.
+        UNUserNotificationCenter.currentNotificationCenter()
+            .requestAuthorizationWithOptions(
+                UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
+            ) { _, _ -> }
+    }
+
     actual suspend fun showNotification(title: String, message: String) {
-        val center = UNUserNotificationCenter.currentNotificationCenter()
-        
-        center.requestAuthorizationWithOptions(UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge) { granted, error ->
-            if (granted) {
-                val content = UNMutableNotificationContent().apply {
-                    setTitle(title)
-                    setBody(message)
-                }
-
-                // Show immediately (after 1s delay to ensure it triggers even if app is just backgrounded)
-                val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(1.0, false)
-                val request = UNNotificationRequest.requestWithIdentifier(
-                    identifier = NSUUID().UUIDString,
-                    content = content,
-                    trigger = trigger
-                )
-
-                center.addNotificationRequest(request) { _ -> }
-            }
+        val content = UNMutableNotificationContent().apply {
+            setTitle(title)
+            setBody(message)
         }
+        val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(1.0, false)
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = NSUUID().UUIDString,
+            content = content,
+            trigger = trigger
+        )
+        UNUserNotificationCenter.currentNotificationCenter()
+            .addNotificationRequest(request) { _ -> }
     }
 }
 
 actual class BackgroundTaskManager {
-    actual fun beginTask(): Long {
-        return UIApplication.sharedApplication.beginBackgroundTaskWithExpirationHandler {
-            // Task expired
+
+    private var uiTaskId: Long = UIBackgroundTaskIdentifierInvalid
+
+    actual fun beginTask(onExpired: () -> Unit): Long {
+        uiTaskId = UIApplication.sharedApplication.beginBackgroundTaskWithExpirationHandler {
+            // iOS is revoking background time (~30s elapsed).
+            // Cancel the generation so the state machine stays consistent.
+            onExpired()
+            endUiTask()
         }
+        // Schedule a BGProcessingTask as a longer-lived fallback.
+        // The OS decides when to run it; requires registerAiBackgroundTask() at app launch.
+        AiBgTaskHolder.schedule()
+        return uiTaskId
     }
 
     actual fun endTask(id: Long) {
-        if (id != UIBackgroundTaskIdentifierInvalid) {
-            UIApplication.sharedApplication.endBackgroundTask(id)
+        AiBgTaskHolder.complete(success = true)
+        endUiTask()
+    }
+
+    private fun endUiTask() {
+        if (uiTaskId != UIBackgroundTaskIdentifierInvalid) {
+            UIApplication.sharedApplication.endBackgroundTask(uiTaskId)
+            uiTaskId = UIBackgroundTaskIdentifierInvalid
         }
     }
 }

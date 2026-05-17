@@ -11,6 +11,6 @@ expect class NotificationService {
  * Manager for requesting extended execution time from the OS.
  */
 expect class BackgroundTaskManager {
-    fun beginTask(): Long
+    fun beginTask(onExpired: () -> Unit): Long
     fun endTask(id: Long)
 }

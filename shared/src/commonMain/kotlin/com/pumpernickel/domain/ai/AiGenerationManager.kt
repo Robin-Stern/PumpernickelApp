@@ -1,7 +1,9 @@
 package com.pumpernickel.domain.ai
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +25,8 @@ class AiGenerationManager(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    private var currentJob: Job? = null
+
     private val _state = MutableStateFlow<AiGenerationState>(AiGenerationState.Idle)
     val state: StateFlow<AiGenerationState> = _state.asStateFlow()
 
@@ -37,8 +41,8 @@ class AiGenerationManager(
 
         _state.value = AiGenerationState.Generating(AiType.WORKOUT, form)
         _streamingText.value = StreamingText()
-        scope.launch {
-            val taskId = backgroundTaskManager.beginTask()
+        currentJob = scope.launch {
+            val taskId = backgroundTaskManager.beginTask(onExpired = ::clear)
             try {
                 val preview = workoutUseCase.invoke(form) { content, reasoning ->
                     _streamingText.value = StreamingText(content, reasoning)
@@ -48,7 +52,9 @@ class AiGenerationManager(
                     "Workout fertig!",
                     "Dein KI-generiertes Workout ist bereit."
                 )
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 _state.value = AiGenerationState.Error(AiType.WORKOUT, e, form)
                 notificationService.showNotification(
                     "Fehler bei der Generierung",
@@ -69,8 +75,8 @@ class AiGenerationManager(
 
         _state.value = AiGenerationState.Generating(AiType.RECIPE, remaining)
         _streamingText.value = StreamingText()
-        scope.launch {
-            val taskId = backgroundTaskManager.beginTask()
+        currentJob = scope.launch {
+            val taskId = backgroundTaskManager.beginTask(onExpired = ::clear)
             try {
                 val preview = recipeUseCase.invoke(remaining) { content, reasoning ->
                     _streamingText.value = StreamingText(content, reasoning)
@@ -80,7 +86,9 @@ class AiGenerationManager(
                     "Rezept fertig!",
                     "Dein KI-generiertes Rezept ist bereit."
                 )
-            } catch (e: Exception) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
                 _state.value = AiGenerationState.Error(AiType.RECIPE, e, remaining)
                 notificationService.showNotification(
                     "Fehler bei der Generierung",
@@ -94,6 +102,8 @@ class AiGenerationManager(
     }
 
     fun clear() {
+        currentJob?.cancel()
+        currentJob = null
         _state.value = AiGenerationState.Idle
         _streamingText.value = StreamingText()
     }

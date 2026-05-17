@@ -29,5 +29,5 @@ actual val platformModule: Module = module {
 
     // Phase 19 — Background AI Generation
     single { com.pumpernickel.domain.ai.NotificationService(androidContext()) }
-    single { com.pumpernickel.domain.ai.BackgroundTaskManager() }
+    single { com.pumpernickel.domain.ai.BackgroundTaskManager(androidContext()) }
 }

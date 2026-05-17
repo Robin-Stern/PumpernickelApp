@@ -50,10 +50,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.pumpernickel.android.R
+import com.pumpernickel.domain.model.Food
 import com.pumpernickel.presentation.nutrition.RecipeCreationEvent
 import com.pumpernickel.presentation.nutrition.RecipeCreationViewModel
 import com.pumpernickel.presentation.nutrition.RecipeListViewModel
-import com.pumpernickel.presentation.nutrition.SearchResultItem
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.roundToInt
 
@@ -151,11 +151,11 @@ fun NutritionRecipeCreationScreen(
                 } else if (state.searchResults.isEmpty() && state.searchQuery.isNotBlank()) {
                     item { SearchEmptyState() }
                 } else {
-                    itemsIndexed(state.searchResults) { _, result ->
+                    itemsIndexed(state.searchResults) { _, food ->
                         SearchResultCard(
-                            result = result,
+                            food = food,
                             onAdd = {
-                                viewModel.onEvent(RecipeCreationEvent.OnFoodSelected(result.food))
+                                viewModel.onEvent(RecipeCreationEvent.OnFoodSelected(food))
                                 searchFocused = false
                             }
                         )
@@ -191,13 +191,13 @@ fun NutritionRecipeCreationScreen(
                             .background(ColorSurfaceMuted, RoundedCornerShape(14.dp))
                             .padding(4.dp)
                     ) {
-                        state.searchResults.forEachIndexed { index, result ->
+                        state.searchResults.forEachIndexed { index, food ->
                             if (index > 0) {
                                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(ColorBorderSoft))
                             }
                             RecentFoodItem(
-                                result = result,
-                                onAdd = { viewModel.onEvent(RecipeCreationEvent.OnFoodSelected(result.food)) }
+                                food = food,
+                                onAdd = { viewModel.onEvent(RecipeCreationEvent.OnFoodSelected(food)) }
                             )
                         }
                         if (state.searchResults.isEmpty()) {
@@ -394,7 +394,7 @@ private fun SearchSectionHeader(query: String, resultCount: Int, isLoading: Bool
 // ── Recent food item (idle section 1) ──
 
 @Composable
-private fun RecentFoodItem(result: SearchResultItem, onAdd: () -> Unit) {
+private fun RecentFoodItem(food: Food, onAdd: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -407,7 +407,7 @@ private fun RecentFoodItem(result: SearchResultItem, onAdd: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    result.food.name,
+                    food.name,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = ColorText,
@@ -416,14 +416,14 @@ private fun RecentFoodItem(result: SearchResultItem, onAdd: () -> Unit) {
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("${result.food.calories.roundToInt()} kcal/100g", fontSize = 11.5.sp, color = ColorTextMuted)
+                Text("${food.calories.roundToInt()} kcal/100g", fontSize = 11.5.sp, color = ColorTextMuted)
             }
             Spacer(Modifier.height(7.dp))
             MacroRow(
-                protein = result.food.protein,
-                fat = result.food.fat,
-                carbs = result.food.carbohydrates,
-                sugar = result.food.sugar
+                protein = food.protein,
+                fat = food.fat,
+                carbs = food.carbohydrates,
+                sugar = food.sugar
             )
         }
         Box(
@@ -443,7 +443,7 @@ private fun RecentFoodItem(result: SearchResultItem, onAdd: () -> Unit) {
 // ── Search result card ──
 
 @Composable
-private fun SearchResultCard(result: SearchResultItem, onAdd: () -> Unit) {
+private fun SearchResultCard(food: Food, onAdd: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -461,20 +461,15 @@ private fun SearchResultCard(result: SearchResultItem, onAdd: () -> Unit) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        result.food.name,
+                        food.name,
                         fontSize = 13.5.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = ColorText,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
-                    val sub = buildString {
-                        result.brand?.let { append(it); append(" · ") }
-                        append("${result.food.calories.roundToInt()} kcal/100g")
-                    }
-                    Text(sub, fontSize = 11.sp, color = ColorTextMuted)
+                    Text("${food.calories.roundToInt()} kcal/100g", fontSize = 11.sp, color = ColorTextMuted)
                 }
-                result.nutriScore?.let { NutriScoreBadge(it) }
             }
             Spacer(Modifier.height(7.dp))
             Row(
@@ -483,10 +478,10 @@ private fun SearchResultCard(result: SearchResultItem, onAdd: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 MacroRow(
-                    protein = result.food.protein,
-                    fat = result.food.fat,
-                    carbs = result.food.carbohydrates,
-                    sugar = result.food.sugar
+                    protein = food.protein,
+                    fat = food.fat,
+                    carbs = food.carbohydrates,
+                    sugar = food.sugar
                 )
                 Box(
                     modifier = Modifier

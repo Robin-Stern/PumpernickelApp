@@ -1,8 +1,13 @@
 package com.pumpernickel.android
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
@@ -30,6 +35,13 @@ class MainActivity : FragmentActivity() {
         // (D-17-13/14). Holders MUST be wired before setContent because
         // PhotoCaptureLauncherHost.<init> calls registerForActivityResult,
         // which requires the Activity to be in CREATED (not yet STARTED).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
+        }
+
         BiometricGateActivityHolder.attach(this)
         photoCaptureHost = PhotoCaptureLauncherHost(activity = this, context = applicationContext)
         PhotoCaptureLauncherActivityHolder.attach(photoCaptureHost)
