@@ -1,11 +1,12 @@
 ---
 slug: ios-geofence-grace-expiry-crash
-status: layer_a_applied
+status: layer_b_applied
 trigger: Phase 19 — after grace period expires on iOS, no auto-abort fullscreen view; chip shows "Zone verlassen"; next user tap crashes with FOREIGN KEY constraint failed on WorkoutSessionDao_Impl.insertSet
 created: 2026-05-17
 updated: 2026-05-17
 layer_a_commit: 87ff836
-layer_b_followup: quick-task pending (WorkoutAbortedView + Aborted state + Android parity)
+layer_b_commits: 8bda080, 4fa6af3, f3dac66
+layer_b_followup: complete (quick-task 260517-ra5)
 ---
 
 # Debug Session: ios-geofence-grace-expiry-crash
@@ -174,3 +175,20 @@ Three changes in `shared/src/commonMain/kotlin/com/pumpernickel/presentation/wor
 iOS Debug build: BUILD SUCCEEDED (99.7s).
 
 D2 (UX — generic "Workout Complete!" instead of abort recap per UI-SPEC §180) NOT addressed — tracked as Layer B follow-up quick-task.
+
+### Layer B applied — 2026-05-17, commits 8bda080 / 4fa6af3 / f3dac66
+
+Quick-task `260517-ra5` closed defect D2. Three changes across shared + iOS + Android:
+
+1. **Shared** (8bda080): `WorkoutSessionState.Finished` extended with three defaulted fields — `abandoned: Boolean = false`, `loggedSets: Int = 0`, `penaltyXp: Int = 0`. Only `handleGeofenceExitGraceExpired()` sets `abandoned = true`; penalty is derived locally via `XpFormula.geofenceExitPenalty(plannedSetCount, loggedSetCount)` since `GamificationEngine.onGeofenceExitPenalty` returns `Unit`. The two non-abandon construction sites (`enterReview`, `saveCurrentAsCompletedWithoutPenalty`) are unchanged and rely on the defaults.
+2. **iOS** (4fa6af3): new `WorkoutAbortedView.swift` (UI-SPEC §180 verbatim, exclamation-triangle + orange + "Zur Übersicht" CTA). `WorkoutSessionView` body branches `finished.abandoned`. Xcode pbxproj registers the new file (UUIDs `A10066` / `B10066`).
+3. **Android** (f3dac66): `FinishedContent` branches early on `finished.abandoned -> AbortedContent(...)`. New `AbortedContent` composable with `Icons.Default.Warning` (color `0xFFFB8C00`), matching German copy and CTA. Reuses existing `SummaryRow` + `formatDuration` helpers.
+
+Build verification:
+- `./gradlew :androidApp:assembleDebug` → **BUILD SUCCESSFUL** in 18s.
+- `xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Debug -destination 'generic/platform=iOS Simulator' build` → **BUILD SUCCEEDED** in 136.9s.
+
+Manual UAT (outstanding, not gated by this quick-task):
+- Trigger geofence-exit grace expiry on iOS simulator → confirm abort recap renders with German copy + correct logged-sets/penalty values, "Zur Übersicht" returns to overview.
+- Normal-completion regression spot-check on both platforms (Reviewing → Save) — celebratory `WorkoutFinishedView` / `FinishedContent` must still render unchanged.
+- Optional no-budget Early-Exit path (also routes through `handleGeofenceExitGraceExpired`) — per planner discretion, single recap variant uses §180 wording for both reasons.
