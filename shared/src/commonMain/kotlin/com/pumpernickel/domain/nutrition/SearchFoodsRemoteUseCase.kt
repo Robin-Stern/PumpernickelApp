@@ -10,7 +10,9 @@ class SearchFoodsRemoteUseCase(private val api: OpenFoodFactsApi) {
         val protein: Double,
         val fat: Double,
         val carbs: Double,
-        val sugar: Double
+        val sugar: Double,
+        val brand: String? = null,
+        val nutriScore: String? = null
     )
 
     sealed interface Result {
@@ -33,7 +35,9 @@ class SearchFoodsRemoteUseCase(private val api: OpenFoodFactsApi) {
                     protein = nutriments.proteins100g ?: 0.0,
                     fat = nutriments.fat100g ?: 0.0,
                     carbs = carbs,
-                    sugar = minOf(sugar, carbs)
+                    sugar = minOf(sugar, carbs),
+                    brand = product.brands?.takeIf { it.isNotBlank() },
+                    nutriScore = product.nutritionGradeFr?.uppercase()?.takeIf { it in setOf("A", "B", "C", "D", "E") }
                 )
             }
             if (results.isEmpty()) Result.Empty else Result.Success(results)

@@ -26,10 +26,16 @@ import kotlinx.coroutines.launch
 
 data class IngredientEntry(val food: Food, val amountGrams: String)
 
+data class SearchResultItem(
+    val food: Food,
+    val brand: String? = null,
+    val nutriScore: String? = null
+)
+
 data class RecipeCreationUiState(
     val recipeName: String = "",
     val searchQuery: String = "",
-    val searchResults: List<Food> = emptyList(),
+    val searchResults: List<SearchResultItem> = emptyList(),
     val isSearchingRemote: Boolean = false,
     val ingredients: List<IngredientEntry> = emptyList(),
     val totals: RecipeMacros = RecipeMacros(),
@@ -42,6 +48,7 @@ sealed interface RecipeCreationEvent {
     data class OnRecipeNameChanged(val value: String) : RecipeCreationEvent
     data class OnSearchQueryChanged(val value: String) : RecipeCreationEvent
     data class OnFoodSelected(val food: Food) : RecipeCreationEvent
+    data class OnSearchFocused(val focused: Boolean) : RecipeCreationEvent
     data class OnIngredientAmountChanged(val index: Int, val value: String) : RecipeCreationEvent
     data class OnIngredientRemoved(val index: Int) : RecipeCreationEvent
     data class OnIngredientMoved(val fromIndex: Int, val toIndex: Int) : RecipeCreationEvent
@@ -117,19 +124,23 @@ class RecipeCreationViewModel(
                     _foods.value = freshFoods
                     val query = event.value.trim()
                     val localResults = if (query.isBlank()) recentFoods()
-                        else freshFoods.filter { it.name.contains(query, ignoreCase = true) }
+                        else freshFoods.filter { it.name.contains(query, ignoreCase = true) }.map { SearchResultItem(it) }
                     if (localResults.isNotEmpty() || query.isBlank()) {
                         _creationState.update { it.copy(searchResults = localResults) }
                     } else {
                         _creationState.update { it.copy(searchResults = emptyList(), isSearchingRemote = true) }
                         when (val remote = searchFoodsRemote(query)) {
                             is SearchFoodsRemoteUseCase.Result.Success -> {
-                                val remoteFoods = remote.foods.map { r ->
-                                    Food(name = r.name, calories = r.calories, protein = r.protein,
-                                        fat = r.fat, carbohydrates = r.carbs, sugar = r.sugar,
-                                        source = "openfoodfacts")
+                                val remoteItems = remote.foods.map { r ->
+                                    SearchResultItem(
+                                        food = Food(name = r.name, calories = r.calories, protein = r.protein,
+                                            fat = r.fat, carbohydrates = r.carbs, sugar = r.sugar,
+                                            source = "openfoodfacts"),
+                                        brand = r.brand,
+                                        nutriScore = r.nutriScore
+                                    )
                                 }
-                                _creationState.update { it.copy(searchResults = remoteFoods, isSearchingRemote = false) }
+                                _creationState.update { it.copy(searchResults = remoteItems, isSearchingRemote = false) }
                             }
                             else -> _creationState.update { it.copy(searchResults = emptyList(), isSearchingRemote = false) }
                         }
@@ -145,9 +156,11 @@ class RecipeCreationViewModel(
                         state.ingredients + IngredientEntry(food, "100")
                     else state.ingredients
                     state.withIngredients(newIngredients)
-                        .copy(searchResults = state.searchResults.filter { it.id != food.id })
+                        .copy(searchResults = state.searchResults.filter { it.food.id != food.id })
                 }
             }
+
+            is RecipeCreationEvent.OnSearchFocused -> Unit
 
             is RecipeCreationEvent.OnIngredientAmountChanged -> _creationState.update { state ->
                 val newIngredients = state.ingredients.toMutableList()
@@ -194,7 +207,7 @@ class RecipeCreationViewModel(
         }
     }
 
-    private fun recentFoods() = _foods.value.takeLast(5).reversed()
+    private fun recentFoods() = _foods.value.takeLast(5).reversed().map { SearchResultItem(it) }
 
     private fun RecipeCreationUiState.withIngredients(newIngredients: List<IngredientEntry>) = copy(
         ingredients = newIngredients, totals = calcTotals(newIngredients)
