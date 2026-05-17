@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
@@ -29,15 +30,18 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -61,8 +65,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.pumpernickel.android.BuildConfig
 import com.pumpernickel.android.R
 import com.pumpernickel.android.notifications.GeofenceNotifications
+import com.pumpernickel.android.ui.components.DebugGeofencePanel
 import com.pumpernickel.android.ui.components.EarlyExitConfirmDialog
 import com.pumpernickel.android.ui.components.EarlyExitDialogConfig
 import com.pumpernickel.android.ui.components.GeofenceStatusChip
@@ -463,6 +469,10 @@ private fun ActiveWorkoutContent(
 
     var showMenu by remember { mutableStateOf(false) }
 
+    // DEBUG-only in-workout geofence trigger sheet (quick-260517-pzh)
+    var showDebugSheet by remember { mutableStateOf(false) }
+    val debugSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -534,7 +544,22 @@ private fun ActiveWorkoutContent(
                     }
                 }
             )
-        }
+        },
+        floatingActionButton = {
+            if (BuildConfig.DEBUG) {
+                SmallFloatingActionButton(
+                    onClick = { showDebugSheet = true },
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Build,
+                        contentDescription = "Open debug geofence panel"
+                    )
+                }
+            }
+        },
+        floatingActionButtonPosition = FabPosition.Start
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -616,6 +641,28 @@ private fun ActiveWorkoutContent(
                 weightUnit = weightUnit,
                 onEditSet = onEditCompletedSet
             )
+        }
+
+        // DEBUG-only geofence mock sheet (quick-260517-pzh)
+        if (BuildConfig.DEBUG && showDebugSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showDebugSheet = false },
+                sheetState = debugSheetState
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Debug — Geofence",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    DebugGeofencePanel()
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
         }
     }
 
