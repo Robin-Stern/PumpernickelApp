@@ -30,7 +30,7 @@ Phase: 19 (geofencing-workout-enforcement) — IMPLEMENTATION COMPLETE, UAT PEND
 Plan: 7 of 7
 Branch: `android-ios-parity` @ `5f1d7d2`
 Status: Awaiting physical-device UAT for 19-06 (iOS, 12 steps) + 19-07 (Android, 13 steps)
-Last activity: 2026-05-17 -- Quick-Task 260517-vn7: Settings Debug-Mode toggle + configurable Grace-Period picker (demo prep)
+Last activity: 2026-05-17 -- Quick-Task 260517-w2f: 3 redundante End-Buttons konsolidiert zu einem kontextsensitiven "Workout beenden" (iOS + Android)
 
 Progress: [██████████] 100%
 
@@ -152,6 +152,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260517-pzh | Debug Mock-Panel direkt im Workout-Screen erreichbar machen — DEBUG-gated overlay/FAB öffnet bestehendes DebugGeofencePanel inline (iOS + Android), Exit-Trigger ohne App-Switch testbar mid-workout. Manual UAT pending | 2026-05-17 | 2f3808e | [260517-pzh-debug-mock-panel-direkt-im-workout-scree](./quick/260517-pzh-debug-mock-panel-direkt-im-workout-scree/) |
 | 260517-ra5 | Layer B — Workout-Abort Recap-View per UI-SPEC §180: Finished state erweitert um abandoned/loggedSets/penaltyXp, neue WorkoutAbortedView (iOS) + AbortedContent (Android), branch in WorkoutSessionView/WorkoutSessionScreen. Built auf Layer A (87ff836) der Debug-Session ios-geofence-grace-expiry-crash. Manual UAT pending | 2026-05-17 | 180a915 | [260517-ra5-layer-b-workout-abort-recap-view-per-ui-](./quick/260517-ra5-layer-b-workout-abort-recap-view-per-ui-/) |
 | 260517-vn7 | Demo-Vorbereitung — Settings Debug-Modus-Toggle + konfigurierbare Grace-Period (5/10/30/60/300sec) Picker. SettingsRepository um debugModeEnabled+gracePeriodSeconds erweitert; WorkoutSessionViewModel.startGracePeriod liest dynamisch aus Repo (defaults 300L via XpFormula). iOS + Android Settings-Section, in-workout-Pille/FAB gated. Manual UAT pending | 2026-05-17 | eef64c2 | [260517-vn7-settings-debug-mode-toggle-configurable-](./quick/260517-vn7-settings-debug-mode-toggle-configurable-/) |
+| 260517-w2f | End-Button-Konsolidierung — 3 redundante Workout-End-Buttons (Abandon/Finish/Workout beenden) → 1 kontextsensitiver Trailing-Button "Workout beenden". Tap → viewModel.requestEarlyExit(); allDone-Check öffnet entweder Review-Pfad oder EarlyExitConfirmDialog (Budget/Penalty). Discard-Pfad entfällt, "Abandon Workout?" Dialog entfernt. iOS + Android. Manual UAT pending | 2026-05-17 | 0bb5c18 | [260517-w2f-end-button-konsolidierung-drei-redundant](./quick/260517-w2f-end-button-konsolidierung-drei-redundant/) |
 
 ## Session Continuity
 
