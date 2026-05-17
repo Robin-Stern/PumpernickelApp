@@ -67,7 +67,10 @@ sealed class WorkoutSessionState {
         val durationMillis: Long,
         val totalSets: Int,
         val totalExercises: Int,
-        val workoutId: Long
+        val workoutId: Long,
+        val abandoned: Boolean = false,
+        val loggedSets: Int = 0,
+        val penaltyXp: Int = 0
     ) : WorkoutSessionState()
 }
 
@@ -1072,12 +1075,16 @@ class WorkoutSessionViewModel(
         // DB write) bails before insertSet races the FK-bearing delete (Bug:
         // ios-geofence-grace-expiry-crash, FK 787).
         val totalSets = completedExercises.sumOf { it.sets.size }
+        val derivedPenaltyXp = XpFormula.geofenceExitPenalty(plannedSetCount, loggedSetCount)
         _sessionState.value = WorkoutSessionState.Finished(
             workoutName = active.templateName,
             durationMillis = exitMillis - active.startTimeMillis,
             totalSets = totalSets,
             totalExercises = completedExercises.size,
-            workoutId = savedWorkoutId
+            workoutId = savedWorkoutId,
+            abandoned = true,
+            loggedSets = loggedSetCount,
+            penaltyXp = derivedPenaltyXp
         )
         workoutRepository.clearActiveSession()
         _hasActiveSession.value = false
