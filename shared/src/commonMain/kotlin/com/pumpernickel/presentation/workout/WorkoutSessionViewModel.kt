@@ -399,6 +399,7 @@ class WorkoutSessionViewModel(
      */
     fun completeSet(reps: Int, weightKgX10: Int, rir: Int = 2) {
         viewModelScope.launch {
+            try {
             // ENTRY-06: Reject 0-rep sets
             if (reps <= 0) return@launch
             val active = _sessionState.value as? WorkoutSessionState.Active ?: return@launch
@@ -429,6 +430,10 @@ class WorkoutSessionViewModel(
             } else {
                 exIdx
             }
+            // Race guard: re-check sessionState is still Active right before the
+            // suspending DB insert. handleGeofenceExitGraceExpired() may have
+            // transitioned to Finished while we were filling in fields above.
+            if (_sessionState.value !is WorkoutSessionState.Active) return@launch
             workoutRepository.saveCompletedSet(
                 templateExIdx, setIdx, reps, weightKgX10,
                 kotlin.time.Clock.System.now().toEpochMilliseconds(),
@@ -477,6 +482,13 @@ class WorkoutSessionViewModel(
             // Start rest timer
             if (restPeriodSec > 0) {
                 startRestTimer(restPeriodSec)
+            }
+            } catch (e: androidx.sqlite.SQLiteException) {
+                // Defense-in-depth for the grace-period auto-abort race: if a child
+                // row insert loses to the parent delete despite the guards above,
+                // swallow the FK violation rather than crashing. The session is
+                // already being torn down — the user just sees the abort UI.
+                println("[Geofence] completeSet aborted (FK race with grace-period auto-abort): ${e.message}")
             }
         }
     }
@@ -1054,10 +1066,11 @@ class WorkoutSessionViewModel(
         timerJob?.cancel()
         elapsedJob?.cancel()
         gymLocation = null
-        workoutRepository.clearActiveSession()
-        _hasActiveSession.value = false
-        _geofenceState.value = GeofenceUiState.Inactive
 
+        // Publish terminal state BEFORE deleting the parent row so any concurrent
+        // completeSet coroutine (which re-checks sessionState before each suspending
+        // DB write) bails before insertSet races the FK-bearing delete (Bug:
+        // ios-geofence-grace-expiry-crash, FK 787).
         val totalSets = completedExercises.sumOf { it.sets.size }
         _sessionState.value = WorkoutSessionState.Finished(
             workoutName = active.templateName,
@@ -1066,6 +1079,9 @@ class WorkoutSessionViewModel(
             totalExercises = completedExercises.size,
             workoutId = savedWorkoutId
         )
+        workoutRepository.clearActiveSession()
+        _hasActiveSession.value = false
+        _geofenceState.value = GeofenceUiState.Inactive
     }
 
     /**
