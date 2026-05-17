@@ -30,7 +30,7 @@ Phase: 19 (geofencing-workout-enforcement) — IMPLEMENTATION COMPLETE, UAT PEND
 Plan: 7 of 7
 Branch: `android-ios-parity` @ `5f1d7d2`
 Status: Awaiting physical-device UAT for 19-06 (iOS, 12 steps) + 19-07 (Android, 13 steps)
-Last activity: 2026-05-17 -- Phase 19 D1 (FK crash) fixed via Layer A (87ff836); D2 (abort recap UI) fixed via Layer B quick-task 260517-ra5 (8bda080+4fa6af3+f3dac66+180a915)
+Last activity: 2026-05-17 -- Quick-Task 260517-vn7: Settings Debug-Mode toggle + configurable Grace-Period picker (demo prep)
 
 Progress: [██████████] 100%
 
@@ -151,6 +151,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260516-nfn | Debug-GPS-Mock für Phase 19: DebugGeofenceProvider (commonMain) + build-gated Koin override (BuildConfig.DEBUG / #if DEBUG) + Debug-Panel in Settings mit Enter/Exit/Error-Trigger-Buttons — Phase-19-Flow ohne physisches Rumlaufen testbar. UAT auf Emulator/Simulator pending | 2026-05-16 | 8846475 | [260516-nfn-debug-gps-mock-f-r-phase-19-geofencing-b](./quick/260516-nfn-debug-gps-mock-f-r-phase-19-geofencing-b/) |
 | 260517-pzh | Debug Mock-Panel direkt im Workout-Screen erreichbar machen — DEBUG-gated overlay/FAB öffnet bestehendes DebugGeofencePanel inline (iOS + Android), Exit-Trigger ohne App-Switch testbar mid-workout. Manual UAT pending | 2026-05-17 | 2f3808e | [260517-pzh-debug-mock-panel-direkt-im-workout-scree](./quick/260517-pzh-debug-mock-panel-direkt-im-workout-scree/) |
 | 260517-ra5 | Layer B — Workout-Abort Recap-View per UI-SPEC §180: Finished state erweitert um abandoned/loggedSets/penaltyXp, neue WorkoutAbortedView (iOS) + AbortedContent (Android), branch in WorkoutSessionView/WorkoutSessionScreen. Built auf Layer A (87ff836) der Debug-Session ios-geofence-grace-expiry-crash. Manual UAT pending | 2026-05-17 | 180a915 | [260517-ra5-layer-b-workout-abort-recap-view-per-ui-](./quick/260517-ra5-layer-b-workout-abort-recap-view-per-ui-/) |
+| 260517-vn7 | Demo-Vorbereitung — Settings Debug-Modus-Toggle + konfigurierbare Grace-Period (5/10/30/60/300sec) Picker. SettingsRepository um debugModeEnabled+gracePeriodSeconds erweitert; WorkoutSessionViewModel.startGracePeriod liest dynamisch aus Repo (defaults 300L via XpFormula). iOS + Android Settings-Section, in-workout-Pille/FAB gated. Manual UAT pending | 2026-05-17 | eef64c2 | [260517-vn7-settings-debug-mode-toggle-configurable-](./quick/260517-vn7-settings-debug-mode-toggle-configurable-/) |
 
 ## Session Continuity
 
