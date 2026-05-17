@@ -43,11 +43,17 @@ class IosPermissionController : PermissionController {
     override suspend fun currentLocationStatus(): LocationPermissionStatus =
         toDomain(CLLocationManager.authorizationStatus())
 
-    override suspend fun requestWhenInUse(): LocationPermissionStatus =
-        suspendCancellableCoroutine { cont ->
-            delegate.onceOnAuthorizationChange { status -> cont.resume(toDomain(status)) }
+    override suspend fun requestWhenInUse(): LocationPermissionStatus {
+        println("[PermController] requestWhenInUse() entry — current status=${CLLocationManager.authorizationStatus()}")
+        return suspendCancellableCoroutine { cont ->
+            delegate.onceOnAuthorizationChange { status ->
+                println("[PermController] requestWhenInUse delegate callback fired: status=$status")
+                cont.resume(toDomain(status))
+            }
+            println("[PermController] calling locationManager.requestWhenInUseAuthorization()")
             locationManager.requestWhenInUseAuthorization()
         }
+    }
 
     override suspend fun requestAlways(): LocationPermissionStatus =
         suspendCancellableCoroutine { cont ->

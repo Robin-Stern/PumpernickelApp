@@ -164,11 +164,15 @@ struct WorkoutSessionView: View {
                 group.addTask {
                     // D-19-09: show rationale once per session if status != ALWAYS
                     try? await Task.sleep(nanoseconds: 500_000_000)   // 0.5s for VM to settle
+                    print("[Rationale] eval — hasShownRationaleThisSession=\(hasShownRationaleThisSession) locationPermissionStatus=\(locationPermissionStatus)")
                     if !hasShownRationaleThisSession && locationPermissionStatus != .always {
+                        print("[Rationale] showing rationale sheet")
                         await MainActor.run {
                             showRationaleSheet = true
                             hasShownRationaleThisSession = true
                         }
+                    } else {
+                        print("[Rationale] NOT showing — condition not met")
                     }
                 }
             }
@@ -366,22 +370,31 @@ struct WorkoutSessionView: View {
         .sheet(isPresented: $showRationaleSheet) {
             PermissionRationaleSheet(
                 onActivate: {
+                    print("[Rationale] onActivate tapped — launching permission Task")
                     Task {
-                        _ = try? await permissionController.requestWhenInUse()
+                        print("[Rationale] Task: calling requestWhenInUse()")
+                        let result1 = try? await permissionController.requestWhenInUse()
+                        print("[Rationale] requestWhenInUse returned: \(String(describing: result1))")
                         let status = try? await permissionController.currentLocationStatus()
+                        print("[Rationale] currentLocationStatus after whenInUse: \(String(describing: status))")
                         if let status { self.locationPermissionStatus = status }
                         // WARN-19-1 fix — request notifications UNCONDITIONALLY after the
                         // first location grant resolves (useful even for .whenInUse state).
-                        _ = try? await permissionController.requestNotifications()
+                        let notifResult = try? await permissionController.requestNotifications()
+                        print("[Rationale] requestNotifications returned: \(String(describing: notifResult))")
                         // D-19-09 — Always-Allow can only be requested AFTER WhenInUse on iOS.
                         if status == .whenInUse {
+                            print("[Rationale] status==whenInUse, escalating to Always")
                             _ = try? await permissionController.requestAlways()
                             let after = try? await permissionController.currentLocationStatus()
+                            print("[Rationale] currentLocationStatus after Always: \(String(describing: after))")
                             if let after { self.locationPermissionStatus = after }
                         }
                     }
                 },
-                onLater: { /* no-op — sheet dismisses */ }
+                onLater: {
+                    print("[Rationale] onLater tapped")
+                }
             )
         }
         .confirmationDialog(
