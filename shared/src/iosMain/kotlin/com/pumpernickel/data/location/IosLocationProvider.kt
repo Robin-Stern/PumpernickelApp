@@ -24,17 +24,12 @@ class IosLocationProvider : LocationProvider {
 
     override suspend fun getCurrentLocation(): GeoPoint? {
         val status = CLLocationManager.authorizationStatus()
-        println("[LocProvider] getCurrentLocation: authorizationStatus=$status (whenInUse=$kCLAuthorizationStatusAuthorizedWhenInUse, always=$kCLAuthorizationStatusAuthorizedAlways)")
         if (status != kCLAuthorizationStatusAuthorizedWhenInUse &&
             status != kCLAuthorizationStatusAuthorizedAlways
         ) {
-            println("[LocProvider] AUTHORIZATION NOT GRANTED — returning null. status=$status")
             return null
         }
-        println("[LocProvider] auth OK, requesting single fix")
-        val result = delegate.requestSingleFix(manager)
-        println("[LocProvider] single fix completed: result=$result")
-        return result
+        return delegate.requestSingleFix(manager)
     }
 }
 
@@ -49,10 +44,8 @@ private class LocationDelegate : NSObject(), CLLocationManagerDelegateProtocol {
         withContext(Dispatchers.Main) {
             suspendCancellableCoroutine { c ->
                 cont = c
-                println("[LocDelegate] calling manager.requestLocation() (Main thread)")
                 manager.requestLocation()
                 c.invokeOnCancellation {
-                    println("[LocDelegate] coroutine cancelled — stopping updates")
                     manager.stopUpdatingLocation()
                     cont = null
                 }
@@ -60,16 +53,13 @@ private class LocationDelegate : NSObject(), CLLocationManagerDelegateProtocol {
         }
 
     override fun locationManager(manager: CLLocationManager, didUpdateLocations: List<*>) {
-        println("[LocDelegate] didUpdateLocations callback — count=${didUpdateLocations.size}")
         val loc = didUpdateLocations.lastOrNull() as? CLLocation
         if (loc == null) {
-            println("[LocDelegate] last location is null — resuming with null")
             cont?.resume(null)
             cont = null
             return
         }
         loc.coordinate.useContents {
-            println("[LocDelegate] resuming continuation with lat=$latitude lng=$longitude")
             cont?.resume(GeoPoint(latitude, longitude))
         }
         cont = null
@@ -79,7 +69,6 @@ private class LocationDelegate : NSObject(), CLLocationManagerDelegateProtocol {
         manager: CLLocationManager,
         didFailWithError: platform.Foundation.NSError
     ) {
-        println("[LocDelegate] didFailWithError: domain=${didFailWithError.domain} code=${didFailWithError.code} desc=${didFailWithError.localizedDescription}")
         cont?.resume(null)
         cont = null
     }

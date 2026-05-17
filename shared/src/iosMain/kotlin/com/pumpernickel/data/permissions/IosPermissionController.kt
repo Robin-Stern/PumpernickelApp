@@ -46,17 +46,12 @@ class IosPermissionController : PermissionController {
         toDomain(CLLocationManager.authorizationStatus())
 
     override suspend fun requestWhenInUse(): LocationPermissionStatus {
-        println("[PermController] requestWhenInUse() entry — current status=${CLLocationManager.authorizationStatus()}")
         // CLLocationManager.requestWhenInUseAuthorization MUST be called on the main thread
         // (Apple docs). Kotlin/Native coroutines default to background dispatchers — without
         // this withContext, iOS silently swallows the call and the system dialog never appears.
         return withContext(Dispatchers.Main) {
             suspendCancellableCoroutine { cont ->
-                delegate.onceOnAuthorizationChange { status ->
-                    println("[PermController] requestWhenInUse delegate callback fired: status=$status")
-                    cont.resume(toDomain(status))
-                }
-                println("[PermController] calling locationManager.requestWhenInUseAuthorization() (Main thread)")
+                delegate.onceOnAuthorizationChange { status -> cont.resume(toDomain(status)) }
                 locationManager.requestWhenInUseAuthorization()
             }
         }

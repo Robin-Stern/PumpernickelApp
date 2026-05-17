@@ -452,7 +452,6 @@ class WorkoutSessionViewModel(
             // MUST run BEFORE the last-set early-return below — otherwise 1-set templates
             // (or any path where the 1st logged set is also the last set) never register
             // the geofence and the status chip stays "Inactive" forever.
-            println("[Geofence] completeSet about to call maybeRegisterGeofenceForFirstSet — exIdx=$exIdx setIdx=$setIdx nextCursor=$nextCursor")
             maybeRegisterGeofenceForFirstSet(active)
 
             // Last set of last exercise -- auto-transition to review
@@ -491,7 +490,7 @@ class WorkoutSessionViewModel(
                 // row insert loses to the parent delete despite the guards above,
                 // swallow the FK violation rather than crashing. The session is
                 // already being torn down — the user just sees the abort UI.
-                println("[Geofence] completeSet aborted (FK race with grace-period auto-abort): ${e.message}")
+                println("completeSet aborted (FK race with grace-period auto-abort): ${e.message}")
             }
         }
     }
@@ -502,37 +501,25 @@ class WorkoutSessionViewModel(
      * is already set).
      */
     private fun maybeRegisterGeofenceForFirstSet(active: WorkoutSessionState.Active) {
-        println("[Geofence] maybeRegisterGeofenceForFirstSet entry: gymLocation=$gymLocation startTimeMillis=${active.startTimeMillis}")
-        if (gymLocation != null) {
-            println("[Geofence] gymLocation already set — SKIPPING register")
-            return
-        }
+        if (gymLocation != null) return
         locationJob?.cancel()
         locationJob = viewModelScope.launch {
-            println("[Geofence] locationJob launched — calling locationProvider.getCurrentLocation()")
             val captured = locationProvider.getCurrentLocation()
-            println("[Geofence] getCurrentLocation returned: $captured")
             gymLocation = captured
             if (captured != null) {
                 val regionId = "active-workout-${active.startTimeMillis}"
                 activeRegionId = regionId
-                println("[Geofence] calling geofenceProvider.register(center=$captured, radius=${XpFormula.GYM_RADIUS_METERS}, id=$regionId) — provider class=${geofenceProvider::class.simpleName}")
                 val result = geofenceProvider.register(
                     center = captured,
                     radiusMeters = XpFormula.GYM_RADIUS_METERS,
                     id = regionId
                 )
-                println("[Geofence] register result: isSuccess=${result.isSuccess} value=${result.getOrNull()} error=${result.exceptionOrNull()?.message}")
                 if (result.isSuccess) {
                     _geofenceState.value = GeofenceUiState.InZone
-                    println("[Geofence] _geofenceState set to InZone, starting observer")
                     startGeofenceObserver(regionId)
                 } else {
                     _geofenceState.value = GeofenceUiState.Inactive
-                    println("[Geofence] register FAILED — _geofenceState set to Inactive")
                 }
-            } else {
-                println("[Geofence] captured location is null — register NOT called, chip stays whatever it was")
             }
         }
     }
