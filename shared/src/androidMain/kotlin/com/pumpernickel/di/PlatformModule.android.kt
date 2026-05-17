@@ -26,4 +26,8 @@ actual val platformModule: Module = module {
     single<BiometricGate> { BiometricGate(androidContext()) }
     // Phase 18 — BYOK key store (REQ-AI-06).
     single<SecureKeyStore> { SecureKeyStore(androidContext()) }
+
+    // Phase 19 — Background AI Generation
+    single { com.pumpernickel.domain.ai.NotificationService(androidContext()) }
+    single { com.pumpernickel.domain.ai.BackgroundTaskManager() }
 }

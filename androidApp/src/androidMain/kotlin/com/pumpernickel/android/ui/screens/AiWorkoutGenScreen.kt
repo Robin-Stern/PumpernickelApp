@@ -57,9 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.pumpernickel.android.ui.navigation.AiSettingsRoute
 import com.pumpernickel.domain.ai.AiError
+import com.pumpernickel.domain.ai.StreamingText
 import com.pumpernickel.domain.ai.WorkoutAiSplit
 import com.pumpernickel.domain.model.MuscleGroup
-import com.pumpernickel.presentation.ai.StreamingText
 import com.pumpernickel.presentation.ai.WorkoutAiUiState
 import com.pumpernickel.presentation.ai.WorkoutAiViewModel
 import org.koin.compose.viewmodel.koinViewModel

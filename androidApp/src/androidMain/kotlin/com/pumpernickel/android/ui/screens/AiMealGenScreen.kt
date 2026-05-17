@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.pumpernickel.android.ui.navigation.AiSettingsRoute
 import com.pumpernickel.domain.ai.RemainingMacros
+import com.pumpernickel.domain.ai.StreamingText
 import com.pumpernickel.presentation.ai.RecipeAiUiState
 import com.pumpernickel.presentation.ai.RecipeAiViewModel
 import org.koin.compose.viewmodel.koinViewModel

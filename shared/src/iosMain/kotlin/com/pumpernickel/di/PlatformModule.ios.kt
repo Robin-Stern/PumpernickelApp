@@ -22,4 +22,8 @@ actual val platformModule: Module = module {
     single<BiometricGate> { BiometricGate() }
     // Phase 18 — BYOK key store, no-arg ctor (REQ-AI-06).
     single<SecureKeyStore> { SecureKeyStore() }
+
+    // Phase 19 — Background AI Generation
+    single { com.pumpernickel.domain.ai.NotificationService() }
+    single { com.pumpernickel.domain.ai.BackgroundTaskManager() }
 }

@@ -3,11 +3,15 @@ package com.pumpernickel.presentation.ai
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pumpernickel.domain.ai.AiError
+import com.pumpernickel.domain.ai.AiGenerationManager
+import com.pumpernickel.domain.ai.AiGenerationState
+import com.pumpernickel.domain.ai.AiType
 import com.pumpernickel.domain.ai.ApiKeyState
 import com.pumpernickel.domain.ai.RecipeAiPreview
 import com.pumpernickel.domain.ai.RecipeAiUseCase
 import com.pumpernickel.domain.ai.RemainingMacros
 import com.pumpernickel.domain.ai.SecureKeyStore
+import com.pumpernickel.domain.ai.StreamingText
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -31,7 +35,8 @@ import kotlinx.coroutines.launch
  */
 class RecipeAiViewModel(
     private val useCase: RecipeAiUseCase,
-    private val secureKeyStore: SecureKeyStore
+    private val secureKeyStore: SecureKeyStore,
+    private val generationManager: AiGenerationManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<RecipeAiUiState>(RecipeAiUiState.Loading)
@@ -39,12 +44,8 @@ class RecipeAiViewModel(
     @NativeCoroutinesState
     val uiState: StateFlow<RecipeAiUiState> = _uiState.asStateFlow()
 
-    /** See WorkoutAiViewModel.streamingText. */
-    private val _streamingText = MutableStateFlow(StreamingText())
     @NativeCoroutinesState
-    val streamingText: StateFlow<StreamingText> = _streamingText.asStateFlow()
-
-    private var generationJob: Job? = null
+    val streamingText: StateFlow<StreamingText> = generationManager.streamingText
 
     init {
         viewModelScope.launch { secureKeyStore.readApiKey() }
@@ -64,6 +65,46 @@ class RecipeAiViewModel(
                         refreshRemaining()
                     }
                     else -> {}
+                }
+            }
+        }
+
+        // Observe global generation state
+        viewModelScope.launch {
+            generationManager.state.collect { genState ->
+                val current = _uiState.value
+                when (genState) {
+                    is AiGenerationState.Idle -> {
+                        if (current is RecipeAiUiState.Generating) {
+                            refreshRemaining()
+                        }
+                    }
+                    is AiGenerationState.Generating -> {
+                        if (genState.type == AiType.RECIPE) {
+                            _uiState.value = RecipeAiUiState.Generating
+                        }
+                    }
+                    is AiGenerationState.Success -> {
+                        if (genState.type == AiType.RECIPE) {
+                            val preview = genState.preview as RecipeAiPreview
+                            val remaining = genState.originatingData as? RemainingMacros
+                            _uiState.value = RecipeAiUiState.Preview(
+                                preview = preview,
+                                originatingRemaining = remaining ?: (current as? RecipeAiUiState.Preview)?.originatingRemaining
+                                    ?: RemainingMacros(0.0, 0.0, 0.0, 0.0, 0.0)
+                            )
+                        }
+                    }
+                    is AiGenerationState.Error -> {
+                        if (genState.type == AiType.RECIPE) {
+                            val error = if (genState.exception is AiError) genState.exception else AiError.fromThrowable(genState.exception)
+                            val remaining = genState.originatingData as? RemainingMacros
+                            _uiState.value = RecipeAiUiState.Error(
+                                error = error,
+                                originatingRemaining = remaining ?: (current as? RecipeAiUiState.Error)?.originatingRemaining
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -96,31 +137,17 @@ class RecipeAiViewModel(
     fun generate() {
         val form = (_uiState.value as? RecipeAiUiState.Form) ?: return
         val remaining = form.remaining
-        _uiState.value = RecipeAiUiState.Generating
-        _streamingText.value = StreamingText()
-        generationJob = viewModelScope.launch {
-            try {
-                val preview = useCase.invoke(remaining) { content, reasoning ->
-                    _streamingText.value = StreamingText(content, reasoning)
-                }
-                _uiState.value = RecipeAiUiState.Preview(preview, originatingRemaining = remaining)
-            } catch (ce: CancellationException) {
-                _uiState.value = RecipeAiUiState.Form(remaining)
-                throw ce
-            } catch (ai: AiError) {
-                _uiState.value = RecipeAiUiState.Error(ai, originatingRemaining = remaining)
-            } catch (t: Throwable) {
-                _uiState.value = RecipeAiUiState.Error(
-                    AiError.fromThrowable(t),
-                    originatingRemaining = remaining
-                )
-            }
+        val started = generationManager.startRecipeGeneration(remaining)
+        if (!started) {
+            _uiState.value = RecipeAiUiState.Error(
+                error = AiError.SchemaInvalid("Bereits eine Generierung aktiv. Bitte warten."),
+                originatingRemaining = remaining
+            )
         }
     }
 
     fun cancel() {
-        generationJob?.cancel()
-        generationJob = null
+        generationManager.clear()
     }
 
     fun save() {
@@ -129,6 +156,7 @@ class RecipeAiViewModel(
             try {
                 useCase.commit(preview.preview)
                 _uiState.value = RecipeAiUiState.Saved
+                generationManager.clear()
             } catch (ce: CancellationException) {
                 throw ce
             } catch (ai: AiError) {
@@ -145,6 +173,7 @@ class RecipeAiViewModel(
     fun discardPreview() {
         val preview = (_uiState.value as? RecipeAiUiState.Preview) ?: return
         _uiState.value = RecipeAiUiState.Form(preview.originatingRemaining)
+        generationManager.clear()
     }
 
     /**
@@ -165,6 +194,7 @@ class RecipeAiViewModel(
 
     fun retryFromError() {
         val error = (_uiState.value as? RecipeAiUiState.Error) ?: return
+        generationManager.clear()
         if (error.originatingRemaining == null) {
             // computeRemaining failure path — re-run the refresh.
             refreshRemaining()
