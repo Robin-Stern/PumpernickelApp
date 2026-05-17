@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -1319,6 +1320,10 @@ private fun FinishedContent(
     finished: WorkoutSessionState.Finished,
     onDone: () -> Unit
 ) {
+    if (finished.abandoned) {
+        AbortedContent(finished = finished, onDone = onDone)
+        return
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1384,6 +1389,81 @@ private fun FinishedContent(
             )
         ) {
             Text("Done", fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun AbortedContent(
+    finished: WorkoutSessionState.Finished,
+    onDone: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Spacer(Modifier.weight(1f))
+
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = androidx.compose.ui.graphics.Color(0xFFFB8C00)
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            text = "Workout beendet",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            text = "Du hast die Trainingszone verlassen. ${finished.loggedSets} Sätze wurden gespeichert, ${kotlin.math.abs(finished.penaltyXp)} XP abgezogen.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 32.dp)
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                SummaryRow("Workout", finished.workoutName)
+                SummaryRow("Dauer", formatDuration(finished.durationMillis))
+                SummaryRow("Geloggte Sätze", finished.loggedSets.toString())
+                SummaryRow("XP-Abzug", "−${kotlin.math.abs(finished.penaltyXp)} XP")
+            }
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        Button(
+            onClick = onDone,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = androidx.compose.ui.graphics.Color(0xFFFB8C00)
+            )
+        ) {
+            Text("Zur Übersicht", fontWeight = FontWeight.SemiBold)
         }
 
         Spacer(Modifier.height(32.dp))
