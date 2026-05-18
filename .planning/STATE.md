@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: Android Material 3 UI
 status: verifying
 stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-05-18T16:49:33.508Z"
+last_updated: "2026-05-18T17:25:09.306Z"
 last_activity: 2026-05-18
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 62
-  completed_plans: 53
-  percent: 85
+  completed_plans: 55
+  percent: 89
 ---
 
 # Project State
@@ -32,7 +32,7 @@ Branch: `android-ios-parity` (ahead of `main` by ~25 commits — merge pending)
 Status: Phase complete — ready for verification
 Last activity: 2026-05-18
 
-Progress: [█████████░] 85%
+Progress: [█████████░] 89%
 
 ## ⚠️  Untracked Drift
 
@@ -82,6 +82,7 @@ See `MILESTONES.md` → "Post-v1.5 (Untracked)" for the full summary. No per-pha
 | Phase 20 P03 | ~12 min | 3 tasks | 31 files |
 | Phase 20 P04 | 5 min | 2 tasks | 13 files |
 | Phase 20 P06 | 3 min | 2 tasks | 6 files |
+| Phase 20 P08 | ~13 min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -129,6 +130,9 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - [Phase 20]: Plan 20-06: Per-aggregate mapper-file granularity (ExerciseMappers.kt + WorkoutTemplateMappers.kt, one file per aggregate root)
 - [Phase 20]: Plan 20-06: Pure-domain helpers stay in domain/model/WorkoutTemplate.kt — Smell 5 scope is mapper-move only
 - [Phase 20]: Plan 20-06: domain/model/ is now Room-free — dependency rule (D-20-01) closed for Smell 5
+- [Phase ?]: Plan 20-08: Smell 3 fully closed (Engine ctor swapped from DAOs to Repository interfaces)
+- [Phase ?]: Plan 20-08: GamificationRepository.getPrLedgerEntries() return type changed from data.db.XpLedgerEntity to new domain XpLedgerRecord — closes the Plan 20-04 deferred Smell-3 leak in 20-08 (not in 20-09 as originally noted), because the Engine grep-guard requires zero data.* imports
+- [Phase ?]: Plan 20-08: New domain records in EngineRecords.kt (CompletedWorkoutRecord, CompletedExerciseRecord, CompletedSetRecord, XpLedgerRecord) — narrow projections at the repository boundary; ProgressGalleryViewModel got an inline Entity→Domain mapper as a Rule 3 blocking fix (deferred Smell 6 — VM still injects DAO directly)
 
 ### Roadmap Evolution
 
@@ -177,6 +181,6 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 
 ## Session Continuity
 
-Last session: 2026-05-18T16:46:37.436Z
+Last session: 2026-05-18T17:24:43.397Z
 Stopped at: Completed 20-02-PLAN.md
 Next step: Optional — `android-ios-parity` → `main` merge; plan post-v1.0 work (e.g. Phase 20 or demo polish for university deadline)
