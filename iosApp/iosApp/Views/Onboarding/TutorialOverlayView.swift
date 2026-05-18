@@ -9,7 +9,7 @@ private struct TutorialPage {
 
 private let pages: [TutorialPage] = [
     TutorialPage(
-        title: "Willkommen bei Pumpernickel",
+        title: "Willkommen bei Pumpernickl",
         body: "Dein persönlicher Fitness-Begleiter für strukturiertes Krafttraining.",
         emoji: "💪"
     ),
@@ -24,14 +24,19 @@ private let pages: [TutorialPage] = [
         emoji: "🏋️"
     ),
     TutorialPage(
-        title: "Wischen zum Löschen",
-        body: "Wische Einträge nach links zum Löschen — in Templates, Rezepten und Tagebuch.",
-        emoji: "👈"
+        title: "KI-Assistent",
+        body: "Lass dir ein Workout vorschlagen — basierend auf deinen Trainingszielen und untertrainierten Muskeln.\n\nIm Ernährung-Tab generiert der KI-Assistent passende Mahlzeiten zu deinen Makrozielen.",
+        emoji: "🤖"
     ),
     TutorialPage(
-        title: "Wischen zum Favorisieren",
-        body: "Wische ein Rezept nach rechts, um es als Favorit zu markieren.",
-        emoji: "⭐"
+        title: "Achievements & Ränge",
+        body: "Verdiene XP für jeden absolvierten Satz und jedes abgeschlossene Workout. Schalte Achievements frei und steige in der Rangliste auf.",
+        emoji: "🏆"
+    ),
+    TutorialPage(
+        title: "Wischgesten",
+        body: "👈 Nach links wischen — Eintrag löschen (Templates, Rezepte, Tagebuch)\n\n⭐ Nach rechts wischen — Rezept als Favorit markieren",
+        emoji: "👆"
     ),
     TutorialPage(
         title: "Lebensmittel verwalten",
@@ -49,8 +54,18 @@ private let pages: [TutorialPage] = [
         emoji: "📷"
     ),
     TutorialPage(
+        title: "Makroziele & Körperprofil",
+        body: "Hinterlege Alter, Geschlecht und Gewicht — die App berechnet deinen Kalorienbedarf (TDEE) und setzt automatisch deine Makroziele.",
+        emoji: "📊"
+    ),
+    TutorialPage(
+        title: "Fortschrittsfotos",
+        body: "Halte deinen Fortschritt mit Fotos fest. Die Progress Gallery findest du im Übersicht-Tab.",
+        emoji: "📸"
+    ),
+    TutorialPage(
         title: "Los geht's!",
-        body: "Du kannst dieses Tutorial jederzeit in den Einstellungen erneut aufrufen.",
+        body: "Du kannst dieses Tutorial jederzeit erneut starten — über das Zahnrad-Icon im Training-Tab.",
         emoji: "🚀"
     )
 ]

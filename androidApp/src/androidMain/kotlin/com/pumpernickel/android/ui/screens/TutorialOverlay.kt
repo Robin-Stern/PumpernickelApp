@@ -31,7 +31,7 @@ private data class TutorialPage(val title: String, val body: String, val emoji: 
 
 private val pages = listOf(
     TutorialPage(
-        title = "Willkommen bei Pumpernickel",
+        title = "Willkommen bei Pumpernickl",
         body = "Dein persönlicher Fitness-Begleiter für strukturiertes Krafttraining.",
         emoji = "💪"
     ),
