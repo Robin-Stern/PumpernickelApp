@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: Android Material 3 UI
 status: verifying
 stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-05-18T16:26:36.906Z"
+last_updated: "2026-05-18T16:49:33.508Z"
 last_activity: 2026-05-18
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 62
-  completed_plans: 51
-  percent: 82
+  completed_plans: 53
+  percent: 85
 ---
 
 # Project State
@@ -32,7 +32,7 @@ Branch: `android-ios-parity` (ahead of `main` by ~25 commits — merge pending)
 Status: Phase complete — ready for verification
 Last activity: 2026-05-18
 
-Progress: [████████░░] 82%
+Progress: [█████████░] 85%
 
 ## ⚠️  Untracked Drift
 
@@ -81,6 +81,7 @@ See `MILESTONES.md` → "Post-v1.5 (Untracked)" for the full summary. No per-pha
 | Phase 20 P02 | 14min | 3 tasks | 9 files |
 | Phase 20 P03 | ~12 min | 3 tasks | 31 files |
 | Phase 20 P04 | 5 min | 2 tasks | 13 files |
+| Phase 20 P06 | 3 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,9 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - [Phase 20]: Plan 20-03: Three repos (Template/Exercise/Food) interfaces moved to domain/repository in one atomic commit (Smell 1 fix, Wave 3)
 - [Phase ?]: Plan 20-04: Gamification + ProgressPicture repository interfaces moved to domain/repository (Smell 1 wave 4). Koin bindings updated in feature modules (GamificationModule.kt, ProgressGalleryModule.kt) — not SharedModule.kt as the plan-approach implied.
 - [Phase ?]: Plan 20-04: GamificationRepository.getPrLedgerEntries(): List<XpLedgerEntity> retains the Entity return type — Smell-3 follow-up explicitly deferred to Plan 20-09 per plan-action wording.
+- [Phase 20]: Plan 20-06: Per-aggregate mapper-file granularity (ExerciseMappers.kt + WorkoutTemplateMappers.kt, one file per aggregate root)
+- [Phase 20]: Plan 20-06: Pure-domain helpers stay in domain/model/WorkoutTemplate.kt — Smell 5 scope is mapper-move only
+- [Phase 20]: Plan 20-06: domain/model/ is now Room-free — dependency rule (D-20-01) closed for Smell 5
 
 ### Roadmap Evolution
 
@@ -173,6 +177,6 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 
 ## Session Continuity
 
-Last session: 2026-05-18T16:26:18.636Z
+Last session: 2026-05-18T16:46:37.436Z
 Stopped at: Completed 20-02-PLAN.md
 Next step: Optional — `android-ios-parity` → `main` merge; plan post-v1.0 work (e.g. Phase 20 or demo polish for university deadline)
