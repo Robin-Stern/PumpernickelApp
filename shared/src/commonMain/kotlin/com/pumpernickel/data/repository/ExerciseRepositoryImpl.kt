@@ -3,9 +3,9 @@ package com.pumpernickel.data.repository
 import com.pumpernickel.data.db.DatabaseSeeder
 import com.pumpernickel.data.db.ExerciseDao
 import com.pumpernickel.data.db.ExerciseEntity
+import com.pumpernickel.data.repository.mappers.toDomain
 import com.pumpernickel.domain.model.Exercise
 import com.pumpernickel.domain.model.MuscleGroup
-import com.pumpernickel.domain.model.toDomain
 import com.pumpernickel.domain.repository.ExerciseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

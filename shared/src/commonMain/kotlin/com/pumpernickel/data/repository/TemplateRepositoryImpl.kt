@@ -3,10 +3,10 @@ package com.pumpernickel.data.repository
 import com.pumpernickel.data.db.TemplateExerciseEntity
 import com.pumpernickel.data.db.WorkoutTemplateDao
 import com.pumpernickel.data.db.WorkoutTemplateEntity
+import com.pumpernickel.data.repository.mappers.toDomain
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.TemplateExercise
 import com.pumpernickel.domain.model.WorkoutTemplate
-import com.pumpernickel.domain.model.toDomain
 import com.pumpernickel.domain.repository.ExerciseRepository
 import com.pumpernickel.domain.repository.TemplateRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
