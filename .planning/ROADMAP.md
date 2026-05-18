@@ -326,3 +326,13 @@ Plans:
 - [x] 19-05-PLAN.md — Wave 3: WorkoutSessionViewModel integration (geofence lifecycle, grace timer, Early-Exit flow) + processAbandonedWorkout
 - [x] 19-06-PLAN.md — Wave 4: iOS UI (chip, rationale sheet, banners, early-exit dialog, Settings detail view, notifications) + visual UAT
 - [x] 19-07-PLAN.md — Wave 4: Android UI (chip, rationale sheet, banners, early-exit dialog, Settings detail sheet, notifications) + visual UAT
+
+### Phase 20: Clean Architecture Refactor — Dependency-Rule fixen: Repository-Interfaces nach domain/ verschieben, Room-Imports aus domain/model raus, Use-Cases von Framework entkoppeln, androidMain/iosMain-Paketlayout vereinheitlichen
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 19
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 20 to break down)
