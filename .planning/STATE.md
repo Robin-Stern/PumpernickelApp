@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: Android Material 3 UI
 status: idle
 stopped_at: Phase 19 complete — all 7 plans + Layer A/B crash & UI follow-ups + 4 demo-prep quick-tasks; user-confirmed UAT pass 2026-05-17
-last_updated: "2026-05-18T09:30:00.000Z"
-last_activity: 2026-05-18 -- Completed quick task 260518-f2h: iOS AI Settings API-Key-Status-Anzeige (Picker.onChange Race)
+last_updated: "2026-05-18T11:30:00.000Z"
+last_activity: 2026-05-18 -- Completed quick task 260518-fnk: iOS-App "Pumpernickel"-Rename + gemeinsames App-Icon für Android und iOS
 progress:
   total_phases: 6
   completed_phases: 5
@@ -160,6 +160,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260518-ey4 | AI Workout Stream-Status hardcoded "5 Übungen" → User-exerciseCount — Single-line Fix in WorkoutAiViewModel.kt:113 (skeletonRowCount aus originatingData.exerciseCount statt const 5). Beide Plattformen konsumieren state.skeletonRowCount → automatisch korrigiert. Manual UAT pending | 2026-05-18 | 59e5a67 | [260518-ey4-ai-generation-stream-status-zeigt-hardco](./quick/260518-ey4-ai-generation-stream-status-zeigt-hardco/) |
 | 260518-f1c | Android SettingsSheet scrollt nicht — ModalBottomSheet-Column mit verticalScroll(rememberScrollState()) versehen, KI-Sektion jetzt erreichbar auf kleineren Devices. Manual UAT pending | 2026-05-18 | 4b787fd | [260518-f1c-android-settingsscreen-scrollt-nicht-ki-](./quick/260518-f1c-android-settingsscreen-scrollt-nicht-ki-/) |
 | 260518-f2h | iOS AI Settings API-Key-Status-Anzeige falsch — Root cause: Picker.onChange feuert beim View-Re-Entry weil .task-Observer den initialen @State default ("openai") mit echtem StateFlow-Wert überschreibt → setProviderPreset → clearApiKey → "nicht gespeichert" obwohl Key real noch da. Fix: isSyncingProviderFromFlow @State-Flag als One-Shot-Skip in onChange-Handler. Task war ursprünglich als Android klassifiziert (Speech-to-text "Eiweiß"→iOS Artefakt). Manual UAT pending | 2026-05-18 | 7545b26 | [260518-f2h-android-ai-settings-api-key-status-anzei](./quick/260518-f2h-android-ai-settings-api-key-status-anzei/) |
+| 260518-fnk | iOS-App in "Pumpernickel" umbenennen und gleiches App-Icon (SVG → PNGs) für Android und iOS setzen — assets/app-icon.svg vendored, iOS CFBundleDisplayName=Pumpernickel via INFOPLIST_KEY in pbxproj (Debug+Release), AppIcon.png 1024×1024 in Assets.xcassets, Android app_name=Pumpernickel in strings.xml, AndroidManifest auf @string/app_name + @mipmap/ic_launcher{,_round} umgestellt, 10 mipmap-PNGs (5 Dichten × 2 Namen) via qlmanage+sips generiert. Human-Verify auf Simulator/Emulator pending | 2026-05-18 | c23909c | [260518-fnk-ios-app-in-pumpernickel-umbenennen-und-g](./quick/260518-fnk-ios-app-in-pumpernickel-umbenennen-und-g/) |
 
 ## Session Continuity
 
