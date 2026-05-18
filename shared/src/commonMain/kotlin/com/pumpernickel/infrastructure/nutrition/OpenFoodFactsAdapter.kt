@@ -18,8 +18,8 @@ import com.pumpernickel.domain.nutrition.RemoteFoodSearchClient
  *    those domain types and preserves the existing filter semantics:
  *    products without `productName` or `nutriments` are dropped from search
  *    hits; `sugar` is clamped to `carbohydrates`; `nutriScore` is uppercased
- *    and rejected when outside A–E; `brand` is taken as the first
- *    comma-separated entry; barcode lookups return `null` when `status != 1`
+ *    and rejected when outside A–E; `brand` is taken as the first entry of
+ *    the OFF v2 `brands` array; barcode lookups return `null` when `status != 1`
  *    or the product name is missing.
  *
  * Error contract: transport exceptions surface verbatim so
@@ -38,7 +38,7 @@ class OpenFoodFactsAdapter(
             val nutriments = product.nutriments ?: return@mapNotNull null
             val carbs = nutriments.carbohydrates100g ?: 0.0
             val sugar = nutriments.sugars100g ?: 0.0
-            val brand = product.brands?.substringBefore(',')?.trim()?.takeIf { it.isNotBlank() }
+            val brand = product.brands?.firstOrNull()?.trim()?.takeIf { it.isNotBlank() }
             RemoteFoodResult(
                 name = name,
                 calories = nutriments.energyKcal100g ?: 0.0,

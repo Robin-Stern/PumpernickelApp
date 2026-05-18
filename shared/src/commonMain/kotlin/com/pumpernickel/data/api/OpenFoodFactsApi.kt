@@ -20,14 +20,12 @@ class OpenFoodFactsApi(private val client: HttpClient) {
 
     suspend fun searchByName(query: String, pageSize: Int = 20): OpenFoodFactsSearchResponse {
         println("[OFF] searchByName query='$query' pageSize=$pageSize")
-        val responseText = client.get("https://world.openfoodfacts.org/cgi/search.pl") {
+        val responseText = client.get("https://search.openfoodfacts.org/search") {
             header("User-Agent", "PumpernickelApp/1.0 (Android/iOS; contact@pumpernickel.app)")
-            parameter("search_terms", query)
-            parameter("search_simple", "1")
-            parameter("action", "process")
-            parameter("json", "1")
-            parameter("fields", "product_name,brands,nutriments")
+            parameter("q", query)
+            parameter("fields", "product_name,brands,nutriments,nutrition_grade_fr")
             parameter("page_size", pageSize.toString())
+            parameter("sort_by", "unique_scans_n")
         }.bodyAsText()
         println("[OFF] response received bytes=${responseText.length} preview='${responseText.take(120)}'")
         if (responseText.trimStart().startsWith("<")) {
@@ -35,6 +33,7 @@ class OpenFoodFactsApi(private val client: HttpClient) {
             throw IllegalStateException("OpenFoodFacts ist gerade nicht erreichbar.")
         }
         println("[OFF] decoding JSON…")
-        return json.decodeFromString(responseText)
+        val v2 = json.decodeFromString<OpenFoodFactsSearchV2Response>(responseText)
+        return OpenFoodFactsSearchResponse(count = v2.count, products = v2.hits)
     }
 }
