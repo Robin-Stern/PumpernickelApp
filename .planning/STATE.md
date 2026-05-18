@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Android Material 3 UI
-status: Idle. Phase 19 functional + UAT confirmed. Diagnostic prints removed.
-stopped_at: Phase 20 context gathered
-last_updated: "2026-05-18T10:18:11.506Z"
-last_activity: 2026-05-17 -- Phase 19 closure + diagnostic-prints cleanup (quick-task 260517-x4p)
+status: verifying
+stopped_at: Completed 20-02-PLAN.md
+last_updated: "2026-05-18T16:04:28.219Z"
+last_activity: 2026-05-18
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 49
-  completed_plans: 47
-  percent: 96
+  total_plans: 62
+  completed_plans: 49
+  percent: 79
 ---
 
 # Project State
@@ -29,10 +29,10 @@ Milestone: v1.5 (shipped 2026-03-31)
 Phase: 19 (geofencing-workout-enforcement) — COMPLETE (UAT confirmed 2026-05-17)
 Plan: 7 of 7
 Branch: `android-ios-parity` (ahead of `main` by ~25 commits — merge pending)
-Status: Idle. Phase 19 functional + UAT confirmed. Diagnostic prints removed.
-Last activity: 2026-05-17 -- Phase 19 closure + diagnostic-prints cleanup (quick-task 260517-x4p)
+Status: Phase complete — ready for verification
+Last activity: 2026-05-18
 
-Progress: [██████████] 100%
+Progress: [████████░░] 79%
 
 ## ⚠️  Untracked Drift
 
@@ -78,6 +78,7 @@ See `MILESTONES.md` → "Post-v1.5 (Untracked)" for the full summary. No per-pha
 | Phase 15 P11 | 8 | 3 tasks | 5 files |
 | Phase 16-set-nutrition-goals-kcal-protein-carbs-fat-per-day-surface-p P08 | 3min | 2 tasks | 2 files |
 | Phase 16-set-nutrition-goals-kcal-protein-carbs-fat-per-day-surface-p P09 | 2min | 3 tasks | 2 files |
+| Phase 20 P02 | 14min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,8 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - [Phase ?]: [Phase 16-09]: iOS rings staleness fixed via .sheet onDismiss refresh — non-invasive, no shared-VM plumbing across the editor sheet boundary
 - [Phase ?]: [Phase 16-09]: bannerVisible @State defaults to false on iOS — observeBannerVisible() seeds the persisted value on first emission; one-frame missing-banner is less distracting than the flash
 - [Phase ?]: [Phase 16-09]: Android first-composition refresh handled by OverviewViewModel.init { refresh() } alone — LaunchedEffect(Unit) was redundant and spawned a second concurrent refresh per re-entry
+- [Phase ?]: Phase 20 P02: ActiveSessionData/ActiveSessionSetData wandern mit dem WorkoutRepository-Interface nach domain/repository/ (gleiches File), nicht als separate domain/model/-DTOs gesplittet.
+- [Phase ?]: Phase 20 P02: WorkoutRepository.getExerciseSetRirSince() behält data.db.ExerciseSetRirDto-Return-Type als Follow-up-Smell; domain-DTO-Ersatz ist separater Refactor (DAO-Signature betroffen).
 
 ### Roadmap Evolution
 
@@ -165,6 +168,6 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 
 ## Session Continuity
 
-Last session: 2026-05-18T10:18:11.494Z
-Stopped at: Phase 20 context gathered
+Last session: 2026-05-18T16:04:18.193Z
+Stopped at: Completed 20-02-PLAN.md
 Next step: Optional — `android-ios-parity` → `main` merge; plan post-v1.0 work (e.g. Phase 20 or demo polish for university deadline)
