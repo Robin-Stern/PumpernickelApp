@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.pumpernickel.android.R
 import com.pumpernickel.domain.model.Food
+import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
 import com.pumpernickel.presentation.nutrition.RecipeCreationEvent
 import com.pumpernickel.presentation.nutrition.RecipeCreationViewModel
 import com.pumpernickel.presentation.nutrition.RecipeListViewModel
@@ -136,42 +137,67 @@ fun NutritionRecipeCreationScreen(
                 item {
                     SearchSectionHeader(
                         query = state.searchQuery,
-                        resultCount = state.searchResults.size,
+                        resultCount = state.searchResults.size + state.remoteSearchResults.size,
                         isLoading = state.isSearchingRemote
                     )
                     Spacer(Modifier.height(8.dp))
                 }
 
-                if (state.isSearchingRemote) {
-                    item {
-                        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = ColorPrimary, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                // Lokale Ergebnisse
+                itemsIndexed(state.searchResults) { _, food ->
+                    SearchResultCard(
+                        food = food,
+                        onAdd = {
+                            viewModel.onEvent(RecipeCreationEvent.OnFoodSelected(food))
+                            searchFocused = false
                         }
-                    }
-                } else if (state.searchResults.isEmpty() && state.searchQuery.isNotBlank()) {
-                    item { SearchEmptyState() }
-                } else {
-                    itemsIndexed(state.searchResults) { _, food ->
-                        SearchResultCard(
-                            food = food,
-                            onAdd = {
-                                viewModel.onEvent(RecipeCreationEvent.OnFoodSelected(food))
-                                searchFocused = false
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                // Remote-Ergebnisse (OpenFoodFacts)
+                if (state.searchQuery.length >= 3) {
+                    if (state.isSearchingRemote) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = ColorPrimary, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                             }
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
-                    if (state.searchQuery.isNotBlank()) {
+                        }
+                    } else if (state.remoteSearchResults.isNotEmpty()) {
+                        item {
+                            Text(
+                                "OPENFOODFACTS",
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 1.2.sp,
+                                color = ColorTextFaint,
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            )
+                        }
+                        itemsIndexed(state.remoteSearchResults) { _, result ->
+                            RemoteSearchResultCard(
+                                result = result,
+                                onAdd = {
+                                    viewModel.onEvent(RecipeCreationEvent.OnRemoteFoodSelected(result))
+                                    searchFocused = false
+                                }
+                            )
+                            Spacer(Modifier.height(8.dp))
+                        }
                         item {
                             Text(
                                 "Daten von openfoodfacts.org",
                                 fontSize = 11.sp,
                                 color = ColorTextFaint,
-                                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                                modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         }
+                    } else if (state.searchResults.isEmpty()) {
+                        item { SearchEmptyState() }
                     }
+                } else if (state.searchResults.isEmpty() && state.searchQuery.isNotBlank()) {
+                    item { SearchEmptyState() }
                 }
             } else {
                 // ── Idle mode ──
@@ -451,50 +477,83 @@ private fun SearchResultCard(food: Food, onAdd: () -> Unit) {
             .background(Color.White, RoundedCornerShape(12.dp))
             .padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        food.name,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = ColorText,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                    Text("${food.calories.roundToInt()} kcal/100g", fontSize = 11.sp, color = ColorTextMuted)
-                }
-            }
+            Text(
+                food.name,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = ColorText,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            Text("${food.calories.roundToInt()} kcal/100g", fontSize = 11.sp, color = ColorTextMuted)
             Spacer(Modifier.height(7.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                MacroRow(
-                    protein = food.protein,
-                    fat = food.fat,
-                    carbs = food.carbohydrates,
-                    sugar = food.sugar
-                )
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .border(1.5.dp, ColorPrimary, CircleShape)
-                        .background(Color.White)
-                        .clickable(onClick = onAdd),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("+", fontSize = 18.sp, color = ColorPrimary, lineHeight = 18.sp)
-                }
+            MacroRow(
+                protein = food.protein,
+                fat = food.fat,
+                carbs = food.carbohydrates,
+                sugar = food.sugar
+            )
+        }
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .border(1.5.dp, ColorPrimary, CircleShape)
+                .background(Color.White)
+                .clickable(onClick = onAdd),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("+", fontSize = 18.sp, color = ColorPrimary, lineHeight = 18.sp)
+        }
+    }
+}
+
+// ── Remote search result card (OpenFoodFacts) ──
+
+@Composable
+private fun RemoteSearchResultCard(
+    result: SearchFoodsRemoteUseCase.RemoteFoodResult,
+    onAdd: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, ColorBorder, RoundedCornerShape(12.dp))
+            .background(Color.White, RoundedCornerShape(12.dp))
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                result.name,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = ColorText,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            result.brand?.let {
+                Text(it, fontSize = 11.sp, color = ColorTextMuted, maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
             }
+            Text("${result.calories.roundToInt()} kcal/100g", fontSize = 11.sp, color = ColorTextMuted)
+            Spacer(Modifier.height(7.dp))
+            MacroRow(protein = result.protein, fat = result.fat, carbs = result.carbs, sugar = result.sugar)
+        }
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .border(1.5.dp, ColorPrimary, CircleShape)
+                .background(Color.White)
+                .clickable(onClick = onAdd),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("+", fontSize = 18.sp, color = ColorPrimary, lineHeight = 18.sp)
         }
     }
 }

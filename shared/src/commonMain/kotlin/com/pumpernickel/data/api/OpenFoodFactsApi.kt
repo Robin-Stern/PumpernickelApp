@@ -9,7 +9,7 @@ import kotlinx.serialization.json.Json
 
 class OpenFoodFactsApi(private val client: HttpClient) {
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     suspend fun lookupBarcode(barcode: String): OpenFoodFactsResponse {
         val responseText = client.get("https://world.openfoodfacts.org/api/v2/product/$barcode.json") {
