@@ -2,7 +2,7 @@ package com.pumpernickel.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.domain.repository.SettingsRepository
 import com.pumpernickel.domain.model.WeightUnit
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.flow.SharingStarted

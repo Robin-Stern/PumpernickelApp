@@ -9,7 +9,7 @@ import com.pumpernickel.data.api.OpenAICompatibleClient
 import com.pumpernickel.data.api.RecipeAiResponse
 import com.pumpernickel.data.api.ResponseFormat
 import com.pumpernickel.domain.repository.FoodRepository
-import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.domain.repository.SettingsRepository
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
 import com.pumpernickel.domain.model.NutritionGoals

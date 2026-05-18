@@ -1,19 +1,21 @@
 package com.pumpernickel.domain.geofence
 
-import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.domain.repository.EarlyExitBudgetStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 /**
- * D-19-07 — monthly Early-Exits budget. Pure domain wrapper over
- * SettingsRepository.earlyExits — handles the "consume one" semantics so the
- * VM doesn't reach into DataStore directly.
+ * D-19-07 / D-20-05 — monthly Early-Exits budget. Pure domain wrapper over the
+ * narrow [EarlyExitBudgetStore] port — handles the "consume one" semantics so
+ * the VM doesn't reach into DataStore directly.
  *
- * Budget resets at the 1st of each calendar month via SettingsRepository's
- * year-month sentinel; this class does not own the reset logic.
+ * Smell 13 fix (Plan 20-05): depends on the narrow `EarlyExitBudgetStore`
+ * domain port instead of the fat settings facade. Budget resets at the
+ * 1st of each calendar month are handled by the implementation's year-month
+ * sentinel; this class does not own the reset logic.
  */
 class EarlyExitTracker(
-    private val settingsRepository: SettingsRepository
+    private val store: EarlyExitBudgetStore
 ) {
 
     companion object {
@@ -22,7 +24,7 @@ class EarlyExitTracker(
     }
 
     /** Current month's snapshot (used + remaining). Auto-resets on month change. */
-    val budget: Flow<EarlyExitBudget> = settingsRepository.earlyExits
+    val budget: Flow<EarlyExitBudget> = store.earlyExits
 
     /**
      * Atomically consumes one Early Exit. Returns:
@@ -30,9 +32,9 @@ class EarlyExitTracker(
      *  - false if budget was already at 0 (caller must apply penalty path instead)
      */
     suspend fun consumeOne(): Boolean {
-        val current = settingsRepository.earlyExits.first()
+        val current = store.earlyExits.first()
         if (current.remaining <= 0) return false
-        settingsRepository.incrementEarlyExitUsed()
+        store.incrementEarlyExitUsed()
         return true
     }
 }

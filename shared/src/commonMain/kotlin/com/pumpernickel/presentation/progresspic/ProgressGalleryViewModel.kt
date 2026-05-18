@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pumpernickel.data.db.GamificationDao
 import com.pumpernickel.data.db.NutritionDao
 import com.pumpernickel.domain.repository.ProgressPictureRepository
-import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.domain.repository.SettingsRepository
 import com.pumpernickel.domain.gamification.NutritionGoalDayPolicy
 import com.pumpernickel.domain.progresspic.ProgressGalleryTile
 import com.pumpernickel.domain.model.NutritionGoals

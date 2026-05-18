@@ -2,7 +2,7 @@ package com.pumpernickel.presentation.ai
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.domain.repository.SettingsRepository
 import com.pumpernickel.domain.ai.ApiKeyState
 import com.pumpernickel.domain.ai.SecureKeyStore
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState

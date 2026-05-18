@@ -16,6 +16,8 @@ import com.pumpernickel.domain.model.NutritionGoals
 import com.pumpernickel.domain.model.Sex
 import com.pumpernickel.domain.model.UserPhysicalStats
 import com.pumpernickel.domain.model.WeightUnit
+import com.pumpernickel.domain.repository.EarlyExitBudgetStore
+import com.pumpernickel.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -25,9 +27,24 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
-class SettingsRepository(
+/**
+ * D-20-04 / D-20-05 — DataStore-backed monolithic settings facade.
+ *
+ * Implements three interfaces against the same singleton instance:
+ *  - [SettingsRepository] — fat domain facade for all settings (used by ~10
+ *    ViewModels + 3 Use-Cases + `GamificationEngine`).
+ *  - [PendingGeofenceExitStore] — narrow domain port for cold-start EXIT
+ *    sentinel (D-19-04).
+ *  - [EarlyExitBudgetStore] — narrow domain port for monthly Early-Exits
+ *    budget (D-19-07 / D-20-05); injected into `EarlyExitTracker`.
+ *
+ * All three are bound to this single instance via Koin's `bind ::class` chain
+ * in `di/SharedModule.kt` so callers asking for any of them get the same
+ * DataStore-backed object.
+ */
+class SettingsRepositoryImpl(
     private val dataStore: DataStore<Preferences>
-) : PendingGeofenceExitStore {
+) : SettingsRepository, PendingGeofenceExitStore, EarlyExitBudgetStore {
     private val hasSeenTutorialKey = booleanPreferencesKey("has_seen_tutorial")
     private val weightUnitKey = stringPreferencesKey("weight_unit")
     private val appThemeKey = stringPreferencesKey("app_theme")
@@ -61,44 +78,44 @@ class SettingsRepository(
     private val pendingGeofenceExitTimeMillisKey = longPreferencesKey("pending_geofence_exit_time_millis")
     private val pendingGeofenceExitRegionIdKey = stringPreferencesKey("pending_geofence_exit_region_id")
 
-    val hasSeenTutorial: Flow<Boolean> = dataStore.data.map { preferences ->
+    override val hasSeenTutorial: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[hasSeenTutorialKey] ?: false
     }
 
-    suspend fun setHasSeenTutorial(value: Boolean) {
+    override suspend fun setHasSeenTutorial(value: Boolean) {
         dataStore.edit { preferences ->
             preferences[hasSeenTutorialKey] = value
         }
     }
 
-    val weightUnit: Flow<WeightUnit> = dataStore.data.map { preferences ->
+    override val weightUnit: Flow<WeightUnit> = dataStore.data.map { preferences ->
         when (preferences[weightUnitKey]) {
             "LBS" -> WeightUnit.LBS
             else -> WeightUnit.KG
         }
     }
 
-    val appTheme: Flow<String> = dataStore.data.map { preferences ->
+    override val appTheme: Flow<String> = dataStore.data.map { preferences ->
         preferences[appThemeKey] ?: "system"
     }
 
-    val accentColor: Flow<String> = dataStore.data.map { preferences ->
+    override val accentColor: Flow<String> = dataStore.data.map { preferences ->
         preferences[accentColorKey] ?: "green"
     }
 
-    suspend fun setWeightUnit(unit: WeightUnit) {
+    override suspend fun setWeightUnit(unit: WeightUnit) {
         dataStore.edit { preferences ->
             preferences[weightUnitKey] = unit.name
         }
     }
 
-    suspend fun setAppTheme(theme: String) {
+    override suspend fun setAppTheme(theme: String) {
         dataStore.edit { preferences ->
             preferences[appThemeKey] = theme
         }
     }
 
-    suspend fun setAccentColor(color: String) {
+    override suspend fun setAccentColor(color: String) {
         dataStore.edit { preferences ->
             preferences[accentColorKey] = color
         }
@@ -109,11 +126,11 @@ class SettingsRepository(
      * (iOS pill + Android FAB). Defaults to true so existing users see
      * unchanged DEBUG behavior on first launch.
      */
-    val debugModeEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+    override val debugModeEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
         prefs[debugModeEnabledKey] ?: true
     }
 
-    suspend fun setDebugModeEnabled(enabled: Boolean) {
+    override suspend fun setDebugModeEnabled(enabled: Boolean) {
         dataStore.edit { prefs -> prefs[debugModeEnabledKey] = enabled }
     }
 
@@ -124,15 +141,15 @@ class SettingsRepository(
      * remains the canonical default; this Flow is the source of truth for
      * the running countdown.
      */
-    val gracePeriodSeconds: Flow<Long> = dataStore.data.map { prefs ->
+    override val gracePeriodSeconds: Flow<Long> = dataStore.data.map { prefs ->
         prefs[gracePeriodSecondsKey] ?: com.pumpernickel.domain.gamification.XpFormula.GEOFENCE_GRACE_PERIOD_SECONDS
     }
 
-    suspend fun setGracePeriodSeconds(seconds: Long) {
+    override suspend fun setGracePeriodSeconds(seconds: Long) {
         dataStore.edit { prefs -> prefs[gracePeriodSecondsKey] = seconds }
     }
 
-    val nutritionGoals: Flow<NutritionGoals> = combine(
+    override val nutritionGoals: Flow<NutritionGoals> = combine(
         dataStore.data.map { it[calorieGoalKey]?.toIntOrNull() ?: 2500 },
         dataStore.data.map { it[proteinGoalKey]?.toIntOrNull() ?: 150 },
         dataStore.data.map { it[fatGoalKey]?.toIntOrNull() ?: 80 },
@@ -142,7 +159,7 @@ class SettingsRepository(
         NutritionGoals(cal, pro, fat, carb, sugar)
     }
 
-    suspend fun setNutritionGoals(goals: NutritionGoals) {
+    override suspend fun setNutritionGoals(goals: NutritionGoals) {
         dataStore.edit { prefs ->
             prefs[calorieGoalKey] = goals.calorieGoal.toString()
             prefs[proteinGoalKey] = goals.proteinGoal.toString()
@@ -157,11 +174,11 @@ class SettingsRepository(
      * first-launch XP replay has completed successfully. If false or missing,
      * the RetroactiveWalker runs on next app resume and writes true on success.
      */
-    val retroactiveApplied: Flow<Boolean> = dataStore.data.map { preferences ->
+    override val retroactiveApplied: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[retroactiveAppliedKey] ?: false
     }
 
-    suspend fun setRetroactiveApplied(applied: Boolean) {
+    override suspend fun setRetroactiveApplied(applied: Boolean) {
         dataStore.edit { preferences ->
             preferences[retroactiveAppliedKey] = applied
         }
@@ -171,7 +188,7 @@ class SettingsRepository(
      * D-16-10 / D-16-11 — `null` when no stats ever stored (calculator opens with placeholders);
      * fully populated otherwise. Flow only emits a value once ALL five keys are present.
      */
-    val userPhysicalStats: Flow<UserPhysicalStats?> = combine(
+    override val userPhysicalStats: Flow<UserPhysicalStats?> = combine(
         dataStore.data.map { it[userWeightKgKey]?.toDoubleOrNull() },
         dataStore.data.map { it[userHeightCmKey]?.toIntOrNull() },
         dataStore.data.map { it[userAgeKey]?.toIntOrNull() },
@@ -191,7 +208,7 @@ class SettingsRepository(
         }
     }
 
-    suspend fun setUserPhysicalStats(stats: UserPhysicalStats) {
+    override suspend fun setUserPhysicalStats(stats: UserPhysicalStats) {
         dataStore.edit { prefs ->
             prefs[userWeightKgKey] = stats.weightKg.toString()
             prefs[userHeightCmKey] = stats.heightCm.toString()
@@ -206,11 +223,11 @@ class SettingsRepository(
      * OR successfully saves new (non-default) nutrition goals. Default false (banner visible).
      * Persisted across launches; never reset by this layer.
      */
-    val nutritionGoalsBannerDismissed: Flow<Boolean> = dataStore.data.map { preferences ->
+    override val nutritionGoalsBannerDismissed: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[nutritionGoalsBannerDismissedKey] ?: false
     }
 
-    suspend fun setNutritionGoalsBannerDismissed(dismissed: Boolean) {
+    override suspend fun setNutritionGoalsBannerDismissed(dismissed: Boolean) {
         dataStore.edit { preferences ->
             preferences[nutritionGoalsBannerDismissedKey] = dismissed
         }
@@ -222,27 +239,27 @@ class SettingsRepository(
     private val aiBaseUrlKey = stringPreferencesKey("ai_base_url")
     private val aiModelKey = stringPreferencesKey("ai_model")
 
-    val aiProviderPreset: Flow<String> = dataStore.data.map { prefs ->
+    override val aiProviderPreset: Flow<String> = dataStore.data.map { prefs ->
         prefs[aiProviderPresetKey] ?: "openai"
     }
 
-    val aiBaseUrl: Flow<String> = dataStore.data.map { prefs ->
+    override val aiBaseUrl: Flow<String> = dataStore.data.map { prefs ->
         prefs[aiBaseUrlKey] ?: "https://api.openai.com/v1"
     }
 
-    val aiModel: Flow<String> = dataStore.data.map { prefs ->
+    override val aiModel: Flow<String> = dataStore.data.map { prefs ->
         prefs[aiModelKey] ?: "gpt-4o-mini"
     }
 
-    suspend fun setAiProviderPreset(preset: String) {
+    override suspend fun setAiProviderPreset(preset: String) {
         dataStore.edit { prefs -> prefs[aiProviderPresetKey] = preset }
     }
 
-    suspend fun setAiBaseUrl(url: String) {
+    override suspend fun setAiBaseUrl(url: String) {
         dataStore.edit { prefs -> prefs[aiBaseUrlKey] = url }
     }
 
-    suspend fun setAiModel(model: String) {
+    override suspend fun setAiModel(model: String) {
         dataStore.edit { prefs -> prefs[aiModelKey] = model }
     }
 
@@ -254,7 +271,7 @@ class SettingsRepository(
      *
      * Consumed by EarlyExitTracker; the VM never reads this Flow directly.
      */
-    val earlyExits: Flow<EarlyExitBudget> = dataStore.data.map { prefs ->
+    override val earlyExits: Flow<EarlyExitBudget> = dataStore.data.map { prefs ->
         val storedYm = prefs[earlyExitYearMonthKey]
         val storedUsed = prefs[earlyExitUsedKey] ?: 0
         val currentYm = currentYearMonth()
@@ -272,7 +289,7 @@ class SettingsRepository(
      * the first exit of the new month). Capped at EARLY_EXIT_BUDGET_PER_MONTH —
      * caller must check budget first via EarlyExitTracker.consumeOne().
      */
-    suspend fun incrementEarlyExitUsed() {
+    override suspend fun incrementEarlyExitUsed() {
         dataStore.edit { prefs ->
             val currentYm = currentYearMonth()
             val storedYm = prefs[earlyExitYearMonthKey]

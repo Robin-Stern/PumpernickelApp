@@ -4,13 +4,11 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.room.RoomDatabase
 import com.pumpernickel.data.db.AppDatabase
-import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.platform.createDataStoreAndroid
 import com.pumpernickel.platform.getDatabaseBuilder
 import com.pumpernickel.domain.ai.SecureKeyStore
 import com.pumpernickel.domain.geofence.EarlyExitTracker
 import com.pumpernickel.domain.geofence.GeofenceProvider
-import com.pumpernickel.domain.geofence.PendingGeofenceExitStore
 import com.pumpernickel.domain.location.LocationProvider
 import com.pumpernickel.domain.permissions.PermissionController
 import com.pumpernickel.domain.progresspic.BiometricGate
@@ -28,12 +26,11 @@ actual val platformModule: Module = module {
     single<DataStore<Preferences>> { createDataStoreAndroid(get()) }
     single<LocationProvider> { AndroidLocationProvider(androidContext()) }
     // Phase 19 — geofence + permission stack
-    // PendingGeofenceExitStore is implemented by SettingsRepository (Plan 01 design decision);
-    // resolve from Koin graph here since SharedModule binds SettingsRepository as a concrete type.
-    single<PendingGeofenceExitStore> { get<SettingsRepository>() }
+    // PendingGeofenceExitStore is bound in SharedModule via SettingsRepositoryImpl's
+    // multi-bind (Plan 20-05 / D-20-05); no Android-side override needed.
     single<GeofenceProvider> { AndroidGeofenceProvider(androidContext()) }
     single<PermissionController> { AndroidPermissionController(androidContext()) }
-    single { EarlyExitTracker(get()) }   // takes SettingsRepository (already in graph)
+    single { EarlyExitTracker(get()) }   // takes EarlyExitBudgetStore (narrow port, D-20-05)
     // Phase 17 — actuals from 17-03 take Context (D-17-19).
     single<PhotoVault> { PhotoVault(androidContext()) }
     single<PhotoCaptureLauncher> { PhotoCaptureLauncher(androidContext()) }

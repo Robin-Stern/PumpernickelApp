@@ -35,7 +35,7 @@ actual val platformModule: Module = module {
     // here we wire the iOS actuals that consume it.
     single<GeofenceProvider> { IosGeofenceProvider(get()) }    // takes PendingGeofenceExitStore
     single<PermissionController> { IosPermissionController() }
-    single { EarlyExitTracker(get()) }   // takes SettingsRepository (already in graph)
+    single { EarlyExitTracker(get()) }   // takes EarlyExitBudgetStore (narrow port, D-20-05)
 
     // Async AI generation: notifications + BGTask-backed background work.
     single { com.pumpernickel.domain.ai.NotificationService() }

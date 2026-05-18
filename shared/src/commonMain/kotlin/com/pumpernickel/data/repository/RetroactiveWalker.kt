@@ -5,6 +5,7 @@ import com.pumpernickel.data.db.ConsumptionEntryEntity
 import com.pumpernickel.data.db.NutritionDao
 import com.pumpernickel.domain.gamification.GamificationEngine
 import com.pumpernickel.domain.gamification.NutritionGoalDayPolicy
+import com.pumpernickel.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
