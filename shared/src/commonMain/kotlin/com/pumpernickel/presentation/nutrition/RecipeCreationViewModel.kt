@@ -140,8 +140,12 @@ class RecipeCreationViewModel(
                     val newIngredients = if (state.ingredients.none { it.food.id == food.id })
                         state.ingredients + IngredientEntry(food, "100")
                     else state.ingredients
-                    state.withIngredients(newIngredients)
-                        .copy(searchResults = state.searchResults.filter { it.id != food.id })
+                    state.withIngredients(newIngredients).copy(
+                        searchQuery = "",
+                        searchResults = recentFoods(),
+                        remoteSearchResults = emptyList(),
+                        isSearchingRemote = false
+                    )
                 }
             }
 
@@ -161,8 +165,12 @@ class RecipeCreationViewModel(
                     val newIngredients = if (state.ingredients.none { it.food.id == savedFood.id })
                         state.ingredients + IngredientEntry(savedFood, "100")
                     else state.ingredients
-                    state.withIngredients(newIngredients)
-                        .copy(remoteSearchResults = state.remoteSearchResults.filter { it.name != event.result.name })
+                    state.withIngredients(newIngredients).copy(
+                        searchQuery = "",
+                        searchResults = recentFoods(),
+                        remoteSearchResults = emptyList(),
+                        isSearchingRemote = false
+                    )
                 }
             }
 

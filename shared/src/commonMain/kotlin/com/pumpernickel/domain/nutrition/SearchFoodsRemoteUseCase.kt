@@ -29,7 +29,7 @@ class SearchFoodsRemoteUseCase(private val api: OpenFoodFactsApi) {
                 val nutriments = product.nutriments ?: return@mapNotNull null
                 val carbs = nutriments.carbohydrates100g ?: 0.0
                 val sugar = nutriments.sugars100g ?: 0.0
-                val brand = product.brands?.substringBefore(',')?.trim()?.takeIf { it.isNotBlank() }
+                val brand = product.brands?.firstOrNull()?.trim()?.takeIf { it.isNotBlank() }
                 RemoteFoodResult(
                     name = name,
                     calories = nutriments.energyKcal100g ?: 0.0,
