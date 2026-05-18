@@ -30,6 +30,7 @@ data class RecipeCreationUiState(
     val recipeName: String = "",
     val searchQuery: String = "",
     val searchResults: List<Food> = emptyList(),
+    val remoteSearchResults: List<SearchFoodsRemoteUseCase.RemoteFoodResult> = emptyList(),
     val isSearchingRemote: Boolean = false,
     val ingredients: List<IngredientEntry> = emptyList(),
     val totals: RecipeMacros = RecipeMacros(),
@@ -42,6 +43,7 @@ sealed interface RecipeCreationEvent {
     data class OnRecipeNameChanged(val value: String) : RecipeCreationEvent
     data class OnSearchQueryChanged(val value: String) : RecipeCreationEvent
     data class OnFoodSelected(val food: Food) : RecipeCreationEvent
+    data class OnRemoteFoodSelected(val result: SearchFoodsRemoteUseCase.RemoteFoodResult) : RecipeCreationEvent
     data class OnIngredientAmountChanged(val index: Int, val value: String) : RecipeCreationEvent
     data class OnIngredientRemoved(val index: Int) : RecipeCreationEvent
     data class OnIngredientMoved(val fromIndex: Int, val toIndex: Int) : RecipeCreationEvent
@@ -110,7 +112,7 @@ class RecipeCreationViewModel(
                 _creationState.update { it.copy(recipeName = event.value) }
 
             is RecipeCreationEvent.OnSearchQueryChanged -> {
-                _creationState.update { it.copy(searchQuery = event.value, isSearchingRemote = false) }
+                _creationState.update { it.copy(searchQuery = event.value, remoteSearchResults = emptyList(), isSearchingRemote = false) }
                 searchJob?.cancel()
                 searchJob = viewModelScope.launch {
                     val freshFoods = repository.loadFoods()
@@ -118,20 +120,14 @@ class RecipeCreationViewModel(
                     val query = event.value.trim()
                     val localResults = if (query.isBlank()) recentFoods()
                         else freshFoods.filter { it.name.contains(query, ignoreCase = true) }
-                    if (localResults.isNotEmpty() || query.isBlank()) {
-                        _creationState.update { it.copy(searchResults = localResults) }
-                    } else {
-                        _creationState.update { it.copy(searchResults = emptyList(), isSearchingRemote = true) }
+                    _creationState.update { it.copy(searchResults = localResults) }
+                    if (query.length >= 3) {
+                        _creationState.update { it.copy(isSearchingRemote = true) }
                         when (val remote = searchFoodsRemote(query)) {
-                            is SearchFoodsRemoteUseCase.Result.Success -> {
-                                val remoteFoods = remote.foods.map { r ->
-                                    Food(name = r.name, calories = r.calories, protein = r.protein,
-                                        fat = r.fat, carbohydrates = r.carbs, sugar = r.sugar,
-                                        source = "openfoodfacts")
-                                }
-                                _creationState.update { it.copy(searchResults = remoteFoods, isSearchingRemote = false) }
-                            }
-                            else -> _creationState.update { it.copy(searchResults = emptyList(), isSearchingRemote = false) }
+                            is SearchFoodsRemoteUseCase.Result.Success ->
+                                _creationState.update { it.copy(remoteSearchResults = remote.foods, isSearchingRemote = false) }
+                            else ->
+                                _creationState.update { it.copy(remoteSearchResults = emptyList(), isSearchingRemote = false) }
                         }
                     }
                 }
@@ -146,6 +142,27 @@ class RecipeCreationViewModel(
                     else state.ingredients
                     state.withIngredients(newIngredients)
                         .copy(searchResults = state.searchResults.filter { it.id != food.id })
+                }
+            }
+
+            is RecipeCreationEvent.OnRemoteFoodSelected -> viewModelScope.launch {
+                val food = Food(
+                    name = event.result.name,
+                    calories = event.result.calories,
+                    protein = event.result.protein,
+                    fat = event.result.fat,
+                    carbohydrates = event.result.carbs,
+                    sugar = event.result.sugar,
+                    source = "openfoodfacts"
+                )
+                val savedFood = selectFood(food)
+                _foods.value = repository.loadFoods()
+                _creationState.update { state ->
+                    val newIngredients = if (state.ingredients.none { it.food.id == savedFood.id })
+                        state.ingredients + IngredientEntry(savedFood, "100")
+                    else state.ingredients
+                    state.withIngredients(newIngredients)
+                        .copy(remoteSearchResults = state.remoteSearchResults.filter { it.name != event.result.name })
                 }
             }
 
