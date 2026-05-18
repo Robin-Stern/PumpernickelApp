@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: Android Material 3 UI
 status: idle
 stopped_at: Phase 19 complete — all 7 plans + Layer A/B crash & UI follow-ups + 4 demo-prep quick-tasks; user-confirmed UAT pass 2026-05-17
-last_updated: "2026-05-17T22:00:00.000Z"
-last_activity: 2026-05-17 -- Phase 19 closure + diagnostic-prints cleanup
+last_updated: "2026-05-18T08:30:00.000Z"
+last_activity: 2026-05-18 -- Completed quick task 260518-e7r: AI Generation Timeout auf 10 Minuten erhöhen
 progress:
   total_phases: 6
   completed_phases: 5
@@ -154,6 +154,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260517-vn7 | Demo-Vorbereitung — Settings Debug-Modus-Toggle + konfigurierbare Grace-Period (5/10/30/60/300sec) Picker. SettingsRepository um debugModeEnabled+gracePeriodSeconds erweitert; WorkoutSessionViewModel.startGracePeriod liest dynamisch aus Repo (defaults 300L via XpFormula). iOS + Android Settings-Section, in-workout-Pille/FAB gated. Manual UAT pending | 2026-05-17 | eef64c2 | [260517-vn7-settings-debug-mode-toggle-configurable-](./quick/260517-vn7-settings-debug-mode-toggle-configurable-/) |
 | 260517-w2f | End-Button-Konsolidierung — 3 redundante Workout-End-Buttons (Abandon/Finish/Workout beenden) → 1 kontextsensitiver Trailing-Button "Workout beenden". Tap → viewModel.requestEarlyExit(); allDone-Check öffnet entweder Review-Pfad oder EarlyExitConfirmDialog (Budget/Penalty). Discard-Pfad entfällt, "Abandon Workout?" Dialog entfernt. iOS + Android. Manual UAT pending | 2026-05-17 | 0bb5c18 | [260517-w2f-end-button-konsolidierung-drei-redundant](./quick/260517-w2f-end-button-konsolidierung-drei-redundant/) |
 | 260517-x4p | Phase 19 Closure + Diagnostic-Prints Cleanup — 44 println/print-Marker (`[Geofence]`/`[LocProvider]`/`[LocDelegate]`/`[PermController]`/`[Rationale]`/`[SwiftPerm]`) aus 4 Files entfernt; FK-race-Catch-Log behalten aber Tag-Prefix gestrippt. STATE.md auf `idle`/100%, VERIFICATION.md auf `passed` mit uat_confirmed, ROADMAP Phase 19 als COMPLETE markiert | 2026-05-17 | fcc6478 | [260517-x4p-phase-19-closure-diagnostic-prints-clean](./quick/260517-x4p-phase-19-closure-diagnostic-prints-clean/) |
+| 260518-e7r | AI Generation Timeout auf 10 Minuten erhöhen (Ktor HttpClient + Stream) — 6 Timeout-Sites (per-request buffered+stream, iOS Ktor engine + Darwin URLSession, Android Ktor engine + OkHttp) auf 600_000 ms / 600s gehoben; socketTimeout 120_000 unverändert, TCP-connect 30s unverändert | 2026-05-18 | ab3f1a9 | [260518-e7r-ai-generation-timeout-auf-10-minuten-erh](./quick/260518-e7r-ai-generation-timeout-auf-10-minuten-erh/) |
 
 ## Session Continuity
 
