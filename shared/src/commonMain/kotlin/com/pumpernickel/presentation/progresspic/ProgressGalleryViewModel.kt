@@ -2,12 +2,15 @@ package com.pumpernickel.presentation.progresspic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pumpernickel.data.db.ConsumptionEntryEntity
 import com.pumpernickel.data.db.GamificationDao
 import com.pumpernickel.data.db.NutritionDao
 import com.pumpernickel.domain.repository.ProgressPictureRepository
 import com.pumpernickel.domain.repository.SettingsRepository
 import com.pumpernickel.domain.gamification.NutritionGoalDayPolicy
 import com.pumpernickel.domain.progresspic.ProgressGalleryTile
+import com.pumpernickel.domain.model.ConsumptionEntry
+import com.pumpernickel.domain.model.FoodUnit
 import com.pumpernickel.domain.model.NutritionGoals
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
@@ -94,7 +97,12 @@ class ProgressGalleryViewModel(
                     .date
                     .toString() == workoutIsoDate
             }
-            val isGoalDay = nutritionGoalDayPolicy.isGoalDay(entriesForDate, goals)
+            // Plan 20-08 (Smell 3): NutritionGoalDayPolicy now takes domain
+            // ConsumptionEntry — map Entity → Domain at this VM boundary.
+            // Smell 6 (this VM injecting DAO directly) is deferred per D-20-01;
+            // when it lands, the mapper moves to a repository method.
+            val domainEntries = entriesForDate.map { it.toDomainConsumption() }
+            val isGoalDay = nutritionGoalDayPolicy.isGoalDay(domainEntries, goals)
             tile.copy(prCount = prCount, isGoalDay = isGoalDay)
         }
     }
@@ -132,3 +140,23 @@ data class GalleryUiState(
 sealed class NavEvent {
     data class OpenViewer(val workoutId: Long) : NavEvent()
 }
+
+/**
+ * Entity → Domain mapper for [ConsumptionEntryEntity]. File-private — only
+ * used by this VM until Smell 6 (DAO injection here) is closed and the
+ * mapping moves into the repository layer.
+ */
+private fun ConsumptionEntryEntity.toDomainConsumption(): ConsumptionEntry =
+    ConsumptionEntry(
+        id = id,
+        foodId = foodId,
+        name = name,
+        caloriesPer100 = caloriesPer100,
+        proteinPer100 = proteinPer100,
+        fatPer100 = fatPer100,
+        carbsPer100 = carbsPer100,
+        sugarPer100 = sugarPer100,
+        unit = runCatching { FoodUnit.valueOf(unit) }.getOrDefault(FoodUnit.GRAM),
+        amount = amount,
+        timestampMillis = timestampMillis
+    )

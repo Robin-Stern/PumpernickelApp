@@ -12,6 +12,10 @@ import org.koin.dsl.module
  *   - Plan 04 (wave 3): GamificationEngine binding
  *   - Plan 05 (wave 4): RetroactiveWalker, GamificationStartup bindings
  *   - Plan 07 (wave 4): GoalDayTrigger binding
+ *   - Plan 20-08 (wave 6): GamificationEngine ctor swapped from DAOs to
+ *     Repository interfaces (Smell 3 fix). DAO gets resolved transitively
+ *     via the WorkoutRepositoryImpl / FoodRepositoryImpl / ExerciseRepositoryImpl
+ *     bindings already wired in SharedModule / GamificationModule.
  *
  * Each plan edits this file to add its bindings without disturbing other
  * modules (Blocker 1 fix -- no wave-level SharedModule.kt conflicts).
@@ -20,9 +24,9 @@ val gamificationEngineModule = module {
     single {
         GamificationEngine(
             gamificationRepo = get(),
-            completedWorkoutDao = get(),
-            nutritionDao = get(),
-            exerciseDao = get(),
+            workoutRepo = get(),
+            foodRepo = get(),
+            exerciseRepo = get(),
             settingsRepo = get()
         )
     }

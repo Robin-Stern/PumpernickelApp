@@ -5,6 +5,8 @@ import com.pumpernickel.data.db.ConsumptionEntryEntity
 import com.pumpernickel.data.db.NutritionDao
 import com.pumpernickel.domain.gamification.GamificationEngine
 import com.pumpernickel.domain.gamification.NutritionGoalDayPolicy
+import com.pumpernickel.domain.model.ConsumptionEntry
+import com.pumpernickel.domain.model.FoodUnit
 import com.pumpernickel.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Instant
@@ -26,6 +28,11 @@ import kotlinx.datetime.toLocalDateTime
  * - On success, set retroactiveApplied = true.
  * - On throw, do NOT set the sentinel — re-try on next launch. Dedupe on
  *   (source, eventKey) guarantees no double-award (D-13).
+ *
+ * Plan 20-08 (Smell 3): the shared [NutritionGoalDayPolicy] now consumes
+ * the domain type [ConsumptionEntry] instead of the Room-backed Entity.
+ * The walker maps Entity → Domain inline via [toDomainConsumption] before
+ * the policy call so the data-layer remains the only Entity-aware site.
  */
 class RetroactiveWalker(
     private val engine: GamificationEngine,
@@ -65,8 +72,11 @@ class RetroactiveWalker(
         }
 
         for ((dateIso, dayEntries) in byDate.entries.sortedBy { it.key }) {
+            // Map Entity → Domain at the data-layer boundary so the shared
+            // predicate stays free of Room types (Plan 20-08, Smell 3).
+            val domainEntries = dayEntries.map { it.toDomainConsumption() }
             // Shared predicate — behaviour MUST match engine's live path (Warning-9 fix).
-            if (!NutritionGoalDayPolicy.isGoalDay(dayEntries, goals)) continue
+            if (!NutritionGoalDayPolicy.isGoalDay(domainEntries, goals)) continue
             val localDate = LocalDate.parse(dateIso)
             val awardedAtMillis = localDate.toStartOfDayMillis()
             // processHistoricalGoalDay also fires the nutrition streak bonus via
@@ -93,3 +103,26 @@ class RetroactiveWalker(
             .toEpochMilliseconds()
     }
 }
+
+/**
+ * Entity → Domain mapper for [ConsumptionEntryEntity]. Inline in the walker
+ * file (Plan 20-08, Approach §6 Option A) — semantically tiny, only consumed
+ * here and in the gallery VM (which has its own copy to keep concerns local).
+ *
+ * `unit` is stored as a `String` on the Room entity ("GRAM" / "MILLILITER")
+ * and re-promoted to the [FoodUnit] enum with GRAM as a safe fallback.
+ */
+private fun ConsumptionEntryEntity.toDomainConsumption(): ConsumptionEntry =
+    ConsumptionEntry(
+        id = id,
+        foodId = foodId,
+        name = name,
+        caloriesPer100 = caloriesPer100,
+        proteinPer100 = proteinPer100,
+        fatPer100 = fatPer100,
+        carbsPer100 = carbsPer100,
+        sugarPer100 = sugarPer100,
+        unit = runCatching { FoodUnit.valueOf(unit) }.getOrDefault(FoodUnit.GRAM),
+        amount = amount,
+        timestampMillis = timestampMillis
+    )

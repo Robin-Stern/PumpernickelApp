@@ -8,6 +8,9 @@ import com.pumpernickel.data.db.CompletedWorkoutExerciseEntity
 import com.pumpernickel.data.db.CompletedWorkoutSetEntity
 import com.pumpernickel.data.db.ExerciseSetRirDto
 import com.pumpernickel.data.db.WorkoutSessionDao
+import com.pumpernickel.domain.gamification.CompletedExerciseRecord
+import com.pumpernickel.domain.gamification.CompletedSetRecord
+import com.pumpernickel.domain.gamification.CompletedWorkoutRecord
 import com.pumpernickel.domain.model.CompletedExercise
 import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
@@ -16,6 +19,7 @@ import com.pumpernickel.domain.repository.ActiveSessionData
 import com.pumpernickel.domain.repository.ActiveSessionSetData
 import com.pumpernickel.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class WorkoutRepositoryImpl(
@@ -253,5 +257,32 @@ class WorkoutRepositoryImpl(
 
     override suspend fun getExerciseSetRirSince(sinceMillis: Long): List<ExerciseSetRirDto> {
         return completedWorkoutDao.getExerciseSetRirSince(sinceMillis)
+    }
+
+    // ----- Plan 20-08 (Smell 3): engine-facing domain-record queries -----
+
+    override suspend fun getAllCompletedWorkoutRecords(): List<CompletedWorkoutRecord> {
+        return completedWorkoutDao.getAllWorkouts().first()
+            .map { CompletedWorkoutRecord(id = it.id, startTimeMillis = it.startTimeMillis) }
+    }
+
+    override suspend fun getExercisesForCompletedWorkout(workoutId: Long): List<CompletedExerciseRecord> {
+        return completedWorkoutDao.getExercisesForWorkout(workoutId).map { entity ->
+            CompletedExerciseRecord(
+                id = entity.id,
+                workoutId = entity.workoutId,
+                exerciseId = entity.exerciseId
+            )
+        }
+    }
+
+    override suspend fun getSetsForCompletedExercise(workoutExerciseId: Long): List<CompletedSetRecord> {
+        return completedWorkoutDao.getSetsForExercise(workoutExerciseId).map { entity ->
+            CompletedSetRecord(
+                workoutExerciseId = entity.workoutExerciseId,
+                actualReps = entity.actualReps,
+                actualWeightKgX10 = entity.actualWeightKgX10
+            )
+        }
     }
 }

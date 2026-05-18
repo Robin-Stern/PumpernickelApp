@@ -1,6 +1,6 @@
 package com.pumpernickel.domain.gamification
 
-import com.pumpernickel.data.db.ConsumptionEntryEntity
+import com.pumpernickel.domain.model.ConsumptionEntry
 import com.pumpernickel.domain.model.NutritionGoals
 
 /**
@@ -15,7 +15,7 @@ import com.pumpernickel.domain.model.NutritionGoals
  * stay aligned (Warning 9 fix).
  *
  * Field type observations (confirmed by reading actual source files):
- *   - ConsumptionEntryEntity: stores macros as per-100g/ml values
+ *   - ConsumptionEntry: stores macros as per-100g/ml values
  *     (caloriesPer100: Double, proteinPer100: Double, fatPer100: Double,
  *     carbsPer100: Double, sugarPer100: Double) plus amount: Double.
  *     Actual nutrient = (per100 / 100.0) * amount.
@@ -24,12 +24,16 @@ import com.pumpernickel.domain.model.NutritionGoals
  *     (the domain defaults are 2500/150/80/300/50 when configured).
  *     A user who has not touched goals will see defaults — these are treated
  *     as active goals (non-zero). A goal of exactly 0 is treated as unset.
+ *
+ * Plan 20-08 (D-20-07): signature now takes the domain type [ConsumptionEntry]
+ * instead of the Room-backed consumption entry entity, so this predicate is
+ * fully decoupled from the data layer (Smell 3 fix).
  */
 object NutritionGoalDayPolicy {
 
     private const val TOLERANCE: Double = 0.10  // +-10% — D-04 strict
 
-    fun isGoalDay(entries: List<ConsumptionEntryEntity>, goals: NutritionGoals): Boolean {
+    fun isGoalDay(entries: List<ConsumptionEntry>, goals: NutritionGoals): Boolean {
         if (entries.isEmpty()) return false
 
         // Compute actual daily totals from per-100g values * serving amount.

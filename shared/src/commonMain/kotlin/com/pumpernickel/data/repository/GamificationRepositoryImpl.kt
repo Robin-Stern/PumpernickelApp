@@ -10,6 +10,7 @@ import com.pumpernickel.domain.gamification.AchievementProgress
 import com.pumpernickel.domain.gamification.Rank
 import com.pumpernickel.domain.gamification.RankLadder
 import com.pumpernickel.domain.gamification.RankState
+import com.pumpernickel.domain.gamification.XpLedgerRecord
 import com.pumpernickel.domain.repository.GamificationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -90,7 +91,8 @@ class GamificationRepositoryImpl(
 
     override suspend fun getGoalDayIsoDates(): List<String> = dao.getGoalDayIsoDates()
 
-    override suspend fun getPrLedgerEntries(): List<XpLedgerEntity> = dao.getPrLedgerEntries()
+    override suspend fun getPrLedgerEntries(): List<XpLedgerRecord> =
+        dao.getPrLedgerEntries().map { it.toRecord() }
 }
 
 // ----- Mappers -----
@@ -122,3 +124,16 @@ private fun AchievementStateEntity.toDomain(): AchievementProgress? {
         unlockedAtMillis = this.unlockedAtMillis
     )
 }
+
+/**
+ * Plan 20-08 (Smell 3 closure): project the Room ledger row into the engine-
+ * facing domain record so `GamificationRepository.getPrLedgerEntries` no
+ * longer leaks `XpLedgerEntity`.
+ */
+private fun XpLedgerEntity.toRecord(): XpLedgerRecord = XpLedgerRecord(
+    source = source,
+    eventKey = eventKey,
+    xpAmount = xpAmount,
+    awardedAtMillis = awardedAtMillis,
+    retroactive = retroactive
+)

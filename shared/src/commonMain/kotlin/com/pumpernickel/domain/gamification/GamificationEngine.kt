@@ -1,10 +1,10 @@
 package com.pumpernickel.domain.gamification
 
-import com.pumpernickel.data.db.CompletedWorkoutDao
-import com.pumpernickel.data.db.ExerciseDao
-import com.pumpernickel.data.db.NutritionDao
+import com.pumpernickel.domain.repository.ExerciseRepository
+import com.pumpernickel.domain.repository.FoodRepository
 import com.pumpernickel.domain.repository.GamificationRepository
 import com.pumpernickel.domain.repository.SettingsRepository
+import com.pumpernickel.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -22,12 +22,18 @@ import kotlinx.datetime.toLocalDateTime
  *
  * Shared between live use (plan 05 WorkoutSessionViewModel hook) and
  * retroactive replay (plan 06 RetroactiveWalker).
+ *
+ * Plan 20-08 (Smell 3 fix): the engine now consumes Repository interfaces
+ * only — no `data.db.*Dao` imports, no Room entities. All read queries the
+ * engine needs are projected into domain records on the repository boundary
+ * (see [CompletedWorkoutRecord], [CompletedExerciseRecord],
+ * [CompletedSetRecord], [XpLedgerRecord]).
  */
 class GamificationEngine(
     private val gamificationRepo: GamificationRepository,
-    private val completedWorkoutDao: CompletedWorkoutDao,
-    private val nutritionDao: NutritionDao,
-    private val exerciseDao: ExerciseDao,
+    private val workoutRepo: WorkoutRepository,
+    private val foodRepo: FoodRepository,
+    private val exerciseRepo: ExerciseRepository,
     private val settingsRepo: SettingsRepository
 ) {
 
@@ -107,8 +113,8 @@ class GamificationEngine(
      */
     suspend fun processAbandonedWorkout(workoutId: Long) {
         val nowMillis = currentTimeMillis()
-        val exercises = completedWorkoutDao.getExercisesForWorkout(workoutId)
-        val sets = exercises.flatMap { ex -> completedWorkoutDao.getSetsForExercise(ex.id) }
+        val exercises = workoutRepo.getExercisesForCompletedWorkout(workoutId)
+        val sets = exercises.flatMap { ex -> workoutRepo.getSetsForCompletedExercise(ex.id) }
         val xpInputs = sets.map {
             WorkoutSetInput(actualReps = it.actualReps, actualWeightKgX10 = it.actualWeightKgX10)
         }
@@ -140,7 +146,7 @@ class GamificationEngine(
         val goals = settingsRepo.nutritionGoals.first()
         val isoDate = date.toString()   // "YYYY-MM-DD"
         // Filter all consumption entries to those on this calendar day (using local TZ).
-        val allEntries = nutritionDao.getAllEntries()
+        val allEntries = foodRepo.loadConsumptions()
         val entriesForDate = allEntries.filter { entry ->
             entry.timestampMillis.toLocalDateString() == isoDate
         }
@@ -215,9 +221,9 @@ class GamificationEngine(
         retroactive: Boolean,
         pbOverride: MutableMap<String, Int>? = null
     ) {
-        // 1. Read the workout's exercises + sets from Room.
-        val exercises = completedWorkoutDao.getExercisesForWorkout(workoutId)
-        val sets = exercises.flatMap { ex -> completedWorkoutDao.getSetsForExercise(ex.id) }
+        // 1. Read the workout's exercises + sets via the repository (domain records).
+        val exercises = workoutRepo.getExercisesForCompletedWorkout(workoutId)
+        val sets = exercises.flatMap { ex -> workoutRepo.getSetsForCompletedExercise(ex.id) }
         val xpInputs = sets.map { WorkoutSetInput(actualReps = it.actualReps, actualWeightKgX10 = it.actualWeightKgX10) }
 
         // 2. Workout XP (D-02).
@@ -245,10 +251,10 @@ class GamificationEngine(
             // Retroactive path: use the caller-managed running-PB map.
             pbOverride.toMap()
         } else {
-            // Live path: query Room for the current PBs for affected exercises.
+            // Live path: query the repository for the current PBs for affected exercises.
             val ids = perExerciseMax.keys.toList()
             if (ids.isEmpty()) emptyMap()
-            else completedWorkoutDao.getPersonalBests(ids).associate { dto -> dto.exerciseId to (dto.maxWeightKgX10 ?: 0) }
+            else workoutRepo.getPersonalBests(ids)
         }
 
         for ((exerciseId, maxInSession) in perExerciseMax) {
@@ -267,8 +273,8 @@ class GamificationEngine(
             }
         }
 
-        // 4. Workout streak check (D-06). Pulls ALL completed workout dates from Room.
-        val allWorkoutEpochDays = completedWorkoutDao.getAllWorkouts().first()
+        // 4. Workout streak check (D-06). Pulls ALL completed workout dates.
+        val allWorkoutEpochDays = workoutRepo.getAllCompletedWorkoutRecords()
             .map { it.startTimeMillis.toEpochDay() }
         val streak = StreakCalculator.longestStreak(allWorkoutEpochDays)
         val workoutThresholds = listOf(3, 7, 30)
@@ -399,11 +405,11 @@ class GamificationEngine(
         }
     }
 
-    /** Build an aggregated snapshot from Room for achievement evaluation. */
+    /** Build an aggregated snapshot for achievement evaluation (domain-record path). */
     private suspend fun buildSnapshot(): ProgressSnapshot {
-        val allWorkouts = completedWorkoutDao.getAllWorkouts().first()
-        val allExerciseRows = allWorkouts.flatMap { w -> completedWorkoutDao.getExercisesForWorkout(w.id) }
-        val allSetRows = allExerciseRows.flatMap { e -> completedWorkoutDao.getSetsForExercise(e.id) }
+        val allWorkouts = workoutRepo.getAllCompletedWorkoutRecords()
+        val allExerciseRows = allWorkouts.flatMap { w -> workoutRepo.getExercisesForCompletedWorkout(w.id) }
+        val allSetRows = allExerciseRows.flatMap { e -> workoutRepo.getSetsForCompletedExercise(e.id) }
 
         // Lifetime volume (D-14 volume family).
         val lifetimeVolume = allSetRows.sumOf { (it.actualReps * it.actualWeightKgX10).toLong() } / 10L
@@ -433,12 +439,12 @@ class GamificationEngine(
         val bestPrsInSingleSession = prMeta.groupBy { it.second }
             .values.maxOfOrNull { it.size } ?: 0
 
-        // Variety-coverage: join trained exerciseIds → ExerciseEntity.primaryMuscles.
-        // ExerciseEntity.primaryMuscles is comma-separated groupName values (e.g., "chest,abs").
-        val allExerciseEntities = exerciseDao.getAllExercises().first()
+        // Variety-coverage: join trained exerciseIds → Exercise.primaryMuscles (domain enum).
+        // Use the domain ExerciseRepository → no manual comma-split / lowercasing required.
+        val trainedExercises = exerciseRepo.getExercises().first()
             .filter { it.id in distinctExerciseIds }
-        val trainedGroupNames: Set<String> = allExerciseEntities
-            .flatMap { entity -> entity.primaryMuscles.split(",").map { s -> s.trim().lowercase() } }
+        val trainedGroupNames: Set<String> = trainedExercises
+            .flatMap { exercise -> exercise.primaryMuscles.map { it.dbName.lowercase() } }
             .filter { it.isNotBlank() }
             .toSet()
         val frontGroupNames = com.pumpernickel.domain.model.MuscleRegionPaths.frontRegions
@@ -450,7 +456,7 @@ class GamificationEngine(
 
         // Nutrition stats — WARNING-9 fix: use shared NutritionGoalDayPolicy.
         val goals = settingsRepo.nutritionGoals.first()
-        val allConsumption = nutritionDao.getAllEntries()
+        val allConsumption = foodRepo.loadConsumptions()
         // Group consumption entries by ISO date (derived from timestampMillis in local TZ).
         val goalDayEpochDays = allConsumption
             .groupBy { it.timestampMillis.toLocalDateString() }

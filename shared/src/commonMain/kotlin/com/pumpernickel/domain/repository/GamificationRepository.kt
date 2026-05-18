@@ -1,9 +1,9 @@
 package com.pumpernickel.domain.repository
 
-import com.pumpernickel.data.db.XpLedgerEntity
 import com.pumpernickel.domain.gamification.AchievementProgress
 import com.pumpernickel.domain.gamification.Rank
 import com.pumpernickel.domain.gamification.RankState
+import com.pumpernickel.domain.gamification.XpLedgerRecord
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -11,10 +11,9 @@ import kotlinx.coroutines.flow.Flow
  * write-side is suspend. All write methods return Booleans/Units that indicate
  * whether a dedupe-IGNORE fired (so callers can early-exit cascades).
  *
- * NOTE (Smell-3 follow-up): [getPrLedgerEntries] still returns the Room
- * [XpLedgerEntity] type. This Entity-in-domain leak is intentionally retained
- * in Plan 20-04 and will be addressed in Plan 20-09 (GamificationEngine
- * refactor) via a domain projection on the repository.
+ * Plan 20-08 closed the Plan 20-04 Smell 3 leak by switching
+ * [getPrLedgerEntries] from the Room `XpLedgerEntity` to the domain
+ * [XpLedgerRecord] projection — `GamificationEngine` is now fully Room-free.
  */
 interface GamificationRepository {
     val totalXp: Flow<Long>
@@ -57,6 +56,10 @@ interface GamificationRepository {
     /** Returns ISO dates where a nutrition_goal_day XP row exists (ASC). */
     suspend fun getGoalDayIsoDates(): List<String>
 
-    /** Returns all PR-source ledger entries (ASC). */
-    suspend fun getPrLedgerEntries(): List<XpLedgerEntity>
+    /**
+     * Returns all PR-source ledger entries as domain records (ASC by
+     * awardedAtMillis). Plan 20-08: switched from `XpLedgerEntity` to
+     * [XpLedgerRecord] so the engine no longer imports `data.db.*` (Smell 3).
+     */
+    suspend fun getPrLedgerEntries(): List<XpLedgerRecord>
 }

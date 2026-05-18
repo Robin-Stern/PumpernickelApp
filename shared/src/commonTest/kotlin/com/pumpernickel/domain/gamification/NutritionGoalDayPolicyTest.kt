@@ -1,6 +1,7 @@
 package com.pumpernickel.domain.gamification
 
-import com.pumpernickel.data.db.ConsumptionEntryEntity
+import com.pumpernickel.domain.model.ConsumptionEntry
+import com.pumpernickel.domain.model.FoodUnit
 import com.pumpernickel.domain.model.NutritionGoals
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -9,7 +10,7 @@ import kotlin.test.assertTrue
 class NutritionGoalDayPolicyTest {
 
     /**
-     * ConsumptionEntryEntity stores macros per 100g/ml (caloriesPer100, proteinPer100, etc.)
+     * ConsumptionEntry stores macros per 100g/ml (caloriesPer100, proteinPer100, etc.)
      * and amount (grams or ml). Actual nutrient = (per100 / 100.0) * amount.
      *
      * For test simplicity: set per100 = nutrient * 100 and amount = 1.0,
@@ -21,7 +22,7 @@ class NutritionGoalDayPolicyTest {
         fat: Double = 0.0,
         carbs: Double = 0.0,
         sugar: Double = 0.0
-    ): ConsumptionEntryEntity = ConsumptionEntryEntity(
+    ): ConsumptionEntry = ConsumptionEntry(
         id = "test-${kcal.toLong()}-${protein.toLong()}",
         foodId = null,
         name = "Test food",
@@ -31,7 +32,7 @@ class NutritionGoalDayPolicyTest {
         fatPer100 = fat * 100.0,
         carbsPer100 = carbs * 100.0,
         sugarPer100 = sugar * 100.0,
-        unit = "GRAM",
+        unit = FoodUnit.GRAM,
         amount = 1.0,
         timestampMillis = 0L
     )

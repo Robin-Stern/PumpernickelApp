@@ -1,6 +1,9 @@
 package com.pumpernickel.domain.repository
 
 import com.pumpernickel.data.db.ExerciseSetRirDto
+import com.pumpernickel.domain.gamification.CompletedExerciseRecord
+import com.pumpernickel.domain.gamification.CompletedSetRecord
+import com.pumpernickel.domain.gamification.CompletedWorkoutRecord
 import com.pumpernickel.domain.model.CompletedWorkout
 import com.pumpernickel.domain.model.WorkoutSummary
 import kotlinx.coroutines.flow.Flow
@@ -62,6 +65,19 @@ interface WorkoutRepository {
     // leaking into the domain interface. Mechanical move keeps the signature 1:1;
     // replacing with a domain DTO is a separate refactor.
     suspend fun getExerciseSetRirSince(sinceMillis: Long): List<ExerciseSetRirDto>
+
+    // ----- Plan 20-08 (Smell 3): GamificationEngine domain-record queries -----
+    // The engine reads completed-workout history without touching Room entities.
+    // Records are narrow projections (see domain/gamification/EngineRecords.kt).
+
+    /** Returns all completed workouts as domain records (no ordering guarantee). */
+    suspend fun getAllCompletedWorkoutRecords(): List<CompletedWorkoutRecord>
+
+    /** Returns the exercise rows for a completed workout, in `exerciseOrder` ascending. */
+    suspend fun getExercisesForCompletedWorkout(workoutId: Long): List<CompletedExerciseRecord>
+
+    /** Returns the set rows for a single completed-workout-exercise row, in setIndex ascending. */
+    suspend fun getSetsForCompletedExercise(workoutExerciseId: Long): List<CompletedSetRecord>
 }
 
 // Domain-level representation of active session data (no Room entity leakage).
