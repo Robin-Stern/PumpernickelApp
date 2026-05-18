@@ -11,7 +11,8 @@ struct NutritionRecipeCreationView: View {
     }
 
     @State private var state = RecipeCreationUiState(
-        recipeName: "", searchQuery: "", searchResults: [], isSearchingRemote: false,
+        recipeName: "", searchQuery: "", searchResults: [],
+        remoteSearchResults: [], isSearchingRemote: false,
         ingredients: [], totals: RecipeMacros(calories: 0, protein: 0, fat: 0, carbs: 0, sugar: 0),
         errorMessage: nil, editingRecipeId: nil, editingIsFavorite: false
     )
@@ -57,6 +58,33 @@ struct NutritionRecipeCreationView: View {
                         viewModel.onEvent(event: RecipeCreationEventOnFoodSelected(food: food))
                     } label: {
                         SearchResultRow(food: food)
+                    }
+                }
+
+                if state.searchQuery.count >= 3 {
+                    if state.isSearchingRemote {
+                        HStack {
+                            ProgressView()
+                            Text("Suche in OpenFoodFacts…")
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                        }
+                    } else if !state.remoteSearchResults.isEmpty {
+                        Text("OPENFOODFACTS")
+                            .font(.caption2.weight(.semibold))
+                            .tracking(1.2)
+                            .foregroundColor(.secondary)
+                        ForEach(state.remoteSearchResults, id: \.name) { result in
+                            remoteFoodCard(result)
+                        }
+                        Text("Daten von openfoodfacts.org")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    } else if state.searchResults.isEmpty {
+                        Text("Keine Ergebnisse")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
                     }
                 }
             }
@@ -185,6 +213,36 @@ struct NutritionRecipeCreationView: View {
         } catch {
             print("RecipeCreation saved event error: \(error)")
         }
+    }
+
+    // MARK: - OpenFoodFacts result card
+    private func remoteFoodCard(_ result: RemoteFoodResult) -> some View {
+        Button {
+            focusedField = false
+            viewModel.onEvent(event: RecipeCreationEventOnRemoteFoodSelected(result: result))
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(result.name)
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    if let brand = result.brand {
+                        Text(brand)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                    Text("\(Int(result.calories.rounded())) kcal/100g · E \(Int(result.protein.rounded()))g · F \(Int(result.fat.rounded()))g · KH \(Int(result.carbs.rounded()))g")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Image(systemName: "plus.circle")
+                    .foregroundColor(.appAccent)
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
 
