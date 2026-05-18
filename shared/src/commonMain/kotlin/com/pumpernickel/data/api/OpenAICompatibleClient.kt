@@ -40,6 +40,7 @@ class OpenAICompatibleClient(
         baseUrl: String,
         request: ChatRequest
     ): ChatResponse {
+        validateUrl(baseUrl)
         val key = requireKey()
         val url = endpoint(baseUrl)
         println("[AI] POST $url model=${request.model} messages=${request.messages.size} keyLen=${key.length}")
@@ -47,7 +48,10 @@ class OpenAICompatibleClient(
             val response = client.post(url) {
                 header("Authorization", "Bearer $key")
                 contentType(ContentType.Application.Json)
-                timeout { requestTimeoutMillis = 180_000 }
+                timeout {
+                    requestTimeoutMillis = 600_000   // 10 min — full stream lifetime for slow free-tier LLMs
+                    socketTimeoutMillis = 120_000    // 2 min between bytes — generous gap tolerance for slow token streams
+                }
                 setBody(request)
             }
             val responseText = response.bodyAsText()
@@ -93,6 +97,7 @@ class OpenAICompatibleClient(
         request: ChatRequest,
         onProgress: (content: String, reasoning: String) -> Unit
     ): String {
+        validateUrl(baseUrl)
         val key = requireKey()
         val url = endpoint(baseUrl)
         val streamingRequest = request.copy(stream = true)
@@ -107,7 +112,10 @@ class OpenAICompatibleClient(
                 header("Authorization", "Bearer $key")
                 header("Accept", "text/event-stream")
                 contentType(ContentType.Application.Json)
-                timeout { requestTimeoutMillis = 180_000 }
+                timeout {
+                    requestTimeoutMillis = 600_000   // 10 min — full stream lifetime for slow free-tier LLMs
+                    socketTimeoutMillis = 120_000    // 2 min between bytes — generous gap tolerance for slow token streams
+                }
                 setBody(streamingRequest)
             }.execute { response ->
                 val statusCode = response.status.value
@@ -170,6 +178,13 @@ class OpenAICompatibleClient(
     }
 
     // MARK: - shared helpers
+
+    private fun validateUrl(url: String) {
+        if (url.isBlank()) throw AiError.Network()
+        if (!url.startsWith("https://")) {
+            throw AiError.SchemaInvalid("Insecure URL rejected (must use https)")
+        }
+    }
 
     private suspend fun requireKey(): String {
         val key = keyProvider()

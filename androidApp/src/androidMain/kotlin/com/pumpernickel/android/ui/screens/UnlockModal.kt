@@ -21,6 +21,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,6 +47,7 @@ fun UnlockModalHost(
     viewModel: GamificationViewModel = koinViewModel()
 ) {
     val pending = remember { mutableStateListOf<UnlockEvent>() }
+    val haptics = LocalHapticFeedback.current
 
     // Collect new events into the queue.
     LaunchedEffect(Unit) {
@@ -55,6 +58,16 @@ fun UnlockModalHost(
 
     // Show head of queue, if any.
     val head = pending.firstOrNull()
+
+    // Mirror iOS UnlockModalView.swift:65-71 — success haptic when a new
+    // unlock dialog appears. Keyed on the head event so multiple unlocks
+    // from one save each fire their own pulse as the queue advances.
+    LaunchedEffect(head) {
+        if (head != null) {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+
     if (head != null) {
         UnlockDialog(
             event = head,

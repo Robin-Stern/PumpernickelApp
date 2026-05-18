@@ -19,6 +19,7 @@ import com.pumpernickel.data.repository.FoodRepositoryImpl
 import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.data.repository.TemplateRepositoryImpl
 import com.pumpernickel.data.repository.SettingsRepository
+import com.pumpernickel.domain.geofence.PendingGeofenceExitStore
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.WorkoutRepositoryImpl
 import com.pumpernickel.domain.nutrition.AddFoodUseCase
@@ -32,6 +33,7 @@ import com.pumpernickel.domain.nutrition.LoadFoodsUseCase
 import com.pumpernickel.domain.nutrition.LogConsumptionUseCase
 import com.pumpernickel.domain.nutrition.LookupBarcodeUseCase
 import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
+import com.pumpernickel.domain.nutrition.SelectFoodUseCase
 import com.pumpernickel.domain.nutrition.UpdateFoodUseCase
 import com.pumpernickel.domain.nutrition.ValidateFoodInputUseCase
 import com.pumpernickel.presentation.exercises.CreateExerciseViewModel
@@ -52,6 +54,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.core.context.startKoin
 import org.koin.core.KoinApplication
@@ -88,7 +91,7 @@ val sharedModule = module {
     single<ExerciseRepository> { ExerciseRepositoryImpl(get(), get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get()) }
     single<WorkoutRepository> { WorkoutRepositoryImpl(get(), get()) }
-    single<SettingsRepository> { SettingsRepository(get()) }
+    single<SettingsRepository> { SettingsRepository(get()) } bind PendingGeofenceExitStore::class
     single<FoodRepository> { FoodRepositoryImpl(get(), get()) }
 
     // Nutrition: API + Seeder
@@ -105,6 +108,7 @@ val sharedModule = module {
     single { CalculateRecipeMacrosUseCase() }
     single { LookupBarcodeUseCase(get(), get()) }
     single { SearchFoodsRemoteUseCase(get()) }
+    single { SelectFoodUseCase(get()) }
     single { LogConsumptionUseCase(get()) }
     single { LoadConsumptionsForDateUseCase(get()) }
     single { DeleteConsumptionUseCase(get()) }
@@ -117,7 +121,7 @@ val sharedModule = module {
     viewModel { CreateExerciseViewModel(get()) }
     viewModel { TemplateListViewModel(get()) }
     viewModel { TemplateEditorViewModel(get(), get()) }
-    viewModel { WorkoutSessionViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { WorkoutSessionViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { WorkoutHistoryViewModel(get(), get()) }
     viewModel { SettingsViewModel(get()) }
     viewModel { OverviewViewModel(get(), get(), get(), get(), get(), get(), get()) }
@@ -125,7 +129,7 @@ val sharedModule = module {
     // ViewModels -- Nutrition
     viewModel { FoodEntryViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { RecipeListViewModel(get(), get()) }
-    viewModel { RecipeCreationViewModel(get(), get(), get()) }
+    viewModel { RecipeCreationViewModel(get(), get(), get(), get(), get()) }
     viewModel { DailyLogViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 }
 
@@ -133,6 +137,9 @@ val sharedModule = module {
 // appDeclaration allows platform-specific config (e.g. androidContext() on Android)
 fun initKoin(appDeclaration: KoinApplication.() -> Unit = {}) {
     startKoin {
+        // allowOverride(true) enables loadKoinModules to replace an existing binding —
+        // required for the DEBUG-only GeofenceProvider override loaded after startKoin.
+        allowOverride(true)
         appDeclaration()
         modules(sharedModule + platformModule)
     }

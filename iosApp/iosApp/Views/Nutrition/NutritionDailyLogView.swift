@@ -6,6 +6,8 @@ struct NutritionDailyLogView: View {
     private let viewModel = KoinHelper.shared.getDailyLogViewModel()
 
     @State private var uiState: DailyLogUiState?
+    @State private var entryToDelete: ConsumptionEntry?
+    @State private var showDeleteConfirmation = false
 
     // Sheets
     @State private var showFoodPicker = false
@@ -169,6 +171,14 @@ struct NutritionDailyLogView: View {
                 }
             }
         }
+        .alert("Eintrag löschen?", isPresented: $showDeleteConfirmation, presenting: entryToDelete) { entry in
+            Button("Löschen", role: .destructive) {
+                viewModel.delete(id: entry.id)
+            }
+            Button("Abbrechen", role: .cancel) {}
+        } message: { entry in
+            Text("Möchtest du '\(entry.name)' wirklich aus deinem Log entfernen?")
+        }
     }
 
     private func entryRow(entry: ConsumptionEntry) -> some View {
@@ -182,7 +192,8 @@ struct NutritionDailyLogView: View {
             }
             Spacer()
             Button(role: .destructive) {
-                viewModel.delete(id: entry.id)
+                entryToDelete = entry
+                showDeleteConfirmation = true
             } label: {
                 Image(systemName: "trash")
                     .font(.caption)

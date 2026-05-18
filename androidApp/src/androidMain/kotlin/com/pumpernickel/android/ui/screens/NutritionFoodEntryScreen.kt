@@ -5,7 +5,9 @@ import android.content.pm.PackageManager
 import android.util.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
@@ -15,6 +17,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.foundation.layout.Box
@@ -31,8 +34,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,7 +56,9 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -62,7 +69,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -79,6 +89,9 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.pumpernickel.android.R
+import com.pumpernickel.android.ui.components.PrimaryActionButton
+import com.pumpernickel.android.ui.components.SectionCard
+import com.pumpernickel.android.ui.components.TonalActionButton
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
 import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
@@ -112,156 +125,147 @@ fun NutritionFoodEntryScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { Spacer(Modifier.height(8.dp)) }
+            item { Spacer(Modifier.height(0.dp)) }
 
+            // ── Lebensmittel ──
             item {
-                OutlinedTextField(
-                    value = uiState.name,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnNameChanged(it)) },
-                    label = { Text(stringResource(R.string.label_name)) },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true
-                )
-            }
-
-            item {
-                Text(
-                    stringResource(R.string.label_per_100_hint),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            item {
-                OutlinedTextField(
-                    value = uiState.calories,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCaloriesChanged(it)) },
-                    label = { Text(stringResource(R.string.label_calories)) },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
-            }
-
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionCard(title = stringResource(R.string.section_food)) {
                     OutlinedTextField(
-                        value = uiState.protein,
-                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnProteinChanged(it)) },
-                        label = { Text(stringResource(R.string.label_protein)) },
-                        modifier = Modifier.weight(1f), singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                    )
-                    OutlinedTextField(
-                        value = uiState.fat,
-                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnFatChanged(it)) },
-                        label = { Text(stringResource(R.string.label_fat)) },
-                        modifier = Modifier.weight(1f), singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        value = uiState.name,
+                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnNameChanged(it)) },
+                        label = { Text(stringResource(R.string.label_name)) },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true
                     )
                 }
             }
 
+            // ── Nährwerte pro 100 g/ml ──
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionCard(title = stringResource(R.string.section_nutrition_per_100)) {
                     OutlinedTextField(
-                        value = uiState.carbs,
-                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCarbsChanged(it)) },
-                        label = { Text(stringResource(R.string.label_carbs)) },
-                        modifier = Modifier.weight(1f), singleLine = true,
+                        value = uiState.calories,
+                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCaloriesChanged(it)) },
+                        label = { Text(stringResource(R.string.label_calories)) },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                     )
-                    OutlinedTextField(
-                        value = uiState.sugar,
-                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSugarChanged(it)) },
-                        label = { Text(stringResource(R.string.label_sugar)) },
-                        modifier = Modifier.weight(1f), singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                    )
-                }
-            }
-
-            item {
-                Text(
-                    stringResource(R.string.label_unit_designation),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    FoodUnit.entries.forEachIndexed { index, unit ->
-                        SegmentedButton(
-                            selected = uiState.unit == unit,
-                            onClick = { viewModel.onEvent(FoodEntryEvent.OnUnitChanged(unit)) },
-                            shape = SegmentedButtonDefaults.itemShape(index, FoodUnit.entries.size),
-                            label = { Text(stringResource(if (unit == FoodUnit.GRAM) R.string.unit_gram else R.string.unit_ml)) }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = uiState.protein,
+                            onValueChange = { viewModel.onEvent(FoodEntryEvent.OnProteinChanged(it)) },
+                            label = { Text(stringResource(R.string.label_protein)) },
+                            modifier = Modifier.weight(1f), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        )
+                        OutlinedTextField(
+                            value = uiState.fat,
+                            onValueChange = { viewModel.onEvent(FoodEntryEvent.OnFatChanged(it)) },
+                            label = { Text(stringResource(R.string.label_fat)) },
+                            modifier = Modifier.weight(1f), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = uiState.carbs,
+                            onValueChange = { viewModel.onEvent(FoodEntryEvent.OnCarbsChanged(it)) },
+                            label = { Text(stringResource(R.string.label_carbs)) },
+                            modifier = Modifier.weight(1f), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                        )
+                        OutlinedTextField(
+                            value = uiState.sugar,
+                            onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSugarChanged(it)) },
+                            label = { Text(stringResource(R.string.label_sugar)) },
+                            modifier = Modifier.weight(1f), singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                         )
                     }
                 }
             }
 
+            // ── Einheit ──
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    BarcodeScannerButton(
-                        onBarcodeScanned = { viewModel.onEvent(FoodEntryEvent.OnBarcodeScanned(it)) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    if (uiState.isLookingUp) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                SectionCard(title = stringResource(R.string.section_unit)) {
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        FoodUnit.entries.forEachIndexed { index, unit ->
+                            SegmentedButton(
+                                selected = uiState.unit == unit,
+                                onClick = { viewModel.onEvent(FoodEntryEvent.OnUnitChanged(unit)) },
+                                shape = SegmentedButtonDefaults.itemShape(index, FoodUnit.entries.size),
+                                label = { Text(stringResource(if (unit == FoodUnit.GRAM) R.string.unit_gram else R.string.unit_ml)) }
+                            )
+                        }
                     }
                 }
-                if (uiState.barcode.isNotEmpty()) {
-                    Text(
-                        text = "Barcode: ${uiState.barcode}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+            }
+
+            // ── Barcode + Actions ──
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        BarcodeScannerButton(
+                            onBarcodeScanned = { viewModel.onEvent(FoodEntryEvent.OnBarcodeScanned(it)) },
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (uiState.isLookingUp) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        }
+                    }
+                    if (uiState.barcode.isNotEmpty()) {
+                        Text(
+                            text = "Barcode: ${uiState.barcode}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    uiState.errorMessage?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                    uiState.successMessage?.let {
+                        Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (isEditing) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            TonalActionButton(
+                                text = stringResource(R.string.action_cancel),
+                                onClick = { viewModel.onEvent(FoodEntryEvent.OnCancelEdit) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            PrimaryActionButton(
+                                text = stringResource(R.string.action_update),
+                                onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    } else {
+                        PrimaryActionButton(
+                            text = stringResource(R.string.action_save),
+                            onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) }
+                        )
+                    }
+                }
+            }
+
+            // ── Gespeicherte Lebensmittel ──
+            item {
+                SectionCard(title = stringResource(R.string.section_saved_foods)) {
+                    OutlinedTextField(
+                        value = uiState.searchQuery,
+                        onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSearchQueryChanged(it)) },
+                        label = { Text(stringResource(R.string.hint_search)) },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true
                     )
                 }
-            }
-
-            item {
-                uiState.errorMessage?.let {
-                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                }
-                uiState.successMessage?.let {
-                    Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
-                }
-                if (isEditing) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { viewModel.onEvent(FoodEntryEvent.OnCancelEdit) },
-                            modifier = Modifier.weight(1f)
-                        ) { Text(stringResource(R.string.action_cancel)) }
-                        Button(
-                            onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
-                            modifier = Modifier.weight(1f)
-                        ) { Text(stringResource(R.string.action_update)) }
-                    }
-                } else {
-                    Button(
-                        onClick = { viewModel.onEvent(FoodEntryEvent.OnSaveClicked) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text(stringResource(R.string.action_save)) }
-                }
-            }
-
-            item {
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider()
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.heading_saved_foods), style = MaterialTheme.typography.titleMedium)
-            }
-
-            item {
-                OutlinedTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = { viewModel.onEvent(FoodEntryEvent.OnSearchQueryChanged(it)) },
-                    label = { Text(stringResource(R.string.hint_search)) },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true
-                )
             }
 
             if (filteredFoods.isEmpty()) {
@@ -283,14 +287,16 @@ fun NutritionFoodEntryScreen(
 
             if (uiState.searchQuery.length >= 3) {
                 item {
-                    Spacer(Modifier.height(8.dp))
-                    HorizontalDivider()
-                    Spacer(Modifier.height(8.dp))
                     Row(
+                        modifier = Modifier.padding(start = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("OpenFoodFacts", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "OpenFoodFacts",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         if (uiState.isSearchingRemote) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                         }
@@ -376,9 +382,33 @@ private fun LogAmountDialog(food: Food, onConfirm: (Double) -> Unit, onDismiss: 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) {
-    val dismissState = rememberSwipeToDismissBoxState()
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) onDelete()
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    val dismissState = rememberSwipeToDismissBoxState(
+        positionalThreshold = { it * 0.5f },
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) showConfirmDialog = true
+            false
+        }
+    )
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text(stringResource(R.string.action_delete)) },
+            text = { Text(stringResource(R.string.confirm_delete_food)) },
+            confirmButton = {
+                Button(
+                    onClick = { showConfirmDialog = false; onDelete() },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
+                ) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
     SwipeToDismissBox(
         state = dismissState, enableDismissFromStartToEnd = false,
@@ -405,7 +435,11 @@ private fun FoodSwipeCard(food: Food, onDelete: () -> Unit, onEdit: () -> Unit) 
 // ── Barcode Scanner ──
 
 @Composable
-fun BarcodeScannerButton(onBarcodeScanned: (String) -> Unit, modifier: Modifier = Modifier) {
+fun BarcodeScannerButton(
+    onBarcodeScanned: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    showAsIcon: Boolean = false
+) {
     val context = LocalContext.current
     var showScanner by remember { mutableStateOf(false) }
     var permissionDenied by remember { mutableStateOf(false) }
@@ -414,14 +448,23 @@ fun BarcodeScannerButton(onBarcodeScanned: (String) -> Unit, modifier: Modifier 
         if (granted) { showScanner = true; permissionDenied = false } else { permissionDenied = true }
     }
 
-    Button(
-        onClick = {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                showScanner = true
-            } else { permissionLauncher.launch(Manifest.permission.CAMERA) }
-        },
-        modifier = modifier
-    ) { Text(stringResource(R.string.action_scan_barcode)) }
+    val onTap = {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+            showScanner = true
+        else permissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    if (showAsIcon) {
+        IconButton(onClick = onTap, modifier = modifier) {
+            Icon(
+                imageVector = Icons.Default.QrCodeScanner,
+                contentDescription = stringResource(R.string.action_scan_barcode),
+                tint = androidx.compose.ui.graphics.Color(0xFF1A1A1A)
+            )
+        }
+    } else {
+        Button(onClick = onTap, modifier = modifier) { Text(stringResource(R.string.action_scan_barcode)) }
+    }
 
     if (permissionDenied) {
         Text(stringResource(R.string.msg_camera_permission_denied), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -527,6 +570,7 @@ private fun CameraPreview(onBarcodeDetected: (String) -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     var detected by remember { mutableStateOf(false) }
+    val haptics = LocalHapticFeedback.current
 
     val scannerOptions = remember {
         BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8).build()
@@ -534,37 +578,74 @@ private fun CameraPreview(onBarcodeDetected: (String) -> Unit) {
     val scanner = remember { BarcodeScanning.getClient(scannerOptions) }
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
 
+    // Hoisted out of the AndroidView factory so the tap-to-focus pointerInput
+    // and the haptic side-effect can reference them after composition.
+    val previewView = remember { PreviewView(context) }
+    var camera by remember { mutableStateOf<Camera?>(null) }
+
     DisposableEffect(Unit) {
         onDispose { scanner.close(); analysisExecutor.shutdown() }
     }
 
-    AndroidView(
-        factory = { ctx ->
-            val previewView = PreviewView(ctx)
-            cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
-                val resolutionSelector = ResolutionSelector.Builder()
-                    .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
-                    .build()
-                val imageAnalysis = ImageAnalysis.Builder()
-                    .setResolutionSelector(resolutionSelector)
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
-                    processImage(imageProxy, scanner) { barcode ->
-                        if (!detected) { detected = true; onBarcodeDetected(barcode) }
-                    }
+    // Mirror iOS BarcodeScannerView.swift:232 — vibrate once when the first
+    // barcode is recognised. Driven off `detected` so the call lands on the
+    // composition (main) thread rather than the analyzer executor.
+    LaunchedEffect(detected) {
+        if (detected) {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            // Mirror iOS BarcodeScannerView.swift:156-180 — tap anywhere on the
+            // preview to refocus + re-meter exposure. PreviewView's metering
+            // point factory handles the view→sensor coordinate transform.
+            .pointerInput(Unit) {
+                detectTapGestures { offset ->
+                    val cam = camera ?: return@detectTapGestures
+                    val point = previewView.meteringPointFactory.createPoint(offset.x, offset.y)
+                    val action = FocusMeteringAction.Builder(
+                        point,
+                        FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE
+                    ).build()
+                    runCatching { cam.cameraControl.startFocusAndMetering(action) }
                 }
-                try {
-                    cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalysis)
-                } catch (_: Exception) {}
-            }, ContextCompat.getMainExecutor(ctx))
-            previewView
-        },
-        modifier = Modifier.fillMaxSize()
-    )
+            }
+    ) {
+        AndroidView(
+            factory = {
+                cameraProviderFuture.addListener({
+                    val cameraProvider = cameraProviderFuture.get()
+                    val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
+                    val resolutionSelector = ResolutionSelector.Builder()
+                        .setResolutionStrategy(ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
+                        .build()
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setResolutionSelector(resolutionSelector)
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                    imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
+                        processImage(imageProxy, scanner) { barcode ->
+                            if (!detected) { detected = true; onBarcodeDetected(barcode) }
+                        }
+                    }
+                    try {
+                        cameraProvider.unbindAll()
+                        camera = cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            preview,
+                            imageAnalysis
+                        )
+                    } catch (_: Exception) {}
+                }, ContextCompat.getMainExecutor(context))
+                previewView
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }
 
 @Composable
@@ -575,20 +656,13 @@ private fun RemoteFoodCard(result: SearchFoodsRemoteUseCase.RemoteFoodResult, on
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Text(result.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+            result.brand?.let { brand ->
                 Text(
-                    result.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
+                    brand,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                result.brand?.let { brand ->
-                    Text(
-                        brand,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
             Text(
                 "${result.calories.roundToInt()} kcal · E ${result.protein.roundToInt()}g · F ${result.fat.roundToInt()}g · KH ${result.carbs.roundToInt()}g",

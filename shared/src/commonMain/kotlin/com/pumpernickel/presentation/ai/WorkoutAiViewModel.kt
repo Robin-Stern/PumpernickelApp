@@ -3,20 +3,29 @@ package com.pumpernickel.presentation.ai
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pumpernickel.domain.ai.AiError
+import com.pumpernickel.domain.ai.AiGenerationManager
+import com.pumpernickel.domain.ai.AiGenerationState
+import com.pumpernickel.domain.ai.AiType
 import com.pumpernickel.domain.ai.ApiKeyState
 import com.pumpernickel.domain.ai.SecureKeyStore
+import com.pumpernickel.domain.ai.StreamingText
 import com.pumpernickel.domain.ai.WorkoutAiForm
 import com.pumpernickel.domain.ai.WorkoutAiPreview
 import com.pumpernickel.domain.ai.WorkoutAiSplit
 import com.pumpernickel.domain.ai.WorkoutAiUseCase
 import com.pumpernickel.domain.model.MuscleGroup
+import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 
 /**
  * D-18-07 / D-18-08 / D-18-12 / D-18-13 / D-18-16 — F6 Workout AI flow VM.
@@ -31,7 +40,8 @@ import kotlinx.coroutines.launch
  */
 class WorkoutAiViewModel(
     private val useCase: WorkoutAiUseCase,
-    private val secureKeyStore: SecureKeyStore
+    private val secureKeyStore: SecureKeyStore,
+    private val generationManager: AiGenerationManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<WorkoutAiUiState>(
@@ -45,18 +55,21 @@ class WorkoutAiViewModel(
     @NativeCoroutinesState
     val uiState: StateFlow<WorkoutAiUiState> = _uiState.asStateFlow()
 
-    /**
-     * Live token stream from the LLM. Updated during Generating state — each
-     * SSE chunk replaces the value with the latest accumulated text. Reset to
-     * empty string before each generate(). UI shows it inside the
-     * "KI denkt nach…" panel as monospace text so the user sees what the
-     * model is actually producing instead of a blind timer.
-     */
-    private val _streamingText = MutableStateFlow(StreamingText())
     @NativeCoroutinesState
-    val streamingText: StateFlow<StreamingText> = _streamingText.asStateFlow()
+    val streamingText: StateFlow<StreamingText> = generationManager.streamingText
 
-    private var generationJob: Job? = null
+    /**
+     * 260518-eny — one-shot dismiss signal for iOS-View after successful `save()`.
+     * Replaces the previous "persistent `Saved` UI-state -> auto-dismiss" pattern,
+     * which left the screen "burned" on re-entry (Saved state survived navigation
+     * because the Koin-resolved VM instance is effectively long-lived on iOS).
+     * Android continues to react to the (very short-lived) `Saved` UI-state in its
+     * existing `LaunchedEffect(uiState)`-based pop logic.
+     */
+    private val _savedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    @NativeCoroutines
+    val savedEvent: SharedFlow<Unit> = _savedEvent.asSharedFlow()
 
     private val defaultForm = WorkoutAiUiState.Form(
         targetMuscles = emptyList(),
@@ -67,10 +80,7 @@ class WorkoutAiViewModel(
     init {
         // Bootstrap ApiKeyState from Keychain on first init (read updates the flow).
         viewModelScope.launch { secureKeyStore.readApiKey() }
-        // Live-react to key changes: this ensures the screen exits NoKey the
-        // moment the user saves a key from the Settings screen — even if this
-        // VM instance was created before the key existed (the common case
-        // because SwiftUI holds VM references across navigation).
+        // Live-react to key changes
         viewModelScope.launch {
             ApiKeyState.configured.collect { hasKey ->
                 val current = _uiState.value
@@ -83,7 +93,56 @@ class WorkoutAiViewModel(
                     hasKey && current is WorkoutAiUiState.NoKey -> {
                         _uiState.value = defaultForm
                     }
-                    else -> {} // don't disturb in-flight generation / preview / error
+                    else -> {}
+                }
+            }
+        }
+
+        // Observe global generation state
+        viewModelScope.launch {
+            generationManager.state.collect { genState ->
+                val current = _uiState.value
+                when (genState) {
+                    is AiGenerationState.Idle -> {
+                        if (current is WorkoutAiUiState.Generating) {
+                            _uiState.value = defaultForm
+                        }
+                    }
+                    is AiGenerationState.Generating -> {
+                        if (genState.type == AiType.WORKOUT) {
+                            val form = genState.originatingData as? WorkoutAiForm
+                            val rows = form?.exerciseCount ?: (current as? WorkoutAiUiState.Form)?.exerciseCount ?: 5
+                            _uiState.value = WorkoutAiUiState.Generating(skeletonRowCount = rows)
+                        }
+                    }
+                    is AiGenerationState.Success -> {
+                        if (genState.type == AiType.WORKOUT) {
+                            val preview = genState.preview as WorkoutAiPreview
+                            val form = genState.originatingData as? WorkoutAiForm
+                            _uiState.value = WorkoutAiUiState.Preview(
+                                preview = preview,
+                                originatingForm = if (form != null) {
+                                    WorkoutAiUiState.Form(form.targetMuscles, form.exerciseCount, form.splitStyle)
+                                } else {
+                                    (current as? WorkoutAiUiState.Preview)?.originatingForm ?: defaultForm
+                                }
+                            )
+                        }
+                    }
+                    is AiGenerationState.Error -> {
+                        if (genState.type == AiType.WORKOUT) {
+                            val error = if (genState.exception is AiError) genState.exception else AiError.fromThrowable(genState.exception)
+                            val form = genState.originatingData as? WorkoutAiForm
+                            _uiState.value = WorkoutAiUiState.Error(
+                                error = error,
+                                originatingForm = if (form != null) {
+                                    WorkoutAiUiState.Form(form.targetMuscles, form.exerciseCount, form.splitStyle)
+                                } else {
+                                    (current as? WorkoutAiUiState.Error)?.originatingForm ?: defaultForm
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -106,41 +165,25 @@ class WorkoutAiViewModel(
 
     fun generate() {
         val form = (_uiState.value as? WorkoutAiUiState.Form) ?: return
-        if (form.targetMuscles.isEmpty()) return  // form-side validation; UI also disables button
+        if (form.targetMuscles.isEmpty()) return
 
-        _uiState.value = WorkoutAiUiState.Generating(skeletonRowCount = form.exerciseCount)
-        _streamingText.value = StreamingText()
-        generationJob = viewModelScope.launch {
-            try {
-                val preview = useCase.invoke(
-                    form = WorkoutAiForm(
-                        targetMuscles = form.targetMuscles,
-                        exerciseCount = form.exerciseCount,
-                        splitStyle = form.splitStyle
-                    ),
-                    onProgress = { content, reasoning ->
-                        _streamingText.value = StreamingText(content, reasoning)
-                    }
-                )
-                _uiState.value = WorkoutAiUiState.Preview(preview, originatingForm = form)
-            } catch (ce: CancellationException) {
-                // User-cancel — return to Form, no error UI per D-18-16.
-                _uiState.value = form
-                throw ce
-            } catch (ai: AiError) {
-                _uiState.value = WorkoutAiUiState.Error(ai, originatingForm = form)
-            } catch (t: Throwable) {
-                _uiState.value = WorkoutAiUiState.Error(
-                    AiError.fromThrowable(t),
-                    originatingForm = form
-                )
-            }
+        val started = generationManager.startWorkoutGeneration(
+            WorkoutAiForm(
+                targetMuscles = form.targetMuscles,
+                exerciseCount = form.exerciseCount,
+                splitStyle = form.splitStyle
+            )
+        )
+        if (!started) {
+            _uiState.value = WorkoutAiUiState.Error(
+                error = AiError.SchemaInvalid("Bereits eine Generierung aktiv. Bitte warten."),
+                originatingForm = form
+            )
         }
     }
 
     fun cancel() {
-        generationJob?.cancel()
-        generationJob = null
+        generationManager.clear()
     }
 
     fun save() {
@@ -148,7 +191,16 @@ class WorkoutAiViewModel(
         viewModelScope.launch {
             try {
                 val ids = useCase.commit(preview.preview)
+                generationManager.clear()
+                // Android: LaunchedEffect(uiState) sees `Saved` once and pops.
                 _uiState.value = WorkoutAiUiState.Saved(templateIds = ids)
+                // iOS: one-shot SharedFlow triggers dismiss() in the View.
+                _savedEvent.tryEmit(Unit)
+                // After both observers had a chance to react, fall back to the
+                // default Form so a re-entry into this screen does NOT replay the
+                // Saved state (260518-eny — fixes iOS "burned screen" bug).
+                yield()
+                _uiState.value = defaultForm
             } catch (ce: CancellationException) {
                 throw ce
             } catch (ai: AiError) {
@@ -162,19 +214,30 @@ class WorkoutAiViewModel(
         }
     }
 
+    /**
+     * 260518-eny — idempotent reset called from iOS `.onAppear` to guarantee the
+     * AI workout screen always shows a fresh Form view, even if the long-lived VM
+     * instance carries a stale `Saved` / `Preview` / `Error` state from a prior
+     * navigation cycle. Does NOT cancel in-flight generations (would break the
+     * Phase-19 BackgroundTaskManager flow); the `Generating` guard preserves that.
+     */
+    fun reset() {
+        if (_uiState.value is WorkoutAiUiState.Generating) return
+        _uiState.value = defaultForm
+    }
+
     fun discardPreview() {
         val preview = (_uiState.value as? WorkoutAiUiState.Preview) ?: return
         _uiState.value = preview.originatingForm
+        generationManager.clear()
     }
 
     fun retryFromError() {
         val error = (_uiState.value as? WorkoutAiUiState.Error) ?: return
         _uiState.value = error.originatingForm
+        generationManager.clear()
     }
 }
-
-/** Live LLM token stream — both ai-content (the answer) and reasoning (chain-of-thought, reasoning models only). */
-data class StreamingText(val content: String = "", val reasoning: String = "")
 
 /**
  * Sealed UiState — exported to Swift via the KMPNativeCoroutines flat-export
@@ -202,5 +265,13 @@ sealed class WorkoutAiUiState {
         val originatingForm: Form
     ) : WorkoutAiUiState()
 
+    /**
+     * 260518-eny — As of this fix, `Saved` is only emitted for a single coroutine
+     * tick inside `WorkoutAiViewModel.save()` to give Android's
+     * `LaunchedEffect(uiState)`-based pop logic a chance to fire. The iOS View
+     * uses the one-shot `WorkoutAiViewModel.savedEvent` SharedFlow instead and
+     * defensively ignores the `Saved` UI-state (no `dismiss()` from `onAppear`).
+     * The data class is retained for shared-framework binary stability.
+     */
     data class Saved(val templateIds: List<Long>) : WorkoutAiUiState()
 }

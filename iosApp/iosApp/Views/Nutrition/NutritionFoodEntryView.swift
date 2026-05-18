@@ -18,6 +18,8 @@ struct NutritionFoodEntryView: View {
     @State private var showLogDialog = false
     @State private var logAmountText = "100"
     @State private var inputMode: InputMode = .manual
+    @State private var foodToDelete: Food?
+    @State private var showDeleteConfirmation = false
 
     @FocusState private var focusedField: Bool
 
@@ -44,6 +46,14 @@ struct NutritionFoodEntryView: View {
             .padding()
         }
         .onTapGesture { focusedField = false }
+        .alert("Lebensmittel löschen?", isPresented: $showDeleteConfirmation, presenting: foodToDelete) { food in
+            Button("Löschen", role: .destructive) {
+                viewModel.onEvent(event: FoodEntryEventOnFoodDeleted(food: food))
+            }
+            Button("Abbrechen", role: .cancel) {}
+        } message: { food in
+            Text("Möchtest du '\(food.name)' wirklich dauerhaft löschen?")
+        }
         .navigationTitle(uiState.editingFoodId != nil ? "Bearbeiten" : "Lebensmittel")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -234,7 +244,8 @@ struct NutritionFoodEntryView: View {
             }
             Spacer()
             Button(role: .destructive) {
-                viewModel.onEvent(event: FoodEntryEventOnFoodDeleted(food: food))
+                foodToDelete = food
+                showDeleteConfirmation = true
             } label: {
                 Image(systemName: "trash")
                     .font(.caption)

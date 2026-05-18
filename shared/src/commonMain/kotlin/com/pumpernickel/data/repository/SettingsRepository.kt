@@ -4,7 +4,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.pumpernickel.domain.geofence.EarlyExitBudget
+import com.pumpernickel.domain.geofence.EarlyExitTracker
+import com.pumpernickel.domain.geofence.PendingGeofenceExit
+import com.pumpernickel.domain.geofence.PendingGeofenceExitStore
 import com.pumpernickel.domain.model.ActivityLevel
 import com.pumpernickel.domain.model.NutritionGoals
 import com.pumpernickel.domain.model.Sex
@@ -12,15 +18,24 @@ import com.pumpernickel.domain.model.UserPhysicalStats
 import com.pumpernickel.domain.model.WeightUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlin.time.Clock
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class SettingsRepository(
     private val dataStore: DataStore<Preferences>
-) {
+) : PendingGeofenceExitStore {
     private val hasSeenTutorialKey = booleanPreferencesKey("has_seen_tutorial")
     private val weightUnitKey = stringPreferencesKey("weight_unit")
     private val appThemeKey = stringPreferencesKey("app_theme")
     private val accentColorKey = stringPreferencesKey("accent_color")
+
+    // D-quick-vn7 — Debug-Modus toggle + configurable Geofence grace-period.
+    private val debugModeEnabledKey = booleanPreferencesKey("debug_mode_enabled")
+    private val gracePeriodSecondsKey = longPreferencesKey("grace_period_seconds")
 
     private val calorieGoalKey = stringPreferencesKey("calorie_goal")
     private val proteinGoalKey = stringPreferencesKey("protein_goal")
@@ -36,6 +51,15 @@ class SettingsRepository(
     private val userActivityKey = stringPreferencesKey("user_activity_level")
     // D-16-13 / D-16-14 — Overview-tab "set goals" banner dismissal sentinel.
     private val nutritionGoalsBannerDismissedKey = booleanPreferencesKey("nutrition_goals_banner_dismissed")
+
+    // Phase 19 — Early-Exit budget per calendar month (D-19-07)
+    private val earlyExitYearMonthKey = stringPreferencesKey("early_exits_year_month")
+    private val earlyExitUsedKey = intPreferencesKey("early_exits_used")
+
+    // Phase 19 — Cold-start sentinel for geofence EXIT events (D-19-04)
+    private val pendingGeofenceExitWorkoutIdKey = longPreferencesKey("pending_geofence_exit_workout_id")
+    private val pendingGeofenceExitTimeMillisKey = longPreferencesKey("pending_geofence_exit_time_millis")
+    private val pendingGeofenceExitRegionIdKey = stringPreferencesKey("pending_geofence_exit_region_id")
 
     val hasSeenTutorial: Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[hasSeenTutorialKey] ?: false
@@ -78,6 +102,34 @@ class SettingsRepository(
         dataStore.edit { preferences ->
             preferences[accentColorKey] = color
         }
+    }
+
+    /**
+     * D-quick-vn7 — Debug-Modus toggle. Gates the in-workout debug overlay
+     * (iOS pill + Android FAB). Defaults to true so existing users see
+     * unchanged DEBUG behavior on first launch.
+     */
+    val debugModeEnabled: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[debugModeEnabledKey] ?: true
+    }
+
+    suspend fun setDebugModeEnabled(enabled: Boolean) {
+        dataStore.edit { prefs -> prefs[debugModeEnabledKey] = enabled }
+    }
+
+    /**
+     * D-quick-vn7 — grace period (seconds) before auto-abort after geofence
+     * exit. Defaults to XpFormula.GEOFENCE_GRACE_PERIOD_SECONDS (300L) so
+     * users who never touch the picker see unchanged behavior. The constant
+     * remains the canonical default; this Flow is the source of truth for
+     * the running countdown.
+     */
+    val gracePeriodSeconds: Flow<Long> = dataStore.data.map { prefs ->
+        prefs[gracePeriodSecondsKey] ?: com.pumpernickel.domain.gamification.XpFormula.GEOFENCE_GRACE_PERIOD_SECONDS
+    }
+
+    suspend fun setGracePeriodSeconds(seconds: Long) {
+        dataStore.edit { prefs -> prefs[gracePeriodSecondsKey] = seconds }
     }
 
     val nutritionGoals: Flow<NutritionGoals> = combine(
@@ -192,5 +244,105 @@ class SettingsRepository(
 
     suspend fun setAiModel(model: String) {
         dataStore.edit { prefs -> prefs[aiModelKey] = model }
+    }
+
+    /**
+     * D-19-07 — current month's Early-Exit budget. Auto-resets when the stored
+     * year-month no longer matches the current local-time year-month: the Flow
+     * emits a {used=0} snapshot WITHOUT touching DataStore on read (lazy reset).
+     * The first write via incrementEarlyExitUsed() persists the new year-month.
+     *
+     * Consumed by EarlyExitTracker; the VM never reads this Flow directly.
+     */
+    val earlyExits: Flow<EarlyExitBudget> = dataStore.data.map { prefs ->
+        val storedYm = prefs[earlyExitYearMonthKey]
+        val storedUsed = prefs[earlyExitUsedKey] ?: 0
+        val currentYm = currentYearMonth()
+        val effectiveUsed = if (storedYm == currentYm) storedUsed else 0
+        EarlyExitBudget(
+            used = effectiveUsed,
+            remaining = (EarlyExitTracker.EARLY_EXIT_BUDGET_PER_MONTH - effectiveUsed).coerceAtLeast(0),
+            yearMonth = currentYm
+        )
+    }
+
+    /**
+     * D-19-07 — atomically increment the Early-Exit counter for the current
+     * month. If the stored year-month is stale, reset to 1 (this consumption is
+     * the first exit of the new month). Capped at EARLY_EXIT_BUDGET_PER_MONTH —
+     * caller must check budget first via EarlyExitTracker.consumeOne().
+     */
+    suspend fun incrementEarlyExitUsed() {
+        dataStore.edit { prefs ->
+            val currentYm = currentYearMonth()
+            val storedYm = prefs[earlyExitYearMonthKey]
+            val storedUsed = if (storedYm == currentYm) (prefs[earlyExitUsedKey] ?: 0) else 0
+            val nextUsed = (storedUsed + 1).coerceAtMost(EarlyExitTracker.EARLY_EXIT_BUDGET_PER_MONTH)
+            prefs[earlyExitYearMonthKey] = currentYm
+            prefs[earlyExitUsedKey] = nextUsed
+        }
+    }
+
+    /**
+     * Format: "YYYY-MM" in the user's local time zone. Used as the reset
+     * sentinel — a calendar-month flip changes this string and triggers reset.
+     */
+    private fun currentYearMonth(): String {
+        val now: LocalDateTime = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+        val month = now.monthNumber.toString().padStart(2, '0')
+        return "${now.year}-$month"
+    }
+
+    // ============================================================
+    // D-19-04 — PendingGeofenceExitStore implementation
+    // ============================================================
+
+    /**
+     * Persist (or clear) the latest pending exit sentinel. Single edit{}
+     * transaction so writes are atomic across all three keys.
+     */
+    override suspend fun setPendingExit(exit: PendingGeofenceExit?) {
+        dataStore.edit { prefs ->
+            if (exit == null) {
+                prefs.remove(pendingGeofenceExitWorkoutIdKey)
+                prefs.remove(pendingGeofenceExitTimeMillisKey)
+                prefs.remove(pendingGeofenceExitRegionIdKey)
+            } else {
+                prefs[pendingGeofenceExitWorkoutIdKey] = exit.workoutId
+                prefs[pendingGeofenceExitTimeMillisKey] = exit.exitTimeMillis
+                prefs[pendingGeofenceExitRegionIdKey] = exit.regionId
+            }
+        }
+    }
+
+    /**
+     * Atomically read and clear. The single edit{} block guarantees no other
+     * concurrent reader can re-consume the same payload. Returns the previously
+     * stored exit (or null if none was pending).
+     */
+    override suspend fun consumePendingExit(): PendingGeofenceExit? {
+        var captured: PendingGeofenceExit? = null
+        dataStore.edit { prefs ->
+            val wid = prefs[pendingGeofenceExitWorkoutIdKey]
+            val ts = prefs[pendingGeofenceExitTimeMillisKey]
+            val rid = prefs[pendingGeofenceExitRegionIdKey]
+            if (wid != null && ts != null && rid != null) {
+                captured = PendingGeofenceExit(workoutId = wid, exitTimeMillis = ts, regionId = rid)
+                prefs.remove(pendingGeofenceExitWorkoutIdKey)
+                prefs.remove(pendingGeofenceExitTimeMillisKey)
+                prefs.remove(pendingGeofenceExitRegionIdKey)
+            }
+        }
+        return captured
+    }
+
+    /** Non-clearing read for diagnostics. */
+    override suspend fun peekPendingExit(): PendingGeofenceExit? {
+        val prefs = dataStore.data.first()
+        val wid = prefs[pendingGeofenceExitWorkoutIdKey] ?: return null
+        val ts = prefs[pendingGeofenceExitTimeMillisKey] ?: return null
+        val rid = prefs[pendingGeofenceExitRegionIdKey] ?: return null
+        return PendingGeofenceExit(workoutId = wid, exitTimeMillis = ts, regionId = rid)
     }
 }

@@ -57,4 +57,27 @@ class SettingsViewModel(
             settingsRepository.setAccentColor(color)
         }
     }
+
+    // D-quick-vn7 — Debug-Modus toggle + Geofence grace-period picker.
+    @NativeCoroutinesState
+    val debugModeEnabled: StateFlow<Boolean> = settingsRepository
+        .debugModeEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    @NativeCoroutinesState
+    val gracePeriodSeconds: StateFlow<Long> = settingsRepository
+        .gracePeriodSeconds
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 300L)
+
+    fun setDebugModeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setDebugModeEnabled(enabled)
+        }
+    }
+
+    fun setGracePeriodSeconds(seconds: Long) {
+        viewModelScope.launch {
+            settingsRepository.setGracePeriodSeconds(seconds)
+        }
+    }
 }

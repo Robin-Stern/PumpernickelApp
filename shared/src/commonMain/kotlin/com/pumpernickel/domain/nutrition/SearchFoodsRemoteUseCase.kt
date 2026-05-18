@@ -11,7 +11,8 @@ class SearchFoodsRemoteUseCase(private val api: OpenFoodFactsApi) {
         val fat: Double,
         val carbs: Double,
         val sugar: Double,
-        val brand: String? = null
+        val brand: String? = null,
+        val nutriScore: String? = null
     )
 
     sealed interface Result {
@@ -21,10 +22,8 @@ class SearchFoodsRemoteUseCase(private val api: OpenFoodFactsApi) {
     }
 
     suspend operator fun invoke(query: String): Result {
-        println("[SearchUC] invoke query='$query'")
         return try {
             val response = api.searchByName(query)
-            println("[SearchUC] api returned count=${response.count} products=${response.products.size}")
             val results = response.products.mapNotNull { product ->
                 val name = product.productName?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
                 val nutriments = product.nutriments ?: return@mapNotNull null
@@ -38,13 +37,12 @@ class SearchFoodsRemoteUseCase(private val api: OpenFoodFactsApi) {
                     fat = nutriments.fat100g ?: 0.0,
                     carbs = carbs,
                     sugar = minOf(sugar, carbs),
-                    brand = brand
+                    brand = brand,
+                    nutriScore = product.nutritionGradeFr?.uppercase()?.takeIf { it in setOf("A", "B", "C", "D", "E") }
                 )
             }
-            println("[SearchUC] mapped results=${results.size}")
             if (results.isEmpty()) Result.Empty else Result.Success(results)
         } catch (e: Exception) {
-            println("[SearchUC] caught ${e::class.simpleName}: ${e.message}")
             val msg = e.message
             if (msg != null && msg.contains("OpenFoodFacts ist gerade nicht erreichbar")) {
                 Result.Error("OpenFoodFacts ist gerade nicht erreichbar. Versuch es später nochmal.")

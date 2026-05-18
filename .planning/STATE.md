@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Android Material 3 UI
-status: executing
-stopped_at: Phase 18 context gathered
-last_updated: "2026-05-12T14:36:13.612Z"
-last_activity: "2026-05-12 -- Completed quick task 260512-m1x: OFF search auf cgi/search.pl + defensive HTML detection + iOS Tab-Picker UI"
+status: idle
+stopped_at: Phase 19 complete — all 7 plans + Layer A/B crash & UI follow-ups + 4 demo-prep quick-tasks; user-confirmed UAT pass 2026-05-17
+last_updated: "2026-05-18T11:30:00.000Z"
+last_activity: 2026-05-18 -- Completed quick task 260518-fnk: iOS-App "Pumpernickel"-Rename + gemeinsames App-Icon für Android und iOS
 progress:
-  total_phases: 5
-  completed_phases: 4
-  total_plans: 42
-  completed_plans: 40
-  percent: 95
+  total_phases: 6
+  completed_phases: 5
+  total_plans: 49
+  completed_plans: 49
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Users can select a workout template and execute it set-by-set — logging reps, weight, and rest periods — with a clean, reliable flow
-**Current focus:** Phase 18 — ai-features-f6-workout-generation-f8-meal-generation-byok-op
+**Current focus:** Phase 19 closed; ready for next phase or demo prep
 
 ## Current Position
 
 Milestone: v1.5 (shipped 2026-03-31)
-Phase: 18 (ai-features-f6-workout-generation-f8-meal-generation-byok-op) — EXECUTING
-Plan: 1 of 10
-Branch: `feature/workouts` @ `985884c`
-Status: Executing Phase 18
-Last activity: 2026-05-12 -- Completed quick task 260512-m1x: OFF search auf cgi/search.pl + defensive HTML detection + iOS Tab-Picker UI
+Phase: 19 (geofencing-workout-enforcement) — COMPLETE (UAT confirmed 2026-05-17)
+Plan: 7 of 7
+Branch: `android-ios-parity` (ahead of `main` by ~25 commits — merge pending)
+Status: Idle. Phase 19 functional + UAT confirmed. Diagnostic prints removed.
+Last activity: 2026-05-17 -- Phase 19 closure + diagnostic-prints cleanup (quick-task 260517-x4p)
 
 Progress: [██████████] 100%
 
@@ -124,6 +124,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - Phase 15.1 inserted after Phase 15 (2026-04-23): Ranks & Achievements Browser — rank ladder + achievement catalog UI (URGENT). Surfaced by Phase 15 UAT — current gamification is opaque: users see their rank and unlock toasts but cannot browse what tiers / achievements exist. Pure presentation over existing GamificationRepository / RankLadder / AchievementCatalog — no new domain logic.
 - Phase 16 added (2026-04-28): Set nutrition goals (kcal/protein/carbs/fat per day) — surface progress on Overview tab and award bonus XP when daily goal achieved within tolerance. Builds on existing post-v1.5 NutritionGoals model (in SettingsRepository) + Phase 15 gamification engine; user mentions a ±5–10% tolerance + XP reward already partially in code — planner should investigate first.
 - Phase 17 added (2026-04-28): Progress-pic feature with biometric-locked gallery — post-workout photo capture (camera or library) tied to workouts; gallery surfaces under Overview tab with blurred-by-default tiles showing day highlights (volume, PRs, nutrition); tap unblurs individual image via biometric auth (passcode fallback); re-locks on gallery close. Cross-platform iOS + Android via Compose Multiplatform. Spans new domain (ProgressPicture entity tied to WorkoutHistory), platform integrations (camera/photo-library + LocalAuthentication on iOS, CameraX/PhotoPicker + BiometricPrompt on Android), and a new gallery surface integrated into Overview rather than a corner button.
+- Phase 19 added (2026-05-13): Geofencing-basierte Workout-Enforcement — erstes geloggtes Set setzt einen ~50m-Geofence um den aktuellen Standort; verlässt der User die Zone vor regulärem Workout-Ende, wird das Workout abgebrochen und XP abgezogen (-100 bis -200, finalisiert in Discuss). Eskape-Hatch: 2 Early Exits pro Monat erlauben sauberes Verkürzen. Cross-platform iOS + Android. Baut auf der vorhandenen `LocationProvider`-Abstraktion auf, neu sind Geofence-Logik, Background-Polling-Strategie, Notification-Trigger, Permissions-UX und XP-System-Integration (Phase 15). Viele offene Designfragen — Discuss-Phase vor Planung empfohlen.
 
 ### Pending Todos
 
@@ -135,30 +136,34 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 
 ### Quick Tasks Completed
 
-| # | Description | Date | Commit | Status | Directory |
-|---|-------------|------|--------|--------|-----------|
-| 260423-sja | Clean up AchievementGalleryScreen category headers — M3 section-break hierarchy (titleLarge + 20/8 padding + hairline divider) | 2026-04-23 | 4c0740b | — | [260423-sja-clean-up-achievementgalleryscreen-catego](./quick/260423-sja-clean-up-achievementgalleryscreen-catego/) |
-| 260501-wcg | Phase 17 iOS surfaces (SwiftUI gallery + viewer + prompt card + presenter holder wire) | 2026-05-01 | 17581fa | — | [260501-wcg-phase-17-ios-surfaces](./quick/260501-wcg-phase-17-ios-surfaces/) |
-| 260506-0hk | fix iOS Progress Gallery tile layout — tiles render offscreen-left with date label clipped (visual checkpoint pending) | 2026-05-05 | db2812e | — | [260506-0hk-fix-ios-progress-gallery-tile-layout-til](./quick/260506-0hk-fix-ios-progress-gallery-tile-layout-til/) |
-| 260506-pf3 | iOS Progress Gallery photo viewer prompts for passcode instead of Face ID (visual UAT pending) | 2026-05-06 | abb61f5 | — | [260506-pf3-ios-progress-gallery-photo-viewer-prompt](./quick/260506-pf3-ios-progress-gallery-photo-viewer-prompt/) |
-| 260510-w9h | Swap Together preset default + error-msg recommendations to google/gemma-4-31B-it (eval-driven) | 2026-05-10 | b643711 | — | [260510-w9h-app-defaults-f-r-ai-provider-von-openai-](./quick/260510-w9h-app-defaults-f-r-ai-provider-von-openai-/) |
-| 260510-wgs | Align iOS AISettingsView model-suggestion notes with eval evidence (Together/OpenRouter/Groq) | 2026-05-10 | 7d7962a | — | [260510-wgs-ios-aisettingsview-model-suggestions-an-](./quick/260510-wgs-ios-aisettingsview-model-suggestions-an-/) |
-| 260510-x7o | B.1.code: workout-prompt array-wrapper restatement + multi-model.mjs CLI flags for targeted re-runs (prompt edit later reverted in 501c31d — see B.1 delta in MULTI-MODEL-RESULTS.md) | 2026-05-11 | df71e85 | — | [260510-x7o-b-1-code-workout-prompt-wrapper-restatem](./quick/260510-x7o-b-1-code-workout-prompt-wrapper-restatem/) |
-| 260511-117 | B.2.code: add worked-example macro arithmetic section to recipe-system-prompt.md (target: Llama-3.3 arithmetic + Qwen mode-collapse failure modes) | 2026-05-11 | 380d8d2 | — | [260511-117-b-2-code-recipe-prompt-mit-worked-exampl](./quick/260511-117-b-2-code-recipe-prompt-mit-worked-exampl/) |
-| 260511-1h7 | Didactic end-to-end explainer for eval harness (evals/PROMPT-TESTING-EXPLAINED.md, 565 lines, 9 sections + ASCII diagrams) — presentation material | 2026-05-11 | 4d1d615 | — | [260511-1h7-didaktische-dokumentation-des-eval-harne](./quick/260511-1h7-didaktische-dokumentation-des-eval-harne/) |
-| 260511-gff | B.4.code: refusal path measurable — validators honor expectRefusal, 2 impossible-scenario cases per suite, sharpened Refusal sections in both system prompts | 2026-05-11 | e33ef0d | — | [260511-gff-b-4-code-refusal-path-messbar-machen-exp](./quick/260511-gff-b-4-code-refusal-path-messbar-machen-exp/) |
-| 260512-gv9 | OpenFoodFacts Volltextsuche: cgi/search.pl → /api/v2/search (sort_by=popularity_key, lc=de, brand field) + iOS-UI für Remote-Suchergebnisse + Android-Brand-Label auf RemoteFoodCard | 2026-05-12 | dbb6f7e | Needs Review | [260512-gv9-volltextsuche-f-r-lebensmittel-off-v2-se](./quick/260512-gv9-volltextsuche-f-r-lebensmittel-off-v2-se/) |
-| 260512-kws | Fix iOS Build: IosLocationProvider — `CLLocationCoordinate2D` braucht `useContents { latitude; longitude }` in Kotlin/Native (pre-existing drift, durch ff044e5 entblockt und so erst sichtbar geworden) | 2026-05-12 | 6f968b3 | — | [260512-kws-fix-ios-build-ioslocationprovider-usecon](./quick/260512-kws-fix-ios-build-ioslocationprovider-usecon/) |
-| 260512-l79 | Fix Room schema drift: `shared/schemas/` aus `.gitignore` entfernt + 9 AutoMigration-JSONs (v2–v10) committed — Room AutoMigrations brauchen die als Build-Inputs (Worktrees/CI/fresh-clones scheiterten vorher in KSP) | 2026-05-12 | 99f52bd | — | [260512-l79-fix-room-schema-drift-untrack-schemas-co](./quick/260512-l79-fix-room-schema-drift-untrack-schemas-co/) |
-| 260512-lei | iOS Build grün: (a) FoodEntryUiState init um 3 remote-search Felder ergänzt; (b) nested data class swift name korrigiert: `SearchFoodsRemoteUseCase.RemoteFoodResult` (dotted, nicht flat — Verifier hat das initial falsche Pattern aufgedeckt); (c) Shared.framework rebuilt, exportiert `RemoteFoodResult.brand` | 2026-05-12 | 412b58d | Verified | [260512-lei-ios-build-endg-ltig-gr-n-foodentryuistat](./quick/260512-lei-ios-build-endg-ltig-gr-n-foodentryuistat/) |
-| 260512-lrq | Fix iOS Startup-Crash: `LocationProvider` in `PlatformModule.ios.kt` registriert — Android hatte das schon, iOS war seit Commit 1d33816 (Location Feature) drift; `WorkoutSessionViewModel` braucht den Provider injected, Koin warf `NoDefinitionFoundException` | 2026-05-12 | 9ef3eca | — | [260512-lrq-fix-ios-di-register-ioslocationprovider-](./quick/260512-lrq-fix-ios-di-register-ioslocationprovider-/) |
-| 260512-m1x | OFF search: (a) zurück auf `cgi/search.pl` (v2 search ist HTTP 503 down — live verifiziert via curl); (b) defensive HTML detection vor `json.decodeFromString` — wirft IllegalStateException statt App-Crash; (c) iOS Tab-Picker [Manuell\|Suchen\|Barcode] mit Auto-Switch zu Manuell nach OFF-Tap und Barcode-Dismiss | 2026-05-12 | 24087b1 | Needs Review | [260512-m1x-off-search-cgi-search-pl-defensive-parsi](./quick/260512-m1x-off-search-cgi-search-pl-defensive-parsi/) |
-| 260512-mr1 | Diagnose-Logging für OFF-Suche: 12 temporäre `println`-Marker entlang `[OFF]` (API), `[SearchUC]` (UseCase), `[FoodVM]` (ViewModel debounce/collect) — soll im Xcode-Console zeigen wo die Suche stirbt (Debouncer? Network? Parse? mapNotNull? Exception?). User meldet "0 Treffer, nichts passiert" auf Native + Simulator | 2026-05-12 | 58a690f | Diagnostic | [260512-mr1-diagnose-logging-f-r-off-suche](./quick/260512-mr1-diagnose-logging-f-r-off-suche/) |
-| 260512-mzq | Fix iOS FoodEntry VM-Instabilität: `private let viewModel` → `@State private var viewModel` in `NutritionFoodEntryView.swift`. Root Cause: Koin `viewModel { ... }` Scope verhält sich auf iOS wie factory (kein Android `ViewModelProvider`), `private let` wird bei jedem SwiftUI body-eval neu initialisiert → neue VM-Instanz pro Re-Render. Diagnose-Prints zeigten mehrfach `query='' length=0` weil getippter Text in einer anderen VM-Instanz als die observierte landete | 2026-05-12 | 64f6e3b | Needs Review | [260512-mzq-fix-ios-food-entry-vm-instabilit-t](./quick/260512-mzq-fix-ios-food-entry-vm-instabilit-t/) |
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260423-sja | Clean up AchievementGalleryScreen category headers — M3 section-break hierarchy (titleLarge + 20/8 padding + hairline divider) | 2026-04-23 | 4c0740b | [260423-sja-clean-up-achievementgalleryscreen-catego](./quick/260423-sja-clean-up-achievementgalleryscreen-catego/) |
+| 260501-wcg | Phase 17 iOS surfaces (SwiftUI gallery + viewer + prompt card + presenter holder wire) | 2026-05-01 | 17581fa | [260501-wcg-phase-17-ios-surfaces](./quick/260501-wcg-phase-17-ios-surfaces/) |
+| 260506-0hk | fix iOS Progress Gallery tile layout — tiles render offscreen-left with date label clipped (visual checkpoint pending) | 2026-05-05 | db2812e | [260506-0hk-fix-ios-progress-gallery-tile-layout-til](./quick/260506-0hk-fix-ios-progress-gallery-tile-layout-til/) |
+| 260506-pf3 | iOS Progress Gallery photo viewer prompts for passcode instead of Face ID (visual UAT pending) | 2026-05-06 | abb61f5 | [260506-pf3-ios-progress-gallery-photo-viewer-prompt](./quick/260506-pf3-ios-progress-gallery-photo-viewer-prompt/) |
+| 260510-w9h | Swap Together preset default + error-msg recommendations to google/gemma-4-31B-it (eval-driven) | 2026-05-10 | b643711 | [260510-w9h-app-defaults-f-r-ai-provider-von-openai-](./quick/260510-w9h-app-defaults-f-r-ai-provider-von-openai-/) |
+| 260510-wgs | Align iOS AISettingsView model-suggestion notes with eval evidence (Together/OpenRouter/Groq) | 2026-05-10 | 7d7962a | [260510-wgs-ios-aisettingsview-model-suggestions-an-](./quick/260510-wgs-ios-aisettingsview-model-suggestions-an-/) |
+| 260510-x7o | B.1.code: workout-prompt array-wrapper restatement + multi-model.mjs CLI flags for targeted re-runs (prompt edit later reverted in 501c31d — see B.1 delta in MULTI-MODEL-RESULTS.md) | 2026-05-11 | df71e85 | [260510-x7o-b-1-code-workout-prompt-wrapper-restatem](./quick/260510-x7o-b-1-code-workout-prompt-wrapper-restatem/) |
+| 260511-117 | B.2.code: add worked-example macro arithmetic section to recipe-system-prompt.md (target: Llama-3.3 arithmetic + Qwen mode-collapse failure modes) | 2026-05-11 | 380d8d2 | [260511-117-b-2-code-recipe-prompt-mit-worked-exampl](./quick/260511-117-b-2-code-recipe-prompt-mit-worked-exampl/) |
+| 260511-1h7 | Didactic end-to-end explainer for eval harness (evals/PROMPT-TESTING-EXPLAINED.md, 565 lines, 9 sections + ASCII diagrams) — presentation material | 2026-05-11 | 4d1d615 | [260511-1h7-didaktische-dokumentation-des-eval-harne](./quick/260511-1h7-didaktische-dokumentation-des-eval-harne/) |
+| 260511-gff | B.4.code: refusal path measurable — validators honor expectRefusal, 2 impossible-scenario cases per suite, sharpened Refusal sections in both system prompts | 2026-05-11 | e33ef0d | [260511-gff-b-4-code-refusal-path-messbar-machen-exp](./quick/260511-gff-b-4-code-refusal-path-messbar-machen-exp/) |
+| 260516-nfn | Debug-GPS-Mock für Phase 19: DebugGeofenceProvider (commonMain) + build-gated Koin override (BuildConfig.DEBUG / #if DEBUG) + Debug-Panel in Settings mit Enter/Exit/Error-Trigger-Buttons — Phase-19-Flow ohne physisches Rumlaufen testbar. UAT auf Emulator/Simulator pending | 2026-05-16 | 8846475 | [260516-nfn-debug-gps-mock-f-r-phase-19-geofencing-b](./quick/260516-nfn-debug-gps-mock-f-r-phase-19-geofencing-b/) |
+| 260517-pzh | Debug Mock-Panel direkt im Workout-Screen erreichbar machen — DEBUG-gated overlay/FAB öffnet bestehendes DebugGeofencePanel inline (iOS + Android), Exit-Trigger ohne App-Switch testbar mid-workout. Manual UAT pending | 2026-05-17 | 2f3808e | [260517-pzh-debug-mock-panel-direkt-im-workout-scree](./quick/260517-pzh-debug-mock-panel-direkt-im-workout-scree/) |
+| 260517-ra5 | Layer B — Workout-Abort Recap-View per UI-SPEC §180: Finished state erweitert um abandoned/loggedSets/penaltyXp, neue WorkoutAbortedView (iOS) + AbortedContent (Android), branch in WorkoutSessionView/WorkoutSessionScreen. Built auf Layer A (87ff836) der Debug-Session ios-geofence-grace-expiry-crash. Manual UAT pending | 2026-05-17 | 180a915 | [260517-ra5-layer-b-workout-abort-recap-view-per-ui-](./quick/260517-ra5-layer-b-workout-abort-recap-view-per-ui-/) |
+| 260517-vn7 | Demo-Vorbereitung — Settings Debug-Modus-Toggle + konfigurierbare Grace-Period (5/10/30/60/300sec) Picker. SettingsRepository um debugModeEnabled+gracePeriodSeconds erweitert; WorkoutSessionViewModel.startGracePeriod liest dynamisch aus Repo (defaults 300L via XpFormula). iOS + Android Settings-Section, in-workout-Pille/FAB gated. Manual UAT pending | 2026-05-17 | eef64c2 | [260517-vn7-settings-debug-mode-toggle-configurable-](./quick/260517-vn7-settings-debug-mode-toggle-configurable-/) |
+| 260517-w2f | End-Button-Konsolidierung — 3 redundante Workout-End-Buttons (Abandon/Finish/Workout beenden) → 1 kontextsensitiver Trailing-Button "Workout beenden". Tap → viewModel.requestEarlyExit(); allDone-Check öffnet entweder Review-Pfad oder EarlyExitConfirmDialog (Budget/Penalty). Discard-Pfad entfällt, "Abandon Workout?" Dialog entfernt. iOS + Android. Manual UAT pending | 2026-05-17 | 0bb5c18 | [260517-w2f-end-button-konsolidierung-drei-redundant](./quick/260517-w2f-end-button-konsolidierung-drei-redundant/) |
+| 260517-x4p | Phase 19 Closure + Diagnostic-Prints Cleanup — 44 println/print-Marker (`[Geofence]`/`[LocProvider]`/`[LocDelegate]`/`[PermController]`/`[Rationale]`/`[SwiftPerm]`) aus 4 Files entfernt; FK-race-Catch-Log behalten aber Tag-Prefix gestrippt. STATE.md auf `idle`/100%, VERIFICATION.md auf `passed` mit uat_confirmed, ROADMAP Phase 19 als COMPLETE markiert | 2026-05-17 | fcc6478 | [260517-x4p-phase-19-closure-diagnostic-prints-clean](./quick/260517-x4p-phase-19-closure-diagnostic-prints-clean/) |
+| 260518-e7r | AI Generation Timeout auf 10 Minuten erhöhen (Ktor HttpClient + Stream) — 6 Timeout-Sites (per-request buffered+stream, iOS Ktor engine + Darwin URLSession, Android Ktor engine + OkHttp) auf 600_000 ms / 600s gehoben; socketTimeout 120_000 unverändert, TCP-connect 30s unverändert | 2026-05-18 | ab3f1a9 | [260518-e7r-ai-generation-timeout-auf-10-minuten-erh](./quick/260518-e7r-ai-generation-timeout-auf-10-minuten-erh/) |
+| 260518-egc | iOS Geofence-Exit-Notification Parity — AppDelegate als UNUserNotificationCenterDelegate registriert + requestAuthorization beim Launch + willPresent[.banner,.sound,.list] für Foreground-Präsentation. Root cause: ohne expliziten Authorize-Call schlugen alle `postGeofenceNotification`-Calls silent fehl; ohne Delegate unterdrückt iOS Foreground-Notifications by default. Manual UAT pending (App neu installieren/Notif-Permission akzeptieren) | 2026-05-18 | 289f2e8 | [260518-egc-ios-geofence-exit-notification-posten-ko](./quick/260518-egc-ios-geofence-exit-notification-posten-ko/) |
+| 260518-eny | iOS AI Workout Generation State-Reset nach Save — one-shot `savedEvent: SharedFlow<Unit>` + `reset()` im WorkoutAiViewModel; AIWorkoutGenView ruft reset() in onAppear + dismiss via savedEvent statt persistentem Saved-State. Root cause: `Saved` war persistent im StateFlow, View triggerte `dismiss()` bei jedem Re-Entry sofort → "verbrannter Screen". Android intakt (NavBackStackEntry-Scoping). Manual UAT pending | 2026-05-18 | 81113d6 | [260518-eny-ios-ai-workout-generation-state-reset-na](./quick/260518-eny-ios-ai-workout-generation-state-reset-na/) |
+| 260518-ey4 | AI Workout Stream-Status hardcoded "5 Übungen" → User-exerciseCount — Single-line Fix in WorkoutAiViewModel.kt:113 (skeletonRowCount aus originatingData.exerciseCount statt const 5). Beide Plattformen konsumieren state.skeletonRowCount → automatisch korrigiert. Manual UAT pending | 2026-05-18 | 59e5a67 | [260518-ey4-ai-generation-stream-status-zeigt-hardco](./quick/260518-ey4-ai-generation-stream-status-zeigt-hardco/) |
+| 260518-f1c | Android SettingsSheet scrollt nicht — ModalBottomSheet-Column mit verticalScroll(rememberScrollState()) versehen, KI-Sektion jetzt erreichbar auf kleineren Devices. Manual UAT pending | 2026-05-18 | 4b787fd | [260518-f1c-android-settingsscreen-scrollt-nicht-ki-](./quick/260518-f1c-android-settingsscreen-scrollt-nicht-ki-/) |
+| 260518-f2h | iOS AI Settings API-Key-Status-Anzeige falsch — Root cause: Picker.onChange feuert beim View-Re-Entry weil .task-Observer den initialen @State default ("openai") mit echtem StateFlow-Wert überschreibt → setProviderPreset → clearApiKey → "nicht gespeichert" obwohl Key real noch da. Fix: isSyncingProviderFromFlow @State-Flag als One-Shot-Skip in onChange-Handler. Task war ursprünglich als Android klassifiziert (Speech-to-text "Eiweiß"→iOS Artefakt). Manual UAT pending | 2026-05-18 | 7545b26 | [260518-f2h-android-ai-settings-api-key-status-anzei](./quick/260518-f2h-android-ai-settings-api-key-status-anzei/) |
+| 260518-fnk | iOS-App in "Pumpernickel" umbenennen und gleiches App-Icon (SVG → PNGs) für Android und iOS setzen — assets/app-icon.svg vendored, iOS CFBundleDisplayName=Pumpernickel via INFOPLIST_KEY in pbxproj (Debug+Release), AppIcon.png 1024×1024 in Assets.xcassets, Android app_name=Pumpernickel in strings.xml, AndroidManifest auf @string/app_name + @mipmap/ic_launcher{,_round} umgestellt, 10 mipmap-PNGs (5 Dichten × 2 Namen) via qlmanage+sips generiert. Human-Verify auf Simulator/Emulator pending | 2026-05-18 | c23909c | [260518-fnk-ios-app-in-pumpernickel-umbenennen-und-g](./quick/260518-fnk-ios-app-in-pumpernickel-umbenennen-und-g/) |
 
 ## Session Continuity
 
-Last session: 2026-05-12T14:36:13.603Z
-Stopped at: Phase 18 context gathered
-Resume file: None
-Next step: `/gsd-plan-phase 15` to break Phase 15 into plans
+Last session: 2026-05-17T22:00:00.000Z
+Stopped at: Phase 19 closed — UAT user-confirmed, diagnostic prints removed, all demo-prep quick-tasks shipped
+Next step: Optional — `android-ios-parity` → `main` merge; plan post-v1.0 work (e.g. Phase 20 or demo polish for university deadline)

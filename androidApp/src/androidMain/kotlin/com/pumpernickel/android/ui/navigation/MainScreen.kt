@@ -29,7 +29,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.pumpernickel.android.R
 import com.pumpernickel.android.ui.screens.AchievementGalleryScreen
+import com.pumpernickel.android.ui.screens.AiMealGenScreen
 import com.pumpernickel.android.ui.screens.AiSettingsScreen
+import com.pumpernickel.android.ui.screens.AiWorkoutGenScreen
 import com.pumpernickel.android.ui.screens.CreateExerciseScreen
 import com.pumpernickel.android.ui.screens.ExerciseCatalogScreen
 import com.pumpernickel.android.ui.screens.ExerciseDetailScreen
@@ -55,7 +57,7 @@ import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 enum class TopLevelTab(
-    @StringRes val labelRes: Int,
+    @param:StringRes val labelRes: Int,
     val icon: ImageVector,
 ) {
     WORKOUT(R.string.tab_workout, Icons.Filled.FitnessCenter),
@@ -114,8 +116,12 @@ fun MainScreen() {
                         )
                     }
                     composable<ExercisePickerRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ExercisePickerRoute>()
+                        // Provide the TemplateEditorViewModel from the parent back stack entry
+                        // so ExercisePicker can append exercises directly to the template.
                         val parentEntry = remember(backStackEntry) {
-                            workoutNavController.getBackStackEntry<TemplateEditorRoute>()
+                            runCatching { workoutNavController.getBackStackEntry<TemplateEditorRoute>() }
+                                .getOrNull() ?: backStackEntry
                         }
                         val editorViewModel: TemplateEditorViewModel = koinViewModel(
                             viewModelStoreOwner = parentEntry
@@ -125,7 +131,8 @@ fun MainScreen() {
                                 editorViewModel.addExercise(id, name, muscles)
                                 workoutNavController.popBackStack()
                             },
-                            navController = workoutNavController
+                            navController = workoutNavController,
+                            preselectedMuscleDbName = route.preselectedMuscleDbName
                         )
                     }
                     composable<WorkoutSessionRoute> { backStackEntry ->
@@ -135,8 +142,12 @@ fun MainScreen() {
                             navController = workoutNavController
                         )
                     }
-                    composable<ExerciseCatalogRoute> {
-                        ExerciseCatalogScreen(navController = workoutNavController)
+                    composable<ExerciseCatalogRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ExerciseCatalogRoute>()
+                        ExerciseCatalogScreen(
+                            navController = workoutNavController,
+                            preselectedMuscleDbName = route.preselectedMuscleDbName
+                        )
                     }
                     composable<ExerciseDetailRoute> { backStackEntry ->
                         val route = backStackEntry.toRoute<ExerciseDetailRoute>()
@@ -163,6 +174,9 @@ fun MainScreen() {
                     }
                     composable<AiSettingsRoute> {
                         AiSettingsScreen(navController = workoutNavController)
+                    }
+                    composable<AiWorkoutGenRoute> {
+                        AiWorkoutGenScreen(navController = workoutNavController)
                     }
                 }
 
@@ -194,6 +208,22 @@ fun MainScreen() {
                             navController = overviewNavController
                         )
                     }
+                    // Reached via Overview's muscle-map tap → browse exercises filtered
+                    // by the tapped MuscleGroup. Mirrored from the workout tab's registration.
+                    composable<ExerciseCatalogRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ExerciseCatalogRoute>()
+                        ExerciseCatalogScreen(
+                            navController = overviewNavController,
+                            preselectedMuscleDbName = route.preselectedMuscleDbName
+                        )
+                    }
+                    composable<ExerciseDetailRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ExerciseDetailRoute>()
+                        ExerciseDetailScreen(
+                            exerciseId = route.exerciseId,
+                            navController = overviewNavController
+                        )
+                    }
                 }
 
                 2 -> NavHost(
@@ -209,8 +239,9 @@ fun MainScreen() {
                     composable<NutritionRecipeListRoute> {
                         NutritionRecipeListScreen(navController = nutritionNavController)
                     }
-                    composable<NutritionRecipeCreationRoute> {
-                        val parentEntry = remember(it) {
+                    composable<NutritionRecipeCreationRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<NutritionRecipeCreationRoute>()
+                        val parentEntry = remember(backStackEntry) {
                             nutritionNavController.getBackStackEntry<NutritionRecipeListRoute>()
                         }
                         val listViewModel: RecipeListViewModel = koinViewModel(
@@ -218,8 +249,15 @@ fun MainScreen() {
                         )
                         NutritionRecipeCreationScreen(
                             listViewModel = listViewModel,
-                            navController = nutritionNavController
+                            navController = nutritionNavController,
+                            recipeId = route.recipeId
                         )
+                    }
+                    composable<AiMealGenRoute> {
+                        AiMealGenScreen(navController = nutritionNavController)
+                    }
+                    composable<AiSettingsRoute> {
+                        AiSettingsScreen(navController = nutritionNavController)
                     }
                 }
             }

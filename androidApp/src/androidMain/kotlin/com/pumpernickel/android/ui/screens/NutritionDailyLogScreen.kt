@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +23,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.FoodBank
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,9 +60,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pumpernickel.android.ui.components.CalorieRing
+import com.pumpernickel.android.ui.components.MacroRingItem
+import com.pumpernickel.android.ui.components.CalorieRingColor
+import com.pumpernickel.android.ui.components.ProteinRingColor
+import com.pumpernickel.android.ui.components.CarbRingColor
+import com.pumpernickel.android.ui.components.FatRingColor
+import com.pumpernickel.android.ui.components.SugarRingColor
 import androidx.navigation.NavController
 import com.pumpernickel.android.R
+import com.pumpernickel.android.ui.navigation.AiMealGenRoute
 import com.pumpernickel.android.ui.navigation.NutritionFoodEntryRoute
 import com.pumpernickel.android.ui.navigation.NutritionRecipeListRoute
 import com.pumpernickel.domain.model.ConsumptionEntry
@@ -83,6 +94,16 @@ fun NutritionDailyLogScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // FoodRepository is suspend-only (no Flow), so the in-memory state.foods /
+    // state.recipes don't auto-update when a new Food/Recipe is created on a
+    // child screen. Refresh on every resume so returning from
+    // NutritionFoodEntryScreen / NutritionRecipeCreationScreen surfaces the
+    // new item without an app restart.
+    LifecycleResumeEffect(Unit) {
+        viewModel.refresh()
+        onPauseOrDispose { }
+    }
+
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -95,6 +116,9 @@ fun NutritionDailyLogScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.title_daily_log)) },
                 actions = {
+                    IconButton(onClick = { navController.navigate(AiMealGenRoute) }) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = "AI-Rezept generieren")
+                    }
                     IconButton(onClick = { navController.navigate(NutritionFoodEntryRoute) }) {
                         Icon(Icons.Default.FoodBank, contentDescription = "Lebensmittel verwalten")
                     }
@@ -129,43 +153,7 @@ fun NutritionDailyLogScreen(
             }
 
             // Summary card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(stringResource(R.string.label_daily_total), fontWeight = FontWeight.SemiBold)
-                        Text(
-                            "${state.totals.calories.roundToInt()} / ${state.goals.calorieGoal} kcal",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    MacroRow(
-                        protein = state.totals.protein,
-                        fat = state.totals.fat,
-                        carbs = state.totals.carbs,
-                        sugar = state.totals.sugar
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        MacroGoalChip("P", state.totals.protein, state.goals.proteinGoal.toDouble(), Modifier.weight(1f))
-                        MacroGoalChip("F", state.totals.fat, state.goals.fatGoal.toDouble(), Modifier.weight(1f))
-                        MacroGoalChip("KH", state.totals.carbs, state.goals.carbGoal.toDouble(), Modifier.weight(1f))
-                    }
-                }
-            }
+            NutritionSummaryCard(state)
 
             // Entries
             if (state.entries.isEmpty()) {
@@ -255,12 +243,109 @@ fun NutritionDailyLogScreen(
     }
 }
 
+@Composable
+private fun NutritionSummaryCard(state: com.pumpernickel.presentation.nutrition.DailyLogUiState) {
+    val macros = state.totals
+    val goals = state.goals
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(top = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Tagesabschluss",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Main calorie ring
+            CalorieRing(
+                current = macros.calories,
+                goal = goals.calorieGoal.toDouble(),
+                modifier = Modifier.size(160.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Macro rings row
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                MacroRingItem(
+                    label = "Protein",
+                    current = macros.protein,
+                    goal = goals.proteinGoal.toDouble(),
+                    unit = "g",
+                    color = ProteinRingColor
+                )
+                MacroRingItem(
+                    label = "Kohlenh.",
+                    current = macros.carbs,
+                    goal = goals.carbGoal.toDouble(),
+                    unit = "g",
+                    color = CarbRingColor
+                )
+                MacroRingItem(
+                    label = "Fett",
+                    current = macros.fat,
+                    goal = goals.fatGoal.toDouble(),
+                    unit = "g",
+                    color = FatRingColor
+                )
+                MacroRingItem(
+                    label = "Zucker",
+                    current = macros.sugar,
+                    goal = goals.sugarGoal.toDouble(),
+                    unit = "g",
+                    color = SugarRingColor
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EntrySwipeCard(entry: ConsumptionEntry, onDelete: () -> Unit) {
-    val dismissState = rememberSwipeToDismissBoxState()
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) onDelete()
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    val dismissState = rememberSwipeToDismissBoxState(
+        positionalThreshold = { it * 0.5f },
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) showConfirmDialog = true
+            false
+        }
+    )
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text(stringResource(R.string.action_delete)) },
+            text = { Text(stringResource(R.string.confirm_delete_entry)) },
+            confirmButton = {
+                Button(
+                    onClick = { showConfirmDialog = false; onDelete() },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
+                ) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
     val m = entry.macros()
     SwipeToDismissBox(

@@ -4,11 +4,23 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.pumpernickel.ai_generation</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Aufnehmen von Fortschritts-Fotos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Wähle Fotos für deine Fortschritts-Galerie.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Fortschrittsbild entsperren.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Workout-Enforcement nutzt deinen Standort, um zu prüfen ob du im Gym bist.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Damit dein Workout auch zählt wenn du das Handy weglegst, brauchen wir Standortzugriff im Hintergrund. Wir tracken nur den ~50m-Radius um dein Gym während aktiver Workouts.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

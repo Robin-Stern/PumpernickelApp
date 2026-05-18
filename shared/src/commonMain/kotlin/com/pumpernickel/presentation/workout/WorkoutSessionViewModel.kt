@@ -2,16 +2,23 @@ package com.pumpernickel.presentation.workout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pumpernickel.data.repository.GamificationRepository
 import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.domain.gamification.GamificationEngine
 import com.pumpernickel.domain.gamification.XpFormula
+import com.pumpernickel.domain.geofence.EarlyExitBudget
+import com.pumpernickel.domain.geofence.EarlyExitTracker
+import com.pumpernickel.domain.geofence.GeofenceEvent
+import com.pumpernickel.domain.geofence.GeofenceProvider
+import com.pumpernickel.domain.geofence.PendingGeofenceExitStore
 import com.pumpernickel.domain.location.GeoPoint
 import com.pumpernickel.domain.location.LocationProvider
 import com.pumpernickel.domain.model.CompletedExercise
-import com.pumpernickel.domain.model.MuscleGroup
+import com.pumpernickel.domain.permissions.PermissionController
 import com.pumpernickel.domain.workout.GetUndertrainedMusclesUseCase
+import com.pumpernickel.domain.workout.UndertrainedMuscle
 import com.pumpernickel.domain.model.CompletedSet
 import com.pumpernickel.domain.model.CompletedWorkout
 import com.pumpernickel.domain.model.SessionExercise
@@ -25,7 +32,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -57,7 +67,10 @@ sealed class WorkoutSessionState {
         val durationMillis: Long,
         val totalSets: Int,
         val totalExercises: Int,
-        val workoutId: Long
+        val workoutId: Long,
+        val abandoned: Boolean = false,
+        val loggedSets: Int = 0,
+        val penaltyXp: Int = 0
     ) : WorkoutSessionState()
 }
 
@@ -65,6 +78,28 @@ sealed class RestState {
     data object NotResting : RestState()
     data class Resting(val remainingSeconds: Int, val totalSeconds: Int) : RestState()
     data object RestComplete : RestState()
+}
+
+/**
+ * D-19-16 — UI state for the geofence status chip in WorkoutSessionView.
+ *
+ *  - Inactive: no geofence active (pre-1st-set OR permission missing / registration failed).
+ *  - InZone: geofence registered, user inside the radius.
+ *  - GracePeriod: user has exited; remainingSeconds counts down from 300 to 0.
+ *  - Exited: transient state emitted right before auto-abort completes.
+ */
+sealed class GeofenceUiState {
+    data object Inactive : GeofenceUiState()
+    data object InZone : GeofenceUiState()
+    data class GracePeriod(val remainingSeconds: Int) : GeofenceUiState()
+    data object Exited : GeofenceUiState()
+}
+
+/** Result codes for the UI consumer of requestEarlyExit (D-19-08). */
+sealed class EarlyExitResult {
+    data object NoActiveSession : EarlyExitResult()
+    data object NormalReview : EarlyExitResult()
+    data object Processing : EarlyExitResult()
 }
 
 // -- ViewModel --
@@ -75,7 +110,12 @@ class WorkoutSessionViewModel(
     private val settingsRepository: SettingsRepository,
     private val gamificationEngine: GamificationEngine,
     private val locationProvider: LocationProvider,
-    private val getUndertrainedMuscles: GetUndertrainedMusclesUseCase
+    private val getUndertrainedMuscles: GetUndertrainedMusclesUseCase,
+    private val geofenceProvider: GeofenceProvider,
+    private val permissionController: PermissionController,
+    private val earlyExitTracker: EarlyExitTracker,
+    private val gamificationRepo: GamificationRepository,
+    private val pendingGeofenceExitStore: PendingGeofenceExitStore
 ) : ViewModel() {
 
     private val _sessionState = MutableStateFlow<WorkoutSessionState>(WorkoutSessionState.Idle)
@@ -90,9 +130,9 @@ class WorkoutSessionViewModel(
     @NativeCoroutinesState
     val hasActiveSession: StateFlow<Boolean> = _hasActiveSession.asStateFlow()
 
-    private val _undertrainedMuscles = MutableStateFlow<List<MuscleGroup>>(emptyList())
+    private val _undertrainedMuscles = MutableStateFlow<List<UndertrainedMuscle>>(emptyList())
     @NativeCoroutinesState
-    val undertrainedMuscles: StateFlow<List<MuscleGroup>> = _undertrainedMuscles.asStateFlow()
+    val undertrainedMuscles: StateFlow<List<UndertrainedMuscle>> = _undertrainedMuscles.asStateFlow()
 
     // Previous performance keyed by exerciseId (HIST-04, D-08, D-09)
     private val _previousPerformance = MutableStateFlow<Map<String, CompletedExercise>>(emptyMap())
@@ -117,21 +157,64 @@ class WorkoutSessionViewModel(
 
     private var timerJob: Job? = null
     private var elapsedJob: Job? = null
-    private var inactivityJob: Job? = null
     private var locationJob: Job? = null
     private var gymLocation: GeoPoint? = null
     private var templateOriginalIndices: MutableList<Int> = mutableListOf()
+    // Phase 19 — geofence + grace lifecycle
+    private var geofenceObserverJob: Job? = null
+    private var gracePeriodJob: Job? = null
+    // BLOCKER-19-4: built from `active.startTimeMillis` (canonical per-workout id pre-save).
+    // ActiveSessionEntity.id is a singleton sentinel (=1) and MUST NOT be used.
+    private var activeRegionId: String? = null
+
+    // D-19-16 — surfaced to UI for status chip rendering.
+    private val _geofenceState = MutableStateFlow<GeofenceUiState>(GeofenceUiState.Inactive)
+    @NativeCoroutinesState
+    val geofenceState: StateFlow<GeofenceUiState> = _geofenceState.asStateFlow()
+
+    // D-19-07 — Early-Exit budget surfaced for Settings + confirm dialog.
+    @NativeCoroutinesState
+    val earlyExitBudget: StateFlow<EarlyExitBudget> =
+        earlyExitTracker.budget.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000L),
+            EarlyExitBudget(
+                used = 0,
+                remaining = EarlyExitTracker.EARLY_EXIT_BUDGET_PER_MONTH,
+                yearMonth = ""
+            )
+        )
 
     // -- Public methods --
 
     /**
-     * Check Room for an unfinished active session.
-     * SwiftUI observes hasActiveSessionFlow via asyncSequence and shows the
-     * resume/discard prompt when this emits true (D-14, WORK-09).
+     * Check Room for an unfinished active session and reconcile any cold-start
+     * geofence EXIT (D-19-04, BLOCKER-19-3 fix).
+     *
+     * Ordering matters:
+     *  1) Drain `PendingGeofenceExitStore` FIRST (atomic read+clear).
+     *  2) Detect active session.
+     *  3) If the pending exit's regionId matches the resumed session's
+     *     expected `"active-workout-{startTimeMillis}"`, synchronously rehydrate
+     *     state and apply the penalty path with NO grace (deadline has passed).
+     *  4) Stale sentinels are silently discarded (consume already cleared them).
      */
     fun checkForActiveSession() {
         viewModelScope.launch {
-            _hasActiveSession.value = workoutRepository.hasActiveSession()
+            val pending = pendingGeofenceExitStore.consumePendingExit()
+            val hasActive = workoutRepository.hasActiveSession()
+            _hasActiveSession.value = hasActive
+
+            if (pending != null && hasActive) {
+                val active = workoutRepository.getActiveSession()
+                val expectedRegionId = active?.startTimeMillis?.let { "active-workout-$it" }
+                if (expectedRegionId != null && pending.regionId == expectedRegionId) {
+                    // Cold-start path: rehydrate then run penalty without grace.
+                    rehydrateActiveSession()
+                    handleGeofenceExitGraceExpired(exitTimeMillisOverride = pending.exitTimeMillis)
+                }
+                // else: stale sentinel — already cleared by consume; nothing to do.
+            }
         }
     }
 
@@ -208,9 +291,20 @@ class WorkoutSessionViewModel(
      */
     fun resumeWorkout() {
         viewModelScope.launch {
-            val activeSession = workoutRepository.getActiveSession() ?: return@launch
+            rehydrateActiveSession()
+        }
+    }
+
+    /**
+     * Internal: rehydrate `_sessionState` to `Active` from the persisted
+     * `ActiveSessionEntity`. Extracted from `resumeWorkout` so the cold-start
+     * reconciliation path (Phase 19, BLOCKER-19-3) can synchronously restore
+     * before invoking `handleGeofenceExitGraceExpired`.
+     */
+    private suspend fun rehydrateActiveSession() {
+            val activeSession = workoutRepository.getActiveSession() ?: return
             val template = templateRepository.getTemplateById(activeSession.templateId).first()
-                ?: return@launch
+                ?: return
 
             // Load previous performance for resumed workout (HIST-04, D-09)
             val previousWorkout = workoutRepository.getPreviousPerformance(activeSession.templateId)
@@ -298,7 +392,7 @@ class WorkoutSessionViewModel(
             val resumeExercise = orderedExercises[activeSession.currentExerciseIndex]
             _preFill.value = computePreFill(resumeExercise, activeSession.currentSetIndex)
             startElapsedTicker(elapsed)
-        }
+            _hasActiveSession.value = true
     }
 
     /**
@@ -308,6 +402,7 @@ class WorkoutSessionViewModel(
      */
     fun completeSet(reps: Int, weightKgX10: Int, rir: Int = 2) {
         viewModelScope.launch {
+            try {
             // ENTRY-06: Reject 0-rep sets
             if (reps <= 0) return@launch
             val active = _sessionState.value as? WorkoutSessionState.Active ?: return@launch
@@ -338,6 +433,10 @@ class WorkoutSessionViewModel(
             } else {
                 exIdx
             }
+            // Race guard: re-check sessionState is still Active right before the
+            // suspending DB insert. handleGeofenceExitGraceExpired() may have
+            // transitioned to Finished while we were filling in fields above.
+            if (_sessionState.value !is WorkoutSessionState.Active) return@launch
             workoutRepository.saveCompletedSet(
                 templateExIdx, setIdx, reps, weightKgX10,
                 kotlin.time.Clock.System.now().toEpochMilliseconds(),
@@ -347,6 +446,13 @@ class WorkoutSessionViewModel(
             // Compute next cursor position
             val currentExercise = active.exercises[exIdx]
             val nextCursor = computeNextCursor(exIdx, setIdx, active.exercises)
+
+            // D-19-13 — capture anchor + register geofence on the 1st logged set.
+            // F5 inactivity timer was removed by Plan 19-01 (D-19-06); geofence-exit replaces it.
+            // MUST run BEFORE the last-set early-return below — otherwise 1-set templates
+            // (or any path where the 1st logged set is also the last set) never register
+            // the geofence and the status chip stays "Inactive" forever.
+            maybeRegisterGeofenceForFirstSet(active)
 
             // Last set of last exercise -- auto-transition to review
             if (nextCursor.first == exIdx && nextCursor.second == setIdx) {
@@ -379,15 +485,40 @@ class WorkoutSessionViewModel(
             if (restPeriodSec > 0) {
                 startRestTimer(restPeriodSec)
             }
+            } catch (e: androidx.sqlite.SQLiteException) {
+                // Defense-in-depth for the grace-period auto-abort race: if a child
+                // row insert loses to the parent delete despite the guards above,
+                // swallow the FK violation rather than crashing. The session is
+                // already being torn down — the user just sees the abort UI.
+                println("completeSet aborted (FK race with grace-period auto-abort): ${e.message}")
+            }
+        }
+    }
 
-            // Reset inactivity timer — user is still active in the gym
-            startInactivityTimer(active.startTimeMillis)
-
-            // Capture gym reference location on first set of each session
-            if (gymLocation == null) {
-                locationJob?.cancel()
-                locationJob = viewModelScope.launch {
-                    gymLocation = locationProvider.getCurrentLocation()
+    /**
+     * D-19-13 — captures the user's gym anchor location once per workout (first set)
+     * and registers the 50m geofence around it. No-op on subsequent calls (gymLocation
+     * is already set).
+     */
+    private fun maybeRegisterGeofenceForFirstSet(active: WorkoutSessionState.Active) {
+        if (gymLocation != null) return
+        locationJob?.cancel()
+        locationJob = viewModelScope.launch {
+            val captured = locationProvider.getCurrentLocation()
+            gymLocation = captured
+            if (captured != null) {
+                val regionId = "active-workout-${active.startTimeMillis}"
+                activeRegionId = regionId
+                val result = geofenceProvider.register(
+                    center = captured,
+                    radiusMeters = XpFormula.GYM_RADIUS_METERS,
+                    id = regionId
+                )
+                if (result.isSuccess) {
+                    _geofenceState.value = GeofenceUiState.InZone
+                    startGeofenceObserver(regionId)
+                } else {
+                    _geofenceState.value = GeofenceUiState.Inactive
                 }
             }
         }
@@ -547,9 +678,17 @@ class WorkoutSessionViewModel(
 
             timerJob?.cancel()
             elapsedJob?.cancel()
-            inactivityJob?.cancel()
             locationJob?.cancel()
             gymLocation = null
+
+            // Phase 19 cleanup — D-19-13
+            gracePeriodJob?.cancel()
+            gracePeriodJob = null
+            geofenceObserverJob?.cancel()
+            geofenceObserverJob = null
+            activeRegionId?.let { id -> geofenceProvider.unregister(id) }
+            activeRegionId = null
+            _geofenceState.value = GeofenceUiState.Inactive
 
             val endTimeMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
             val durationMillis = endTimeMillis - active.startTimeMillis
@@ -641,9 +780,16 @@ class WorkoutSessionViewModel(
         viewModelScope.launch {
             timerJob?.cancel()
             elapsedJob?.cancel()
-            inactivityJob?.cancel()
             locationJob?.cancel()
             gymLocation = null
+            // Phase 19 cleanup — D-19-13
+            gracePeriodJob?.cancel()
+            gracePeriodJob = null
+            geofenceObserverJob?.cancel()
+            geofenceObserverJob = null
+            activeRegionId?.let { id -> geofenceProvider.unregister(id) }
+            activeRegionId = null
+            _geofenceState.value = GeofenceUiState.Inactive
             workoutRepository.clearActiveSession()
             _hasActiveSession.value = false
             _sessionState.value = WorkoutSessionState.Idle
@@ -770,34 +916,256 @@ class WorkoutSessionViewModel(
     }
 
     /**
-     * Starts a 10-minute inactivity watchdog. If no set is completed before the
-     * timer fires, the user has likely left the gym — deduct XP as penalty (F5).
-     * Cancelled on every set completion, enterReview(), and discardWorkout().
-     */
-    private fun startInactivityTimer(sessionStartMillis: Long) {
-        inactivityJob?.cancel()
-        inactivityJob = viewModelScope.launch {
-            delay(XpFormula.INACTIVITY_TIMEOUT_SECONDS * 1000L)
-            if (_sessionState.value !is WorkoutSessionState.Active) return@launch
-
-            val current = if (gymLocation != null) locationProvider.getCurrentLocation() else null
-            try {
-                gamificationEngine.onInactivityPenalty(
-                    sessionStartMillis = sessionStartMillis,
-                    gymRef = gymLocation,
-                    current = current
-                )
-            } catch (t: Throwable) {
-                println("GamificationEngine.onInactivityPenalty failed: ${t.message}")
-            }
-        }
-    }
-
-    /**
      * Update the rest state within the current Active session state.
      */
     private fun updateRestState(restState: RestState) {
         val current = _sessionState.value as? WorkoutSessionState.Active ?: return
         _sessionState.value = current.copy(restState = restState)
+    }
+
+    // ---------- Phase 19: geofence lifecycle, grace period, early-exit flow ----------
+
+    /**
+     * D-19-15 — observe geofence events for the active region. EXIT starts a
+     * 5-min grace timer; ENTER cancels it; the timer expiring triggers
+     * handleGeofenceExitGraceExpired().
+     */
+    private fun startGeofenceObserver(regionId: String) {
+        geofenceObserverJob?.cancel()
+        geofenceObserverJob = geofenceProvider.events
+            .filter { it.regionId == regionId }
+            .onEach { event ->
+                when (event) {
+                    is GeofenceEvent.Enter -> {
+                        gracePeriodJob?.cancel()
+                        gracePeriodJob = null
+                        _geofenceState.value = GeofenceUiState.InZone
+                    }
+                    is GeofenceEvent.Exit -> {
+                        startGracePeriod()
+                    }
+                    is GeofenceEvent.Error -> {
+                        _geofenceState.value = GeofenceUiState.Inactive
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    /**
+     * D-19-15 — start the 5-min countdown. Emits GracePeriod(remainingSeconds)
+     * each second so the UI can render m:ss. When countdown reaches 0, the
+     * workout is auto-aborted.
+     */
+    private fun startGracePeriod() {
+        gracePeriodJob?.cancel()
+        gracePeriodJob = viewModelScope.launch {
+            // D-quick-vn7 — captured once at grace-period start (later picker
+            // changes do not affect a running countdown). Default 300L returned
+            // by repo if no user preference stored.
+            val configured = settingsRepository.gracePeriodSeconds.first()
+            var remaining = configured.toInt()
+            _geofenceState.value = GeofenceUiState.GracePeriod(remaining)
+            while (remaining > 0) {
+                delay(1000L)
+                remaining--
+                _geofenceState.value = GeofenceUiState.GracePeriod(remaining)
+            }
+            _geofenceState.value = GeofenceUiState.Exited
+            handleGeofenceExitGraceExpired()
+        }
+    }
+
+    /**
+     * D-19-14 + D-19-05 — the 5-min grace expired (warm path) OR the cold-start
+     * reconciliation drained a pending exit (D-19-04 cold path). Saves the
+     * current Active state as an abandoned workout (with whatever sets were
+     * logged), awards volume-XP via `processAbandonedWorkout`, then applies the
+     * staffeled penalty via `onGeofenceExitPenalty`.
+     *
+     * @param exitTimeMillisOverride if non-null, use this as the exit timestamp
+     *        (cold-start path passes the OS-reported time). If null, use the
+     *        current wall clock (warm path).
+     */
+    private suspend fun handleGeofenceExitGraceExpired(exitTimeMillisOverride: Long? = null) {
+        val active = _sessionState.value as? WorkoutSessionState.Active ?: return
+        val exitMillis = exitTimeMillisOverride
+            ?: kotlin.time.Clock.System.now().toEpochMilliseconds()
+
+        // Build CompletedWorkout from in-memory Active state — only sets the user
+        // actually logged. Empty exercises (no logged sets) are filtered.
+        val completedExercises = active.exercises.mapIndexedNotNull { order, exercise ->
+            val logged = exercise.sets.filter { it.isCompleted }
+            if (logged.isEmpty()) return@mapIndexedNotNull null
+            CompletedExercise(
+                exerciseId = exercise.exerciseId,
+                exerciseName = exercise.exerciseName,
+                exerciseOrder = order,
+                sets = logged.map { s ->
+                    CompletedSet(
+                        setIndex = s.setIndex,
+                        actualReps = s.actualReps ?: 0,
+                        actualWeightKgX10 = s.actualWeightKgX10 ?: 0,
+                        rir = s.rir ?: 2
+                    )
+                }
+            )
+        }
+
+        val plannedSetCount = active.exercises.sumOf { it.targetSets }
+        val loggedSetCount = active.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
+
+        var savedWorkoutId: Long = -1L
+        if (loggedSetCount > 0) {
+            val completed = CompletedWorkout(
+                id = 0,
+                templateId = active.templateId,
+                name = active.templateName,
+                startTimeMillis = active.startTimeMillis,
+                endTimeMillis = exitMillis,
+                durationMillis = exitMillis - active.startTimeMillis,
+                exercises = completedExercises,
+                abandoned = true
+            )
+            savedWorkoutId = workoutRepository.saveAbandonedWorkout(completed)
+            try {
+                gamificationEngine.processAbandonedWorkout(savedWorkoutId)
+            } catch (t: Throwable) {
+                println("processAbandonedWorkout failed: ${t.message}")
+            }
+        }
+
+        try {
+            // BLOCKER-19-4: workoutId here is active.startTimeMillis (NOT the post-save id).
+            // EventKey uniqueness comes from (startTimeMillis, exitTimeMillis) — matches
+            // both warm-path and platform actuals' parseWorkoutIdFromRegionId logic.
+            gamificationEngine.onGeofenceExitPenalty(
+                workoutId = active.startTimeMillis,
+                exitTimeMillis = exitMillis,
+                plannedSetCount = plannedSetCount,
+                loggedSetCount = loggedSetCount
+            )
+        } catch (t: Throwable) {
+            println("onGeofenceExitPenalty failed: ${t.message}")
+        }
+
+        // Tear down — shape matches discardWorkout but keep savedWorkoutId.
+        activeRegionId?.let { id -> geofenceProvider.unregister(id) }
+        activeRegionId = null
+        geofenceObserverJob?.cancel()
+        geofenceObserverJob = null
+        gracePeriodJob?.cancel()
+        gracePeriodJob = null
+        locationJob?.cancel()
+        timerJob?.cancel()
+        elapsedJob?.cancel()
+        gymLocation = null
+
+        // Publish terminal state BEFORE deleting the parent row so any concurrent
+        // completeSet coroutine (which re-checks sessionState before each suspending
+        // DB write) bails before insertSet races the FK-bearing delete (Bug:
+        // ios-geofence-grace-expiry-crash, FK 787).
+        val totalSets = completedExercises.sumOf { it.sets.size }
+        val derivedPenaltyXp = XpFormula.geofenceExitPenalty(plannedSetCount, loggedSetCount)
+        _sessionState.value = WorkoutSessionState.Finished(
+            workoutName = active.templateName,
+            durationMillis = exitMillis - active.startTimeMillis,
+            totalSets = totalSets,
+            totalExercises = completedExercises.size,
+            workoutId = savedWorkoutId,
+            abandoned = true,
+            loggedSets = loggedSetCount,
+            penaltyXp = derivedPenaltyXp
+        )
+        workoutRepository.clearActiveSession()
+        _hasActiveSession.value = false
+        _geofenceState.value = GeofenceUiState.Inactive
+    }
+
+    /**
+     * D-19-08 — user tapped the explicit "Workout beenden" button. Branches:
+     *  - allSetsCompleted: just enter review (no penalty, no budget usage).
+     *  - budget >= 1: consume one Early Exit, save normally (no penalty).
+     *  - budget == 0: full penalty path (delegates to handleGeofenceExitGraceExpired).
+     */
+    fun requestEarlyExit(): EarlyExitResult {
+        val active = _sessionState.value as? WorkoutSessionState.Active ?: return EarlyExitResult.NoActiveSession
+        val allSetsDone = active.exercises.all { ex -> ex.sets.all { it.isCompleted } }
+        if (allSetsDone) {
+            enterReview()
+            return EarlyExitResult.NormalReview
+        }
+        viewModelScope.launch {
+            val consumed = earlyExitTracker.consumeOne()
+            if (consumed) {
+                saveCurrentAsCompletedWithoutPenalty(active)
+            } else {
+                handleGeofenceExitGraceExpired()
+            }
+        }
+        return EarlyExitResult.Processing
+    }
+
+    /**
+     * D-19-08 — Early-Exit save with budget consumed: persist as a normal
+     * completed workout (abandoned=false), fire onWorkoutSaved so
+     * PRs/streaks/achievements DO count (legitimate exit, not punishment).
+     */
+    private suspend fun saveCurrentAsCompletedWithoutPenalty(active: WorkoutSessionState.Active) {
+        val endTimeMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        val completedExercises = active.exercises.mapIndexedNotNull { order, exercise ->
+            val logged = exercise.sets.filter { it.isCompleted }
+            if (logged.isEmpty()) return@mapIndexedNotNull null
+            CompletedExercise(
+                exerciseId = exercise.exerciseId,
+                exerciseName = exercise.exerciseName,
+                exerciseOrder = order,
+                sets = logged.map { s ->
+                    CompletedSet(
+                        setIndex = s.setIndex,
+                        actualReps = s.actualReps ?: 0,
+                        actualWeightKgX10 = s.actualWeightKgX10 ?: 0,
+                        rir = s.rir ?: 2
+                    )
+                }
+            )
+        }
+        val completed = CompletedWorkout(
+            id = 0,
+            templateId = active.templateId,
+            name = active.templateName,
+            startTimeMillis = active.startTimeMillis,
+            endTimeMillis = endTimeMillis,
+            durationMillis = endTimeMillis - active.startTimeMillis,
+            exercises = completedExercises,
+            abandoned = false
+        )
+        val workoutId = workoutRepository.saveCompletedWorkout(completed)
+        try {
+            gamificationEngine.onWorkoutSaved(workoutId)
+        } catch (t: Throwable) {
+            println("onWorkoutSaved failed (early-exit path): ${t.message}")
+        }
+        activeRegionId?.let { id -> geofenceProvider.unregister(id) }
+        activeRegionId = null
+        geofenceObserverJob?.cancel()
+        geofenceObserverJob = null
+        gracePeriodJob?.cancel()
+        gracePeriodJob = null
+        locationJob?.cancel()
+        timerJob?.cancel()
+        elapsedJob?.cancel()
+        gymLocation = null
+        workoutRepository.clearActiveSession()
+        _hasActiveSession.value = false
+        _geofenceState.value = GeofenceUiState.Inactive
+        val totalSets = completedExercises.sumOf { it.sets.size }
+        _sessionState.value = WorkoutSessionState.Finished(
+            workoutName = active.templateName,
+            durationMillis = endTimeMillis - active.startTimeMillis,
+            totalSets = totalSets,
+            totalExercises = completedExercises.size,
+            workoutId = workoutId
+        )
     }
 }

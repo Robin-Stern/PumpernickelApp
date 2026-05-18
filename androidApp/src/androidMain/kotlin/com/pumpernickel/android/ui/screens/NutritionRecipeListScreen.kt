@@ -1,6 +1,7 @@
 package com.pumpernickel.android.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -19,6 +21,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -60,21 +64,27 @@ fun NutritionRecipeListScreen(
     viewModel: RecipeListViewModel = koinViewModel()
 ) {
     val recipes by viewModel.recipes.collectAsStateWithLifecycle()
-    var favoriteDeleteCandidate by remember { mutableStateOf<Recipe?>(null) }
+    var recipeToDelete by remember { mutableStateOf<Recipe?>(null) }
 
-    favoriteDeleteCandidate?.let { recipe ->
+    recipeToDelete?.let { recipe ->
         AlertDialog(
-            onDismissRequest = { favoriteDeleteCandidate = null },
-            title = { Text(recipe.name) },
-            text = { Text(stringResource(R.string.dialog_recipe_action_prompt)) },
+            onDismissRequest = { recipeToDelete = null },
+            title = { Text(stringResource(R.string.action_delete_recipe)) },
+            text = { Text(stringResource(R.string.confirm_delete_recipe)) },
             confirmButton = {
-                TextButton(onClick = { viewModel.onEvent(RecipeListEvent.OnRecipeDeleted(recipe)); favoriteDeleteCandidate = null }) {
-                    Text(stringResource(R.string.action_delete_recipe), color = MaterialTheme.colorScheme.error)
+                Button(
+                    onClick = {
+                        viewModel.onEvent(RecipeListEvent.OnRecipeDeleted(recipe))
+                        recipeToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.Black)
+                ) {
+                    Text(stringResource(R.string.action_delete))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onEvent(RecipeListEvent.OnRecipeFavoriteToggled(recipe)); favoriteDeleteCandidate = null }) {
-                    Text(stringResource(R.string.action_remove_favorite))
+                TextButton(onClick = { recipeToDelete = null }) {
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -92,7 +102,7 @@ fun NutritionRecipeListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate(NutritionRecipeCreationRoute) }) {
+            FloatingActionButton(onClick = { navController.navigate(NutritionRecipeCreationRoute()) }) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.title_new_recipe))
             }
         }
@@ -109,8 +119,12 @@ fun NutritionRecipeListScreen(
                     RecipeSwipeCard(
                         recipe = recipe, viewModel = viewModel,
                         onDelete = {
-                            if (recipe.isFavorite) favoriteDeleteCandidate = recipe
-                            else viewModel.onEvent(RecipeListEvent.OnRecipeDeleted(recipe))
+                            recipeToDelete = recipe
+                        },
+                        onEdit = {
+                            navController.navigate(
+                                NutritionRecipeCreationRoute(recipeId = recipe.id)
+                            )
                         }
                     )
                 }
@@ -122,25 +136,31 @@ fun NutritionRecipeListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RecipeSwipeCard(recipe: Recipe, viewModel: RecipeListViewModel, onDelete: () -> Unit) {
+private fun RecipeSwipeCard(
+    recipe: Recipe,
+    viewModel: RecipeListViewModel,
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
+) {
     val currentRecipe by rememberUpdatedState(recipe)
     val currentOnDelete by rememberUpdatedState(onDelete)
     val dismissState = rememberSwipeToDismissBoxState(
-        positionalThreshold = { it * 0.3f },
+        positionalThreshold = { it * 0.5f },
         confirmValueChange = { value ->
             when (value) {
                 SwipeToDismissBoxValue.StartToEnd -> { viewModel.onEvent(RecipeListEvent.OnRecipeFavoriteToggled(currentRecipe)); false }
-                SwipeToDismissBoxValue.EndToStart -> { currentOnDelete(); !currentRecipe.isFavorite }
+                SwipeToDismissBoxValue.EndToStart -> { currentOnDelete(); false }
                 else -> false
             }
         }
     )
+    val nutColors = nutritionColors()
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
             val direction = dismissState.targetValue
             val (bg, label, alignment) = when (direction) {
-                SwipeToDismissBoxValue.StartToEnd -> Triple(NutritionColors.favoriteBackground, stringResource(R.string.action_favorite), Alignment.CenterStart)
+                SwipeToDismissBoxValue.StartToEnd -> Triple(nutColors.favoriteBackground, stringResource(R.string.action_favorite), Alignment.CenterStart)
                 SwipeToDismissBoxValue.EndToStart -> Triple(MaterialTheme.colorScheme.errorContainer, stringResource(R.string.action_delete_recipe), Alignment.CenterEnd)
                 else -> Triple(Color.Transparent, "", Alignment.Center)
             }
@@ -151,32 +171,46 @@ private fun RecipeSwipeCard(recipe: Recipe, viewModel: RecipeListViewModel, onDe
             }
         }
     ) {
-        RecipeCard(recipe = currentRecipe, viewModel = viewModel)
+        RecipeCard(recipe = currentRecipe, viewModel = viewModel, onEdit = onEdit)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RecipeCard(recipe: Recipe, viewModel: RecipeListViewModel) {
+private fun RecipeCard(recipe: Recipe, viewModel: RecipeListViewModel, onEdit: () -> Unit) {
     val macros = viewModel.calculateMacros(recipe)
     val foodMap = viewModel.foods.collectAsStateWithLifecycle().value.associateBy { it.id }
     var expanded by remember { mutableStateOf(false) }
     val totalGrams = recipe.ingredients.sumOf { it.amountGrams }.roundToInt()
 
     Card(
-        onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = if (recipe.isFavorite) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant)
+        modifier = Modifier.fillMaxWidth(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (recipe.isFavorite)
+                MaterialTheme.colorScheme.secondaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            // Header row \u2192 edit. Mirrors iOS where the name+kcal block is the
+            // NavigationLink and the ingredients toggle below is a separate button.
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onEdit),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    if (recipe.isFavorite) Text("\u2605", color = NutritionColors.favoriteStar, style = MaterialTheme.typography.titleMedium)
+                    if (recipe.isFavorite) Text("\u2605", color = nutritionColors().favoriteStar, style = MaterialTheme.typography.titleMedium)
                     Text(recipe.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text("${macros.calories.roundToInt()} kcal", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Text(stringResource(R.string.recipe_total_grams, totalGrams), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                Spacer(Modifier.width(4.dp))
+                Text("\u203a", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             MacroRow(protein = macros.protein, fat = macros.fat, carbs = macros.carbs, sugar = macros.sugar)
             AnimatedVisibility(visible = expanded) {
@@ -194,8 +228,10 @@ private fun RecipeCard(recipe: Recipe, viewModel: RecipeListViewModel) {
                 }
             }
             Text(
-                if (expanded) stringResource(R.string.recipe_ingredients_hide) else stringResource(R.string.recipe_ingredients_count, recipe.ingredients.size),
-                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = if (expanded) stringResource(R.string.recipe_ingredients_hide) else stringResource(R.string.recipe_ingredients_count, recipe.ingredients.size),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.clickable { expanded = !expanded }.padding(vertical = 2.dp)
             )
         }
     }

@@ -19,8 +19,11 @@ struct OverviewView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // ── Rank Strip (D-11 / D-18) ──
-                OverviewRankStrip(rankState: rankState)
+                // ── Rank Strip (D-11 / D-18) — tappable → RankLadderView ──
+                NavigationLink(destination: RankLadderView()) {
+                    OverviewRankStrip(rankState: rankState)
+                }
+                .buttonStyle(.plain)
 
                 // ── Muscle Activity Section ──
                 muscleActivitySection

@@ -10,9 +10,16 @@ object XpFormula {
 
     // ----- Per-source constants (D-02, D-03, D-06, D-17) -----
     const val PR_XP: Int = 50                      // D-03
-    const val INACTIVITY_PENALTY_XP: Int = 50      // F5
-    const val INACTIVITY_TIMEOUT_SECONDS: Long = 600L // F5 — 10 minutes
-    const val GYM_RADIUS_METERS: Double = 50.0     // F5 — Geofence-Radius
+    const val GYM_RADIUS_METERS: Double = 50.0     // Phase 19 — Geofence-Radius (per D-19-06)
+
+    // Phase 19 — Geofence-Exit penalty constants (D-19-05)
+    const val GEOFENCE_EXIT_PENALTY_PER_MISSED_SET: Int = 10
+    const val GEOFENCE_EXIT_PENALTY_MIN: Int = 50
+    const val GEOFENCE_EXIT_PENALTY_MAX: Int = 200
+
+    // Phase 19 — Re-entry grace period before auto-abort (D-19-15)
+    const val GEOFENCE_GRACE_PERIOD_SECONDS: Long = 300L  // 5 minutes
+
     const val NUTRITION_GOAL_DAY_XP: Int = 25      // Claude-discretion flat award per goal-day (D-04/D-05)
 
     // Streak thresholds (D-06) — flat bonus on crossing the threshold once per run.
@@ -58,6 +65,27 @@ object XpFormula {
     fun streakNutritionXp(threshold: Int): Int = when (threshold) {
         7 -> STREAK_NUTRITION_7D
         else -> 0
+    }
+
+    /**
+     * D-19-05 — geofence-exit penalty staffeled by remaining work.
+     *
+     * Formula: -min(MAX, max(MIN, (plannedSetCount - loggedSetCount) * PER_MISSED_SET))
+     *
+     * Examples (PER_MISSED_SET=10, MIN=50, MAX=200):
+     *   - planned=10, logged=0  -> -100 XP
+     *   - planned=10, logged=5  -> -50 XP (clamped to MIN)
+     *   - planned=30, logged=5  -> -200 XP (clamped to MAX)
+     *   - planned=5, logged=5   -> -50 XP (still MIN; geofence-exit always penalises)
+     *   - planned=10, logged=12 -> -50 XP (negative diff clamped to MIN)
+     *
+     * Returned value is always negative (it is a penalty).
+     */
+    fun geofenceExitPenalty(plannedSetCount: Int, loggedSetCount: Int): Int {
+        val missed = plannedSetCount - loggedSetCount
+        val raw = missed * GEOFENCE_EXIT_PENALTY_PER_MISSED_SET
+        val clamped = raw.coerceIn(GEOFENCE_EXIT_PENALTY_MIN, GEOFENCE_EXIT_PENALTY_MAX)
+        return -clamped
     }
 }
 

@@ -10,12 +10,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +48,7 @@ import androidx.navigation.NavHostController
 import com.pumpernickel.android.R
 import com.pumpernickel.android.ui.navigation.AchievementGalleryRoute
 import com.pumpernickel.android.ui.navigation.AiSettingsRoute
+import com.pumpernickel.android.ui.navigation.AiWorkoutGenRoute
 import com.pumpernickel.android.ui.navigation.TemplateEditorRoute
 import com.pumpernickel.android.ui.navigation.WorkoutHistoryListRoute
 import com.pumpernickel.android.ui.navigation.WorkoutSessionRoute
@@ -75,6 +79,12 @@ fun TemplateListScreen(navController: NavHostController) {
                     }
                 },
                 actions = {
+                    IconButton(onClick = { navController.navigate(AiWorkoutGenRoute) }) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = "AI-Workout generieren"
+                        )
+                    }
                     IconButton(onClick = { showSettingsSheet = true }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -113,6 +123,7 @@ fun TemplateListScreen(navController: NavHostController) {
             ) {
                 items(templates, key = { it.id }) { template ->
                     val dismissState = rememberSwipeToDismissBoxState(
+                        positionalThreshold = { it * 0.5f },
                         confirmValueChange = { dismissValue ->
                             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
                                 templateToDelete = template
@@ -196,12 +207,13 @@ fun TemplateListScreen(navController: NavHostController) {
             title = { Text(stringResource(R.string.dialog_delete_template_title)) },
             text = { Text(stringResource(R.string.dialog_delete_template_message)) },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         templateToDelete?.let { viewModel.deleteTemplate(it.id) }
                         showDeleteDialog = false
                         templateToDelete = null
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
                 ) {
                     Text(stringResource(R.string.action_delete))
                 }

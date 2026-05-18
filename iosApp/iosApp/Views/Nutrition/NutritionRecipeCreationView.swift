@@ -11,7 +11,7 @@ struct NutritionRecipeCreationView: View {
     }
 
     @State private var state = RecipeCreationUiState(
-        recipeName: "", searchQuery: "", searchResults: [],
+        recipeName: "", searchQuery: "", searchResults: [], isSearchingRemote: false,
         ingredients: [], totals: RecipeMacros(calories: 0, protein: 0, fat: 0, carbs: 0, sugar: 0),
         errorMessage: nil, editingRecipeId: nil, editingIsFavorite: false
     )
@@ -52,20 +52,11 @@ struct NutritionRecipeCreationView: View {
                     .accessibilityLabel("Barcode scannen")
                 }
 
-                ForEach(state.searchResults, id: \.id) { food in
+                ForEach(Array(state.searchResults.enumerated()), id: \.offset) { _, food in
                     Button {
                         viewModel.onEvent(event: RecipeCreationEventOnFoodSelected(food: food))
                     } label: {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(food.name).foregroundColor(.primary)
-                                Text("\(Int(food.calories.rounded())) kcal/100g")
-                                    .font(.caption).foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Image(systemName: "plus.circle")
-                                .foregroundColor(.appAccent)
-                        }
+                        SearchResultRow(food: food)
                     }
                 }
             }
@@ -193,6 +184,23 @@ struct NutritionRecipeCreationView: View {
             }
         } catch {
             print("RecipeCreation saved event error: \(error)")
+        }
+    }
+}
+
+private struct SearchResultRow: View {
+    let food: Food
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(food.name).foregroundColor(.primary)
+                Text("\(Int(food.calories.rounded())) kcal/100g")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            Spacer()
+            Image(systemName: "plus.circle")
+                .foregroundColor(.appAccent)
         }
     }
 }

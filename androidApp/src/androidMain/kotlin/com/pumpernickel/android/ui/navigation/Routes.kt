@@ -10,10 +10,13 @@ import kotlinx.serialization.Serializable
 // Workout tab screens (will be implemented in Phase 12+)
 @Serializable data object TemplateListRoute
 @Serializable data class TemplateEditorRoute(val templateId: Long? = null)
-@Serializable data object ExerciseCatalogRoute
+@Serializable data class ExerciseCatalogRoute(val preselectedMuscleDbName: String? = null)
 @Serializable data class ExerciseDetailRoute(val exerciseId: String)
 @Serializable data object CreateExerciseRoute
-@Serializable data class ExercisePickerRoute(val templateId: Long)
+@Serializable data class ExercisePickerRoute(
+    val templateId: Long,
+    val preselectedMuscleDbName: String? = null
+)
 @Serializable data class WorkoutSessionRoute(val templateId: Long)
 @Serializable data object WorkoutHistoryListRoute
 @Serializable data class WorkoutHistoryDetailRoute(val workoutId: Long)
@@ -21,7 +24,7 @@ import kotlinx.serialization.Serializable
 // Nutrition tab screens
 @Serializable data object NutritionFoodEntryRoute
 @Serializable data object NutritionRecipeListRoute
-@Serializable data object NutritionRecipeCreationRoute
+@Serializable data class NutritionRecipeCreationRoute(val recipeId: String? = null)
 @Serializable data object NutritionDailyLogRoute
 
 // Gamification

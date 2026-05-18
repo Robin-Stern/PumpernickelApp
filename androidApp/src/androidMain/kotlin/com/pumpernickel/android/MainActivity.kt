@@ -1,5 +1,8 @@
 package com.pumpernickel.android
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -8,11 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.pumpernickel.android.ui.navigation.MainScreen
 import com.pumpernickel.android.ui.screens.TutorialOverlay
 import com.pumpernickel.android.ui.theme.PumpernickelTheme
 import com.pumpernickel.feature.biometric.BiometricGateActivityHolder
+import com.pumpernickel.feature.permissions.PermissionActivityHolder
 import com.pumpernickel.feature.photo.PhotoCaptureLauncherActivityHolder
 import com.pumpernickel.feature.photo.PhotoCaptureLauncherHost
 import com.pumpernickel.presentation.settings.SettingsViewModel
@@ -31,8 +37,18 @@ class MainActivity : FragmentActivity() {
         // PhotoCaptureLauncherHost.<init> calls registerForActivityResult,
         // which requires the Activity to be in CREATED (not yet STARTED).
         BiometricGateActivityHolder.attach(this)
+        // Phase 19 — permission launchers MUST register before setContent.
+        PermissionActivityHolder.attach(this)
         photoCaptureHost = PhotoCaptureLauncherHost(activity = this, context = applicationContext)
         PhotoCaptureLauncherActivityHolder.attach(photoCaptureHost)
+
+        // Async AI generation needs POST_NOTIFICATIONS (Android 13+) for foreground-service notifications.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
+        }
 
         enableEdgeToEdge()
         setContent {
@@ -59,6 +75,7 @@ class MainActivity : FragmentActivity() {
         // Detach FIRST so any in-flight reads of the holder during teardown
         // don't see a stale reference to a destroyed Activity.
         BiometricGateActivityHolder.detach(this)
+        PermissionActivityHolder.detach()
         PhotoCaptureLauncherActivityHolder.detach(photoCaptureHost)
         super.onDestroy()
     }

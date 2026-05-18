@@ -17,26 +17,31 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,25 +49,54 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.pumpernickel.android.BuildConfig
+import com.pumpernickel.android.R
+import com.pumpernickel.android.notifications.GeofenceNotifications
+import com.pumpernickel.android.ui.components.DebugGeofencePanel
+import com.pumpernickel.android.ui.components.EarlyExitConfirmDialog
+import com.pumpernickel.android.ui.components.EarlyExitDialogConfig
+import com.pumpernickel.android.ui.components.GeofenceStatusChip
+import com.pumpernickel.android.ui.components.PermissionBanner
+import com.pumpernickel.android.ui.components.PermissionBannerVariant
+import com.pumpernickel.android.ui.components.PermissionRationaleSheet
 import com.pumpernickel.android.ui.components.ProgressPicturePromptCard
 import com.pumpernickel.android.ui.components.RepsPicker
 import com.pumpernickel.android.ui.components.WeightPicker
+import com.pumpernickel.domain.geofence.EarlyExitTracker
 import com.pumpernickel.domain.model.CompletedExercise
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.SessionExercise
 import com.pumpernickel.domain.model.WeightUnit
+import com.pumpernickel.android.ui.navigation.ExercisePickerRoute
+import com.pumpernickel.android.ui.navigation.TemplateEditorRoute
+import com.pumpernickel.android.ui.navigation.TemplateListRoute
+import com.pumpernickel.domain.permissions.LocationPermissionStatus
+import com.pumpernickel.domain.permissions.PermissionController
+import com.pumpernickel.domain.workout.UndertrainedMuscle
+import com.pumpernickel.domain.workout.UndertrainedSeverity
+import com.pumpernickel.presentation.workout.GeofenceUiState
 import com.pumpernickel.presentation.workout.RestState
 import com.pumpernickel.presentation.workout.WorkoutSessionState
 import com.pumpernickel.presentation.workout.WorkoutSessionViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,10 +114,22 @@ fun WorkoutSessionScreen(
     val weightUnit by viewModel.weightUnit.collectAsState()
     val undertrainedMuscles by viewModel.undertrainedMuscles.collectAsState()
 
+    // Phase 19 — geofence + permission state
+    val permissionController: PermissionController = koinInject()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val geofenceState by viewModel.geofenceState.collectAsState()
+    val earlyExitBudget by viewModel.earlyExitBudget.collectAsState()
+
+    var permissionStatus by remember { mutableStateOf(LocationPermissionStatus.NOT_DETERMINED) }
+    var showRationaleSheet by remember { mutableStateOf(false) }
+    var hasShownRationaleThisSession by rememberSaveable { mutableStateOf(false) }
+    var earlyExitDialogConfig by remember { mutableStateOf<EarlyExitDialogConfig?>(null) }
+
     var selectedReps by remember { mutableIntStateOf(0) }
     var selectedWeightKgX10 by remember { mutableIntStateOf(0) }
     var selectedRir by remember { mutableIntStateOf(2) }
-    var showAbandonDialog by remember { mutableStateOf(false) }
     var showUndertrainedDialog by remember { mutableStateOf(false) }
     var showExerciseOverview by remember { mutableStateOf(false) }
     var showSetInput by remember { mutableStateOf(false) }
@@ -112,18 +158,89 @@ fun WorkoutSessionScreen(
         viewModel.startWorkout(templateId)
     }
 
+    // Phase 19 — fetch/refresh permission status + trigger rationale sheet once
+    LaunchedEffect(Unit) {
+        permissionStatus = permissionController.currentLocationStatus()
+        if (!hasShownRationaleThisSession && permissionStatus != LocationPermissionStatus.ALWAYS) {
+            showRationaleSheet = true
+            hasShownRationaleThisSession = true
+        }
+    }
+
+    // Phase 19 — consolidated geofence observer (WARN-19-6 fix: single LaunchedEffect)
+    // Both transitions guarded by previous-state comparison so each notification fires exactly once.
+    LaunchedEffect(Unit) {
+        var previousGeofenceState: GeofenceUiState = GeofenceUiState.Inactive
+        snapshotFlow { geofenceState }
+            .distinctUntilChanged()
+            .collect { newState ->
+                val previous = previousGeofenceState
+                when {
+                    // ENTER grace: from non-Grace into Grace
+                    newState is GeofenceUiState.GracePeriod && previous !is GeofenceUiState.GracePeriod -> {
+                        GeofenceNotifications.postExitDetected(context)
+                    }
+                    // RE-ENTER zone: from Grace into InZone
+                    newState is GeofenceUiState.InZone && previous is GeofenceUiState.GracePeriod -> {
+                        GeofenceNotifications.postReEntered(context)
+                    }
+                    // EXIT (grace expired): from any state into Exited
+                    newState is GeofenceUiState.Exited && previous !is GeofenceUiState.Exited -> {
+                        val active = sessionState as? WorkoutSessionState.Active
+                        val planned = active?.exercises?.sumOf { it.targetSets } ?: 0
+                        val logged = active?.exercises?.sumOf { ex -> ex.sets.count { it.isCompleted } } ?: 0
+                        val missed = (planned - logged).coerceAtLeast(0)
+                        val penalty = (missed * 10).coerceIn(50, 200)
+                        GeofenceNotifications.postGraceExpired(context, logged, penalty)
+                    }
+                }
+                previousGeofenceState = newState
+            }
+    }
+
     if (showUndertrainedDialog) {
         UndertrainedMusclesDialog(
             muscles = undertrainedMuscles,
-            onDismiss = { showUndertrainedDialog = false }
+            onDismiss = { showUndertrainedDialog = false },
+            onAddExerciseForMuscle = { group ->
+                // CTA: abandon the freshly-started session and deep-link into the
+                // template editor's exercise picker with the muscle group preselected.
+                // popBackStack → navigate → navigate so the back stack reads
+                // TemplateList ← TemplateEditor ← ExercisePicker — required because
+                // ExercisePicker's parent ViewModel lookup uses getBackStackEntry<TemplateEditorRoute>().
+                showUndertrainedDialog = false
+                viewModel.discardWorkout()
+                navController.popBackStack(TemplateListRoute, inclusive = false)
+                navController.navigate(TemplateEditorRoute(templateId = templateId))
+                navController.navigate(
+                    ExercisePickerRoute(
+                        templateId = templateId,
+                        preselectedMuscleDbName = group.dbName
+                    )
+                )
+            }
         )
     }
+
+    val haptics = LocalHapticFeedback.current
 
     when (val state = sessionState) {
         is WorkoutSessionState.Active -> {
             // Reset showSetInput when exercise/set changes (matching iOS onChange behavior)
             LaunchedEffect(state.currentSetIndex, state.currentExerciseIndex) {
                 showSetInput = false
+            }
+
+            // Mirror iOS WorkoutSessionView.swift:697-705 — success haptic on
+            // Resting → RestComplete transition. The ViewModel state machine
+            // guarantees RestComplete is only reached from Resting, so keying
+            // on the boolean is sufficient (and avoids re-launching every
+            // second during the countdown).
+            val isRestComplete = state.restState is RestState.RestComplete
+            LaunchedEffect(isRestComplete) {
+                if (isRestComplete) {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
             }
 
             ActiveWorkoutContent(
@@ -133,7 +250,6 @@ fun WorkoutSessionScreen(
                 selectedWeightKgX10 = selectedWeightKgX10,
                 selectedRir = selectedRir,
                 showSetInput = showSetInput,
-                showAbandonDialog = showAbandonDialog,
                 showExerciseOverview = showExerciseOverview,
                 previousPerformance = previousPerformance,
                 personalBest = personalBest,
@@ -142,7 +258,6 @@ fun WorkoutSessionScreen(
                 onWeightChanged = { selectedWeightKgX10 = it },
                 onRirChanged = { selectedRir = it },
                 onShowSetInput = { showSetInput = it },
-                onShowAbandonDialog = { showAbandonDialog = it },
                 onShowExerciseOverview = { showExerciseOverview = it },
                 onCompleteSet = { reps, weight, rir ->
                     viewModel.completeSet(reps, weight, rir)
@@ -153,10 +268,6 @@ fun WorkoutSessionScreen(
                 onReorderExercise = { from, to -> viewModel.reorderExercise(from, to) },
                 onEnterReview = { viewModel.enterReview() },
                 onSaveReviewedWorkout = { viewModel.saveReviewedWorkout() },
-                onDiscardWorkout = {
-                    viewModel.discardWorkout()
-                    navController.popBackStack()
-                },
                 onPopBackStack = { navController.popBackStack() },
                 onEditCompletedSet = { exIdx, setIdx, reps, weightKgX10, rir ->
                     editExerciseIndex = exIdx
@@ -165,6 +276,26 @@ fun WorkoutSessionScreen(
                     editSelectedWeightKgX10 = snapToWeightStep(weightKgX10)
                     editSelectedRir = rir
                     showEditSheet = true
+                },
+                geofenceState = geofenceState,
+                permissionStatus = permissionStatus,
+                onEarlyExitMenuClick = {
+                    val allDone = state.exercises.all { ex -> ex.sets.all { it.isCompleted } }
+                    if (allDone) {
+                        viewModel.enterReview()
+                    } else {
+                        val planned = state.exercises.sumOf { it.targetSets }
+                        val logged = state.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
+                        val penalty = ((planned - logged) * 10).coerceIn(50, 200)
+                        earlyExitDialogConfig = EarlyExitDialogConfig(
+                            totalBudget = EarlyExitTracker.EARLY_EXIT_BUDGET_PER_MONTH,
+                            remainingBeforeUse = earlyExitBudget.remaining,
+                            penaltyXp = penalty
+                        )
+                    }
+                },
+                onPermissionBannerTap = {
+                    permissionController.openAppSettings()
                 }
             )
             // Edit sheet for Active state completed sets
@@ -249,6 +380,44 @@ fun WorkoutSessionScreen(
             }
         }
     }
+
+    // Phase 19 — Rationale sheet
+    if (showRationaleSheet) {
+        PermissionRationaleSheet(
+            onActivate = {
+                scope.launch {
+                    permissionController.requestWhenInUse()
+                    val s = permissionController.currentLocationStatus()
+                    permissionStatus = s
+                    if (s == LocationPermissionStatus.WHEN_IN_USE) {
+                        permissionController.requestAlways()
+                        permissionController.requestNotifications()
+                        permissionStatus = permissionController.currentLocationStatus()
+                    }
+                    showRationaleSheet = false
+                }
+            },
+            onLater = { showRationaleSheet = false }
+        )
+    }
+
+    // Phase 19 — Early-Exit dialog
+    earlyExitDialogConfig?.let { cfg ->
+        EarlyExitConfirmDialog(
+            config = cfg,
+            onConfirm = {
+                viewModel.requestEarlyExit()
+                // Post notification matching the path
+                if (cfg.hasBudget) {
+                    GeofenceNotifications.postEarlyExitWithBudget(context, cfg.remainingBeforeUse - 1)
+                } else {
+                    GeofenceNotifications.postEarlyExitWithPenalty(context, cfg.penaltyXp)
+                }
+                earlyExitDialogConfig = null
+            },
+            onDismiss = { earlyExitDialogConfig = null }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -260,7 +429,6 @@ private fun ActiveWorkoutContent(
     selectedWeightKgX10: Int,
     selectedRir: Int,
     showSetInput: Boolean,
-    showAbandonDialog: Boolean,
     showExerciseOverview: Boolean,
     previousPerformance: Map<String, CompletedExercise>,
     personalBest: Map<String, Int>,
@@ -269,7 +437,6 @@ private fun ActiveWorkoutContent(
     onWeightChanged: (Int) -> Unit,
     onRirChanged: (Int) -> Unit,
     onShowSetInput: (Boolean) -> Unit,
-    onShowAbandonDialog: (Boolean) -> Unit,
     onShowExerciseOverview: (Boolean) -> Unit,
     onCompleteSet: (Int, Int, Int) -> Unit,
     onSkipRest: () -> Unit,
@@ -278,9 +445,12 @@ private fun ActiveWorkoutContent(
     onReorderExercise: (Int, Int) -> Unit,
     onEnterReview: () -> Unit,
     onSaveReviewedWorkout: () -> Unit,
-    onDiscardWorkout: () -> Unit,
     onPopBackStack: () -> Unit,
-    onEditCompletedSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int) -> Unit = { _, _, _, _, _ -> }
+    onEditCompletedSet: (exerciseIndex: Int, setIndex: Int, reps: Int, weightKgX10: Int, rir: Int) -> Unit = { _, _, _, _, _ -> },
+    geofenceState: GeofenceUiState = GeofenceUiState.Inactive,
+    permissionStatus: LocationPermissionStatus = LocationPermissionStatus.NOT_DETERMINED,
+    onEarlyExitMenuClick: () -> Unit = {},
+    onPermissionBannerTap: () -> Unit = {}
 ) {
     val exercises = active.exercises
     val exIdx = active.currentExerciseIndex
@@ -289,26 +459,29 @@ private fun ActiveWorkoutContent(
 
     var showMenu by remember { mutableStateOf(false) }
 
+    // D-quick-vn7 — observe the user-controllable Debug-Modus toggle to gate the FAB.
+    val settingsViewModel: com.pumpernickel.presentation.settings.SettingsViewModel = koinViewModel()
+    val debugModeEnabled by settingsViewModel.debugModeEnabled.collectAsState()
+
+    // DEBUG-only in-workout geofence trigger sheet (quick-260517-pzh)
+    var showDebugSheet by remember { mutableStateOf(false) }
+    val debugSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(active.templateName) },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        val hasCompletedSets = exercises.any { ex -> ex.sets.any { it.isCompleted } }
-                        if (hasCompletedSets) {
-                            onShowAbandonDialog(true)
-                        } else {
-                            onDiscardWorkout()
-                        }
-                    }) {
+                actions = {
+                    GeofenceStatusChip(
+                        state = geofenceState,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    IconButton(onClick = onEarlyExitMenuClick) {
                         Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close workout"
+                            imageVector = Icons.Default.Check,
+                            contentDescription = stringResource(R.string.early_exit_menu_label)
                         )
                     }
-                },
-                actions = {
                     Box {
                         IconButton(onClick = { showMenu = true }) {
                             Icon(
@@ -335,18 +508,27 @@ private fun ActiveWorkoutContent(
                                     onShowExerciseOverview(true)
                                 }
                             )
-                            DropdownMenuItem(
-                                text = { Text("Finish Workout") },
-                                onClick = {
-                                    showMenu = false
-                                    onEnterReview()
-                                }
-                            )
                         }
                     }
                 }
             )
-        }
+        },
+        floatingActionButton = {
+            // D-quick-vn7 — FAB hidden when user disables Debug-Modus in Settings.
+            if (BuildConfig.DEBUG && debugModeEnabled) {
+                SmallFloatingActionButton(
+                    onClick = { showDebugSheet = true },
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Build,
+                        contentDescription = "Open debug geofence panel"
+                    )
+                }
+            }
+        },
+        floatingActionButtonPosition = FabPosition.Start
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -356,6 +538,23 @@ private fun ActiveWorkoutContent(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // Phase 19 — permission banner (above content)
+            if (permissionStatus == LocationPermissionStatus.WHEN_IN_USE) {
+                PermissionBanner(
+                    variant = PermissionBannerVariant.WHEN_IN_USE_ONLY,
+                    onTap = onPermissionBannerTap,
+                    modifier = Modifier.padding(bottom = 0.dp)
+                )
+            } else if (permissionStatus == LocationPermissionStatus.DENIED ||
+                permissionStatus == LocationPermissionStatus.RESTRICTED
+            ) {
+                PermissionBanner(
+                    variant = PermissionBannerVariant.DENIED,
+                    onTap = onPermissionBannerTap,
+                    modifier = Modifier.padding(bottom = 0.dp)
+                )
+            }
+
             // 1. Header section
             HeaderSection(
                 exercise = exercise,
@@ -412,41 +611,28 @@ private fun ActiveWorkoutContent(
                 onEditSet = onEditCompletedSet
             )
         }
-    }
 
-    // Abandon dialog (D-13, D-14, D-15)
-    if (showAbandonDialog) {
-        val completedSetsCount = active.exercises.sumOf { ex -> ex.sets.count { it.isCompleted } }
-        AlertDialog(
-            onDismissRequest = { onShowAbandonDialog(false) },
-            title = { Text("Abandon Workout?") },
-            text = {
-                Text(
-                    "Exercise ${active.currentExerciseIndex + 1}/${active.exercises.size}, " +
-                        "$completedSetsCount sets completed"
-                )
-            },
-            confirmButton = {
-                Button(onClick = {
-                    onEnterReview()
-                    onSaveReviewedWorkout()
-                    onPopBackStack()
-                    onShowAbandonDialog(false)
-                }) { Text("Save & Exit") }
-            },
-            dismissButton = {
-                Row {
-                    TextButton(onClick = { onShowAbandonDialog(false) }) { Text("Cancel") }
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = {
-                        onDiscardWorkout()
-                        onShowAbandonDialog(false)
-                    }) {
-                        Text("Discard", color = MaterialTheme.colorScheme.error)
-                    }
+        // DEBUG-only geofence mock sheet (quick-260517-pzh)
+        if (BuildConfig.DEBUG && showDebugSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showDebugSheet = false },
+                sheetState = debugSheetState
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Debug — Geofence",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    DebugGeofencePanel()
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-        )
+        }
     }
 
     // Exercise overview sheet (D-09)
@@ -573,11 +759,11 @@ private fun RestTimerSection(
         } else {
             0f
         }
-        CircularProgressIndicator(
+        LinearProgressIndicator(
             progress = { progress },
-            color = MaterialTheme.colorScheme.primary,
+            color = if (isAlmostDone) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier.fillMaxWidth().height(8.dp)
         )
 
         TextButton(onClick = onSkip) {
@@ -678,6 +864,7 @@ private fun SetInputSection(
     onCompleteSet: () -> Unit,
     isEnabled: Boolean
 ) {
+    val haptics = LocalHapticFeedback.current
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -706,7 +893,11 @@ private fun SetInputSection(
         )
 
         Button(
-            onClick = onCompleteSet,
+            onClick = {
+                // Mirror iOS WorkoutSessionView.swift:421-424 — success haptic on Complete Set.
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onCompleteSet()
+            },
             enabled = isEnabled,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -1062,6 +1253,10 @@ private fun FinishedContent(
     finished: WorkoutSessionState.Finished,
     onDone: () -> Unit
 ) {
+    if (finished.abandoned) {
+        AbortedContent(finished = finished, onDone = onDone)
+        return
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1127,6 +1322,81 @@ private fun FinishedContent(
             )
         ) {
             Text("Done", fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun AbortedContent(
+    finished: WorkoutSessionState.Finished,
+    onDone: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Spacer(Modifier.weight(1f))
+
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = androidx.compose.ui.graphics.Color(0xFFFB8C00)
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Text(
+            text = "Workout beendet",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            text = "Du hast die Trainingszone verlassen. ${finished.loggedSets} Sätze wurden gespeichert, ${kotlin.math.abs(finished.penaltyXp)} XP abgezogen.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 32.dp)
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                SummaryRow("Workout", finished.workoutName)
+                SummaryRow("Dauer", formatDuration(finished.durationMillis))
+                SummaryRow("Geloggte Sätze", finished.loggedSets.toString())
+                SummaryRow("XP-Abzug", "−${kotlin.math.abs(finished.penaltyXp)} XP")
+            }
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        Button(
+            onClick = onDone,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
+                .height(48.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = androidx.compose.ui.graphics.Color(0xFFFB8C00)
+            )
+        ) {
+            Text("Zur Übersicht", fontWeight = FontWeight.SemiBold)
         }
 
         Spacer(Modifier.height(32.dp))
@@ -1240,8 +1510,9 @@ private fun RirSelector(
 
 @Composable
 private fun UndertrainedMusclesDialog(
-    muscles: List<MuscleGroup>,
-    onDismiss: () -> Unit
+    muscles: List<UndertrainedMuscle>,
+    onDismiss: () -> Unit,
+    onAddExerciseForMuscle: (MuscleGroup) -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1249,23 +1520,97 @@ private fun UndertrainedMusclesDialog(
         text = {
             Column {
                 Text(
-                    text = "Diese Muskelgruppen wurden in den letzten 7 Tagen kaum oder gar nicht trainiert:",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "Diese Muskelgruppen brauchen einen neuen Trainingsreiz. " +
+                        "Bewertung basiert auf Tagen seit dem letzten qualifizierten Satz (RIR ≤ 3) " +
+                        "und der Frequenz in den letzten 28 Tagen.",
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                muscles.forEach { muscle ->
-                    Text(
-                        text = "• ${muscle.displayName}",
-                        style = MaterialTheme.typography.bodyMedium
+                muscles.forEach { item ->
+                    UndertrainedMuscleRow(
+                        item = item,
+                        onAddExercise = { onAddExerciseForMuscle(item.group) }
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("OK")
+                Text("Später")
             }
         }
     )
+}
+
+@Composable
+private fun UndertrainedMuscleRow(
+    item: UndertrainedMuscle,
+    onAddExercise: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SeverityChip(item.severity)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = item.group.displayName,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = formatRecoveryDetail(item),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        TextButton(
+            onClick = onAddExercise,
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text("Übung hinzufügen")
+        }
+    }
+}
+
+@Composable
+private fun SeverityChip(severity: UndertrainedSeverity) {
+    val (label, color) = when (severity) {
+        UndertrainedSeverity.NEEDS_ATTENTION ->
+            "Beachten" to MaterialTheme.colorScheme.tertiary
+        UndertrainedSeverity.OVERDUE ->
+            "Überfällig" to MaterialTheme.colorScheme.secondary
+        UndertrainedSeverity.NEGLECTED ->
+            "Vernachlässigt" to MaterialTheme.colorScheme.error
+    }
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = color.copy(alpha = 0.15f)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
+    }
+}
+
+private fun formatRecoveryDetail(item: UndertrainedMuscle): String {
+    val daysPart = when (val d = item.daysSinceLast) {
+        null -> "Noch kein qualifizierter Reiz"
+        0 -> "Heute zuletzt trainiert"
+        1 -> "Vor 1 Tag trainiert"
+        else -> "Vor $d Tagen trainiert"
+    }
+    val freqPart = "${formatFrequency(item.weeklyFrequency)}/Woche"
+    return "$daysPart · $freqPart"
+}
+
+private fun formatFrequency(freq: Double): String {
+    // One decimal is enough granularity for "sets per week".
+    val rounded = (freq * 10).toInt() / 10.0
+    return rounded.toString()
 }
