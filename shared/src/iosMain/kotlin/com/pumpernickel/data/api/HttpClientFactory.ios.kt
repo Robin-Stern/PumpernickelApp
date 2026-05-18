@@ -18,8 +18,9 @@ import kotlinx.serialization.json.Json
  *    60s — which is exactly what we observed with Gemma 4 31B (free-tier
  *    inference can take 90-150s end-to-end).
  *
- * Both are set to 180s here so AI requests have headroom; the Ktor side is
- * tightened back down per-request inside OpenAICompatibleClient.
+ * Both are set to 600s (10 min) here so AI requests have headroom for slow
+ * free-tier LLM generations; the Ktor per-request override inside
+ * OpenAICompatibleClient matches the same 10-min ceiling.
  */
 actual fun createHttpClient(): HttpClient = HttpClient(Darwin) {
     install(ContentNegotiation) {
@@ -29,12 +30,13 @@ actual fun createHttpClient(): HttpClient = HttpClient(Darwin) {
         })
     }
     install(HttpTimeout) {
-        requestTimeoutMillis = 180_000
+        requestTimeoutMillis = 600_000   // 10 min — matches the per-request override in OpenAICompatibleClient
+        socketTimeoutMillis = 120_000    // 2 min between bytes for slow LLM token streams
     }
     engine {
         configureSession {
-            timeoutIntervalForRequest = 180.0
-            timeoutIntervalForResource = 300.0
+            timeoutIntervalForRequest = 600.0   // 10 min — between-packet timeout for the URLSession
+            timeoutIntervalForResource = 600.0  // 10 min — total resource lifetime
         }
     }
 }
