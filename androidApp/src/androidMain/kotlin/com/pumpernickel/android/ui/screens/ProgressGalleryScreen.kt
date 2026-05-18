@@ -47,8 +47,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.pumpernickel.android.ui.navigation.ProgressViewerRoute
-import com.pumpernickel.domain.progresspic.PhotoVault
 import com.pumpernickel.domain.progresspic.ProgressGalleryTile
+import com.pumpernickel.infrastructure.progresspic.PhotoVault
 import com.pumpernickel.presentation.progresspic.NavEvent
 import com.pumpernickel.presentation.progresspic.ProgressGalleryViewModel
 import kotlinx.datetime.Instant

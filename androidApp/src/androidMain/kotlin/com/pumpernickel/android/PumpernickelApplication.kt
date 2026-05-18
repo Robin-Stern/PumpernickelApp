@@ -4,7 +4,7 @@ import android.app.Application
 import com.pumpernickel.data.geofence.DebugGeofenceProvider
 import com.pumpernickel.di.GamificationStartup
 import com.pumpernickel.di.initKoin
-import com.pumpernickel.domain.geofence.GeofenceProvider
+import com.pumpernickel.infrastructure.geofence.GeofenceProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

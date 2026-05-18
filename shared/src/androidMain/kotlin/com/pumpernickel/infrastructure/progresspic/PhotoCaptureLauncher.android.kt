@@ -1,10 +1,8 @@
-package com.pumpernickel.domain.progresspic
+package com.pumpernickel.infrastructure.progresspic
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import com.pumpernickel.feature.photo.PhotoCaptureLauncherActivityHolder
-import com.pumpernickel.feature.photo.PhotoCaptureLauncherHost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -98,4 +96,3 @@ actual class PhotoCaptureLauncher(private val context: Context) {
         return out.toByteArray()
     }
 }
-

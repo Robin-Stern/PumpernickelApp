@@ -1,4 +1,4 @@
-package com.pumpernickel.feature.location
+package com.pumpernickel.infrastructure.location
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -10,7 +10,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.pumpernickel.domain.location.GeoPoint
-import com.pumpernickel.domain.location.LocationProvider
+import com.pumpernickel.infrastructure.location.LocationProvider
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 

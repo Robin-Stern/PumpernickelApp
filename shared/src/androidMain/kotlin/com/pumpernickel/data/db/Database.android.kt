@@ -1,9 +1,8 @@
-package com.pumpernickel.platform
+package com.pumpernickel.data.db
 
 import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.pumpernickel.data.db.AppDatabase
 
 fun getDatabaseBuilder(context: Context): RoomDatabase.Builder<AppDatabase> {
     val dbFile = context.getDatabasePath("pumpernickel.db")

@@ -1,4 +1,4 @@
-package com.pumpernickel.feature.biometric
+package com.pumpernickel.infrastructure.progresspic
 
 import androidx.fragment.app.FragmentActivity
 

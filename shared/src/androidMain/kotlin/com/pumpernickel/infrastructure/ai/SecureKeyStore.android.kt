@@ -1,8 +1,9 @@
-package com.pumpernickel.domain.ai
+package com.pumpernickel.infrastructure.ai
 
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import com.pumpernickel.domain.ai.ApiKeyState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

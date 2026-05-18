@@ -1,4 +1,4 @@
-package com.pumpernickel.domain.ai
+package com.pumpernickel.infrastructure.notification
 
 import android.Manifest
 import android.app.NotificationChannel

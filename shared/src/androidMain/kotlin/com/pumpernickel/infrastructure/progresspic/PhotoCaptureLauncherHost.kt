@@ -1,4 +1,4 @@
-package com.pumpernickel.feature.photo
+package com.pumpernickel.infrastructure.progresspic
 
 import android.Manifest
 import android.content.Context
@@ -20,7 +20,7 @@ import java.util.UUID
  * pre-registered eagerly so capture flow can launch without onCreate-only
  * constraints.
  *
- * Symmetric with [com.pumpernickel.feature.biometric.BiometricGateActivityHolder] —
+ * Symmetric with [BiometricGateActivityHolder] —
  * one consistent setup hook for both Activity-bound services in MainActivity.onCreate.
  */
 object PhotoCaptureLauncherActivityHolder {

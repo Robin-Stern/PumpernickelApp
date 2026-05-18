@@ -4,19 +4,19 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.room.RoomDatabase
 import com.pumpernickel.data.db.AppDatabase
-import com.pumpernickel.platform.createDataStoreAndroid
-import com.pumpernickel.platform.getDatabaseBuilder
-import com.pumpernickel.domain.ai.SecureKeyStore
+import com.pumpernickel.data.db.getDatabaseBuilder
+import com.pumpernickel.data.preferences.createDataStoreAndroid
 import com.pumpernickel.domain.geofence.EarlyExitTracker
-import com.pumpernickel.domain.geofence.GeofenceProvider
-import com.pumpernickel.domain.location.LocationProvider
-import com.pumpernickel.domain.permissions.PermissionController
-import com.pumpernickel.domain.progresspic.BiometricGate
-import com.pumpernickel.domain.progresspic.PhotoCaptureLauncher
-import com.pumpernickel.domain.progresspic.PhotoVault
-import com.pumpernickel.feature.geofence.AndroidGeofenceProvider
-import com.pumpernickel.feature.location.AndroidLocationProvider
-import com.pumpernickel.feature.permissions.AndroidPermissionController
+import com.pumpernickel.infrastructure.ai.SecureKeyStore
+import com.pumpernickel.infrastructure.geofence.AndroidGeofenceProvider
+import com.pumpernickel.infrastructure.geofence.GeofenceProvider
+import com.pumpernickel.infrastructure.location.AndroidLocationProvider
+import com.pumpernickel.infrastructure.location.LocationProvider
+import com.pumpernickel.infrastructure.permissions.AndroidPermissionController
+import com.pumpernickel.infrastructure.permissions.PermissionController
+import com.pumpernickel.infrastructure.progresspic.BiometricGate
+import com.pumpernickel.infrastructure.progresspic.PhotoCaptureLauncher
+import com.pumpernickel.infrastructure.progresspic.PhotoVault
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -39,6 +39,6 @@ actual val platformModule: Module = module {
     single<SecureKeyStore> { SecureKeyStore(androidContext()) }
 
     // Async AI generation: notifications + foreground-service-backed background work.
-    single { com.pumpernickel.domain.ai.NotificationService(androidContext()) }
-    single { com.pumpernickel.domain.ai.BackgroundTaskManager(androidContext()) }
+    single { com.pumpernickel.infrastructure.notification.NotificationService(androidContext()) }
+    single { com.pumpernickel.infrastructure.notification.BackgroundTaskManager(androidContext()) }
 }

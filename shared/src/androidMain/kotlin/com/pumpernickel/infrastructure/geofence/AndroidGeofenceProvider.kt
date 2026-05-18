@@ -1,4 +1,4 @@
-package com.pumpernickel.feature.geofence
+package com.pumpernickel.infrastructure.geofence
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -13,8 +13,8 @@ import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
 import com.pumpernickel.domain.geofence.GeofenceEvent
-import com.pumpernickel.domain.geofence.GeofenceProvider
 import com.pumpernickel.domain.location.GeoPoint
+import com.pumpernickel.infrastructure.geofence.GeofenceProvider
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow

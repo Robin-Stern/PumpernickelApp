@@ -1,11 +1,11 @@
-package com.pumpernickel.domain.progresspic
+package com.pumpernickel.infrastructure.progresspic
 
 import android.content.Context
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
-import com.pumpernickel.feature.biometric.BiometricGateActivityHolder
+import com.pumpernickel.domain.progresspic.UnlockResult
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex

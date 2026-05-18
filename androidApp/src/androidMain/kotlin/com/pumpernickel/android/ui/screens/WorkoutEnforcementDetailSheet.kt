@@ -24,7 +24,7 @@ import com.pumpernickel.android.R
 import com.pumpernickel.domain.geofence.EarlyExitBudget
 import com.pumpernickel.domain.geofence.EarlyExitTracker
 import com.pumpernickel.domain.permissions.LocationPermissionStatus
-import com.pumpernickel.domain.permissions.PermissionController
+import com.pumpernickel.infrastructure.permissions.PermissionController
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)

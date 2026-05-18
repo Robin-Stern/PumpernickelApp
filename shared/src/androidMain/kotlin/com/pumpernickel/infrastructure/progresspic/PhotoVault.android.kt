@@ -1,4 +1,4 @@
-package com.pumpernickel.domain.progresspic
+package com.pumpernickel.infrastructure.progresspic
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers

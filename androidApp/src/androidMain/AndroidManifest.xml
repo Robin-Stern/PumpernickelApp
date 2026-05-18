@@ -56,7 +56,7 @@
 
         <!-- Phase 19 — Geofence transition receiver (D-19-04, cold-start capable) -->
         <receiver
-            android:name="com.pumpernickel.feature.geofence.GeofenceBroadcastReceiver"
+            android:name="com.pumpernickel.infrastructure.geofence.GeofenceBroadcastReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.pumpernickel.geofence.TRANSITION" />

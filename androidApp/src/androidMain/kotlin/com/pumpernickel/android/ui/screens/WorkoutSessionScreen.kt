@@ -87,7 +87,7 @@ import com.pumpernickel.android.ui.navigation.ExercisePickerRoute
 import com.pumpernickel.android.ui.navigation.TemplateEditorRoute
 import com.pumpernickel.android.ui.navigation.TemplateListRoute
 import com.pumpernickel.domain.permissions.LocationPermissionStatus
-import com.pumpernickel.domain.permissions.PermissionController
+import com.pumpernickel.infrastructure.permissions.PermissionController
 import com.pumpernickel.domain.workout.UndertrainedMuscle
 import com.pumpernickel.domain.workout.UndertrainedSeverity
 import com.pumpernickel.presentation.workout.GeofenceUiState

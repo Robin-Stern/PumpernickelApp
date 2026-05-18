@@ -1,4 +1,4 @@
-package com.pumpernickel.feature.geofence
+package com.pumpernickel.infrastructure.geofence
 
 import android.content.BroadcastReceiver
 import android.content.Context

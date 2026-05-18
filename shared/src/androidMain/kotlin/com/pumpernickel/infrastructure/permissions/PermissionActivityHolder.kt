@@ -1,4 +1,4 @@
-package com.pumpernickel.feature.permissions
+package com.pumpernickel.infrastructure.permissions
 
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher

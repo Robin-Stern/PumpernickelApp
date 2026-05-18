@@ -1,4 +1,4 @@
-package com.pumpernickel.feature.permissions
+package com.pumpernickel.infrastructure.permissions
 
 import android.Manifest
 import android.content.Context
@@ -9,7 +9,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import com.pumpernickel.domain.permissions.LocationPermissionStatus
-import com.pumpernickel.domain.permissions.PermissionController
+import com.pumpernickel.infrastructure.permissions.PermissionController
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
