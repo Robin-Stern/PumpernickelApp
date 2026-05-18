@@ -24,8 +24,19 @@ struct AIWorkoutGenView: View {
         }
         .navigationTitle("KI-Workout")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await observeUiState() }
-        .task { await observeStreaming() }
+        .task {
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { await observeUiState() }
+                group.addTask { await observeStreaming() }
+                group.addTask { await observeSavedEvent() }
+            }
+        }
+        .onAppear {
+            // 260518-eny — always start from a fresh Form when the user pushes
+            // this screen, so a leftover Saved/Preview/Error state from the
+            // previous navigation cycle cannot "burn" the view.
+            viewModel.reset()
+        }
     }
 
     @ViewBuilder
@@ -54,7 +65,13 @@ struct AIWorkoutGenView: View {
         } else if let error = state as? WorkoutAiUiState.Error {
             ErrorBody(error: error.error, viewModel: viewModel)
         } else if state is WorkoutAiUiState.Saved {
-            SavedBody().onAppear { dismiss() }
+            // 260518-eny — Saved is now a transient state visible for one
+            // coroutine tick only (see WorkoutAiViewModel.save). The real
+            // dismiss trigger comes from the one-shot savedEvent observed by
+            // observeSavedEvent(). Render a neutral ProgressView so any brief
+            // visual flicker stays unobtrusive; do NOT call dismiss() here.
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
@@ -76,6 +93,16 @@ struct AIWorkoutGenView: View {
             }
         } catch {
             print("AIWorkoutGenView streaming observation error: \(error)")
+        }
+    }
+
+    private func observeSavedEvent() async {
+        do {
+            for try await _ in asyncSequence(for: viewModel.savedEvent) {
+                dismiss()
+            }
+        } catch {
+            print("AIWorkoutGenView savedEvent observation error: \(error)")
         }
     }
 }
