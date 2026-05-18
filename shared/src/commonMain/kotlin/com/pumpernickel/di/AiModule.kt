@@ -5,6 +5,8 @@ import com.pumpernickel.domain.ai.AiPromptCatalog
 import com.pumpernickel.domain.ai.RecipeAiUseCase
 import com.pumpernickel.domain.ai.SecureKeyStore
 import com.pumpernickel.domain.ai.WorkoutAiUseCase
+import com.pumpernickel.infrastructure.ai.AiClient
+import com.pumpernickel.infrastructure.ai.OpenAiCompatibleAiClient
 import com.pumpernickel.presentation.ai.AiSettingsViewModel
 import com.pumpernickel.presentation.ai.RecipeAiViewModel
 import com.pumpernickel.presentation.ai.WorkoutAiViewModel
@@ -24,12 +26,21 @@ import org.koin.dsl.module
 val aiModule = module {
     single { AiPromptCatalog() }
 
+    // Ktor adapter kept for `OpenAiCompatibleAiClient` delegation
+    // (Phase 20 Plan 07 / Smell 4). Auth resolves via `SecureKeyStore` inside
+    // the client per request — neither the port nor the adapter ever holds
+    // the API key.
     single {
         OpenAICompatibleClient(
             client = get(),
             keyProvider = { get<SecureKeyStore>().readApiKey() }
         )
     }
+    // Domain port binding — use-cases (`WorkoutAiUseCase`, `RecipeAiUseCase`,
+    // `AiGenerationManager`) inject `AiClient` instead of the Ktor client.
+    // The adapter wraps `OpenAICompatibleClient` and performs Ktor-DTO
+    // construction + SSE streaming under the hood.
+    single<AiClient> { OpenAiCompatibleAiClient(get()) }
 
     viewModel { AiSettingsViewModel(get(), get()) }
 

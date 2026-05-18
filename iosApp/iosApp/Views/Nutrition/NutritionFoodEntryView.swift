@@ -328,7 +328,7 @@ struct NutritionFoodEntryView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func remoteFoodCard(_ result: SearchFoodsRemoteUseCase.RemoteFoodResult) -> some View {
+    private func remoteFoodCard(_ result: RemoteFoodResult) -> some View {
         Button {
             viewModel.onEvent(event: FoodEntryEventOnRemoteFoodSelected(result: result))
             inputMode = .manual

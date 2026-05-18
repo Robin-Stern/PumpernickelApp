@@ -2,12 +2,6 @@
 
 package com.pumpernickel.domain.ai
 
-import com.pumpernickel.data.api.ChatMessage
-import com.pumpernickel.data.api.ChatRequest
-import com.pumpernickel.data.api.JsonSchemaSpec
-import com.pumpernickel.data.api.OpenAICompatibleClient
-import com.pumpernickel.data.api.RecipeAiResponse
-import com.pumpernickel.data.api.ResponseFormat
 import com.pumpernickel.domain.repository.FoodRepository
 import com.pumpernickel.domain.repository.SettingsRepository
 import com.pumpernickel.domain.model.Food
@@ -18,6 +12,8 @@ import com.pumpernickel.domain.model.RecipeIngredient
 import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
 import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
 import com.pumpernickel.domain.nutrition.LoadConsumptionsForDateUseCase
+import com.pumpernickel.infrastructure.ai.AiClient
+import com.pumpernickel.infrastructure.ai.AiJsonSchema
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlin.time.Clock
@@ -25,14 +21,11 @@ import kotlin.time.ExperimentalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import kotlin.math.abs
 import kotlin.uuid.Uuid
 
 class RecipeAiUseCase(
-    private val client: OpenAICompatibleClient,
+    private val aiClient: AiClient,
     private val promptCatalog: AiPromptCatalog,
     private val foodRepository: FoodRepository,
     private val settingsRepository: SettingsRepository,
@@ -158,24 +151,18 @@ class RecipeAiUseCase(
         baseUrl: String, model: String, systemPrompt: String, userMessage: String,
         onProgress: (content: String, reasoning: String) -> Unit
     ): RecipeAiResponse {
-        val request = ChatRequest(
+        val finalContent = aiClient.completeJsonSchema(
+            baseUrl = baseUrl,
             model = model,
-            messages = listOf(
-                ChatMessage(role = "system", content = systemPrompt),
-                ChatMessage(role = "user", content = userMessage)
+            systemPrompt = systemPrompt,
+            userPrompt = userMessage,
+            schema = AiJsonSchema(
+                name = "RecipeAiResponse",
+                schemaJson = recipeAiSchemaJson(),
+                strict = false
             ),
-            responseFormat = ResponseFormat(
-                type = "json_schema",
-                jsonSchema = JsonSchemaSpec(
-                    name = "RecipeAiResponse",
-                    schema = recipeAiSchema(),
-                    strict = false
-                )
-            ),
-            temperature = 0.7,
-            maxTokens = 4096
+            onProgress = onProgress
         )
-        val finalContent = client.chatCompletionStreaming(baseUrl, request, onProgress)
         return parseResponseFromContent(finalContent)
     }
 
@@ -183,17 +170,13 @@ class RecipeAiUseCase(
         baseUrl: String, model: String, systemPrompt: String, userMessage: String,
         onProgress: (content: String, reasoning: String) -> Unit
     ): RecipeAiResponse {
-        val request = ChatRequest(
+        val finalContent = aiClient.completeJsonObject(
+            baseUrl = baseUrl,
             model = model,
-            messages = listOf(
-                ChatMessage(role = "system", content = systemPrompt + "\n\nReturn only JSON matching the schema in the system prompt body."),
-                ChatMessage(role = "user", content = userMessage)
-            ),
-            responseFormat = ResponseFormat(type = "json_object"),
-            temperature = 0.7,
-            maxTokens = 4096
+            systemPrompt = systemPrompt,
+            userPrompt = userMessage,
+            onProgress = onProgress
         )
-        val finalContent = client.chatCompletionStreaming(baseUrl, request, onProgress)
         return parseResponseFromContent(finalContent)
     }
 
@@ -205,33 +188,6 @@ class RecipeAiUseCase(
             )
         }
         val cleaned = stripCodeFences(content)
-        return try {
-            json.decodeFromString(cleaned)
-        } catch (e: Exception) {
-            val excerpt = cleaned.take(500).replace("\n", " ")
-            throw AiError.SchemaInvalid("Recipe JSON parse failed: ${e.message ?: "unknown"}\n\nAntwort: $excerpt")
-        }
-    }
-
-    private fun parseResponse(message: ChatMessage?): RecipeAiResponse {
-        if (message == null) throw AiError.SchemaInvalid("LLM returned no choices")
-        if (!message.refusal.isNullOrBlank()) {
-            throw AiError.SchemaInvalid("LLM refused: ${message.refusal}")
-        }
-        val raw = message.content
-        if (raw.isNullOrBlank()) {
-            val reasoningExcerpt = message.reasoning?.takeIf { it.isNotBlank() }
-            val msg = if (reasoningExcerpt != null) {
-                "Reasoning-Modell hat 4096 Tokens nur für Gedanken verbraucht und keine Antwort geliefert. " +
-                "Wechsle in den KI-Einstellungen zu einem Nicht-Reasoning-Modell wie google/gemma-4-31B-it.\n\n" +
-                "Gedanken-Auszug: ${reasoningExcerpt.take(300).replace("\n", " ")}…"
-            } else {
-                "LLM returned empty content. Modell existiert vermutlich nicht oder lieferte nur tool_calls. " +
-                "Wechsle in den KI-Einstellungen zu google/gemma-4-31B-it."
-            }
-            throw AiError.SchemaInvalid(msg)
-        }
-        val cleaned = stripCodeFences(raw)
         return try {
             json.decodeFromString(cleaned)
         } catch (e: Exception) {
@@ -375,7 +331,11 @@ class RecipeAiUseCase(
         )
     }
 
-    private fun recipeAiSchema(): JsonElement = buildJsonObject {
-        put("type", "object")
-    }
+    /**
+     * Minimal JSON schema for RecipeAiResponse — the adapter
+     * (`OpenAiCompatibleAiClient`) parses this string into a JsonElement when
+     * building the wire DTO. Pure-Kotlin string keeps the port surface free of
+     * `kotlinx.serialization.json.*` types.
+     */
+    private fun recipeAiSchemaJson(): String = "{\"type\":\"object\"}"
 }

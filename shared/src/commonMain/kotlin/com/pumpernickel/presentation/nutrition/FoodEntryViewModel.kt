@@ -9,6 +9,7 @@ import com.pumpernickel.domain.nutrition.DeleteFoodUseCase
 import com.pumpernickel.domain.nutrition.LoadFoodsUseCase
 import com.pumpernickel.domain.nutrition.LogConsumptionUseCase
 import com.pumpernickel.domain.nutrition.LookupBarcodeUseCase
+import com.pumpernickel.domain.nutrition.RemoteFoodResult
 import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
 import com.pumpernickel.domain.nutrition.UpdateFoodUseCase
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
@@ -32,7 +33,7 @@ data class FoodEntryUiState(
     val searchQuery: String = "",
     val isLookingUp: Boolean = false,
     val pendingLogFood: Food? = null,
-    val remoteSearchResults: List<SearchFoodsRemoteUseCase.RemoteFoodResult> = emptyList(),
+    val remoteSearchResults: List<RemoteFoodResult> = emptyList(),
     val isSearchingRemote: Boolean = false,
     val remoteSearchError: String? = null
 )
@@ -49,7 +50,7 @@ sealed interface FoodEntryEvent {
     data class OnFoodSelected(val food: Food) : FoodEntryEvent
     data class OnSearchQueryChanged(val value: String) : FoodEntryEvent
     data class OnBarcodeScanned(val barcode: String) : FoodEntryEvent
-    data class OnRemoteFoodSelected(val result: SearchFoodsRemoteUseCase.RemoteFoodResult) : FoodEntryEvent
+    data class OnRemoteFoodSelected(val result: RemoteFoodResult) : FoodEntryEvent
     data class OnConfirmLogAmount(val food: Food, val amount: Double) : FoodEntryEvent
     data object OnDismissLogDialog : FoodEntryEvent
     data object OnCancelEdit : FoodEntryEvent

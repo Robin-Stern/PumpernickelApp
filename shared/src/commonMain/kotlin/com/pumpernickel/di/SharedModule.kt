@@ -5,6 +5,8 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.pumpernickel.data.db.AppDatabase
 import com.pumpernickel.data.api.OpenFoodFactsApi
 import com.pumpernickel.data.api.createHttpClient
+import com.pumpernickel.domain.nutrition.RemoteFoodSearchClient
+import com.pumpernickel.infrastructure.nutrition.OpenFoodFactsAdapter
 import com.pumpernickel.data.db.CompletedWorkoutDao
 import com.pumpernickel.data.db.DatabaseSeeder
 import com.pumpernickel.data.db.ExerciseDao
@@ -98,7 +100,13 @@ val sharedModule = module {
 
     // Nutrition: API + Seeder
     single { createHttpClient() }
+    // Ktor adapter kept for OpenFoodFactsAdapter delegation (Phase 20 Plan 07 / Smell 4).
     single { OpenFoodFactsApi(get()) }
+    // Domain-port binding — `LookupBarcodeUseCase` + `SearchFoodsRemoteUseCase`
+    // inject `RemoteFoodSearchClient` instead of `OpenFoodFactsApi`. Adapter
+    // wraps the Ktor client and maps OFF wire DTOs into `RemoteFoodResult` /
+    // `RemoteBarcodeProduct` domain types.
+    single<RemoteFoodSearchClient> { OpenFoodFactsAdapter(get()) }
     single { NutritionDataSeeder(get<NutritionDao>()) }
 
     // Nutrition: Use Cases

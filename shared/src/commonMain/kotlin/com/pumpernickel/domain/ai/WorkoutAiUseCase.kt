@@ -1,31 +1,21 @@
 package com.pumpernickel.domain.ai
 
-import com.pumpernickel.data.api.ChatMessage
-import com.pumpernickel.data.api.ChatRequest
-import com.pumpernickel.data.api.JsonSchemaSpec
-import com.pumpernickel.data.api.OpenAICompatibleClient
-import com.pumpernickel.data.api.ResponseFormat
-import com.pumpernickel.data.api.WorkoutAiInlineExercise
-import com.pumpernickel.data.api.WorkoutAiResponse
-import com.pumpernickel.data.api.WorkoutAiTemplate
-import com.pumpernickel.data.api.WorkoutAiTemplateExercise
 import com.pumpernickel.domain.repository.ExerciseRepository
 import com.pumpernickel.domain.repository.SettingsRepository
 import com.pumpernickel.domain.repository.TemplateRepository
 import com.pumpernickel.domain.model.Exercise
 import com.pumpernickel.domain.model.MuscleGroup
+import com.pumpernickel.infrastructure.ai.AiClient
+import com.pumpernickel.infrastructure.ai.AiJsonSchema
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 class WorkoutAiUseCase(
-    private val client: OpenAICompatibleClient,
+    private val aiClient: AiClient,
     private val promptCatalog: AiPromptCatalog,
     private val exerciseRepository: ExerciseRepository,
     private val templateRepository: TemplateRepository,
@@ -183,28 +173,19 @@ class WorkoutAiUseCase(
         userMessage: String,
         onProgress: (content: String, reasoning: String) -> Unit
     ): WorkoutAiResponse {
-        val request = ChatRequest(
+        // strict=false: strict=true requires exact matches; many providers reject our union shapes.
+        val finalContent = aiClient.completeJsonSchema(
+            baseUrl = baseUrl,
             model = model,
-            messages = listOf(
-                ChatMessage(role = "system", content = systemPrompt),
-                ChatMessage(role = "user", content = userMessage)
+            systemPrompt = systemPrompt,
+            userPrompt = userMessage,
+            schema = AiJsonSchema(
+                name = "WorkoutAiResponse",
+                schemaJson = workoutAiSchemaJson(),
+                strict = false
             ),
-            responseFormat = ResponseFormat(
-                type = "json_schema",
-                jsonSchema = JsonSchemaSpec(
-                    name = "WorkoutAiResponse",
-                    schema = workoutAiSchema(),
-                    strict = false  // strict=true requires exact matches; many providers reject our union shapes
-                )
-            ),
-            temperature = 0.7,
-            // Reasoning models (Qwen QwQ, DeepSeek R1) burn thousands of tokens
-            // on chain-of-thought before emitting actual content. Default Together
-            // max_tokens is ~1024 → reasoning never finishes → content stays empty.
-            // 4096 is plenty for our schema and still bounded.
-            maxTokens = 4096
+            onProgress = onProgress
         )
-        val finalContent = client.chatCompletionStreaming(baseUrl, request, onProgress)
         return parseResponseFromContent(finalContent)
     }
 
@@ -215,17 +196,13 @@ class WorkoutAiUseCase(
         userMessage: String,
         onProgress: (content: String, reasoning: String) -> Unit
     ): WorkoutAiResponse {
-        val request = ChatRequest(
+        val finalContent = aiClient.completeJsonObject(
+            baseUrl = baseUrl,
             model = model,
-            messages = listOf(
-                ChatMessage(role = "system", content = systemPrompt + "\n\nReturn only JSON matching the schema in the system prompt body."),
-                ChatMessage(role = "user", content = userMessage)
-            ),
-            responseFormat = ResponseFormat(type = "json_object"),
-            temperature = 0.7,
-            maxTokens = 4096
+            systemPrompt = systemPrompt,
+            userPrompt = userMessage,
+            onProgress = onProgress
         )
-        val finalContent = client.chatCompletionStreaming(baseUrl, request, onProgress)
         return parseResponseFromContent(finalContent)
     }
 
@@ -238,36 +215,6 @@ class WorkoutAiUseCase(
             )
         }
         val cleaned = stripCodeFences(content)
-        return try {
-            json.decodeFromString(cleaned)
-        } catch (e: Exception) {
-            val excerpt = cleaned.take(500).replace("\n", " ")
-            throw AiError.SchemaInvalid("JSON parse failed: ${e.message ?: "unknown"}\n\nAntwort: $excerpt")
-        }
-    }
-
-    private fun parseResponse(message: ChatMessage?): WorkoutAiResponse {
-        if (message == null) throw AiError.SchemaInvalid("LLM returned no choices")
-        if (!message.refusal.isNullOrBlank()) {
-            throw AiError.SchemaInvalid("LLM refused: ${message.refusal}")
-        }
-        val raw = message.content
-        if (raw.isNullOrBlank()) {
-            // Distinguish reasoning-model exhaustion from a plain empty response.
-            // Reasoning models populate `reasoning` with chain-of-thought; if that's
-            // present but content is empty, the model burned all tokens thinking.
-            val reasoningExcerpt = message.reasoning?.takeIf { it.isNotBlank() }
-            val msg = if (reasoningExcerpt != null) {
-                "Reasoning-Modell hat 4096 Tokens nur für Gedanken verbraucht und keine Antwort geliefert. " +
-                "Wechsle in den KI-Einstellungen zu einem Nicht-Reasoning-Modell wie google/gemma-4-31B-it.\n\n" +
-                "Gedanken-Auszug: ${reasoningExcerpt.take(300).replace("\n", " ")}…"
-            } else {
-                "LLM returned empty content. Modell existiert vermutlich nicht oder lieferte nur tool_calls. " +
-                "Wechsle in den KI-Einstellungen zu google/gemma-4-31B-it."
-            }
-            throw AiError.SchemaInvalid(msg)
-        }
-        val cleaned = stripCodeFences(raw)
         return try {
             json.decodeFromString(cleaned)
         } catch (e: Exception) {
@@ -368,11 +315,10 @@ class WorkoutAiUseCase(
 
     /**
      * Minimal JSON schema for WorkoutAiResponse — just shape constraints, not exhaustive.
-     * Strict-mode validation lives app-side (see validateResponse).
+     * Strict-mode validation lives app-side (see validateResponse). The adapter
+     * (`OpenAiCompatibleAiClient`) re-parses this string into a `JsonElement`
+     * when building the wire DTO — pure-Kotlin string keeps the port surface
+     * free of `kotlinx.serialization.json.*` types.
      */
-    private fun workoutAiSchema(): JsonElement = buildJsonObject {
-        put("type", "object")
-        // Detailed schema body intentionally minimal — providers vary in support.
-        // Full validation is enforced app-side in validateResponse().
-    }
+    private fun workoutAiSchemaJson(): String = "{\"type\":\"object\"}"
 }

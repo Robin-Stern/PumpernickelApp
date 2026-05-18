@@ -94,7 +94,7 @@ import com.pumpernickel.android.ui.components.SectionCard
 import com.pumpernickel.android.ui.components.TonalActionButton
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
-import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
+import com.pumpernickel.domain.nutrition.RemoteFoodResult
 import com.pumpernickel.presentation.nutrition.FoodEntryEvent
 import com.pumpernickel.presentation.nutrition.FoodEntryViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -649,7 +649,7 @@ private fun CameraPreview(onBarcodeDetected: (String) -> Unit) {
 }
 
 @Composable
-private fun RemoteFoodCard(result: SearchFoodsRemoteUseCase.RemoteFoodResult, onClick: () -> Unit) {
+private fun RemoteFoodCard(result: RemoteFoodResult, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),

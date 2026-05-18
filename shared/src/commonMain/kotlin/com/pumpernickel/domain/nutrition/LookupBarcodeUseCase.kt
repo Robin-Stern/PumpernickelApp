@@ -1,10 +1,9 @@
 package com.pumpernickel.domain.nutrition
 
-import com.pumpernickel.data.api.OpenFoodFactsApi
 import com.pumpernickel.domain.model.Food
 
 class LookupBarcodeUseCase(
-    private val api: OpenFoodFactsApi,
+    private val client: RemoteFoodSearchClient,
     private val loadFoods: LoadFoodsUseCase
 ) {
     sealed interface Result {
@@ -24,28 +23,23 @@ class LookupBarcodeUseCase(
         if (localMatch != null) return Result.FoundLocally(localMatch)
 
         return try {
-            val response = api.lookupBarcode(barcode)
-            val product = response.product
-            val nutriments = product?.nutriments
-            val productName = product?.productName
+            val product = client.lookupBarcode(barcode) ?: return Result.NotFound
 
-            if (response.status != 1 || productName == null) return Result.NotFound
-
-            // OFF macros (any may be null/0).
-            val cal = nutriments?.energyKcal100g ?: 0.0
-            val prot = nutriments?.proteins100g ?: 0.0
-            val fat = nutriments?.fat100g ?: 0.0
-            val carbs = nutriments?.carbohydrates100g ?: 0.0
-            val sugar = nutriments?.sugars100g ?: 0.0
+            // OFF macros (any may be 0 after adapter null-coalescing).
+            val cal = product.calories
+            val prot = product.protein
+            val fat = product.fat
+            val carbs = product.carbohydrates
+            val sugar = product.sugar
 
             // Fall back to canonical values when OFF has none. Common case for
             // raw single-ingredient products (Honig, Ahornsirup, Olivenöl etc.)
             // where producers don't fill in nutriments because "everyone knows".
             val allZero = cal <= 0.0 && prot <= 0.0 && fat <= 0.0 && carbs <= 0.0
-            val fallback = if (allZero) fallbackFor(productName) else null
+            val fallback = if (allZero) fallbackFor(product.name) else null
 
             Result.FoundRemote(
-                name = productName,
+                name = product.name,
                 calories = fallback?.calories ?: cal,
                 protein = fallback?.protein ?: prot,
                 fat = fallback?.fat ?: fat,

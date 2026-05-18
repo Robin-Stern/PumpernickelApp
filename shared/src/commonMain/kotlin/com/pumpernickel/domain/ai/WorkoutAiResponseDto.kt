@@ -1,15 +1,22 @@
-package com.pumpernickel.data.api
+package com.pumpernickel.domain.ai
 
 import kotlinx.serialization.Serializable
 
 /**
- * D-18-13 — single LLM call returns an array of templates (length 1 for "no split",
- * up to N for PPL / UL / Full Body / Custom splits).
+ * Phase 20 Plan 07 (Smell 4) — pure-Kotlin domain DTO mirroring the JSON wire
+ * shape returned by the LLM for the workout-template generation flow.
  *
- * D-18-09 — inlineNewExercises lets the LLM emit Exercise rows the app doesn't
- * have yet. App resolves exerciseName references to either an existing Exercise
- * (case-insensitive trimmed name match) or a freshly-staged inline exercise on
- * Save (D-18-12 — transactional commit on Save, NOT on receive).
+ * Moved out of `data/api/WorkoutAiSchema.kt` (where the Ktor adapter lives)
+ * so `WorkoutAiUseCase` can parse the raw JSON string returned by the
+ * `AiClient` port without importing `com.pumpernickel.data.api.*`.
+ *
+ * `kotlinx.serialization.Serializable` is a KMP-core annotation and does not
+ * leak Ktor/HTTP transport detail into the domain layer (see Plan-20-07
+ * pitfall guidance — `@Serializable` is allowed in `domain/`).
+ *
+ * Field shape is verbatim identical to the previous `data/api/WorkoutAiSchema.kt`
+ * structures: same property names, same defaults, same types — so the
+ * existing JSON contract with providers is preserved 1:1.
  */
 @Serializable
 data class WorkoutAiResponse(
