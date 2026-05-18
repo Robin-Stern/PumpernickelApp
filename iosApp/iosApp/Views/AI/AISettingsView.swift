@@ -13,6 +13,11 @@ struct AISettingsView: View {
     private let viewModel = AiSettingsKoinHelper().getAiSettingsViewModel()
 
     @State private var providerPreset: String = "openai"
+    /// Quick 260518-f2h — true while the .task observer is pushing a value from
+    /// the shared StateFlow into the @State. Prevents the Picker's `.onChange`
+    /// from re-calling setProviderPreset (which silently clears the API key) when
+    /// the View re-enters and catches up to the actual stored value.
+    @State private var isSyncingProviderFromFlow: Bool = false
     @State private var baseUrl: String = "https://api.openai.com/v1"
     @State private var model: String = "gpt-4o-mini"
     @State private var apiKeyConfigured: Bool = false
@@ -83,6 +88,13 @@ struct AISettingsView: View {
             }
             .pickerStyle(.menu)
             .onChange(of: providerPreset) { _, newValue in
+                // Guard against the initial flow→@State sync re-firing setProviderPreset on
+                // every view re-entry — that would clearApiKey() and silently wipe the saved-state
+                // indicator even though the key is still in keychain (Quick 260518-f2h root cause).
+                if isSyncingProviderFromFlow {
+                    isSyncingProviderFromFlow = false
+                    return
+                }
                 viewModel.setProviderPreset(preset: newValue)
                 keyDraft = ""
                 keyVisible = false
@@ -287,7 +299,10 @@ struct AISettingsView: View {
     private func observeProviderPreset() async {
         do {
             for try await value in asyncSequence(for: viewModel.providerPresetFlow) {
-                self.providerPreset = value
+                if value != self.providerPreset {
+                    self.isSyncingProviderFromFlow = true
+                    self.providerPreset = value
+                }
             }
         } catch {
             print("AISettingsView providerPreset observation error: \(error)")
