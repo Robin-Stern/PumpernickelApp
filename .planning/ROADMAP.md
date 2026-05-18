@@ -348,3 +348,53 @@ Plans:
 - [x] 20-11-PLAN.md — androidMain feature/+platform/+domain actuals → infrastructure/+data/ (Smell 12 / D-20-02 / D-20-03, Wave 7)
 - [x] 20-12-PLAN.md — iosMain data/{geofence,location,permissions}+domain/{ai,progresspic} actuals → infrastructure/ (Smell 12 / D-20-02, Wave 7)
 - [x] 20-13-PLAN.md — Final verification + iOS UAT + Phase-20-Abschluss (Wave 8)
+
+### Phase 21: Bug-Wave aus iOS-Demo-Test 2026-05-18: AI-Workout state-loss, Barcode 0-Nährwerte, OFF v2 Suche-Quality + Brand-Match, Daily-Log Submit-Clear, Geofence-Notification hardcoded Grace, XP-Bookkeeping bei unranked
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 20
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 21 to break down)
+
+### Phase 22: Anthropic AI Provider — 3. Provider neben OpenAI/Together mit OAuth-Login + Modell-Picker (Opus 4.7 / Sonnet 4.6 / Haiku 4.5), Default Opus 4.7 mit bestehenden Prompts
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 21
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 22 to break down)
+
+### Phase 23: AI UX und iOS-Parität — iOS Workout-Gen Zielmuskel-Auswahl + Sets/Reps-Toggle nachziehen, Background-Mini-Bar (WhatsApp-Style typing-indicator) für laufende AI-Generation auf beiden Plattformen mit Tap-to-Expand
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 22
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 23 to break down)
+
+### Phase 24: Nutrition Search und Display Polish — Brand-Match in OFF-Suche, Macro-Pills überall statt Caption-Text, OFF-Pagination via Mehr-laden Button, Zutat im Rezept-Edit tappbar mit Detail-Sheet
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 23
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 24 to break down)
+
+### Phase 25: Nutrition Units und Order — Teelöffel/Esslöffel/Tasse als Mengen-Einheit mit lebensmittelspezifischer g-Umrechnung, Daily-Log Reihenfolge Rezepte-Liste vor Lebensmittel-Liste
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 24
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 25 to break down)
