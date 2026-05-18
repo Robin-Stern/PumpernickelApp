@@ -1,5 +1,7 @@
 package com.pumpernickel.domain.ai
 
+import com.pumpernickel.infrastructure.notification.BackgroundTaskManager
+import com.pumpernickel.infrastructure.notification.NotificationService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

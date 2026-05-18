@@ -1,4 +1,4 @@
-package com.pumpernickel.domain.ai
+package com.pumpernickel.infrastructure.notification
 
 /**
  * Interface for showing local notifications.

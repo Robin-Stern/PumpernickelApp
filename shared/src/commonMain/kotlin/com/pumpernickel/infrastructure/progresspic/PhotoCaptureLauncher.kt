@@ -1,4 +1,4 @@
-package com.pumpernickel.domain.progresspic
+package com.pumpernickel.infrastructure.progresspic
 
 /**
  * System camera + photo-library wrapper. Returns JPEG bytes already resized

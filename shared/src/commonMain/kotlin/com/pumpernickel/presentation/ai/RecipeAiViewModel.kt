@@ -10,7 +10,7 @@ import com.pumpernickel.domain.ai.ApiKeyState
 import com.pumpernickel.domain.ai.RecipeAiPreview
 import com.pumpernickel.domain.ai.RecipeAiUseCase
 import com.pumpernickel.domain.ai.RemainingMacros
-import com.pumpernickel.domain.ai.SecureKeyStore
+import com.pumpernickel.infrastructure.ai.SecureKeyStore
 import com.pumpernickel.domain.ai.StreamingText
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.CancellationException

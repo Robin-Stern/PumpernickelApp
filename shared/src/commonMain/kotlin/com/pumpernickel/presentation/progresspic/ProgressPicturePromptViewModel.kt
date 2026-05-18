@@ -3,7 +3,7 @@ package com.pumpernickel.presentation.progresspic
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pumpernickel.domain.repository.ProgressPictureRepository
-import com.pumpernickel.domain.progresspic.PhotoCaptureLauncher
+import com.pumpernickel.infrastructure.progresspic.PhotoCaptureLauncher
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

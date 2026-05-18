@@ -1,7 +1,7 @@
 package com.pumpernickel.data.geofence
 
 import com.pumpernickel.domain.geofence.GeofenceEvent
-import com.pumpernickel.domain.geofence.GeofenceProvider
+import com.pumpernickel.infrastructure.geofence.GeofenceProvider
 import com.pumpernickel.domain.location.GeoPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow

@@ -11,12 +11,12 @@ import com.pumpernickel.domain.gamification.XpFormula
 import com.pumpernickel.domain.geofence.EarlyExitBudget
 import com.pumpernickel.domain.geofence.EarlyExitTracker
 import com.pumpernickel.domain.geofence.GeofenceEvent
-import com.pumpernickel.domain.geofence.GeofenceProvider
+import com.pumpernickel.infrastructure.geofence.GeofenceProvider
 import com.pumpernickel.domain.geofence.PendingGeofenceExitStore
 import com.pumpernickel.domain.location.GeoPoint
-import com.pumpernickel.domain.location.LocationProvider
+import com.pumpernickel.infrastructure.location.LocationProvider
 import com.pumpernickel.domain.model.CompletedExercise
-import com.pumpernickel.domain.permissions.PermissionController
+import com.pumpernickel.infrastructure.permissions.PermissionController
 import com.pumpernickel.domain.workout.GetUndertrainedMusclesUseCase
 import com.pumpernickel.domain.workout.UndertrainedMuscle
 import com.pumpernickel.domain.model.CompletedSet

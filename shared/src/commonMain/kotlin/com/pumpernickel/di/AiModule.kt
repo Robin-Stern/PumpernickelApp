@@ -3,7 +3,7 @@ package com.pumpernickel.di
 import com.pumpernickel.data.api.OpenAICompatibleClient
 import com.pumpernickel.domain.ai.AiPromptCatalog
 import com.pumpernickel.domain.ai.RecipeAiUseCase
-import com.pumpernickel.domain.ai.SecureKeyStore
+import com.pumpernickel.infrastructure.ai.SecureKeyStore
 import com.pumpernickel.domain.ai.WorkoutAiUseCase
 import com.pumpernickel.infrastructure.ai.AiClient
 import com.pumpernickel.infrastructure.ai.OpenAiCompatibleAiClient

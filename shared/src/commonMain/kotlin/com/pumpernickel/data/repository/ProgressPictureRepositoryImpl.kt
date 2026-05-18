@@ -2,7 +2,7 @@ package com.pumpernickel.data.repository
 
 import com.pumpernickel.data.db.ProgressPictureDao
 import com.pumpernickel.data.db.ProgressPictureEntity
-import com.pumpernickel.domain.progresspic.PhotoVault
+import com.pumpernickel.infrastructure.progresspic.PhotoVault
 import com.pumpernickel.domain.progresspic.ProgressGalleryTile
 import com.pumpernickel.domain.progresspic.ProgressPicture
 import com.pumpernickel.domain.repository.ProgressPictureRepository

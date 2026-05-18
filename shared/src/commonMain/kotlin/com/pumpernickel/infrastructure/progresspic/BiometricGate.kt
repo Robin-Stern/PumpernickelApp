@@ -1,4 +1,6 @@
-package com.pumpernickel.domain.progresspic
+package com.pumpernickel.infrastructure.progresspic
+
+import com.pumpernickel.domain.progresspic.UnlockResult
 
 /**
  * OS-level auth gate. Android `actual` uses BiometricPrompt with

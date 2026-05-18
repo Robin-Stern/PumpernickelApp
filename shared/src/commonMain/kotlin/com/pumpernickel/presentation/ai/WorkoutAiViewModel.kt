@@ -7,7 +7,7 @@ import com.pumpernickel.domain.ai.AiGenerationManager
 import com.pumpernickel.domain.ai.AiGenerationState
 import com.pumpernickel.domain.ai.AiType
 import com.pumpernickel.domain.ai.ApiKeyState
-import com.pumpernickel.domain.ai.SecureKeyStore
+import com.pumpernickel.infrastructure.ai.SecureKeyStore
 import com.pumpernickel.domain.ai.StreamingText
 import com.pumpernickel.domain.ai.WorkoutAiForm
 import com.pumpernickel.domain.ai.WorkoutAiPreview

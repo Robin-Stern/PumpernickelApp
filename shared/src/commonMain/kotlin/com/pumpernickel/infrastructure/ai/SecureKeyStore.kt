@@ -1,4 +1,4 @@
-package com.pumpernickel.domain.ai
+package com.pumpernickel.infrastructure.ai
 
 /**
  * REQ-AI-06 — BYOK API key storage. The key is the ONLY secret managed here;

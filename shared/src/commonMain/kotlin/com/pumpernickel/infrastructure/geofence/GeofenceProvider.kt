@@ -1,5 +1,6 @@
-package com.pumpernickel.domain.geofence
+package com.pumpernickel.infrastructure.geofence
 
+import com.pumpernickel.domain.geofence.GeofenceEvent
 import com.pumpernickel.domain.location.GeoPoint
 import kotlinx.coroutines.flow.SharedFlow
 

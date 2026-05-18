@@ -1,4 +1,4 @@
-package com.pumpernickel.domain.progresspic
+package com.pumpernickel.infrastructure.progresspic
 
 /**
  * Platform-private photo storage. The `actual` class lives under each

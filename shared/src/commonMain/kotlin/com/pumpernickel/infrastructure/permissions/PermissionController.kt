@@ -1,4 +1,6 @@
-package com.pumpernickel.domain.permissions
+package com.pumpernickel.infrastructure.permissions
+
+import com.pumpernickel.domain.permissions.LocationPermissionStatus
 
 /**
  * D-19-12 — platform-agnostic permission gateway. Implementations:
