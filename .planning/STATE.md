@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: Android Material 3 UI
 status: verifying
 stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-05-18T17:33:02.475Z"
+last_updated: "2026-05-18T17:45:45.055Z"
 last_activity: 2026-05-18
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 62
-  completed_plans: 56
-  percent: 90
+  completed_plans: 57
+  percent: 92
 ---
 
 # Project State
@@ -32,7 +32,7 @@ Branch: `android-ios-parity` (ahead of `main` by ~25 commits — merge pending)
 Status: Phase complete — ready for verification
 Last activity: 2026-05-18
 
-Progress: [█████████░] 90%
+Progress: [█████████░] 92%
 
 ## ⚠️  Untracked Drift
 
@@ -84,6 +84,7 @@ See `MILESTONES.md` → "Post-v1.5 (Untracked)" for the full summary. No per-pha
 | Phase 20 P06 | 3 min | 2 tasks | 6 files |
 | Phase 20 P08 | ~13 min | 3 tasks | 11 files |
 | Phase 20 P10 | 14min | 2 tasks | 26 files |
+| Phase 20 P11 | ~9 min | 2 tasks | 23 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - [Phase ?]: Plan 20-08: GamificationRepository.getPrLedgerEntries() return type changed from data.db.XpLedgerEntity to new domain XpLedgerRecord — closes the Plan 20-04 deferred Smell-3 leak in 20-08 (not in 20-09 as originally noted), because the Engine grep-guard requires zero data.* imports
 - [Phase ?]: Plan 20-08: New domain records in EngineRecords.kt (CompletedWorkoutRecord, CompletedExerciseRecord, CompletedSetRecord, XpLedgerRecord) — narrow projections at the repository boundary; ProgressGalleryViewModel got an inline Entity→Domain mapper as a Rule 3 blocking fix (deferred Smell 6 — VM still injects DAO directly)
 - [Phase ?]: Plan 20-10 done: infrastructure/ commonMain layer (8 ports, Smell 12 / D-20-02)
+- [Phase ?]: Plan 20-11 [D-20-02/D-20-03 Android]: androidMain feature/+platform/+domain actuals atomic move to infrastructure/+data/ — 14 file moves + 9 consumer imports + AndroidManifest receiver-FQN update. Atomic commit 03b6236. Android build green; iOS broken until Plan 20-12.
 
 ### Roadmap Evolution
 
@@ -183,6 +185,6 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 
 ## Session Continuity
 
-Last session: 2026-05-18T17:32:51.077Z
+Last session: 2026-05-18T17:45:26.186Z
 Stopped at: Completed 20-02-PLAN.md
 Next step: Optional — `android-ios-parity` → `main` merge; plan post-v1.0 work (e.g. Phase 20 or demo polish for university deadline)
