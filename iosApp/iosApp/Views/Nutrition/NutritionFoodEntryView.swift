@@ -281,6 +281,14 @@ struct NutritionFoodEntryView: View {
                 .textFieldStyle(.roundedBorder)
                 .submitLabel(.search)
                 .focused($focusedField)
+                .onSubmit {
+                    // D-21-05 / B4 — neutral submit: only collapse the keyboard,
+                    // never call onEvent or cancel remote-search jobs. Without this
+                    // explicit no-op handler, .submitLabel(.search) falls through
+                    // SwiftUI's submit chain and triggers a binding re-fire that
+                    // clears remoteSearchResults via OnSearchQueryChanged.
+                    focusedField = false
+                }
             }
 
             if uiState.isSearchingRemote {
