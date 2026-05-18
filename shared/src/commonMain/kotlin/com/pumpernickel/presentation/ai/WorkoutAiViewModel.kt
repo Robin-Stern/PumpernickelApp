@@ -14,13 +14,18 @@ import com.pumpernickel.domain.ai.WorkoutAiPreview
 import com.pumpernickel.domain.ai.WorkoutAiSplit
 import com.pumpernickel.domain.ai.WorkoutAiUseCase
 import com.pumpernickel.domain.model.MuscleGroup
+import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 
 /**
  * D-18-07 / D-18-08 / D-18-12 / D-18-13 / D-18-16 — F6 Workout AI flow VM.
@@ -52,6 +57,19 @@ class WorkoutAiViewModel(
 
     @NativeCoroutinesState
     val streamingText: StateFlow<StreamingText> = generationManager.streamingText
+
+    /**
+     * 260518-eny — one-shot dismiss signal for iOS-View after successful `save()`.
+     * Replaces the previous "persistent `Saved` UI-state -> auto-dismiss" pattern,
+     * which left the screen "burned" on re-entry (Saved state survived navigation
+     * because the Koin-resolved VM instance is effectively long-lived on iOS).
+     * Android continues to react to the (very short-lived) `Saved` UI-state in its
+     * existing `LaunchedEffect(uiState)`-based pop logic.
+     */
+    private val _savedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    @NativeCoroutines
+    val savedEvent: SharedFlow<Unit> = _savedEvent.asSharedFlow()
 
     private val defaultForm = WorkoutAiUiState.Form(
         targetMuscles = emptyList(),
@@ -171,8 +189,16 @@ class WorkoutAiViewModel(
         viewModelScope.launch {
             try {
                 val ids = useCase.commit(preview.preview)
-                _uiState.value = WorkoutAiUiState.Saved(templateIds = ids)
                 generationManager.clear()
+                // Android: LaunchedEffect(uiState) sees `Saved` once and pops.
+                _uiState.value = WorkoutAiUiState.Saved(templateIds = ids)
+                // iOS: one-shot SharedFlow triggers dismiss() in the View.
+                _savedEvent.tryEmit(Unit)
+                // After both observers had a chance to react, fall back to the
+                // default Form so a re-entry into this screen does NOT replay the
+                // Saved state (260518-eny — fixes iOS "burned screen" bug).
+                yield()
+                _uiState.value = defaultForm
             } catch (ce: CancellationException) {
                 throw ce
             } catch (ai: AiError) {
@@ -184,6 +210,18 @@ class WorkoutAiViewModel(
                 )
             }
         }
+    }
+
+    /**
+     * 260518-eny — idempotent reset called from iOS `.onAppear` to guarantee the
+     * AI workout screen always shows a fresh Form view, even if the long-lived VM
+     * instance carries a stale `Saved` / `Preview` / `Error` state from a prior
+     * navigation cycle. Does NOT cancel in-flight generations (would break the
+     * Phase-19 BackgroundTaskManager flow); the `Generating` guard preserves that.
+     */
+    fun reset() {
+        if (_uiState.value is WorkoutAiUiState.Generating) return
+        _uiState.value = defaultForm
     }
 
     fun discardPreview() {
@@ -225,5 +263,13 @@ sealed class WorkoutAiUiState {
         val originatingForm: Form
     ) : WorkoutAiUiState()
 
+    /**
+     * 260518-eny — As of this fix, `Saved` is only emitted for a single coroutine
+     * tick inside `WorkoutAiViewModel.save()` to give Android's
+     * `LaunchedEffect(uiState)`-based pop logic a chance to fire. The iOS View
+     * uses the one-shot `WorkoutAiViewModel.savedEvent` SharedFlow instead and
+     * defensively ignores the `Saved` UI-state (no `dismiss()` from `onAppear`).
+     * The data class is retained for shared-framework binary stability.
+     */
     data class Saved(val templateIds: List<Long>) : WorkoutAiUiState()
 }
