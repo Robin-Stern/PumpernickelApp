@@ -16,16 +16,18 @@ actual fun createHttpClient(): HttpClient = HttpClient(OkHttp) {
         })
     }
     install(HttpTimeout) {
-        requestTimeoutMillis = 300_000
-        socketTimeoutMillis = 120_000
+        requestTimeoutMillis = 600_000   // 10 min — matches per-request override in OpenAICompatibleClient
+        socketTimeoutMillis = 120_000    // 2 min between bytes for slow LLM token streams
     }
     engine {
         config {
             // OkHttp defaults are 10s — much shorter than the Ktor request timeout.
-            // For AI endpoints free-tier inference can run 90-150s, so all three
-            // socket-level timeouts must match the Ktor ceiling.
-            readTimeout(300, TimeUnit.SECONDS)
-            writeTimeout(300, TimeUnit.SECONDS)
+            // For AI endpoints free-tier inference can run up to 10 minutes, so the
+            // socket-level read/write timeouts must match the Ktor ceiling.
+            // connectTimeout stays at 30s — TCP handshake is fast and unrelated to
+            // slow LLM generation.
+            readTimeout(600, TimeUnit.SECONDS)
+            writeTimeout(600, TimeUnit.SECONDS)
             connectTimeout(30, TimeUnit.SECONDS)
         }
     }

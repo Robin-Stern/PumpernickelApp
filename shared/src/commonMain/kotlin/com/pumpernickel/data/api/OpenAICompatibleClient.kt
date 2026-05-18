@@ -49,8 +49,8 @@ class OpenAICompatibleClient(
                 header("Authorization", "Bearer $key")
                 contentType(ContentType.Application.Json)
                 timeout {
-                    requestTimeoutMillis = 300_000
-                    socketTimeoutMillis = 120_000
+                    requestTimeoutMillis = 600_000   // 10 min — full stream lifetime for slow free-tier LLMs
+                    socketTimeoutMillis = 120_000    // 2 min between bytes — generous gap tolerance for slow token streams
                 }
                 setBody(request)
             }
@@ -113,8 +113,8 @@ class OpenAICompatibleClient(
                 header("Accept", "text/event-stream")
                 contentType(ContentType.Application.Json)
                 timeout {
-                    requestTimeoutMillis = 300_000
-                    socketTimeoutMillis = 120_000
+                    requestTimeoutMillis = 600_000   // 10 min — full stream lifetime for slow free-tier LLMs
+                    socketTimeoutMillis = 120_000    // 2 min between bytes — generous gap tolerance for slow token streams
                 }
                 setBody(streamingRequest)
             }.execute { response ->
