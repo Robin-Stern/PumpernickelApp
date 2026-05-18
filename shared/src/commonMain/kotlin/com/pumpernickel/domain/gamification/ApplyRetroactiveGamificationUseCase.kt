@@ -1,13 +1,8 @@
-package com.pumpernickel.data.repository
+package com.pumpernickel.domain.gamification
 
-import com.pumpernickel.data.db.CompletedWorkoutDao
-import com.pumpernickel.data.db.ConsumptionEntryEntity
-import com.pumpernickel.data.db.NutritionDao
-import com.pumpernickel.domain.gamification.GamificationEngine
-import com.pumpernickel.domain.gamification.NutritionGoalDayPolicy
-import com.pumpernickel.domain.model.ConsumptionEntry
-import com.pumpernickel.domain.model.FoodUnit
+import com.pumpernickel.domain.repository.FoodRepository
 import com.pumpernickel.domain.repository.SettingsRepository
+import com.pumpernickel.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -18,7 +13,7 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 
 /**
- * D-12 / D-13. One-shot walker run on first launch after upgrade:
+ * D-12 / D-13. One-shot use-case run on first launch after upgrade:
  * - Sentinel check via SettingsRepository.retroactiveApplied. If true → return.
  * - Walk completed_workouts ASC by startTimeMillis, replaying each through
  *   GamificationEngine.processHistoricalWorkout with a running-PB map
@@ -29,16 +24,19 @@ import kotlinx.datetime.toLocalDateTime
  * - On throw, do NOT set the sentinel — re-try on next launch. Dedupe on
  *   (source, eventKey) guarantees no double-award (D-13).
  *
- * Plan 20-08 (Smell 3): the shared [NutritionGoalDayPolicy] now consumes
- * the domain type [ConsumptionEntry] instead of the Room-backed Entity.
- * The walker maps Entity → Domain inline via [toDomainConsumption] before
- * the policy call so the data-layer remains the only Entity-aware site.
+ * Plan 20-09 (Smell 11 / D-20-06): file moved from `data/repository/RetroactiveWalker.kt`
+ * to `domain/gamification/ApplyRetroactiveGamificationUseCase.kt`. This is a domain
+ * orchestration (not a repository) so it lives under `domain/`. As a consequence the
+ * ctor no longer takes DAOs — it consumes [WorkoutRepository.getAllCompletedWorkoutRecords]
+ * and [FoodRepository.loadConsumptions] instead. The inline `ConsumptionEntryEntity →
+ * ConsumptionEntry` mapper from Plan 20-08 is gone: `loadConsumptions()` already returns
+ * the domain type.
  */
-class RetroactiveWalker(
+class ApplyRetroactiveGamificationUseCase(
     private val engine: GamificationEngine,
     private val settingsRepo: SettingsRepository,
-    private val completedWorkoutDao: CompletedWorkoutDao,
-    private val nutritionDao: NutritionDao
+    private val workoutRepo: WorkoutRepository,
+    private val foodRepo: FoodRepository
 ) {
 
     suspend fun applyIfNeeded() {
@@ -49,7 +47,7 @@ class RetroactiveWalker(
 
     private suspend fun replay() {
         // ----- Workouts in chronological order -----
-        val workouts = completedWorkoutDao.getAllWorkouts().first()
+        val workouts = workoutRepo.getAllCompletedWorkoutRecords()
             .sortedBy { it.startTimeMillis }
         val runningPbKgX10 = mutableMapOf<String, Int>()
 
@@ -63,24 +61,21 @@ class RetroactiveWalker(
 
         // ----- Nutrition goal-days -----
         val goals = settingsRepo.nutritionGoals.first()
-        val allEntries: List<ConsumptionEntryEntity> = nutritionDao.getAllEntries()
+        val allEntries = foodRepo.loadConsumptions()
 
         // Group entries by ISO date derived from timestampMillis in local TZ.
         // This matches the same derivation logic used by GamificationEngine.buildSnapshot().
-        val byDate: Map<String, List<ConsumptionEntryEntity>> = allEntries.groupBy { entry ->
+        val byDate = allEntries.groupBy { entry ->
             entry.timestampMillis.toLocalDateString()
         }
 
         for ((dateIso, dayEntries) in byDate.entries.sortedBy { it.key }) {
-            // Map Entity → Domain at the data-layer boundary so the shared
-            // predicate stays free of Room types (Plan 20-08, Smell 3).
-            val domainEntries = dayEntries.map { it.toDomainConsumption() }
             // Shared predicate — behaviour MUST match engine's live path (Warning-9 fix).
-            if (!NutritionGoalDayPolicy.isGoalDay(domainEntries, goals)) continue
+            if (!NutritionGoalDayPolicy.isGoalDay(dayEntries, goals)) continue
             val localDate = LocalDate.parse(dateIso)
             val awardedAtMillis = localDate.toStartOfDayMillis()
             // processHistoricalGoalDay also fires the nutrition streak bonus via
-            // evaluateNutritionStreakAt, so the walker doesn't replay streaks separately.
+            // evaluateNutritionStreakAt, so this use-case doesn't replay streaks separately.
             engine.processHistoricalGoalDay(localDate, awardedAtMillis)
         }
 
@@ -103,26 +98,3 @@ class RetroactiveWalker(
             .toEpochMilliseconds()
     }
 }
-
-/**
- * Entity → Domain mapper for [ConsumptionEntryEntity]. Inline in the walker
- * file (Plan 20-08, Approach §6 Option A) — semantically tiny, only consumed
- * here and in the gallery VM (which has its own copy to keep concerns local).
- *
- * `unit` is stored as a `String` on the Room entity ("GRAM" / "MILLILITER")
- * and re-promoted to the [FoodUnit] enum with GRAM as a safe fallback.
- */
-private fun ConsumptionEntryEntity.toDomainConsumption(): ConsumptionEntry =
-    ConsumptionEntry(
-        id = id,
-        foodId = foodId,
-        name = name,
-        caloriesPer100 = caloriesPer100,
-        proteinPer100 = proteinPer100,
-        fatPer100 = fatPer100,
-        carbsPer100 = carbsPer100,
-        sugarPer100 = sugarPer100,
-        unit = runCatching { FoodUnit.valueOf(unit) }.getOrDefault(FoodUnit.GRAM),
-        amount = amount,
-        timestampMillis = timestampMillis
-    )

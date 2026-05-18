@@ -1,6 +1,6 @@
 package com.pumpernickel.di
 
-import com.pumpernickel.data.repository.RetroactiveWalker
+import com.pumpernickel.domain.gamification.ApplyRetroactiveGamificationUseCase
 import com.pumpernickel.domain.gamification.GamificationEngine
 import com.pumpernickel.domain.gamification.GoalDayTrigger
 import org.koin.dsl.module
@@ -11,6 +11,8 @@ import org.koin.dsl.module
  * Populated across multiple plans:
  *   - Plan 04 (wave 3): GamificationEngine binding
  *   - Plan 05 (wave 4): RetroactiveWalker, GamificationStartup bindings
+ *     (Plan 20-09 / wave 7 renamed RetroactiveWalker → ApplyRetroactiveGamificationUseCase
+ *     and moved it to domain/gamification/ — Smell 11 / D-20-06)
  *   - Plan 07 (wave 4): GoalDayTrigger binding
  *   - Plan 20-08 (wave 6): GamificationEngine ctor swapped from DAOs to
  *     Repository interfaces (Smell 3 fix). DAO gets resolved transitively
@@ -31,7 +33,9 @@ val gamificationEngineModule = module {
         )
     }
     // Plan 05: retroactive XP replay + ordered first-launch startup helper.
-    single { RetroactiveWalker(get(), get(), get(), get()) }
+    // Plan 20-09: renamed RetroactiveWalker → ApplyRetroactiveGamificationUseCase,
+    // moved into domain/gamification/, DAO ctor params replaced by Repository interfaces.
+    single { ApplyRetroactiveGamificationUseCase(get(), get(), get(), get()) }
     single { GamificationStartup(get(), get()) }
     // Plan 07: D-22 nutrition goal-day trigger on Overview tab appearance.
     single { GoalDayTrigger(get()) }

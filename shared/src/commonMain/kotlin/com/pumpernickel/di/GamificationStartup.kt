@@ -1,7 +1,7 @@
 package com.pumpernickel.di
 
 import com.pumpernickel.data.db.AchievementStateSeeder
-import com.pumpernickel.data.repository.RetroactiveWalker
+import com.pumpernickel.domain.gamification.ApplyRetroactiveGamificationUseCase
 
 /**
  * First-launch gamification trigger. Runs two idempotent steps in order:
@@ -14,10 +14,10 @@ import com.pumpernickel.data.repository.RetroactiveWalker
  */
 class GamificationStartup(
     private val seeder: AchievementStateSeeder,
-    private val walker: RetroactiveWalker
+    private val applyRetroactive: ApplyRetroactiveGamificationUseCase
 ) {
     suspend fun run() {
         seeder.seedIfEmpty()
-        walker.applyIfNeeded()
+        applyRetroactive.applyIfNeeded()
     }
 }
