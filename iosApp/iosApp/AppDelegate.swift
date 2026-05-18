@@ -1,4 +1,5 @@
 import UIKit
+import UserNotifications
 import Shared
 
 /// D-19-04 — UIApplicationDelegate that bootstraps Koin so the single
@@ -12,7 +13,7 @@ import Shared
 /// the exit event. The provider persists the EXIT to DataStore and emits
 /// on its SharedFlow. Wave 3's WorkoutSessionViewModel reconciles the
 /// persisted sentinel on resume (D-19-04).
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
     func application(
         _ application: UIApplication,
@@ -49,6 +50,34 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         //    need to read it because the resolved provider's delegate will
         //    receive `didExitRegion` directly from iOS and forward it both
         //    to the SharedFlow and to PendingGeofenceExitStore.
+
+        // Phase quick-260518-egc — iOS Geofence-Notification Parity:
+        // (a) UNUserNotificationCenter Authorization muss explizit angefragt werden, sonst
+        //     schlagen alle `postGeofenceNotification(...)`-Calls silent fehl.
+        // (b) Self als Delegate setzen, damit Notifications auch im FOREGROUND als Banner+Sound
+        //     präsentiert werden (iOS unterdrückt sie sonst by-default).
+        let notificationCenter = UNUserNotificationCenter.current()
+        notificationCenter.delegate = self
+        notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if let error {
+                print("UN authorization error: \(error.localizedDescription)")
+            } else {
+                print("UN authorization granted: \(granted)")
+            }
+        }
         return true
+    }
+
+    // MARK: - UNUserNotificationCenterDelegate
+
+    /// D-quick-egc — Foreground-Presentation der Geofence-Notifications.
+    /// Ohne diese Methode unterdrückt iOS Notifications, wenn die App im Vordergrund läuft —
+    /// genau der Test-Fall, in dem der User Mock-Exit aus dem Debug-Sheet triggert.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound, .list])
     }
 }
