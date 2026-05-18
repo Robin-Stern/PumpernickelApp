@@ -329,10 +329,22 @@ Plans:
 
 ### Phase 20: Clean Architecture Refactor — Dependency-Rule fixen: Repository-Interfaces nach domain/ verschieben, Room-Imports aus domain/model raus, Use-Cases von Framework entkoppeln, androidMain/iosMain-Paketlayout vereinheitlichen
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Pure Strukturarbeit am Package-Layout, damit die Dependency-Rule (presentation → domain ← data) wirklich hält. Keine neuen Features, keine Schema-Migrationen, keine Verhaltensänderungen. Acht Title-Smells gefixt: 1 (Repository-Interfaces nach domain/), 2 (SettingsRepository-Interface extrahiert), 3 (Room-Entities raus aus domain/), 4 (AI-Use-Cases via AiClient-Port entkoppelt), 5 (Entity.toDomain-Mapper nach data/repository/mappers/), 11 (RetroactiveWalker → ApplyRetroactiveGamificationUseCase), 12 (infrastructure/-Layer für expect/actual-Ports), 13 (EarlyExitTracker via EarlyExitBudgetStore-Narrow-Port).
+**Requirements:** D-20-01 … D-20-10
 **Depends on:** Phase 19
-**Plans:** 12/13 plans executed
+**Plans:** 13/13 plans complete — completed 2026-05-18
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 20 to break down)
+- [x] 20-01-PLAN.md — Phase intake / Smell-Inventar + Scope-Definition
+- [x] 20-02-PLAN.md — WorkoutRepository interface → domain/repository (Smell 1, Wave 2)
+- [x] 20-03-PLAN.md — Template/Exercise/Food repository interfaces → domain/repository (Smell 1, Wave 3)
+- [x] 20-04-PLAN.md — Gamification + ProgressPicture repository interfaces → domain/repository (Smell 1, Wave 4)
+- [x] 20-05-PLAN.md — SettingsRepository interface + EarlyExitBudgetStore narrow port (Smell 2 + Smell 13, Wave 5)
+- [x] 20-06-PLAN.md — Entity.toDomain() Mapper raus aus domain/model → data/repository/mappers/ (Smell 5, Wave 6)
+- [x] 20-07-PLAN.md — AI + OFF use-cases entkoppelt via AiClient + RemoteFoodSearchClient ports (Smell 4, Wave 6)
+- [x] 20-08-PLAN.md — GamificationEngine + NutritionGoalDayPolicy decoupled from data.db; ConsumptionEntry domain model (Smell 3 + D-20-07, Wave 6)
+- [x] 20-09-PLAN.md — RetroactiveWalker → ApplyRetroactiveGamificationUseCase (Smell 11 / D-20-06, Wave 7)
+- [x] 20-10-PLAN.md — infrastructure/ commonMain extraction: expect/interface ports moved out of domain/ (Smell 12 / D-20-02, Wave 7)
+- [x] 20-11-PLAN.md — androidMain feature/+platform/+domain actuals → infrastructure/+data/ (Smell 12 / D-20-02 / D-20-03, Wave 7)
+- [x] 20-12-PLAN.md — iosMain data/{geofence,location,permissions}+domain/{ai,progresspic} actuals → infrastructure/ (Smell 12 / D-20-02, Wave 7)
+- [x] 20-13-PLAN.md — Final verification + iOS UAT + Phase-20-Abschluss (Wave 8)

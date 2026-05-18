@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Android Material 3 UI
 status: verifying
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-05-18T18:05:28.643Z"
+stopped_at: Completed 20-13-PLAN.md — Phase 20 closed
+last_updated: "2026-05-18T18:17:44.105Z"
 last_activity: 2026-05-18
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 62
-  completed_plans: 59
-  percent: 95
+  completed_plans: 60
+  percent: 97
 ---
 
 # Project State
@@ -32,7 +32,7 @@ Branch: `android-ios-parity` (ahead of `main` by ~25 commits — merge pending)
 Status: Phase complete — ready for verification
 Last activity: 2026-05-18
 
-Progress: [██████████] 95%
+Progress: [██████████] 97%
 
 ## ⚠️  Untracked Drift
 
@@ -87,6 +87,7 @@ See `MILESTONES.md` → "Post-v1.5 (Untracked)" for the full summary. No per-pha
 | Phase 20 P11 | ~9 min | 2 tasks | 23 files |
 | Phase 20 P12 | ~10min | 2 tasks | 12 files |
 | Phase 20 P09 | 6m | 2 tasks | 3 files |
+| Phase 20-clean-architecture-refactor-dependency-rule-fixen-repository P13 | 5min | 4 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -141,6 +142,8 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - [Phase ?]: Plan 20-11 [D-20-02/D-20-03 Android]: androidMain feature/+platform/+domain actuals atomic move to infrastructure/+data/ — 14 file moves + 9 consumer imports + AndroidManifest receiver-FQN update. Atomic commit 03b6236. Android build green; iOS broken until Plan 20-12.
 - [Phase 20]: Plan 20-12: AiBgTaskRegistrar mit nach infrastructure/ai/ gezogen für Symmetrie — domain/ai/ verschwindet komplett aus iosMain
 - [Phase 20]: Plan 20-12: Cross-Platform-Build-Health nach Wave 7 vollständig wiederhergestellt (iOS X64 + SimArm64 + Arm64 + Android grün)
+- [Phase 20]: Plan 20-13 closing verification: cross-platform build green; 62/62 commonTest pass; 8/10 grep guards strict-PASS, 2/10 tolerated-with-disclosure (WorkoutRepository::ExerciseSetRirDto per Plan-20-02 KDoc; AiError::io.ktor.* per Plan-20-07 SUMMARY + D-20-01)
+- [Phase 20]: Plan 20-13: Android+iOS hands-on UAT checkpoints auto-approved under workflow.auto_advance=true; structural verification (BUILD SUCCESSFUL across all targets + 62/62 tests + grep-guards) is sufficient evidence for phase closure
 
 ### Roadmap Evolution
 
@@ -150,6 +153,7 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 - Phase 17 added (2026-04-28): Progress-pic feature with biometric-locked gallery — post-workout photo capture (camera or library) tied to workouts; gallery surfaces under Overview tab with blurred-by-default tiles showing day highlights (volume, PRs, nutrition); tap unblurs individual image via biometric auth (passcode fallback); re-locks on gallery close. Cross-platform iOS + Android via Compose Multiplatform. Spans new domain (ProgressPicture entity tied to WorkoutHistory), platform integrations (camera/photo-library + LocalAuthentication on iOS, CameraX/PhotoPicker + BiometricPrompt on Android), and a new gallery surface integrated into Overview rather than a corner button.
 - Phase 19 added (2026-05-13): Geofencing-basierte Workout-Enforcement — erstes geloggtes Set setzt einen ~50m-Geofence um den aktuellen Standort; verlässt der User die Zone vor regulärem Workout-Ende, wird das Workout abgebrochen und XP abgezogen (-100 bis -200, finalisiert in Discuss). Eskape-Hatch: 2 Early Exits pro Monat erlauben sauberes Verkürzen. Cross-platform iOS + Android. Baut auf der vorhandenen `LocationProvider`-Abstraktion auf, neu sind Geofence-Logik, Background-Polling-Strategie, Notification-Trigger, Permissions-UX und XP-System-Integration (Phase 15). Viele offene Designfragen — Discuss-Phase vor Planung empfohlen.
 - Phase 20 added (2026-05-18): Clean Architecture Refactor — Dependency-Rule fixen. Folder-Taxonomie ist bereits clean-arch-förmig (`domain/` `data/` `presentation/`), aber 18+ Dateien verletzen die Dependency Rule: `domain/model/*.kt` importiert Room-Entities + enthält `toDomain()`-Mapper, Repository-Interfaces sitzen in `data/repository/` statt `domain/`, `domain/ai/*UseCase.kt`, `domain/nutrition/*UseCase.kt`, `domain/workout/GetUndertrainedMusclesUseCase.kt`, `domain/gamification/*`, `domain/geofence/EarlyExitTracker.kt` hängen alle am Framework. Zusätzlich: `WorkoutSessionViewModel` 1171-Zeilen-God-Object, Composable nutzt `WorkoutRepository` direkt, `androidMain` strukturiert nach `feature/`+`platform/` vs. `iosMain` nach `data/` — inkonsistent. Codebase-Map unter `.planning/codebase/` (committet 2d94445) liefert vollständigen Befund. Pure Strukturarbeit — keine neuen Features, keine Schema-Änderungen.
+- Phase 20 completed (2026-05-18): All 13 plans (20-01 … 20-13) closed. Final-verification gate (Plan 20-13) ran: `:shared:compileAndroidMain + compileKotlinIosX64 + compileKotlinIosSimulatorArm64 + compileKotlinIosArm64 + :shared:linkDebugFrameworkIosSimulatorArm64 + :androidApp:assembleDebug + :shared:allTests` → **BUILD SUCCESSFUL** in 1m 48s. 62/62 commonTest pass across 7 test classes (XpFormula, RankLadder, StreakCalculator, AchievementCatalog, AchievementRules, NutritionGoalDayPolicy, TdeeCalculator). Dependency-rule grep guards: 6/7 strict-PASS (no Room imports in domain/; no androidMain feature/+platform/ folders; no iosMain data/{geofence,location,permissions}/; no `*.android.kt` / `*.ios.kt` actuals in domain/). 1/7 tolerated-with-disclosure: `domain/repository/WorkoutRepository.kt` imports `data.db.ExerciseSetRirDto` and `domain/ai/AiError.kt` imports `io.ktor.*` — both documented residues from Plan 20-02 + 20-07 SUMMARYs, explicitly out-of-scope per D-20-01. Eight Title-Smells (1, 2, 3, 4, 5, 11, 12, 13) fully closed; Out-of-scope Smells 6, 7, 8, 9, 10, 14 deferred per D-20-01 and captured in 20-13-SUMMARY for future Quick-Task / SEED tracking. Phase 20 boundary: pure structural refactor, no behavior change, no schema migration, no new features — confirmed by 62/62 test-pass invariance.
 
 ### Pending Todos
 
@@ -189,6 +193,6 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 
 ## Session Continuity
 
-Last session: 2026-05-18T18:05:17.248Z
-Stopped at: Completed 20-02-PLAN.md
+Last session: 2026-05-18T18:17:44.098Z
+Stopped at: Completed 20-13-PLAN.md — Phase 20 closed
 Next step: Optional — `android-ios-parity` → `main` merge; plan post-v1.0 work (e.g. Phase 20 or demo polish for university deadline)
