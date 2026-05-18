@@ -1,9 +1,8 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
 
-package com.pumpernickel.data.location
+package com.pumpernickel.infrastructure.location
 
 import com.pumpernickel.domain.location.GeoPoint
-import com.pumpernickel.domain.location.LocationProvider
 import kotlinx.cinterop.useContents
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers

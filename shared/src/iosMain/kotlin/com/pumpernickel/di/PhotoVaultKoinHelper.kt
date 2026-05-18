@@ -1,6 +1,6 @@
 package com.pumpernickel.di
 
-import com.pumpernickel.domain.progresspic.PhotoVault
+import com.pumpernickel.infrastructure.progresspic.PhotoVault
 import org.koin.mp.KoinPlatform
 
 /**

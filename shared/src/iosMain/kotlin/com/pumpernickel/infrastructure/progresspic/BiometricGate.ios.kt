@@ -1,7 +1,8 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
 
-package com.pumpernickel.domain.progresspic
+package com.pumpernickel.infrastructure.progresspic
 
+import com.pumpernickel.domain.progresspic.UnlockResult
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped

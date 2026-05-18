@@ -15,8 +15,8 @@ import com.pumpernickel.presentation.settings.SettingsViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import com.pumpernickel.presentation.templates.TemplateListViewModel
 import com.pumpernickel.domain.geofence.EarlyExitTracker
-import com.pumpernickel.domain.geofence.GeofenceProvider
-import com.pumpernickel.domain.permissions.PermissionController
+import com.pumpernickel.infrastructure.geofence.GeofenceProvider
+import com.pumpernickel.infrastructure.permissions.PermissionController
 import com.pumpernickel.presentation.workout.WorkoutSessionViewModel
 import org.koin.core.context.loadKoinModules
 import org.koin.dsl.module

@@ -1,9 +1,8 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
 
-package com.pumpernickel.data.geofence
+package com.pumpernickel.infrastructure.geofence
 
 import com.pumpernickel.domain.geofence.GeofenceEvent
-import com.pumpernickel.domain.geofence.GeofenceProvider
 import com.pumpernickel.domain.geofence.PendingGeofenceExit
 import com.pumpernickel.domain.geofence.PendingGeofenceExitStore
 import com.pumpernickel.domain.location.GeoPoint

@@ -1,5 +1,6 @@
-package com.pumpernickel.domain.ai
+package com.pumpernickel.infrastructure.notification
 
+import com.pumpernickel.infrastructure.ai.AiBgTaskHolder
 import platform.Foundation.NSUUID
 import platform.UIKit.UIApplication
 import platform.UIKit.UIBackgroundTaskInvalid

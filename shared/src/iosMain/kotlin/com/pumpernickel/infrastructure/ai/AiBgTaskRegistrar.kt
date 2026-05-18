@@ -1,6 +1,6 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 
-package com.pumpernickel.domain.ai
+package com.pumpernickel.infrastructure.ai
 
 import platform.BackgroundTasks.BGProcessingTask
 import platform.BackgroundTasks.BGProcessingTaskRequest

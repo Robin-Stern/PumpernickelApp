@@ -1,7 +1,8 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
 
-package com.pumpernickel.domain.ai
+package com.pumpernickel.infrastructure.ai
 
+import com.pumpernickel.domain.ai.ApiKeyState
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointer

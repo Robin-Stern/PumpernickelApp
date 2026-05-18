@@ -1,9 +1,8 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
 
-package com.pumpernickel.data.permissions
+package com.pumpernickel.infrastructure.permissions
 
 import com.pumpernickel.domain.permissions.LocationPermissionStatus
-import com.pumpernickel.domain.permissions.PermissionController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext

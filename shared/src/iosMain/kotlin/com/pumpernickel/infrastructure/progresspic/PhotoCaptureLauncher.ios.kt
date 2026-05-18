@@ -1,6 +1,6 @@
 @file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
 
-package com.pumpernickel.domain.progresspic
+package com.pumpernickel.infrastructure.progresspic
 
 import kotlin.concurrent.Volatile
 import kotlinx.cinterop.addressOf
