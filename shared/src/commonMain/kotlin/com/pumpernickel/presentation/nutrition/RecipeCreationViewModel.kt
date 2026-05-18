@@ -10,6 +10,7 @@ import com.pumpernickel.domain.model.RecipeMacros
 import com.pumpernickel.domain.model.calculateMacros
 import com.pumpernickel.domain.nutrition.CalculateRecipeMacrosUseCase
 import com.pumpernickel.domain.nutrition.LookupBarcodeUseCase
+import com.pumpernickel.domain.nutrition.RemoteFoodResult
 import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
 import com.pumpernickel.domain.nutrition.SelectFoodUseCase
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
@@ -30,7 +31,7 @@ data class RecipeCreationUiState(
     val recipeName: String = "",
     val searchQuery: String = "",
     val searchResults: List<Food> = emptyList(),
-    val remoteSearchResults: List<SearchFoodsRemoteUseCase.RemoteFoodResult> = emptyList(),
+    val remoteSearchResults: List<RemoteFoodResult> = emptyList(),
     val isSearchingRemote: Boolean = false,
     val ingredients: List<IngredientEntry> = emptyList(),
     val totals: RecipeMacros = RecipeMacros(),
@@ -43,7 +44,7 @@ sealed interface RecipeCreationEvent {
     data class OnRecipeNameChanged(val value: String) : RecipeCreationEvent
     data class OnSearchQueryChanged(val value: String) : RecipeCreationEvent
     data class OnFoodSelected(val food: Food) : RecipeCreationEvent
-    data class OnRemoteFoodSelected(val result: SearchFoodsRemoteUseCase.RemoteFoodResult) : RecipeCreationEvent
+    data class OnRemoteFoodSelected(val result: RemoteFoodResult) : RecipeCreationEvent
     data class OnIngredientAmountChanged(val index: Int, val value: String) : RecipeCreationEvent
     data class OnIngredientRemoved(val index: Int) : RecipeCreationEvent
     data class OnIngredientMoved(val fromIndex: Int, val toIndex: Int) : RecipeCreationEvent

@@ -51,7 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.pumpernickel.android.R
 import com.pumpernickel.domain.model.Food
-import com.pumpernickel.domain.nutrition.SearchFoodsRemoteUseCase
+import com.pumpernickel.domain.nutrition.RemoteFoodResult
 import com.pumpernickel.presentation.nutrition.RecipeCreationEvent
 import com.pumpernickel.presentation.nutrition.RecipeCreationViewModel
 import com.pumpernickel.presentation.nutrition.RecipeListViewModel
@@ -515,7 +515,7 @@ private fun SearchResultCard(food: Food, onAdd: () -> Unit) {
 
 @Composable
 private fun RemoteSearchResultCard(
-    result: SearchFoodsRemoteUseCase.RemoteFoodResult,
+    result: RemoteFoodResult,
     onAdd: () -> Unit
 ) {
     Row(
