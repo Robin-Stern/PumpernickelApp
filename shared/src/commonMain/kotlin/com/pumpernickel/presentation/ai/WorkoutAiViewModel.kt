@@ -110,7 +110,9 @@ class WorkoutAiViewModel(
                     }
                     is AiGenerationState.Generating -> {
                         if (genState.type == AiType.WORKOUT) {
-                            _uiState.value = WorkoutAiUiState.Generating(skeletonRowCount = 5)
+                            val form = genState.originatingData as? WorkoutAiForm
+                            val rows = form?.exerciseCount ?: (current as? WorkoutAiUiState.Form)?.exerciseCount ?: 5
+                            _uiState.value = WorkoutAiUiState.Generating(skeletonRowCount = rows)
                         }
                     }
                     is AiGenerationState.Success -> {
