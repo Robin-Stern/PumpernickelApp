@@ -264,6 +264,13 @@ struct NutritionFoodEntryView: View {
             Text("Lebensmittel in OpenFoodFacts suchen")
                 .font(.headline)
 
+            // B4 root-cause: TextField has `.submitLabel(.search)` but no explicit `.onSubmit`, so Return propagates
+            // through SwiftUI's submit chain and re-fires the binding's `set:` closure with the current query.
+            // That triggers `FoodEntryEvent.OnSearchQueryChanged` in FoodEntryViewModel (line 125), which sets
+            // `remoteSearchResults = emptyList()` synchronously. Because the new query equals the old, the
+            // debounced searchFoodsRemote pipeline filters via `distinctUntilChanged()` and never re-fires —
+            // so the results stay empty and the UI flips to "Keine Ergebnisse". Fix per D-21-05: attach an
+            // explicit neutral `.onSubmit` that only collapses the keyboard.
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.secondary)
