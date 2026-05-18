@@ -2,7 +2,7 @@ package com.pumpernickel.presentation.gamification
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pumpernickel.data.repository.GamificationRepository
+import com.pumpernickel.domain.repository.GamificationRepository
 import com.pumpernickel.domain.gamification.AchievementCatalog
 import com.pumpernickel.domain.gamification.AchievementProgress
 import com.pumpernickel.domain.gamification.Category

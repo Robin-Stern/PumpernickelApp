@@ -2,7 +2,7 @@ package com.pumpernickel.presentation.gamification
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pumpernickel.data.repository.GamificationRepository
+import com.pumpernickel.domain.repository.GamificationRepository
 import com.pumpernickel.domain.gamification.GamificationEngine
 import com.pumpernickel.domain.gamification.RankState
 import com.pumpernickel.domain.gamification.UnlockEvent

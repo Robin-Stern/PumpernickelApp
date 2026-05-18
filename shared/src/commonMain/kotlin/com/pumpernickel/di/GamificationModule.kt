@@ -3,7 +3,7 @@ package com.pumpernickel.di
 import com.pumpernickel.data.db.AchievementStateSeeder
 import com.pumpernickel.data.db.AppDatabase
 import com.pumpernickel.data.db.GamificationDao
-import com.pumpernickel.data.repository.GamificationRepository
+import com.pumpernickel.domain.repository.GamificationRepository
 import com.pumpernickel.data.repository.GamificationRepositoryImpl
 import org.koin.dsl.module
 

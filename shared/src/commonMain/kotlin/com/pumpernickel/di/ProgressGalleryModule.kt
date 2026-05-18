@@ -2,7 +2,7 @@ package com.pumpernickel.di
 
 import com.pumpernickel.data.db.AppDatabase
 import com.pumpernickel.data.db.ProgressPictureDao
-import com.pumpernickel.data.repository.ProgressPictureRepository
+import com.pumpernickel.domain.repository.ProgressPictureRepository
 import com.pumpernickel.data.repository.ProgressPictureRepositoryImpl
 import com.pumpernickel.domain.gamification.NutritionGoalDayPolicy
 import com.pumpernickel.presentation.progresspic.ProgressGalleryViewModel

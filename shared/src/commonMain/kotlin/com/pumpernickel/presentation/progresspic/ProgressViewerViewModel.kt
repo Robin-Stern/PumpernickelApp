@@ -2,7 +2,7 @@ package com.pumpernickel.presentation.progresspic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pumpernickel.data.repository.ProgressPictureRepository
+import com.pumpernickel.domain.repository.ProgressPictureRepository
 import com.pumpernickel.domain.progresspic.BiometricGate
 import com.pumpernickel.domain.progresspic.ProgressPicture
 import com.pumpernickel.domain.progresspic.UnlockResult

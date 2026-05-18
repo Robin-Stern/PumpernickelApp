@@ -2,7 +2,7 @@ package com.pumpernickel.presentation.workout
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pumpernickel.data.repository.GamificationRepository
+import com.pumpernickel.domain.repository.GamificationRepository
 import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.domain.repository.WorkoutRepository
 import com.pumpernickel.domain.repository.TemplateRepository

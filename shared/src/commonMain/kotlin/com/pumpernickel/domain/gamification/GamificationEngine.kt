@@ -3,7 +3,7 @@ package com.pumpernickel.domain.gamification
 import com.pumpernickel.data.db.CompletedWorkoutDao
 import com.pumpernickel.data.db.ExerciseDao
 import com.pumpernickel.data.db.NutritionDao
-import com.pumpernickel.data.repository.GamificationRepository
+import com.pumpernickel.domain.repository.GamificationRepository
 import com.pumpernickel.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
