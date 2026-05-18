@@ -20,7 +20,9 @@
     <application
         android:name=".PumpernickelApplication"
         android:allowBackup="true"
-        android:label="PumpernickelApp"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:dataExtractionRules="@xml/data_extraction_rules"
