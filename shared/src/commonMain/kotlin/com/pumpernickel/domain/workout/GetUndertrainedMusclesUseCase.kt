@@ -1,7 +1,7 @@
 package com.pumpernickel.domain.workout
 
 import com.pumpernickel.data.repository.ExerciseRepository
-import com.pumpernickel.data.repository.WorkoutRepository
+import com.pumpernickel.domain.repository.WorkoutRepository
 import com.pumpernickel.domain.model.MuscleGroup
 import kotlinx.coroutines.flow.first
 import kotlin.time.Clock

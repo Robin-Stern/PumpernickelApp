@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pumpernickel.data.repository.ExerciseRepository
 import com.pumpernickel.data.repository.GamificationRepository
 import com.pumpernickel.data.repository.SettingsRepository
-import com.pumpernickel.data.repository.WorkoutRepository
+import com.pumpernickel.domain.repository.WorkoutRepository
 import com.pumpernickel.domain.gamification.GoalDayTrigger
 import com.pumpernickel.domain.gamification.RankState
 import com.pumpernickel.domain.model.MuscleGroup

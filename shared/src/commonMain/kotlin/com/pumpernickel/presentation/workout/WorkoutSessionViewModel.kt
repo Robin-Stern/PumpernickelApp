@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pumpernickel.data.repository.GamificationRepository
 import com.pumpernickel.data.repository.SettingsRepository
-import com.pumpernickel.data.repository.WorkoutRepository
+import com.pumpernickel.domain.repository.WorkoutRepository
 import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.domain.gamification.GamificationEngine
 import com.pumpernickel.domain.gamification.XpFormula

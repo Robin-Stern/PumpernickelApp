@@ -1,7 +1,7 @@
 package com.pumpernickel.di
 
 import com.pumpernickel.data.geofence.DebugGeofenceProvider
-import com.pumpernickel.data.repository.WorkoutRepository
+import com.pumpernickel.domain.repository.WorkoutRepository
 import com.pumpernickel.presentation.exercises.CreateExerciseViewModel
 import com.pumpernickel.presentation.exercises.ExerciseCatalogViewModel
 import com.pumpernickel.presentation.exercises.ExerciseDetailViewModel

@@ -3,7 +3,7 @@ package com.pumpernickel.presentation.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pumpernickel.data.repository.SettingsRepository
-import com.pumpernickel.data.repository.WorkoutRepository
+import com.pumpernickel.domain.repository.WorkoutRepository
 import com.pumpernickel.domain.model.CompletedWorkout
 import com.pumpernickel.domain.model.WeightUnit
 import com.pumpernickel.domain.model.WorkoutSummary

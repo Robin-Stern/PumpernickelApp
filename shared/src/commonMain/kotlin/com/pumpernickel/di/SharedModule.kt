@@ -20,8 +20,8 @@ import com.pumpernickel.data.repository.TemplateRepository
 import com.pumpernickel.data.repository.TemplateRepositoryImpl
 import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.domain.geofence.PendingGeofenceExitStore
-import com.pumpernickel.data.repository.WorkoutRepository
 import com.pumpernickel.data.repository.WorkoutRepositoryImpl
+import com.pumpernickel.domain.repository.WorkoutRepository
 import com.pumpernickel.domain.nutrition.AddFoodUseCase
 import com.pumpernickel.domain.workout.GetUndertrainedMusclesUseCase
 import com.pumpernickel.domain.nutrition.CalculateDailyMacrosUseCase
