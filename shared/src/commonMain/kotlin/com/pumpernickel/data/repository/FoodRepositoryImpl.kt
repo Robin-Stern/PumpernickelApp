@@ -11,6 +11,7 @@ import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.FoodUnit
 import com.pumpernickel.domain.model.Recipe
 import com.pumpernickel.domain.model.RecipeIngredient
+import com.pumpernickel.domain.repository.FoodRepository
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 

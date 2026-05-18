@@ -2,8 +2,8 @@ package com.pumpernickel.presentation.templates
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pumpernickel.data.repository.ExerciseRepository
-import com.pumpernickel.data.repository.TemplateRepository
+import com.pumpernickel.domain.repository.ExerciseRepository
+import com.pumpernickel.domain.repository.TemplateRepository
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.TemplateExercise
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState

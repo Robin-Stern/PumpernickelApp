@@ -6,6 +6,7 @@ import com.pumpernickel.data.db.ExerciseEntity
 import com.pumpernickel.domain.model.Exercise
 import com.pumpernickel.domain.model.MuscleGroup
 import com.pumpernickel.domain.model.toDomain
+import com.pumpernickel.domain.repository.ExerciseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -13,15 +14,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-
-interface ExerciseRepository {
-    fun getExercises(): Flow<List<Exercise>>
-    fun searchExercises(query: String, muscleGroup: MuscleGroup?): Flow<List<Exercise>>
-    fun getExerciseById(id: String): Flow<Exercise?>
-    suspend fun createExercise(exercise: Exercise)
-    suspend fun getDistinctEquipment(): List<String>
-    suspend fun getDistinctCategories(): List<String>
-}
 
 class ExerciseRepositoryImpl(
     private val dao: ExerciseDao,

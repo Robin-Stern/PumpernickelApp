@@ -2,7 +2,7 @@ package com.pumpernickel.presentation.templates
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pumpernickel.data.repository.TemplateRepository
+import com.pumpernickel.domain.repository.TemplateRepository
 import com.pumpernickel.domain.model.WorkoutTemplate
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutinesState
 import kotlinx.coroutines.flow.SharingStarted

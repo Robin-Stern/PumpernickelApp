@@ -1,6 +1,6 @@
 package com.pumpernickel.domain.nutrition
 
-import com.pumpernickel.data.repository.FoodRepository
+import com.pumpernickel.domain.repository.FoodRepository
 import com.pumpernickel.domain.model.Food
 
 class DeleteFoodUseCase(private val repository: FoodRepository) {

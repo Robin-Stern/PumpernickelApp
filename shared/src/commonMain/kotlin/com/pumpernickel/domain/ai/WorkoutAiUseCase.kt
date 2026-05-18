@@ -9,9 +9,9 @@ import com.pumpernickel.data.api.WorkoutAiInlineExercise
 import com.pumpernickel.data.api.WorkoutAiResponse
 import com.pumpernickel.data.api.WorkoutAiTemplate
 import com.pumpernickel.data.api.WorkoutAiTemplateExercise
-import com.pumpernickel.data.repository.ExerciseRepository
+import com.pumpernickel.domain.repository.ExerciseRepository
 import com.pumpernickel.data.repository.SettingsRepository
-import com.pumpernickel.data.repository.TemplateRepository
+import com.pumpernickel.domain.repository.TemplateRepository
 import com.pumpernickel.domain.model.Exercise
 import com.pumpernickel.domain.model.MuscleGroup
 import kotlinx.coroutines.CancellationException

@@ -2,7 +2,7 @@ package com.pumpernickel.presentation.exercises
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pumpernickel.data.repository.ExerciseRepository
+import com.pumpernickel.domain.repository.ExerciseRepository
 import com.pumpernickel.domain.model.Exercise
 import com.rickclephas.kmp.nativecoroutines.NativeCoroutines
 import kotlinx.coroutines.ExperimentalCoroutinesApi

@@ -1,9 +1,8 @@
-package com.pumpernickel.data.repository
+package com.pumpernickel.domain.repository
 
 import com.pumpernickel.domain.model.ConsumptionEntry
 import com.pumpernickel.domain.model.Food
 import com.pumpernickel.domain.model.Recipe
-import com.pumpernickel.domain.model.RecipeIngredient
 
 interface FoodRepository {
     suspend fun saveFood(food: Food)

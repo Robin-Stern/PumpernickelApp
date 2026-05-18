@@ -2,7 +2,7 @@ package com.pumpernickel.presentation.nutrition
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pumpernickel.data.repository.FoodRepository
+import com.pumpernickel.domain.repository.FoodRepository
 import com.pumpernickel.data.repository.SettingsRepository
 import com.pumpernickel.domain.model.ConsumptionEntry
 import com.pumpernickel.domain.model.Food
