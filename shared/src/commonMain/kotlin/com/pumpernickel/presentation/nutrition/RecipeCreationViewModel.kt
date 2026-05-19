@@ -197,10 +197,24 @@ class RecipeCreationViewModel(
 
             is RecipeCreationEvent.OnBarcodeScanned -> viewModelScope.launch {
                 _creationState.update { it.copy(errorMessage = null) }
+                // D-21-03 root-cause: ViewModel / UseCase silently persisted Food with
+                // zero macros when (a) OFF dataset had no nutriments AND (b) the product
+                // name didn't match any FALLBACKS keyword in LookupBarcodeUseCase. The
+                // FoundRemote branch unconditionally built a Food and saved it without
+                // checking whether any meaningful macros came through. D-21-03 fix below:
+                // surface a UI hint instead of silently persisting a zero-macro Food;
+                // pre-fill the name so the user can edit it from the foods list.
                 when (val result = lookupBarcode(event.barcode)) {
                     is LookupBarcodeUseCase.Result.FoundLocally ->
                         onEvent(RecipeCreationEvent.OnFoodSelected(result.food))
                     is LookupBarcodeUseCase.Result.FoundRemote -> {
+                        // D-21-03 fix — detect the "OFF zero AND fallback empty" case.
+                        // A single calorie threshold of 1 kcal is enough: every real food
+                        // has at least a kcal value (water sits at 0 but is rarely
+                        // barcoded as an ingredient). Protein/carbs/fat are checked too
+                        // to defend against producers who fill only one nutrient.
+                        val hasNoMacros = result.calories < 1.0 &&
+                            result.protein <= 0.0 && result.carbs <= 0.0 && result.fat <= 0.0
                         val food = Food(
                             name = result.name, calories = result.calories,
                             protein = result.protein, fat = result.fat,
@@ -209,6 +223,17 @@ class RecipeCreationViewModel(
                         )
                         repository.saveFood(food)
                         _foods.value = repository.loadFoods()
+                        if (hasNoMacros) {
+                            // D-21-03 fix — honest UI hint instead of silent zero-row.
+                            // The Food still persists (with name + barcode preserved) so
+                            // the user can edit the macros manually from the foods list.
+                            _creationState.update {
+                                it.copy(
+                                    errorMessage = "OpenFoodFacts hat für '${result.name}' " +
+                                        "keine Nährwerte. Bitte manuell ergänzen."
+                                )
+                            }
+                        }
                         onEvent(RecipeCreationEvent.OnFoodSelected(food))
                     }
                     is LookupBarcodeUseCase.Result.NotFound ->
