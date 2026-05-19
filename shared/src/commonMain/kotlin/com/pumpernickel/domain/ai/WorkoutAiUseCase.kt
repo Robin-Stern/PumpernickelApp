@@ -253,7 +253,12 @@ class WorkoutAiUseCase(
         }
         for (t in response.templates) {
             if (t.name.isBlank()) throw AiError.SchemaInvalid("Template name blank")
-            if (t.exercises.isEmpty()) throw AiError.SchemaInvalid("Template has no exercises")
+            if (t.exercises.size != form.exerciseCount) {
+                throw AiError.SchemaInvalid(
+                    "Template '${t.name}': expected ${form.exerciseCount} exercises, " +
+                    "got ${t.exercises.size}"
+                )
+            }
             for (e in t.exercises) {
                 if (e.targetSets !in 1..10) throw AiError.SchemaInvalid("targetSets out of range: ${e.targetSets}")
                 if (e.targetReps !in 1..50) throw AiError.SchemaInvalid("targetReps out of range: ${e.targetReps}")
