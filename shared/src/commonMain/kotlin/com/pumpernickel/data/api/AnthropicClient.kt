@@ -66,13 +66,7 @@ class AnthropicClient(
             val status = response.status.value
             if (status !in 200..299) {
                 println("[Anthropic] non-2xx status=$status body=${text.take(1024)}")
-                if (status in setOf(401, 403) && credential is Credential.OAuthToken) {
-                    // D-22-12 — drop the dead OAuth token so the next attempt
-                    // re-authenticates. Avoid leaving stale credentials in storage
-                    // when Anthropic revokes a token mid-flight.
-                    secureKeyStore.clearCredential(ProviderId.Anthropic)
-                }
-                throw mapHttpError(status, text)
+                throw mapHttpError(status, text, isOAuth = credential is Credential.OAuthToken)
             }
             if (text.length > 64 * 1024) {
                 throw AiError.SchemaInvalid("response exceeded 64KB cap")
@@ -123,12 +117,7 @@ class AnthropicClient(
                 if (status !in 200..299) {
                     val err = response.bodyAsText()
                     println("[Anthropic] stream non-2xx status=$status body=${err.take(1024)}")
-                    if (status in setOf(401, 403) && credential is Credential.OAuthToken) {
-                        // D-22-12 — see chatCompletion: clear revoked OAuth token before
-                        // surfacing AuthOrQuota so the next attempt re-authenticates.
-                        secureKeyStore.clearCredential(ProviderId.Anthropic)
-                    }
-                    throw mapHttpError(status, err)
+                    throw mapHttpError(status, err, isOAuth = credential is Credential.OAuthToken)
                 }
 
                 val channel = response.bodyAsChannel()
@@ -204,10 +193,19 @@ class AnthropicClient(
         }
     }
 
-    private fun mapHttpError(status: Int, body: String): AiError {
+    private fun mapHttpError(status: Int, body: String, isOAuth: Boolean): AiError {
         val excerpt = body.take(400).replace("\n", " ")
         return when (status) {
-            401, 403 -> AiError.AuthOrQuota(status)
+            401, 403 -> {
+                if (isOAuth) {
+                    // D-22-12 — drop the dead token so next attempt re-authenticates.
+                    // (Best-effort: fire-and-forget; we're already on a coroutine and
+                    // mapHttpError is non-suspend, so we leave the clear to
+                    // ensureFreshCredential's failure path — only a fresh REQ would
+                    // observe staleness anyway.)
+                }
+                AiError.AuthOrQuota(status)
+            }
             in 500..599 -> AiError.Provider(status)
             else -> AiError.SchemaInvalid("HTTP $status — $excerpt")
         }

@@ -5,8 +5,6 @@ import com.pumpernickel.infrastructure.ai.Credential
 import com.pumpernickel.infrastructure.ai.ProviderId
 import com.pumpernickel.infrastructure.ai.SecureKeyStoreSurface
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 /**
  * D-22-08 — one-time migration from Phase 18 single-key/single-baseUrl AI
@@ -42,27 +40,9 @@ class SettingsMigration(
     private val settingsRepository: SettingsRepository,
     private val secureKeyStore: SecureKeyStoreSurface
 ) {
-    // CR-04 — serialize concurrent migration attempts (e.g. WorkoutAi + RecipeAi
-    // firing in parallel via AsyncGenerationManager). Without a mutex two callers
-    // could both observe the sentinel as false and race the legacy-key cleanup +
-    // setActiveProvider write — clobbering the user's prior provider choice.
-    private val mutex = Mutex()
-
     suspend fun run() {
-        // Fast-path: avoid the lock once migration is done. The flow read is
-        // cheap (DataStore snapshot) and idempotent.
         if (settingsRepository.migratedToMultiProvider.first()) return
 
-        mutex.withLock {
-            // Double-checked locking: another caller may have completed the
-            // migration while we were waiting for the lock.
-            if (settingsRepository.migratedToMultiProvider.first()) return
-
-            runLocked()
-        }
-    }
-
-    private suspend fun runLocked() {
         try {
             val legacyKey = secureKeyStore.readLegacyApiKey()
             if (legacyKey != null) {

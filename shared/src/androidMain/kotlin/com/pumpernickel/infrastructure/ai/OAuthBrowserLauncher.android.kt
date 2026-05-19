@@ -16,7 +16,7 @@ import androidx.browser.customtabs.CustomTabsIntent
  */
 actual class OAuthBrowserLauncher(private val context: Context) {
 
-    actual suspend fun startAuthFlow(authorizeUrl: String, redirectScheme: String): OAuthRedirect? {
+    actual suspend fun startAuthFlow(authorizeUrl: String, redirectScheme: String): String? {
         // redirectScheme is informational on Android — the actual intercept
         // is configured statically in AndroidManifest <intent-filter>. Kept
         // in the signature so the common API is symmetric with iOS.
@@ -28,17 +28,7 @@ actual class OAuthBrowserLauncher(private val context: Context) {
         // OAuthBrowserLauncherHost — that's all we need from the Activity
         // layer.
         tab.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        try {
-            tab.launchUrl(context, Uri.parse(authorizeUrl))
-        } catch (e: android.content.ActivityNotFoundException) {
-            // WR-04 — no CustomTabs-capable browser installed. `awaitRedirect`
-            // has not been called yet, so there is no pending deferred to
-            // clean up; surface a domain-level error instead of letting
-            // ActivityNotFoundException bubble out unchanged.
-            throw com.pumpernickel.domain.ai.AiError.SchemaInvalid(
-                "Kein Browser installiert — OAuth nicht möglich."
-            )
-        }
+        tab.launchUrl(context, Uri.parse(authorizeUrl))
         return OAuthBrowserLauncherHost.awaitRedirect()
     }
 }
