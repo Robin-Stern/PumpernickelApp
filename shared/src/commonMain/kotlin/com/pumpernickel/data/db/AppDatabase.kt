@@ -45,5 +45,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun progressPictureDao(): ProgressPictureDao
 }
 
-@Suppress("NO_ACTUAL_FOR_EXPECT")
-expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase>
+@Suppress("NO_ACTUAL_FOR_EXPECT", "ABSTRACT_MEMBER_NOT_IMPLEMENTED")
+expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
+    override fun initialize(): AppDatabase
+}

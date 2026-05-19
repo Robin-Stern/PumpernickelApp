@@ -97,7 +97,8 @@ class WorkoutAiViewModel(
     private val defaultForm = WorkoutAiUiState.Form(
         targetMuscles = emptyList(),
         exerciseCount = 5,
-        splitStyle = WorkoutAiSplit.NONE
+        splitStyle = WorkoutAiSplit.NONE,
+        setsPerExercise = 3
     )
 
     init {
@@ -149,7 +150,7 @@ class WorkoutAiViewModel(
                             _uiState.value = WorkoutAiUiState.Preview(
                                 preview = preview,
                                 originatingForm = if (form != null) {
-                                    WorkoutAiUiState.Form(form.targetMuscles, form.exerciseCount, form.splitStyle)
+                                    WorkoutAiUiState.Form(form.targetMuscles, form.exerciseCount, form.splitStyle, form.setsPerExercise)
                                 } else {
                                     (current as? WorkoutAiUiState.Preview)?.originatingForm ?: defaultForm
                                 }
@@ -163,7 +164,7 @@ class WorkoutAiViewModel(
                             _uiState.value = WorkoutAiUiState.Error(
                                 error = error,
                                 originatingForm = if (form != null) {
-                                    WorkoutAiUiState.Form(form.targetMuscles, form.exerciseCount, form.splitStyle)
+                                    WorkoutAiUiState.Form(form.targetMuscles, form.exerciseCount, form.splitStyle, form.setsPerExercise)
                                 } else {
                                     (current as? WorkoutAiUiState.Error)?.originatingForm ?: defaultForm
                                 }
@@ -185,6 +186,11 @@ class WorkoutAiViewModel(
         _uiState.value = current.copy(exerciseCount = count.coerceIn(1, 12))
     }
 
+    fun onSetsPerExerciseChanged(count: Int) {
+        val current = _uiState.value as? WorkoutAiUiState.Form ?: return
+        _uiState.value = current.copy(setsPerExercise = count.coerceIn(1, 6))
+    }
+
     fun onSplitStyleChanged(split: WorkoutAiSplit) {
         val current = _uiState.value as? WorkoutAiUiState.Form ?: return
         _uiState.value = current.copy(splitStyle = split)
@@ -198,7 +204,8 @@ class WorkoutAiViewModel(
             WorkoutAiForm(
                 targetMuscles = form.targetMuscles,
                 exerciseCount = form.exerciseCount,
-                splitStyle = form.splitStyle
+                splitStyle = form.splitStyle,
+                setsPerExercise = form.setsPerExercise
             )
         )
         if (!started) {
@@ -293,7 +300,8 @@ sealed class WorkoutAiUiState {
     data class Form(
         val targetMuscles: List<MuscleGroup>,
         val exerciseCount: Int,
-        val splitStyle: WorkoutAiSplit
+        val splitStyle: WorkoutAiSplit,
+        val setsPerExercise: Int = 3
     ) : WorkoutAiUiState()
 
     data class Generating(val skeletonRowCount: Int) : WorkoutAiUiState()

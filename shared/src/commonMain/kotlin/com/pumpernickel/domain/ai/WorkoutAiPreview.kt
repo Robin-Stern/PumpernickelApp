@@ -46,7 +46,8 @@ data class StagedExercise(
 data class WorkoutAiForm(
     val targetMuscles: List<MuscleGroup>,
     val exerciseCount: Int,                  // 3..8 typical (Claude's discretion in Plan 07)
-    val splitStyle: WorkoutAiSplit
+    val splitStyle: WorkoutAiSplit,
+    val setsPerExercise: Int = 3             // D-23-01: Range 1–6, Default 3
 )
 
 enum class WorkoutAiSplit(val templateCount: Int) {
