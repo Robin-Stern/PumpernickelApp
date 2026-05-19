@@ -38,8 +38,15 @@ class WorkoutAiUseCase(
         form: WorkoutAiForm,
         onProgress: (content: String, reasoning: String) -> Unit = { _, _ -> }
     ): WorkoutAiPreview {
-        val baseUrl = settingsRepository.aiBaseUrl.first()
-        val model = settingsRepository.aiModel.first()
+        // D-22-04 / D-22-09 — per-provider base URL + model resolution.
+        // The legacy aiBaseUrl/aiModel flows remain available on
+        // SettingsRepository for SettingsMigration (Plan 22-06), but new
+        // call-sites read from the provider-keyed Maps.
+        val activeProvider = settingsRepository.activeProvider.first()
+        val baseUrl = settingsRepository.baseUrlByProvider.first()[activeProvider]
+            ?: throw AiError.SchemaInvalid("No base URL configured for provider $activeProvider")
+        val model = settingsRepository.modelByProvider.first()[activeProvider]
+            ?: throw AiError.SchemaInvalid("No model configured for provider $activeProvider")
         val systemPrompt = promptCatalog.workoutSystemPrompt()
         val existingExercises = exerciseRepository.getExercises().first()
         val userMessage = buildUserMessage(form, existingExercises)
