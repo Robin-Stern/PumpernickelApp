@@ -31,8 +31,12 @@ object RankLadder {
         // Walk ranks from top down; return the first whose threshold we meet.
         val ranks = Rank.values()
         for (i in ranks.indices.reversed()) {
-            if (xp >= thresholdFor(ranks[i])) return ranks[i]
+            if (xp >= thresholdFor(ranks[i])) {
+                println("[B6 ladder] rankForXp xp=$xp -> ${ranks[i]} (threshold=${thresholdFor(ranks[i])})")
+                return ranks[i]
+            }
         }
+        println("[B6 ladder] rankForXp xp=$xp -> SILVER (floor)")
         return Rank.SILVER
     }
 
