@@ -15,7 +15,6 @@ data class WorkoutAiPreview(
 
 data class StagedTemplate(
     val name: String,
-    val description: String?,
     val exercises: List<StagedTemplateExercise>
 )
 

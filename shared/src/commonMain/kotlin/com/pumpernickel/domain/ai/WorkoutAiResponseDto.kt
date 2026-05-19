@@ -28,7 +28,6 @@ data class WorkoutAiResponse(
 @Serializable
 data class WorkoutAiTemplate(
     val name: String,
-    val description: String? = null,
     val exercises: List<WorkoutAiTemplateExercise> = emptyList()
 )
 

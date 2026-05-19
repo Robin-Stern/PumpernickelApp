@@ -302,7 +302,6 @@ class WorkoutAiUseCase(
         val stagedTemplates = response.templates.map { t ->
             StagedTemplate(
                 name = t.name,
-                description = t.description,
                 exercises = t.exercises.map { e ->
                     val key = e.exerciseName.lowercase().trim()
                     val resolved = byNormalizedName[key]

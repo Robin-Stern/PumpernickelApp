@@ -89,11 +89,6 @@ private struct TemplateCard: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(template.name)
                 .font(.title3.bold())
-            if let desc = template.description_, !desc.isEmpty {
-                Text(desc)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
             Divider()
             ForEach(Array(template.exercises.enumerated()), id: \.offset) { _, ex in
                 HStack(alignment: .top, spacing: 8) {

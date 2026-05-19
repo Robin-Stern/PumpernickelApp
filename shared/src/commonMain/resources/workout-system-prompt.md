@@ -14,7 +14,6 @@ inline-exercise `instructions`) are in `{locale}`. JSON keys stay English.
   "templates": [
     {
       "name": "Brust & Schultern A",
-      "description": "Push-Fokus mit Schwerpunkt Volumen.",
       "exercises": [
         {
           "exerciseName": "Barbell Bench Press - Medium Grip",

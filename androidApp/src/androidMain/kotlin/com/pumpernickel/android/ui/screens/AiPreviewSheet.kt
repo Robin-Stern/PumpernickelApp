@@ -170,13 +170,6 @@ private fun StagedTemplateCard(template: StagedTemplate) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            template.description?.takeIf { it.isNotBlank() }?.let { desc ->
-                Text(
-                    text = desc,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
             HorizontalDivider()
             template.exercises.forEach { ex ->
                 StagedTemplateExerciseRow(ex)
