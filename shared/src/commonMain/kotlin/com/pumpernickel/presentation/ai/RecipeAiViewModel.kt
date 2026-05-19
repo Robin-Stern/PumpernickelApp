@@ -48,7 +48,10 @@ class RecipeAiViewModel(
     val streamingText: StateFlow<StreamingText> = generationManager.streamingText
 
     init {
-        viewModelScope.launch { secureKeyStore.readApiKey() }
+        // Phase 22 — Bootstrap ApiKeyState from multi-slot SecureKeyStore.
+        viewModelScope.launch {
+            ApiKeyState.set(secureKeyStore.listProviders().isNotEmpty())
+        }
         viewModelScope.launch {
             ApiKeyState.configured.collect { hasKey ->
                 val current = _uiState.value

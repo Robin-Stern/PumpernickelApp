@@ -101,8 +101,12 @@ class WorkoutAiViewModel(
     )
 
     init {
-        // Bootstrap ApiKeyState from Keychain on first init (read updates the flow).
-        viewModelScope.launch { secureKeyStore.readApiKey() }
+        // Bootstrap ApiKeyState from Keychain on first init (Phase 22 multi-slot):
+        // listProviders() returns the set of providers with any credential present;
+        // ApiKeyState mirrors "any credential exists".
+        viewModelScope.launch {
+            ApiKeyState.set(secureKeyStore.listProviders().isNotEmpty())
+        }
         // Live-react to key changes
         viewModelScope.launch {
             ApiKeyState.configured.collect { hasKey ->
