@@ -118,12 +118,16 @@ class AnthropicOAuthFlow(
     }
 
     private fun buildAuthorizeUrl(challenge: String, state: String): String =
+        // WR-13 — defensive: pipe `state` and `challenge` through `urlEncode`
+        // even though both come from base64url-no-padding (already in the
+        // unreserved set). Future alphabet changes would otherwise silently
+        // corrupt the query string.
         "$AUTHORIZE_ENDPOINT?response_type=code" +
-            "&client_id=$CLIENT_ID" +
+            "&client_id=${urlEncode(CLIENT_ID)}" +
             "&redirect_uri=${urlEncode(REDIRECT_URI)}" +
-            "&code_challenge=$challenge" +
+            "&code_challenge=${urlEncode(challenge)}" +
             "&code_challenge_method=S256" +
-            "&state=$state" +
+            "&state=${urlEncode(state)}" +
             "&scope=${urlEncode(SCOPE)}"
 
     /**
