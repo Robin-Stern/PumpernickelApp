@@ -32,7 +32,12 @@ data class SearchProductDto(
     @SerialName("product_name") val productName: String? = null,
     val nutriments: NutrimentsDto? = null,
     val brands: List<String>? = null,
-    @SerialName("nutrition_grade_fr") val nutritionGradeFr: String? = null
+    @SerialName("nutrition_grade_fr") val nutritionGradeFr: String? = null,
+    // D-21-04 step 1 — generic_name + categories_tags so the adapter brand-match re-ranker
+    // can score against more fields than just product_name+brands. Optional + default null
+    // so historical fixtures and any OFF response shape variation still deserializes.
+    @SerialName("generic_name") val genericName: String? = null,
+    @SerialName("categories_tags") val categoriesTags: List<String>? = null
 )
 
 @Serializable
