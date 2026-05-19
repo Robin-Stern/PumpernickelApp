@@ -2,60 +2,69 @@ import SwiftUI
 import Shared
 import KMPNativeCoroutinesAsync
 
-/// BYOK Settings (D-18-05 / D-18-06 / D-18-07).
+/// BYOK Settings — Phase 22 multi-provider model (D-22-05).
 ///
-/// Wraps the shared AiSettingsViewModel via AiSettingsKoinHelper. Selecting a
-/// provider preset resets baseUrl + model AND clears the previously saved key
-/// (an OpenAI key won't work on Together — leaving it around with a green
-/// "saved" indicator was misleading). Per provider the user is shown a list
-/// of known-good model names that auto-fill on tap.
+/// Wraps the shared AiSettingsViewModel via AiSettingsKoinHelper. Three
+/// providers: OpenAI, Together.AI, Anthropic. Anthropic exposes an OAuth
+/// primary path plus an API-key fallback. No baseUrl section — all providers
+/// use their official endpoints.
 struct AISettingsView: View {
     private let viewModel = AiSettingsKoinHelper().getAiSettingsViewModel()
 
+    /// Internal state: holds the active ProviderId's wireName ("openai" /
+    /// "together" / "anthropic").
     @State private var providerPreset: String = "openai"
     /// Quick 260518-f2h — true while the .task observer is pushing a value from
     /// the shared StateFlow into the @State. Prevents the Picker's `.onChange`
-    /// from re-calling setProviderPreset (which silently clears the API key) when
-    /// the View re-enters and catches up to the actual stored value.
+    /// from re-calling setActiveProvider (which would silently wipe per-provider
+    /// state) when the View re-enters and catches up to the actual stored value.
     @State private var isSyncingProviderFromFlow: Bool = false
-    @State private var baseUrl: String = "https://api.openai.com/v1"
+
+    /// Per-provider model map keyed by wireName. Populated by modelByProviderFlow.
+    @State private var modelByProvider: [String: String] = [:]
+    /// Saved model name for the currently active provider.
     @State private var model: String = "gpt-4o-mini"
-    @State private var apiKeyConfigured: Bool = false
+    @State private var modelDraft: String = ""
+
+    /// Wire names of providers that have credentials stored.
+    @State private var connectedProvidersWireNames: Set<String> = []
+
+    @State private var oauthInProgress: Bool = false
+    @State private var lastError: String? = nil
 
     @State private var keyDraft: String = ""
     @State private var keyVisible: Bool = false
-    @State private var baseUrlDraft: String = ""
-    @State private var modelDraft: String = ""
 
     @FocusState private var focusedField: Field?
     @Environment(\.dismiss) private var dismiss
 
-    private enum Field { case key, baseUrl, model }
+    private enum Field { case key, model }
 
     private static let presetLabels: [(key: String, label: String)] = [
         ("openai", "OpenAI"),
         ("together", "Together.AI"),
-        ("openrouter", "OpenRouter"),
-        ("groq", "Groq"),
-        ("custom", "Benutzerdefiniert")
+        ("anthropic", "Anthropic")
     ]
 
-    private var isCustomPreset: Bool { providerPreset == "custom" }
+    // MARK: - Computed
 
-    private var baseUrlInvalid: Bool {
-        let trimmed = baseUrlDraft.trimmingCharacters(in: .whitespaces)
-        return !trimmed.isEmpty && !trimmed.lowercased().hasPrefix("https://")
+    /// True iff the active provider has any credential stored.
+    private var apiKeyConfigured: Bool {
+        connectedProvidersWireNames.contains(providerPreset)
     }
+
+    private var isAnthropic: Bool { providerPreset == "anthropic" }
 
     private var providerLabel: String {
         Self.presetLabels.first(where: { $0.key == providerPreset })?.label ?? providerPreset
     }
 
+    // MARK: - Body
+
     var body: some View {
         Form {
             providerSection
             apiKeySection
-            baseUrlSection
             modelSection
         }
         .navigationTitle("KI-Einstellungen")
@@ -72,9 +81,10 @@ struct AISettingsView: View {
             }
         }
         .task { await observeProviderPreset() }
-        .task { await observeBaseUrl() }
-        .task { await observeModel() }
-        .task { await observeApiKeyConfigured() }
+        .task { await observeModelByProvider() }
+        .task { await observeConnectedProviders() }
+        .task { await observeOAuthInProgress() }
+        .task { await observeLastError() }
     }
 
     // MARK: - Sections
@@ -88,26 +98,39 @@ struct AISettingsView: View {
             }
             .pickerStyle(.menu)
             .onChange(of: providerPreset) { _, newValue in
-                // Guard against the initial flow→@State sync re-firing setProviderPreset on
-                // every view re-entry — that would clearApiKey() and silently wipe the saved-state
-                // indicator even though the key is still in keychain (Quick 260518-f2h root cause).
+                // Guard against initial flow→@State sync re-firing setActiveProvider
+                // on every view re-entry (Quick 260518-f2h root cause pattern).
                 if isSyncingProviderFromFlow {
                     isSyncingProviderFromFlow = false
                     return
                 }
-                viewModel.setProviderPreset(preset: newValue)
+                if let providerId = ProviderId.companion.fromWireNameOrNull(s: newValue) {
+                    viewModel.setActiveProvider(provider: providerId)
+                }
                 keyDraft = ""
                 keyVisible = false
+                // Sync model field to the newly selected provider's saved model.
+                model = modelByProvider[newValue] ?? defaultModel(for: newValue)
+                modelDraft = model
             }
         } header: {
             Text("Anbieter")
         } footer: {
-            Text("Beim Wechsel des Anbieters wird der bisherige API-Schlüssel automatisch gelöscht — Schlüssel sind anbieter-spezifisch.")
+            Text("Beim Wechsel des Anbieters wird der bisherige API-Schlüssel nicht automatisch gelöscht — jeder Anbieter hat seinen eigenen Schlüssel-Slot.")
                 .font(.caption2)
         }
     }
 
+    @ViewBuilder
     private var apiKeySection: some View {
+        if isAnthropic {
+            anthropicApiKeySection
+        } else {
+            standardApiKeySection
+        }
+    }
+
+    private var standardApiKeySection: some View {
         Section {
             HStack {
                 Group {
@@ -132,20 +155,9 @@ struct AISettingsView: View {
                 .accessibilityLabel(keyVisible ? "Schlüssel verbergen" : "Schlüssel zeigen")
             }
 
-            HStack(spacing: 8) {
-                Image(systemName: apiKeyConfigured ? "checkmark.seal.fill" : "exclamationmark.triangle")
-                    .foregroundColor(apiKeyConfigured ? .green : .orange)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(apiKeyConfigured ? "Schlüssel für \(providerLabel) gespeichert" : "Kein Schlüssel für \(providerLabel)")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor(apiKeyConfigured ? .green : .orange)
-                    if !apiKeyConfigured {
-                        Text("Schlüssel oben eintippen und auf Speichern tippen.")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
+            statusRow
+
+            errorRow
 
             HStack(spacing: 12) {
                 Button(action: saveKeyDraft) {
@@ -155,7 +167,7 @@ struct AISettingsView: View {
                 .disabled(keyDraft.trimmingCharacters(in: .whitespaces).isEmpty)
 
                 Button(role: .destructive) {
-                    viewModel.clearApiKey()
+                    viewModel.disconnect(provider: providerIdForCurrent())
                     keyDraft = ""
                     keyVisible = false
                 } label: {
@@ -172,31 +184,109 @@ struct AISettingsView: View {
         }
     }
 
-    private var baseUrlSection: some View {
+    private var anthropicApiKeySection: some View {
         Section {
-            TextField("https://api.openai.com/v1", text: $baseUrlDraft)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled(true)
-                .keyboardType(.URL)
-                .focused($focusedField, equals: .baseUrl)
-                .disabled(!isCustomPreset)
-                .foregroundColor(isCustomPreset ? .primary : .secondary)
-                .onSubmit { commitBaseUrlDraft() }
-            if isCustomPreset && baseUrlInvalid {
-                Text("Nur HTTPS-URLs erlaubt.")
-                    .font(.caption)
-                    .foregroundColor(.red)
+            // OAuth primary path
+            HStack {
+                Button {
+                    viewModel.startAnthropicOAuth()
+                } label: {
+                    Label("Mit Anthropic verbinden (OAuth)", systemImage: "person.badge.key.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(oauthInProgress)
+
+                if oauthInProgress {
+                    Spacer()
+                    ProgressView()
+                }
             }
-            if isCustomPreset {
-                Button("Basis-URL speichern") { commitBaseUrlDraft() }
-                    .disabled(baseUrlInvalid || baseUrlDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+
+            statusRow
+
+            errorRow
+
+            // API-key fallback
+            DisclosureGroup("Stattdessen API-Key verwenden") {
+                HStack {
+                    Group {
+                        if keyVisible {
+                            TextField("sk-ant-…", text: $keyDraft)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+                        } else {
+                            SecureField("sk-ant-…", text: $keyDraft)
+                        }
+                    }
+                    .focused($focusedField, equals: .key)
+                    .submitLabel(.done)
+                    .onSubmit { saveAnthropicKeyDraft() }
+
+                    Button {
+                        keyVisible.toggle()
+                    } label: {
+                        Image(systemName: keyVisible ? "eye.slash" : "eye")
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel(keyVisible ? "Schlüssel verbergen" : "Schlüssel zeigen")
+                }
+
+                HStack(spacing: 12) {
+                    Button(action: saveAnthropicKeyDraft) {
+                        Text("Speichern")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(keyDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+
+                    Button(role: .destructive) {
+                        viewModel.disconnect(provider: ProviderId.anthropic)
+                        keyDraft = ""
+                        keyVisible = false
+                    } label: {
+                        Text("Löschen")
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!apiKeyConfigured)
+                }
             }
         } header: {
-            Text("Basis-URL")
+            Text("API-Schlüssel · Anthropic")
         } footer: {
-            if !isCustomPreset {
-                Text("Bei Standard-Anbietern fest auf den offiziellen Endpunkt gesetzt.")
-                    .font(.caption2)
+            Text("Verbinde dein Anthropic-Konto via OAuth oder trage einen API-Key direkt ein.")
+                .font(.caption2)
+        }
+    }
+
+    /// Status row shared between standard and Anthropic sections.
+    private var statusRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: apiKeyConfigured ? "checkmark.seal.fill" : "exclamationmark.triangle")
+                .foregroundColor(apiKeyConfigured ? .green : .orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(apiKeyConfigured ? "Verbunden mit \(providerLabel)" : "Kein Schlüssel für \(providerLabel)")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(apiKeyConfigured ? .green : .orange)
+                if !apiKeyConfigured {
+                    Text(isAnthropic ? "OAuth-Verbindung oder API-Key oben eintippen." : "Schlüssel oben eintippen und auf Speichern tippen.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+
+    /// Error row — shown only when lastError is non-nil.
+    @ViewBuilder
+    private var errorRow: some View {
+        if let error = lastError {
+            HStack {
+                Text(error)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                Spacer()
+                Button("Schließen") { viewModel.clearError() }
+                    .font(.caption)
+                    .buttonStyle(.borderless)
             }
         }
     }
@@ -231,7 +321,7 @@ struct AISettingsView: View {
                     ForEach(suggestions, id: \.name) { item in
                         ModelSuggestionRow(name: item.name, note: item.note) {
                             modelDraft = item.name
-                            viewModel.setModel(value: item.name)
+                            viewModel.setModel(provider: providerIdForCurrent(), model: item.name)
                         }
                     }
                 }
@@ -246,45 +336,44 @@ struct AISettingsView: View {
     private func saveKeyDraft() {
         let trimmed = keyDraft.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
-        viewModel.setApiKey(value: trimmed)
+        viewModel.setApiKeyFor(provider: providerIdForCurrent(), key: trimmed)
         keyDraft = ""
         keyVisible = false
         focusedField = nil
     }
 
-    private func commitBaseUrlDraft() {
-        let trimmed = baseUrlDraft.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty, !baseUrlInvalid else { return }
-        viewModel.setBaseUrl(url: trimmed)
+    private func saveAnthropicKeyDraft() {
+        let trimmed = keyDraft.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        viewModel.setAnthropicApiKey(key: trimmed)
+        keyDraft = ""
+        keyVisible = false
         focusedField = nil
     }
 
     private func commitModelDraft() {
         let trimmed = modelDraft.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
-        viewModel.setModel(value: trimmed)
+        viewModel.setModel(provider: providerIdForCurrent(), model: trimmed)
+        model = trimmed
         focusedField = nil
     }
 
     private func commitFocusedField() {
         switch focusedField {
-        case .key: saveKeyDraft()
-        case .baseUrl: commitBaseUrlDraft()
-        case .model: commitModelDraft()
-        case .none: break
+        case .key:
+            if isAnthropic { saveAnthropicKeyDraft() } else { saveKeyDraft() }
+        case .model:
+            commitModelDraft()
+        case .none:
+            break
         }
         focusedField = nil
     }
 
     private func saveAllAndDismiss() {
         if !keyDraft.trimmingCharacters(in: .whitespaces).isEmpty {
-            saveKeyDraft()
-        }
-        if isCustomPreset
-            && !baseUrlDraft.trimmingCharacters(in: .whitespaces).isEmpty
-            && !baseUrlInvalid
-            && baseUrlDraft != baseUrl {
-            commitBaseUrlDraft()
+            if isAnthropic { saveAnthropicKeyDraft() } else { saveKeyDraft() }
         }
         if !modelDraft.trimmingCharacters(in: .whitespaces).isEmpty
             && modelDraft != model {
@@ -294,52 +383,95 @@ struct AISettingsView: View {
         dismiss()
     }
 
+    // MARK: - Helpers
+
+    /// Safe force-unwrap: providerPreset is always one of the three known wireNames.
+    private func providerIdForCurrent() -> ProviderId {
+        ProviderId.companion.fromWireNameOrNull(s: providerPreset)!
+    }
+
+    private func defaultModel(for wireName: String) -> String {
+        switch wireName {
+        case "together": return "google/gemma-4-31B-it"
+        case "anthropic": return "claude-sonnet-4-6"
+        default: return "gpt-4o-mini"
+        }
+    }
+
     // MARK: - Observers
 
     private func observeProviderPreset() async {
         do {
-            for try await value in asyncSequence(for: viewModel.providerPresetFlow) {
-                if value != self.providerPreset {
+            for try await value in asyncSequence(for: viewModel.activeProviderFlow) {
+                let wireName = value.wireName
+                if wireName != self.providerPreset {
                     self.isSyncingProviderFromFlow = true
-                    self.providerPreset = value
+                    self.providerPreset = wireName
                 }
+                // Re-sync the model field to the new provider's saved model.
+                self.model = self.modelByProvider[wireName] ?? self.defaultModel(for: wireName)
+                self.modelDraft = self.model
             }
         } catch {
-            print("AISettingsView providerPreset observation error: \(error)")
+            print("AISettingsView activeProvider observation error: \(error)")
         }
     }
 
-    private func observeBaseUrl() async {
+    private func observeModelByProvider() async {
         do {
-            for try await value in asyncSequence(for: viewModel.baseUrlFlow) {
-                self.baseUrl = value
-                self.baseUrlDraft = value
+            for try await dict in asyncSequence(for: viewModel.modelByProviderFlow) {
+                // KMP bridges Map<ProviderId, String> as NSDictionary keyed by ProviderId NSObject.
+                var newMap: [String: String] = [:]
+                for (key, val) in dict {
+                    if let pid = key as? ProviderId, let modelStr = val as? String {
+                        newMap[pid.wireName] = modelStr
+                    }
+                }
+                self.modelByProvider = newMap
+                // Update model field for the currently active provider.
+                self.model = newMap[self.providerPreset] ?? self.defaultModel(for: self.providerPreset)
+                self.modelDraft = self.model
             }
         } catch {
-            print("AISettingsView baseUrl observation error: \(error)")
+            print("AISettingsView modelByProvider observation error: \(error)")
         }
     }
 
-    private func observeModel() async {
+    private func observeConnectedProviders() async {
         do {
-            for try await value in asyncSequence(for: viewModel.modelFlow) {
-                self.model = value
-                self.modelDraft = value
+            for try await set in asyncSequence(for: viewModel.connectedProvidersFlow) {
+                // KMP bridges Set<ProviderId> as NSSet of ProviderId NSObjects.
+                var wireNames: Set<String> = []
+                for item in set {
+                    if let pid = item as? ProviderId {
+                        wireNames.insert(pid.wireName)
+                    }
+                }
+                self.connectedProvidersWireNames = wireNames
             }
         } catch {
-            print("AISettingsView model observation error: \(error)")
+            print("AISettingsView connectedProviders observation error: \(error)")
         }
     }
 
-    private func observeApiKeyConfigured() async {
+    private func observeOAuthInProgress() async {
         do {
-            for try await value in asyncSequence(for: viewModel.apiKeyConfiguredFlow) {
-                let asBool: Bool = (value as? Bool) ?? ((value as? NSNumber)?.boolValue ?? false)
-                self.apiKeyConfigured = asBool
-                print("[AISettingsView] apiKeyConfigured emitted: \(asBool)")
+            for try await value in asyncSequence(for: viewModel.oauthInProgressFlow) {
+                // StateFlow<Boolean> bridges as KotlinBoolean.
+                self.oauthInProgress = value.boolValue
             }
         } catch {
-            print("AISettingsView apiKeyConfigured observation error: \(error)")
+            print("AISettingsView oauthInProgress observation error: \(error)")
+        }
+    }
+
+    private func observeLastError() async {
+        do {
+            for try await value in asyncSequence(for: viewModel.lastErrorFlow) {
+                self.lastError = value
+            }
+        } catch {
+            print("AISettingsView lastError observation error: \(error)")
         }
     }
 }
@@ -367,15 +499,10 @@ private extension AISettingsView {
             ModelSuggestion(name: "meta-llama/Llama-3.3-70B-Instruct-Turbo", note: "Llama · stark allround"),
             ModelSuggestion(name: "deepseek-ai/DeepSeek-V3", note: "DeepSeek · Code/Logik")
         ],
-        "openrouter": [
-            ModelSuggestion(name: "openai/gpt-oss-20b:free", note: "Kostenlos · Reasoning · Recipe unzuverlässig"),
-            ModelSuggestion(name: "meta-llama/llama-3.3-70b-instruct", note: "Stark, allround"),
-            ModelSuggestion(name: "deepseek/deepseek-chat", note: "Stark bei Code/Logik")
-        ],
-        "groq": [
-            ModelSuggestion(name: "llama-3.3-70b-versatile", note: "Standard, sehr schnell"),
-            ModelSuggestion(name: "llama-3.1-8b-instant", note: "Klein, sehr schnell"),
-            ModelSuggestion(name: "openai/gpt-oss-20b", note: "Reasoning · Recipe unzuverlässig")
+        "anthropic": [
+            ModelSuggestion(name: "claude-sonnet-4-6", note: "Empfohlen · Standard"),
+            ModelSuggestion(name: "claude-opus-4-7", note: "Stärkstes Reasoning"),
+            ModelSuggestion(name: "claude-haiku-4-5", note: "Schnell · günstig")
         ]
     ]
 }
