@@ -1,5 +1,6 @@
 package com.pumpernickel.infrastructure.ai
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -18,12 +19,19 @@ import kotlinx.serialization.Serializable
  */
 sealed class Credential {
     @Serializable
-    data class ApiKey(val value: String) : Credential()
+    data class ApiKey(
+        // WR-11 — pin the wire field name so future Kotlin field renames do
+        // not invalidate stored credentials.
+        @SerialName("value") val value: String
+    ) : Credential()
 
     @Serializable
     data class OAuthToken(
-        val accessToken: String,
-        val refreshToken: String?,
-        val expiresAtEpochSeconds: Long
+        // WR-11 — explicit SerialName locks the on-disk JSON shape across
+        // Kotlin-side field renames. The wire format must remain stable so
+        // existing stored tokens survive refactors.
+        @SerialName("accessToken") val accessToken: String,
+        @SerialName("refreshToken") val refreshToken: String?,
+        @SerialName("expiresAtEpochSeconds") val expiresAtEpochSeconds: Long
     ) : Credential()
 }
