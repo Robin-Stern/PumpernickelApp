@@ -258,7 +258,7 @@ Plans:
 - Streaming responses.
 - Cost / token-count UI.
 
-**Plans:** 8/10 plans executed
+**Plans:** 10/10 plans complete
 
 **Wave structure** (serialized where plans share files; parallelism within a wave only when files_modified do not overlap):
 - Wave 1 (foundation, parallel): 01 (Room v9 → v10 — source column on 4 entities + AutoMigration(9, 10)), 02 (HttpClientFactory plugins + AiChatDto + OpenAICompatibleClient + AiError sealed)
@@ -277,9 +277,9 @@ Plans:
 - [x] 18-04-PLAN.md — SecureKeyStore expect/actual (Keychain on iOS, EncryptedSharedPreferences on Android) + PlatformModule bindings + SettingsRepository AI configuration fields
 - [x] 18-05-PLAN.md — AiSettingsViewModel + AiModule (registered in SharedModule) + AiSettingsScreen + SettingsSheet AI row + Routes/MainScreen wiring + iOS AiSettingsKoinHelper
 - [x] 18-06-PLAN.md — WorkoutAiUseCase + WorkoutAiViewModel + AiModule binding + iOS WorkoutAiKoinHelper + TemplateRepository.createTemplate gains source arg
-- [ ] 18-07-PLAN.md — AiPreviewSheet sealed AiPreviewContent + Workout body + AiWorkoutGenScreen + TemplateListScreen sparkles entry + MainScreen route
+- [x] 18-07-PLAN.md — AiPreviewSheet sealed AiPreviewContent + Workout body + AiWorkoutGenScreen + TemplateListScreen sparkles entry + MainScreen route
 - [x] 18-08-PLAN.md — RecipeAiUseCase + RecipeAiViewModel + AiModule binding + iOS RecipeAiKoinHelper
-- [ ] 18-09-PLAN.md — AiPreviewSheet Recipe branch + AiMealGenScreen + NutritionDailyLogScreen sparkles + MainScreen route
+- [x] 18-09-PLAN.md — AiPreviewSheet Recipe branch + AiMealGenScreen + NutritionDailyLogScreen sparkles + MainScreen route
 - [x] 18-10-PLAN.md — 18-IOS-HANDOFF.md spec for SwiftUI surfaces (4 new + 2 modify)
 
 **Success criteria (draft, finalized at plan-phase):**
