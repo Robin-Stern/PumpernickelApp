@@ -74,8 +74,12 @@ class AnthropicClient(
                 }
                 throw mapHttpError(status, text)
             }
-            if (text.length > 64 * 1024) {
-                throw AiError.SchemaInvalid("response exceeded 64KB cap")
+            if (text.length > MAX_RESPONSE_TEXT_LEN_FOR_SANITY) {
+                // WR-09 — sanity check only: `bodyAsText()` above already
+                // buffered the full body into memory, so this does NOT protect
+                // against an attacker-controlled response forcing OOM. Treat as
+                // a post-hoc bound for schema-likely-broken responses.
+                throw AiError.SchemaInvalid("response exceeded 64KB sanity cap")
             }
             return json.decodeFromString<AnthropicMessagesResponse>(text)
         } catch (ce: CancellationException) {
@@ -141,8 +145,10 @@ class AnthropicClient(
 
             val finalContent = parser.result()
             println("[Anthropic] stream complete stop=${parser.done} contentLen=${finalContent.length}")
-            if (finalContent.length > 64 * 1024) {
-                throw AiError.SchemaInvalid("response exceeded 64KB cap")
+            if (finalContent.length > MAX_RESPONSE_TEXT_LEN_FOR_SANITY) {
+                // WR-09 — see chatCompletion: sanity bound, not a security
+                // protection. The streamed body accumulates in `parser.result()`.
+                throw AiError.SchemaInvalid("response exceeded 64KB sanity cap")
             }
             return finalContent
         } catch (ce: CancellationException) {
@@ -221,5 +227,11 @@ class AnthropicClient(
         const val HEADER_ANTHROPIC_VERSION = "anthropic-version"
         const val HEADER_X_API_KEY = "x-api-key"
         const val HttpHeaderAuthorization = "Authorization"
+
+        // WR-09 — post-hoc sanity bound on response text length. NOT a security
+        // protection: bodyAsText()/SSE accumulation has already loaded the body
+        // into memory. True size-bounded reads would require streamed parsing
+        // with running size accounting (deferred).
+        private const val MAX_RESPONSE_TEXT_LEN_FOR_SANITY = 64 * 1024
     }
 }
