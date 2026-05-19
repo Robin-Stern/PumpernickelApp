@@ -18,6 +18,7 @@ import com.pumpernickel.domain.model.UserPhysicalStats
 import com.pumpernickel.domain.model.WeightUnit
 import com.pumpernickel.domain.repository.EarlyExitBudgetStore
 import com.pumpernickel.domain.repository.SettingsRepository
+import com.pumpernickel.infrastructure.ai.ProviderId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -239,6 +240,16 @@ class SettingsRepositoryImpl(
     private val aiBaseUrlKey = stringPreferencesKey("ai_base_url")
     private val aiModelKey = stringPreferencesKey("ai_model")
 
+    // Phase 22 — Multi-Provider AI config (D-22-09)
+    private val activeProviderKey = stringPreferencesKey("active_provider")
+    private val modelOpenAiKey = stringPreferencesKey("model_openai")
+    private val modelTogetherKey = stringPreferencesKey("model_together")
+    private val modelAnthropicKey = stringPreferencesKey("model_anthropic")
+    private val baseUrlOpenAiKey = stringPreferencesKey("base_url_openai")
+    private val baseUrlTogetherKey = stringPreferencesKey("base_url_together")
+    private val baseUrlAnthropicKey = stringPreferencesKey("base_url_anthropic")
+    private val migratedToMultiProviderKey = booleanPreferencesKey("migrated_to_multi_provider")
+
     override val aiProviderPreset: Flow<String> = dataStore.data.map { prefs ->
         prefs[aiProviderPresetKey] ?: "openai"
     }
@@ -361,5 +372,70 @@ class SettingsRepositoryImpl(
         val ts = prefs[pendingGeofenceExitTimeMillisKey] ?: return null
         val rid = prefs[pendingGeofenceExitRegionIdKey] ?: return null
         return PendingGeofenceExit(workoutId = wid, exitTimeMillis = ts, regionId = rid)
+    }
+
+    // ============================================================
+    // D-22-09 — Multi-Provider AI configuration
+    // ============================================================
+
+    override val activeProvider: Flow<ProviderId> = dataStore.data.map { prefs ->
+        ProviderId.fromWireNameOrNull(prefs[activeProviderKey]) ?: ProviderId.OpenAI
+    }
+
+    override suspend fun setActiveProvider(provider: ProviderId) {
+        dataStore.edit { prefs -> prefs[activeProviderKey] = provider.wireName }
+    }
+
+    override val modelByProvider: Flow<Map<ProviderId, String>> = dataStore.data.map { prefs ->
+        mapOf(
+            ProviderId.OpenAI to (prefs[modelOpenAiKey] ?: DEFAULT_MODEL_OPENAI),
+            ProviderId.Together to (prefs[modelTogetherKey] ?: DEFAULT_MODEL_TOGETHER),
+            ProviderId.Anthropic to (prefs[modelAnthropicKey] ?: DEFAULT_MODEL_ANTHROPIC)
+        )
+    }
+
+    override suspend fun setModel(provider: ProviderId, model: String) {
+        val key = when (provider) {
+            ProviderId.OpenAI -> modelOpenAiKey
+            ProviderId.Together -> modelTogetherKey
+            ProviderId.Anthropic -> modelAnthropicKey
+        }
+        dataStore.edit { prefs -> prefs[key] = model }
+    }
+
+    override val baseUrlByProvider: Flow<Map<ProviderId, String>> = dataStore.data.map { prefs ->
+        mapOf(
+            ProviderId.OpenAI to (prefs[baseUrlOpenAiKey] ?: DEFAULT_BASE_URL_OPENAI),
+            ProviderId.Together to (prefs[baseUrlTogetherKey] ?: DEFAULT_BASE_URL_TOGETHER),
+            // D-22-01: Anthropic ist fixed — user override hat keinen Effekt (kein Setter-Path).
+            ProviderId.Anthropic to DEFAULT_BASE_URL_ANTHROPIC
+        )
+    }
+
+    override suspend fun setBaseUrl(provider: ProviderId, url: String) {
+        val key = when (provider) {
+            ProviderId.OpenAI -> baseUrlOpenAiKey
+            ProviderId.Together -> baseUrlTogetherKey
+            // D-22-01: Anthropic URL ist fixed — setBaseUrl(Anthropic, ...) ist ein No-Op.
+            ProviderId.Anthropic -> return
+        }
+        dataStore.edit { prefs -> prefs[key] = url }
+    }
+
+    override val migratedToMultiProvider: Flow<Boolean> = dataStore.data.map { prefs ->
+        prefs[migratedToMultiProviderKey] ?: false
+    }
+
+    override suspend fun setMigratedToMultiProvider(value: Boolean) {
+        dataStore.edit { prefs -> prefs[migratedToMultiProviderKey] = value }
+    }
+
+    companion object {
+        const val DEFAULT_MODEL_OPENAI = "gpt-4o-mini"
+        const val DEFAULT_MODEL_TOGETHER = "google/gemma-4-31B-it"
+        const val DEFAULT_MODEL_ANTHROPIC = "claude-opus-4-7"
+        const val DEFAULT_BASE_URL_OPENAI = "https://api.openai.com/v1"
+        const val DEFAULT_BASE_URL_TOGETHER = "https://api.together.ai/v1"
+        const val DEFAULT_BASE_URL_ANTHROPIC = "https://api.anthropic.com"
     }
 }
