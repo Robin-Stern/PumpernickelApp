@@ -30,6 +30,10 @@ actual val platformModule: Module = module {
     single<BiometricGate> { BiometricGate() }
     // Phase 18 — BYOK key store, no-arg ctor (REQ-AI-06).
     single<SecureKeyStore> { SecureKeyStore() }
+    // Phase 22 — OAuth browser bridge for Anthropic Pro/Max auth flow (D-22-01).
+    single<com.pumpernickel.infrastructure.ai.OAuthBrowserLauncher> {
+        com.pumpernickel.infrastructure.ai.OAuthBrowserLauncher()
+    }
     // Phase 19 — geofence + permission stack (D-19-01, D-19-02, D-19-04, D-19-12)
     // PendingGeofenceExitStore is bound in SharedModule via SettingsRepository bind;
     // here we wire the iOS actuals that consume it.
