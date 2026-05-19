@@ -25,6 +25,7 @@ struct AIWorkoutGenView: View {
         .navigationTitle("KI-Workout")
         .navigationBarTitleDisplayMode(.inline)
         .task {
+            print("[AiView] .task started vm=\(ObjectIdentifier(viewModel).hashValue)")
             await withTaskGroup(of: Void.self) { group in
                 group.addTask { await observeUiState() }
                 group.addTask { await observeStreaming() }
@@ -35,6 +36,7 @@ struct AIWorkoutGenView: View {
             // 260518-eny — always start from a fresh Form when the user pushes
             // this screen, so a leftover Saved/Preview/Error state from the
             // previous navigation cycle cannot "burn" the view.
+            print("[AiView] .onAppear vm=\(ObjectIdentifier(viewModel).hashValue) callingReset()")
             viewModel.reset()
         }
     }

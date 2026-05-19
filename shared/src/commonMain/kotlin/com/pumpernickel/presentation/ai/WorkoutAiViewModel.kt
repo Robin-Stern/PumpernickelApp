@@ -37,6 +37,28 @@ import kotlinx.coroutines.yield
  * - Preview (LLM returned a valid response; preview sheet shown; Save / Discard)
  * - Error (terminal until retry / dismiss; carries an AiError for per-class copy)
  * - Saved (commit() succeeded; templateIds returned for nav back to TemplateList)
+ *
+ * D-21-02 root-cause: (c) SwiftUI `.onAppear { viewModel.reset() }` re-runs every
+ * time the AIWorkoutGenView is presented (incl. when the user returns to the AI
+ * tab after a background generation finished). The Quick-Fix 260518-eny added a
+ * `reset()` whose only guard is `WorkoutAiUiState.Generating` — so when the user
+ * navigates back AFTER the LLM has already completed (state == `Preview`), the
+ * unguarded reset overwrites `Preview` with `defaultForm`. The AiGenerationManager
+ * is itself a Koin `single` running its own app-scope `SupervisorJob`, so
+ * hypothesis (b) "viewModelScope cancelled" is NOT the root cause; the generation
+ * job survives. Hypothesis (a) "factory VM recreated" is partially true (the
+ * `viewModel { }` binding is factory-default in Koin), but the freshly-instantiated
+ * VM picks up the manager's `Success` state via the `init { collect }` replay —
+ * unless `.onAppear` then immediately stomps the resulting `Preview` with reset().
+ * Fix targets the View+VM `reset()` semantics in Task 2, not the Koin scope.
+ *
+ * Evidence (code-trace only — no simulator run needed):
+ *   1. `[AiVM] state=Preview` is set by the `Success` collector at line ~122.
+ *   2. SwiftUI calls `.onAppear { viewModel.reset() }` synchronously on re-entry.
+ *   3. `reset()` only guards `Generating` → overwrites `Preview` with `defaultForm`.
+ * Quick-Fix 260518-eny SUMMARY corroborates: the same VM-instance is long-lived on
+ * iOS, so the surviving `_uiState` is the right place to look — and the unguarded
+ * reset() it added is the regression that turned a recoverable Preview into Idle.
  */
 class WorkoutAiViewModel(
     private val useCase: WorkoutAiUseCase,
@@ -78,6 +100,7 @@ class WorkoutAiViewModel(
     )
 
     init {
+        println("[AiVM] init instance=${this.hashCode()}")
         // Bootstrap ApiKeyState from Keychain on first init (read updates the flow).
         viewModelScope.launch { secureKeyStore.readApiKey() }
         // Live-react to key changes
@@ -88,9 +111,11 @@ class WorkoutAiViewModel(
                     !hasKey && current !is WorkoutAiUiState.Generating
                             && current !is WorkoutAiUiState.Preview
                             && current !is WorkoutAiUiState.Saved -> {
+                        println("[AiVM] state=NoKey instance=${this@WorkoutAiViewModel.hashCode()}")
                         _uiState.value = WorkoutAiUiState.NoKey
                     }
                     hasKey && current is WorkoutAiUiState.NoKey -> {
+                        println("[AiVM] state=Form(default,fromNoKey) instance=${this@WorkoutAiViewModel.hashCode()}")
                         _uiState.value = defaultForm
                     }
                     else -> {}
@@ -105,6 +130,7 @@ class WorkoutAiViewModel(
                 when (genState) {
                     is AiGenerationState.Idle -> {
                         if (current is WorkoutAiUiState.Generating) {
+                            println("[AiVM] state=Form(fromIdle) instance=${this@WorkoutAiViewModel.hashCode()}")
                             _uiState.value = defaultForm
                         }
                     }
@@ -112,6 +138,7 @@ class WorkoutAiViewModel(
                         if (genState.type == AiType.WORKOUT) {
                             val form = genState.originatingData as? WorkoutAiForm
                             val rows = form?.exerciseCount ?: (current as? WorkoutAiUiState.Form)?.exerciseCount ?: 5
+                            println("[AiVM] state=Generating rows=$rows instance=${this@WorkoutAiViewModel.hashCode()}")
                             _uiState.value = WorkoutAiUiState.Generating(skeletonRowCount = rows)
                         }
                     }
@@ -119,6 +146,7 @@ class WorkoutAiViewModel(
                         if (genState.type == AiType.WORKOUT) {
                             val preview = genState.preview as WorkoutAiPreview
                             val form = genState.originatingData as? WorkoutAiForm
+                            println("[AiVM] state=Preview instance=${this@WorkoutAiViewModel.hashCode()}")
                             _uiState.value = WorkoutAiUiState.Preview(
                                 preview = preview,
                                 originatingForm = if (form != null) {
@@ -133,6 +161,7 @@ class WorkoutAiViewModel(
                         if (genState.type == AiType.WORKOUT) {
                             val error = if (genState.exception is AiError) genState.exception else AiError.fromThrowable(genState.exception)
                             val form = genState.originatingData as? WorkoutAiForm
+                            println("[AiVM] state=Error instance=${this@WorkoutAiViewModel.hashCode()}")
                             _uiState.value = WorkoutAiUiState.Error(
                                 error = error,
                                 originatingForm = if (form != null) {
@@ -146,6 +175,11 @@ class WorkoutAiViewModel(
                 }
             }
         }
+    }
+
+    override fun onCleared() {
+        println("[AiVM] onCleared instance=${this.hashCode()}")
+        super.onCleared()
     }
 
     fun onMusclesChanged(muscles: List<MuscleGroup>) {
@@ -222,7 +256,12 @@ class WorkoutAiViewModel(
      * Phase-19 BackgroundTaskManager flow); the `Generating` guard preserves that.
      */
     fun reset() {
-        if (_uiState.value is WorkoutAiUiState.Generating) return
+        val before = _uiState.value
+        if (before is WorkoutAiUiState.Generating) {
+            println("[AiVM] reset() skipped (Generating) instance=${this.hashCode()}")
+            return
+        }
+        println("[AiVM] reset() before=${before::class.simpleName} instance=${this.hashCode()}")
         _uiState.value = defaultForm
     }
 
