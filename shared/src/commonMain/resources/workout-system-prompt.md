@@ -18,7 +18,7 @@ inline-exercise `instructions`) are in `{locale}`. JSON keys stay English.
       "exercises": [
         {
           "exerciseName": "Barbell Bench Press - Medium Grip",
-          "targetSets": 4,
+          "targetSets": 3,
           "targetReps": 8,
           "restPeriodSec": 120,
           "note": "Schulterblätter zusammenziehen."
@@ -43,7 +43,9 @@ inline-exercise `instructions`) are in `{locale}`. JSON keys stay English.
   message. Single template = 1; PPL = 3; Upper-Lower = 2; Full Body = 1.
 - Each template's `exercises.length` MUST equal `exerciseCount` from the user
   message exactly.
-- `targetSets`: use setsPerExercise from user message exactly. `targetReps` ∈ 8..12. `restPeriodSec` ∈ 60..120.
+- `targetSets`: MUST be exactly the value of `setsPerExercise` from the user message for
+  **every** exercise in **every** template. Do not vary it across exercises.
+  `targetReps` ∈ 8..12. `restPeriodSec` ∈ 60..120.
 - `exerciseName` MUST exactly match the `name` of an item in
   `existingExercises` (case-insensitive) OR an entry you emit in
   `inlineNewExercises`. Do NOT invent names that have no match.
