@@ -33,6 +33,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -52,7 +55,13 @@ fun AiGenerationMiniBar(
     val genState by generationManager.state.collectAsState()
 
     val visible = genState is AiGenerationState.Generating || genState is AiGenerationState.Success
-    val activeType: AiType? = when (val s = genState) {
+
+    // Hold the last active state so the exit animation renders meaningful content
+    // rather than blank when genState transitions to Idle mid-animation.
+    var lastVisibleState by remember { mutableStateOf<AiGenerationState>(AiGenerationState.Idle) }
+    if (visible) lastVisibleState = genState
+
+    val activeType: AiType? = when (val s = lastVisibleState) {
         is AiGenerationState.Generating -> s.type
         is AiGenerationState.Success -> s.type
         else -> null
@@ -71,7 +80,7 @@ fun AiGenerationMiniBar(
             color = MaterialTheme.colorScheme.surfaceVariant,
             tonalElevation = 0.dp
         ) {
-            when (val s = genState) {
+            when (val s = lastVisibleState) {
                 is AiGenerationState.Generating -> MiniBarGenerating(s.type)
                 is AiGenerationState.Success -> MiniBarSuccess(s.type)
                 else -> {}
