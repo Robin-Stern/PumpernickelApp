@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -126,35 +123,40 @@ fun SettingsSheet(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(accentPresets) { preset ->
-                    val isSelected = accentColorKey == preset.key
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(preset.color, CircleShape)
-                            .then(
-                                if (isSelected) Modifier
-                                    .border(3.dp, Color.White, CircleShape)
-                                    .shadow(6.dp, CircleShape, ambientColor = preset.color, spotColor = preset.color)
-                                else Modifier
-                            )
-                            .clickable { viewModel.setAccentColor(preset.key) }
+                accentPresets.chunked(4).forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        if (isSelected) {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = preset.name,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
+                        row.forEach { preset ->
+                            val isSelected = accentColorKey == preset.key
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(preset.color, CircleShape)
+                                    .then(
+                                        if (isSelected) Modifier
+                                            .border(3.dp, Color.White, CircleShape)
+                                            .shadow(6.dp, CircleShape, ambientColor = preset.color, spotColor = preset.color)
+                                        else Modifier
+                                    )
+                                    .clickable { viewModel.setAccentColor(preset.key) }
+                            ) {
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = preset.name,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
