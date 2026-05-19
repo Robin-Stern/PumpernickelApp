@@ -31,11 +31,22 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode|locale|fontScale|density">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Phase 22 — OAuth redirect from Chrome CustomTabs (D-22-01).
+                 Captures pumpernickel-oauth://callback?code=... URLs. Routed
+                 to OAuthBrowserLauncherHost.handleRedirect in MainActivity.onNewIntent. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="pumpernickel-oauth" android:host="callback" />
             </intent-filter>
         </activity>
 
