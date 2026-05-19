@@ -38,7 +38,7 @@ class LookupBarcodeUseCase(
             val allZero = cal <= 0.0 && prot <= 0.0 && fat <= 0.0 && carbs <= 0.0
             val fallback = if (allZero) fallbackFor(product.name) else null
 
-            Result.FoundRemote(
+            val result = Result.FoundRemote(
                 name = product.name,
                 calories = fallback?.calories ?: cal,
                 protein = fallback?.protein ?: prot,
@@ -47,7 +47,15 @@ class LookupBarcodeUseCase(
                 sugar = (fallback?.sugar ?: sugar).coerceAtMost(fallback?.carbs ?: carbs),
                 fromFallback = fallback != null
             )
+            // D-21-03 trace — domain Food shape after fallback resolution.
+            println(
+                "[B2] usecase result name=${result.name} kcal=${result.calories} " +
+                    "protein=${result.protein} carbs=${result.carbs} fat=${result.fat} " +
+                    "sugar=${result.sugar} fromFallback=${result.fromFallback} allZeroOFF=$allZero"
+            )
+            result
         } catch (e: Exception) {
+            println("[B2] usecase EXCEPTION ${e::class.simpleName} message=${e.message}")
             Result.Error(e.message ?: "Unbekannter Fehler")
         }
     }

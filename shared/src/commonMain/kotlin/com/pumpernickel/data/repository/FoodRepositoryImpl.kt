@@ -35,6 +35,14 @@ class FoodRepositoryImpl(
     // -- Foods --
 
     override suspend fun saveFood(food: Food) {
+        // D-21-03 trace — final write hitting the DAO. Combined with a sqlite/DB-Browser
+        // dump this nails down whether persisted macros differ from the in-memory Food.
+        println(
+            "[B2] repo persist food id=${food.id} name=${food.name} " +
+                "kcal=${food.calories} protein=${food.protein} " +
+                "carbs=${food.carbohydrates} fat=${food.fat} sugar=${food.sugar} " +
+                "barcode=${food.barcode}"
+        )
         dao.insertFood(food.toEntity())
     }
 

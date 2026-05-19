@@ -197,9 +197,19 @@ class RecipeCreationViewModel(
 
             is RecipeCreationEvent.OnBarcodeScanned -> viewModelScope.launch {
                 _creationState.update { it.copy(errorMessage = null) }
+                // D-21-03 trace — barcode received by the recipe ViewModel.
+                println("[B2] vm received barcode=${event.barcode}")
+                // D-21-03 root-cause: (pending UAT confirmation) — based on static analysis
+                // the most likely layer is the LookupBarcodeUseCase fallback path: when OFF
+                // returns the product but with all-zero nutriments AND the product name has
+                // no keyword overlap with the FALLBACKS table, the persisted Food keeps the
+                // raw zero macros silently. See [B2] trace lines above to confirm. The fix
+                // surfaces a UI hint when both OFF and fallback yielded zero macros (B2 Task 2).
                 when (val result = lookupBarcode(event.barcode)) {
-                    is LookupBarcodeUseCase.Result.FoundLocally ->
+                    is LookupBarcodeUseCase.Result.FoundLocally -> {
+                        println("[B2] vm FoundLocally id=${result.food.id} name=${result.food.name} kcal=${result.food.calories}")
                         onEvent(RecipeCreationEvent.OnFoodSelected(result.food))
+                    }
                     is LookupBarcodeUseCase.Result.FoundRemote -> {
                         val food = Food(
                             name = result.name, calories = result.calories,
@@ -207,14 +217,25 @@ class RecipeCreationViewModel(
                             carbohydrates = result.carbs, sugar = result.sugar,
                             barcode = event.barcode
                         )
+                        // D-21-03 trace — Food object constructed by VM, BEFORE persistence.
+                        println(
+                            "[B2] vm scanned food id=${food.id} name=${food.name} " +
+                                "kcal=${food.calories} protein=${food.protein} " +
+                                "carbs=${food.carbohydrates} fat=${food.fat} " +
+                                "fromFallback=${result.fromFallback}"
+                        )
                         repository.saveFood(food)
                         _foods.value = repository.loadFoods()
                         onEvent(RecipeCreationEvent.OnFoodSelected(food))
                     }
-                    is LookupBarcodeUseCase.Result.NotFound ->
+                    is LookupBarcodeUseCase.Result.NotFound -> {
+                        println("[B2] vm NotFound barcode=${event.barcode}")
                         _creationState.update { it.copy(errorMessage = "Produkt nicht gefunden.") }
-                    is LookupBarcodeUseCase.Result.Error ->
+                    }
+                    is LookupBarcodeUseCase.Result.Error -> {
+                        println("[B2] vm Error barcode=${event.barcode} message=${result.message}")
                         _creationState.update { it.copy(errorMessage = "Fehler: ${result.message}") }
+                    }
                 }
             }
         }

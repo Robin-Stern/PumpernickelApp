@@ -128,10 +128,21 @@ class OpenFoodFactsAdapter(
         val response = api.lookupBarcode(barcode)
         val product = response.product
         val productName = product?.productName
-        if (response.status != 1 || productName.isNullOrBlank()) return null
+        // D-21-03 trace — raw OFF response, BEFORE the null-coalescing fold.
+        println(
+            "[B2] adapter raw barcode=$barcode status=${response.status} name=$productName " +
+                "kcal=${product?.nutriments?.energyKcal100g} " +
+                "protein=${product?.nutriments?.proteins100g} " +
+                "carbs=${product?.nutriments?.carbohydrates100g} " +
+                "fat=${product?.nutriments?.fat100g}"
+        )
+        if (response.status != 1 || productName.isNullOrBlank()) {
+            println("[B2] adapter rejecting barcode=$barcode status=${response.status} name='$productName'")
+            return null
+        }
 
         val nutriments = product.nutriments
-        return RemoteBarcodeProduct(
+        val mapped = RemoteBarcodeProduct(
             name = productName,
             calories = nutriments?.energyKcal100g ?: 0.0,
             protein = nutriments?.proteins100g ?: 0.0,
@@ -139,5 +150,12 @@ class OpenFoodFactsAdapter(
             carbohydrates = nutriments?.carbohydrates100g ?: 0.0,
             sugar = nutriments?.sugars100g ?: 0.0
         )
+        // D-21-03 trace — domain projection after null-coalescing.
+        println(
+            "[B2] adapter mapped barcode=$barcode name=${mapped.name} " +
+                "kcal=${mapped.calories} protein=${mapped.protein} " +
+                "carbs=${mapped.carbohydrates} fat=${mapped.fat} sugar=${mapped.sugar}"
+        )
+        return mapped
     }
 }
