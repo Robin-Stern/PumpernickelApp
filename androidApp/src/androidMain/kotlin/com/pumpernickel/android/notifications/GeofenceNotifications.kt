@@ -7,6 +7,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import com.pumpernickel.android.R
+import com.pumpernickel.infrastructure.geofence.formatGraceDuration
 
 /**
  * D-19-15 — single notification channel + 5 notification triggers.
@@ -32,10 +33,15 @@ object GeofenceNotifications {
         mgr.createNotificationChannel(channel)
     }
 
-    fun postExitDetected(context: Context) {
+    // D-21-06 — dynamic grace-period: caller passes the user-configured seconds so the
+    // notification body reflects Settings (10sec → "10 Sekunden", 300 → "5 Minuten", …).
+    fun postExitDetected(context: Context, graceSeconds: Int) {
         post(context, NOTIFICATION_ID_BASE + 1,
             context.getString(R.string.geofence_notification_exit_title),
-            context.getString(R.string.geofence_notification_exit_body))
+            context.getString(
+                R.string.geofence_notification_exit_body,
+                formatGraceDuration(graceSeconds)
+            ))
     }
 
     fun postReEntered(context: Context) {

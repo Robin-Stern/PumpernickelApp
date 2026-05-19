@@ -1,11 +1,13 @@
 import Foundation
+import Shared
 import UserNotifications
 
 /// D-19-15 — 5 notification triggers from UI-SPEC. Single category id
 /// `workout.geofence` keeps all phase-19 notifications routable for a
 /// future user-managed "do not disturb" toggle.
 enum GeofenceNotification {
-    case exitDetected
+    /// D-21-06 — body string formatted from the user-configured grace-period seconds.
+    case exitDetected(graceSeconds: Int)
     case reEntered
     case graceExpired(loggedSets: Int, penaltyXp: Int)
     case earlyExitWithBudget(remainingAfter: Int)
@@ -23,8 +25,10 @@ enum GeofenceNotification {
 
     var body: String {
         switch self {
-        case .exitDetected:
-            return "5 Minuten um zurückzukommen, sonst wird das Workout abgebrochen."
+        case .exitDetected(let graceSeconds):
+            // D-21-06 — body string formatted from the configured grace-period via shared Kotlin helper.
+            let formatted = GraceDurationFormatKt.formatGraceDuration(seconds: Int32(graceSeconds))
+            return "\(formatted) um zurückzukommen, sonst wird das Workout abgebrochen."
         case .reEntered:
             return "Willkommen zurück. Weiter geht's."
         case .graceExpired(let logged, let penalty):

@@ -161,12 +161,17 @@ struct WorkoutSessionView: View {
     // Minimal set screen toggle (UX-01, D-02)
     @State private var showSetInput: Bool = false
 
+    // D-21-06 — observed grace-period (seconds) drives the exit-notification body.
+    // SettingsViewModel is hoisted out of the #if DEBUG block so non-DEBUG builds can
+    // still subscribe to gracePeriodSecondsFlow.
+    private let settingsViewModel = KoinHelper.shared.getSettingsViewModel()
+    @State private var gracePeriodSeconds: Int64 = 300  // mirrors Settings default
+
     // DEBUG-only sheet trigger for in-workout geofence mock panel (quick-260517-pzh)
     #if DEBUG
     @State private var showDebugGeofenceSheet: Bool = false
     // D-quick-vn7 — Debug-Modus toggle gates the in-workout debug pill.
     @State private var debugModeEnabled: Bool = true
-    private let settingsViewModel = KoinHelper.shared.getSettingsViewModel()
     #endif
 
     // Picker value arrays
@@ -275,6 +280,7 @@ struct WorkoutSessionView: View {
                 group.addTask { await observeUndertrainedMuscles() }
                 group.addTask { await observeGeofenceState() }
                 group.addTask { await observeEarlyExitBudget() }
+                group.addTask { await observeGracePeriodSeconds() }
                 group.addTask { await refreshPermissionStatusOnAppear() }
                 #if DEBUG
                 group.addTask { await observeDebugModeEnabled() }
@@ -1005,8 +1011,8 @@ struct WorkoutSessionView: View {
         switch new {
         case is GeofenceUiState.GracePeriod:
             if !(old is GeofenceUiState.GracePeriod) {
-                // Just entered grace
-                center.postGeofenceNotification(.exitDetected)
+                // Just entered grace — D-21-06: body string uses configured grace-period
+                center.postGeofenceNotification(.exitDetected(graceSeconds: Int(gracePeriodSeconds)))
                 wasInGracePeriod = true
             }
         case is GeofenceUiState.InZone:
@@ -1055,6 +1061,18 @@ struct WorkoutSessionView: View {
             }
         } catch {
             print("ElapsedSeconds observation error: \(error)")
+        }
+    }
+
+    // D-21-06 — keep gracePeriodSeconds in sync with Settings so the exit-notification
+    // body is formatted with the user-configured value at the moment grace begins.
+    private func observeGracePeriodSeconds() async {
+        do {
+            for try await value in asyncSequence(for: settingsViewModel.gracePeriodSecondsFlow) {
+                self.gracePeriodSeconds = value.int64Value
+            }
+        } catch {
+            print("GracePeriodSeconds observation error: \(error)")
         }
     }
 

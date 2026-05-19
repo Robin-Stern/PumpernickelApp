@@ -114,6 +114,11 @@ fun WorkoutSessionScreen(
     val weightUnit by viewModel.weightUnit.collectAsState()
     val undertrainedMuscles by viewModel.undertrainedMuscles.collectAsState()
 
+    // D-21-06 — Settings VM observed at screen root so the configured grace-period
+    // can be threaded into GeofenceNotifications.postExitDetected (dynamic body).
+    val settingsViewModelRoot: com.pumpernickel.presentation.settings.SettingsViewModel = koinViewModel()
+    val gracePeriodSeconds by settingsViewModelRoot.gracePeriodSeconds.collectAsState()
+
     // Phase 19 — geofence + permission state
     val permissionController: PermissionController = koinInject()
     val context = LocalContext.current
@@ -178,7 +183,8 @@ fun WorkoutSessionScreen(
                 when {
                     // ENTER grace: from non-Grace into Grace
                     newState is GeofenceUiState.GracePeriod && previous !is GeofenceUiState.GracePeriod -> {
-                        GeofenceNotifications.postExitDetected(context)
+                        // D-21-06 — body uses user-configured grace-period from Settings
+                        GeofenceNotifications.postExitDetected(context, gracePeriodSeconds.toInt())
                     }
                     // RE-ENTER zone: from Grace into InZone
                     newState is GeofenceUiState.InZone && previous is GeofenceUiState.GracePeriod -> {
