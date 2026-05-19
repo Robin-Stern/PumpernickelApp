@@ -95,8 +95,11 @@ class AnthropicClient(
         val url = MESSAGES_ENDPOINT
         println("[Anthropic] STREAM POST $url model=${request.model} messages=${request.messages.size}")
 
-        val content = StringBuilder()
-        var sawStop = false
+        // D-22-11 — SSE parsing delegated to AnthropicSseParser (Plan 22-10
+        // extraction for unit-testability). The parser is stateful: it tracks
+        // currentEventType across feed(...) calls and exposes `done` once the
+        // `message_stop` frame is consumed.
+        val parser = AnthropicSseParser(json)
 
         try {
             client.preparePost(url) {
@@ -117,59 +120,16 @@ class AnthropicClient(
                     throw mapHttpError(status, err, isOAuth = credential is Credential.OAuthToken)
                 }
 
-                // Anthropic SSE frames: two lines per event ("event: <type>\ndata: {...}")
-                // separated by blank line. We track the latest `event:` line so the
-                // subsequent `data:` line can be routed to the right handler.
-                var currentEventType: String? = null
                 val channel = response.bodyAsChannel()
-                while (!channel.isClosedForRead) {
+                while (!channel.isClosedForRead && !parser.done) {
                     val line = channel.readUTF8Line() ?: break
-                    if (line.isBlank()) {
-                        currentEventType = null  // event boundary
-                        continue
-                    }
-                    when {
-                        line.startsWith("event:") -> {
-                            currentEventType = line.substring(6).trim()
-                        }
-                        line.startsWith("data:") -> {
-                            val payload = line.substring(5).trim()
-                            when (currentEventType) {
-                                "content_block_delta" -> {
-                                    val frame = tryDecode<AnthropicContentBlockDeltaFrame>(payload) ?: continue
-                                    if (frame.delta.type == "text_delta" && frame.delta.text.isNotEmpty()) {
-                                        content.append(frame.delta.text)
-                                        onProgress(content.toString(), "")
-                                    }
-                                }
-                                "error" -> {
-                                    val frame = tryDecode<AnthropicErrorFrame>(payload)
-                                    val msg = frame?.error?.message ?: payload.take(200)
-                                    val errType = frame?.error?.type ?: ""
-                                    // overloaded_error / api_error / billing_error → 5xx-equivalent (Provider)
-                                    // others (invalid_request_error, authentication_error) → SchemaInvalid/Auth
-                                    throw when {
-                                        errType.endsWith("authentication_error") -> AiError.AuthOrQuota(401)
-                                        errType.endsWith("overloaded_error") -> AiError.Provider(529)
-                                        else -> AiError.SchemaInvalid("Anthropic stream error: $msg")
-                                    }
-                                }
-                                "message_stop" -> {
-                                    sawStop = true
-                                    return@execute  // exit channel loop cleanly
-                                }
-                                // Ignore: message_start, content_block_start, content_block_stop,
-                                // message_delta, ping
-                                else -> { /* silent ignore */ }
-                            }
-                        }
-                        // Comment lines, etc.
-                    }
+                    val update = parser.feed(line)
+                    if (update != null) onProgress(update, "")
                 }
             }
 
-            val finalContent = content.toString()
-            println("[Anthropic] stream complete stop=$sawStop contentLen=${finalContent.length}")
+            val finalContent = parser.result()
+            println("[Anthropic] stream complete stop=${parser.done} contentLen=${finalContent.length}")
             if (finalContent.length > 64 * 1024) {
                 throw AiError.SchemaInvalid("response exceeded 64KB cap")
             }
@@ -250,10 +210,6 @@ class AnthropicClient(
             else -> AiError.SchemaInvalid("HTTP $status — $excerpt")
         }
     }
-
-    private inline fun <reified T> tryDecode(payload: String): T? = try {
-        json.decodeFromString<T>(payload)
-    } catch (_: Throwable) { null }
 
     companion object {
         // D-22-03 — fixed endpoints; no user override (D-22-09 baseUrlByProvider

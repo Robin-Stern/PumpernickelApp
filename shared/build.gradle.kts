@@ -51,6 +51,15 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.json)
         }
+        commonTest.dependencies {
+            // Phase 22 Plan 10 — D-22-13 test coverage for migration, SSE parser,
+            // dispatcher, SHA-256. Existing commonTest cases (gamification,
+            // nutrition, geofence) use `kotlin.test` directly; this plan adds
+            // runTest for the migration + dispatcher tests that exercise
+            // suspend functions.
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
 androidMain.dependencies {
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp)

@@ -25,8 +25,8 @@ import kotlinx.coroutines.flow.first
  */
 class DispatchingAiClient(
     private val settings: SettingsRepository,
-    private val openAiAdapter: OpenAiCompatibleAiClient,
-    private val anthropicAdapter: AnthropicAiClient
+    private val openAiAdapter: AiClient,
+    private val anthropicAdapter: AiClient
 ) : AiClient {
 
     override suspend fun completeJsonSchema(

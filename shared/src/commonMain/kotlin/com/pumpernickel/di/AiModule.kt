@@ -17,6 +17,8 @@ import com.pumpernickel.infrastructure.ai.MigratingAiClient
 import com.pumpernickel.infrastructure.ai.OpenAiCompatibleAiClient
 import com.pumpernickel.infrastructure.ai.ProviderId
 import com.pumpernickel.infrastructure.ai.SecureKeyStore
+import com.pumpernickel.infrastructure.ai.SecureKeyStoreAdapter
+import com.pumpernickel.infrastructure.ai.SecureKeyStoreSurface
 import com.pumpernickel.presentation.ai.AiSettingsViewModel
 import com.pumpernickel.presentation.ai.RecipeAiViewModel
 import com.pumpernickel.presentation.ai.WorkoutAiViewModel
@@ -80,16 +82,26 @@ val aiModule = module {
     }
 
     // === Migration (lazy, idempotent) ===
-    single { SettingsMigration(settingsRepository = get(), secureKeyStore = get()) }
+    // SecureKeyStoreAdapter bridges the platform-`expect class` SecureKeyStore
+    // to the SecureKeyStoreSurface interface — see Plan 22-10 SUMMARY for the
+    // testability rationale.
+    single<SecureKeyStoreSurface> { SecureKeyStoreAdapter(get()) }
+    single { SettingsMigration(settingsRepository = get(), secureKeyStore = get<SecureKeyStoreSurface>()) }
 
     // === Provider switch + lazy migration wrapper ===
     // The AiClient binding is wrapped so the very first AI call triggers migration.
     // Use-cases inject `AiClient` — they get the migrating wrapper transparently.
     single {
+        // DispatchingAiClient constructor was widened from
+        // (OpenAiCompatibleAiClient, AnthropicAiClient) to (AiClient, AiClient)
+        // for testability — see Plan 22-10 SUMMARY. Explicit `get<...>()` types
+        // keep Koin resolving the concrete adapters (the AiClient binding is
+        // the MigratingAiClient wrapper below, which we must NOT inject here
+        // or we'd recurse).
         DispatchingAiClient(
             settings = get(),
-            openAiAdapter = get(),
-            anthropicAdapter = get()
+            openAiAdapter = get<OpenAiCompatibleAiClient>(),
+            anthropicAdapter = get<AnthropicAiClient>()
         )
     }
     single<AiClient> {
