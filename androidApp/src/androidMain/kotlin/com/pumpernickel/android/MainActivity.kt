@@ -1,6 +1,7 @@
 package com.pumpernickel.android
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -17,6 +18,7 @@ import androidx.fragment.app.FragmentActivity
 import com.pumpernickel.android.ui.navigation.MainScreen
 import com.pumpernickel.android.ui.screens.TutorialOverlay
 import com.pumpernickel.android.ui.theme.PumpernickelTheme
+import com.pumpernickel.infrastructure.ai.OAuthBrowserLauncherHost
 import com.pumpernickel.infrastructure.permissions.PermissionActivityHolder
 import com.pumpernickel.infrastructure.progresspic.BiometricGateActivityHolder
 import com.pumpernickel.infrastructure.progresspic.PhotoCaptureLauncherActivityHolder
@@ -50,6 +52,15 @@ class MainActivity : FragmentActivity() {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         }
 
+        // Phase 22 — initial intent path: if the app was relaunched by an OAuth redirect
+        // (cold start while CustomTab in background), the redirect URI is in `intent`
+        // rather than arriving via onNewIntent. Forward defensively.
+        intent?.let { initial ->
+            if (initial.data?.scheme == "pumpernickel-oauth") {
+                OAuthBrowserLauncherHost.handleRedirect(initial)
+            }
+        }
+
         enableEdgeToEdge()
         setContent {
             val settingsViewModel: SettingsViewModel = koinViewModel()
@@ -69,6 +80,25 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Phase 22 (D-22-01) — Chrome CustomTabs redirect intercept. The
+     * `<intent-filter>` registered on this activity catches
+     * `pumpernickel-oauth://callback?code=...` URLs; with launchMode=singleTop,
+     * Android delivers them here instead of starting a new activity.
+     *
+     * Defensive: only handle intents whose data scheme matches; everything else
+     * is forwarded to super so platform features (deep links etc.) keep
+     * working. Today there are no other deep-link consumers — this is just
+     * future-proofing.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.data?.scheme == "pumpernickel-oauth") {
+            OAuthBrowserLauncherHost.handleRedirect(intent)
+        }
+        setIntent(intent)  // so subsequent getIntent() reads see the latest
     }
 
     override fun onDestroy() {

@@ -22,5 +22,18 @@
 	<array>
 		<string>location</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.pumpernickel.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>pumpernickel-oauth</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>None</string>
+		</dict>
+	</array>
 </dict>
 </plist>
