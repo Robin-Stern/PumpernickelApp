@@ -13,15 +13,14 @@ import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.set
 import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.ptr
-import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.set
 import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import platform.CoreFoundation.CFDataGetBytePtr
 import platform.CoreFoundation.CFDataGetLength
 import platform.CoreFoundation.CFDataRef
@@ -52,18 +51,75 @@ import platform.Security.kSecValueData
 import platform.posix.memcpy
 
 private const val SERVICE = "PumpernickelApp.AI"
-private const val ACCOUNT = "openai.api.key"
+private const val LEGACY_ACCOUNT = "openai.api.key"
+private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
 actual class SecureKeyStore {
 
-    actual suspend fun writeApiKey(value: String) = withContext(Dispatchers.Default) {
+    actual suspend fun writeCredential(
+        provider: ProviderId,
+        credential: Credential
+    ) = withContext(Dispatchers.Default) {
+        val (account, payload) = when (credential) {
+            is Credential.ApiKey -> provider.apiKeyAccount to credential.value
+            is Credential.OAuthToken -> provider.oauthTokenAccount to
+                json.encodeToString(Credential.OAuthToken.serializer(), credential)
+        }
+        writeRaw(account, payload)
+        // Mirror Phase-18 semantics — ANY write flips the sentinel to true.
+        // AiSettingsViewModel will eventually replace this with per-provider state (Plan 07).
+        ApiKeyState.set(true)
+    }
+
+    actual suspend fun readCredential(provider: ProviderId): Credential? =
+        withContext(Dispatchers.Default) {
+            // D-22-01 OAuth-Primary: try OAuth slot first, fall back to API-Key slot.
+            val oauthRaw = readRaw(provider.oauthTokenAccount)
+            if (oauthRaw != null) {
+                return@withContext try {
+                    json.decodeFromString(Credential.OAuthToken.serializer(), oauthRaw)
+                } catch (t: Throwable) {
+                    println("[SecureKeyStore.ios] readCredential OAuth decode failed: $t")
+                    null
+                }
+            }
+            val apiKey = readRaw(provider.apiKeyAccount)
+            if (apiKey != null) Credential.ApiKey(apiKey) else null
+        }
+
+    actual suspend fun clearCredential(provider: ProviderId) =
+        withContext(Dispatchers.Default) {
+            deleteRaw(provider.apiKeyAccount)
+            deleteRaw(provider.oauthTokenAccount)
+            // Recompute ApiKeyState after clear.
+            ApiKeyState.set(listProvidersBlocking().isNotEmpty())
+        }
+
+    actual suspend fun listProviders(): Set<ProviderId> =
+        withContext(Dispatchers.Default) {
+            listProvidersBlocking()
+        }
+
+    actual suspend fun readLegacyApiKey(): String? =
+        withContext(Dispatchers.Default) {
+            readRaw(LEGACY_ACCOUNT)
+        }
+
+    actual suspend fun clearLegacyApiKey() = withContext(Dispatchers.Default) {
+        deleteRaw(LEGACY_ACCOUNT)
+        Unit
+    }
+
+    // --- internal helpers ---
+
+    private fun writeRaw(account: String, value: String) {
         try {
             val data: NSData = value.encodeToByteArray().toNSData()
             val dataPtr: CPointer<*> = data.objcPointer()
 
             // 1) Try update
             val updateStatus = memScoped {
-                val q = baseQueryDict()
+                val q = baseQueryDict(account)
                 val a = makeDict(arrayOf(kSecValueData to dataPtr))
                 SecItemUpdate(q, a)
             }
@@ -72,83 +128,87 @@ actual class SecureKeyStore {
                 // 2) Add new
                 val accessibility: CPointer<*>? = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
                 val addStatus = memScoped {
-                    val q = baseQueryDict(extras = arrayOf(
-                        kSecValueData to dataPtr,
-                        kSecAttrAccessible to (accessibility ?: return@memScoped errSecSuccess.toInt())
-                    ))
+                    val q = baseQueryDict(
+                        account,
+                        extras = arrayOf(
+                            kSecValueData to dataPtr,
+                            kSecAttrAccessible to (accessibility ?: return@memScoped errSecSuccess.toInt())
+                        )
+                    )
                     SecItemAdd(q, null)
                 }
                 if (addStatus != errSecSuccess) {
-                    println("[SecureKeyStore.ios] SecItemAdd failed (status=$addStatus)")
+                    println("[SecureKeyStore.ios] SecItemAdd failed (account=$account, status=$addStatus)")
                 } else {
-                    println("[SecureKeyStore.ios] writeApiKey OK (added, length=${value.length})")
-                    ApiKeyState.set(true)
+                    println("[SecureKeyStore.ios] writeRaw OK (added, account=$account, length=${value.length})")
                 }
             } else if (updateStatus != errSecSuccess) {
-                println("[SecureKeyStore.ios] SecItemUpdate failed (status=$updateStatus)")
+                println("[SecureKeyStore.ios] SecItemUpdate failed (account=$account, status=$updateStatus)")
             } else {
-                println("[SecureKeyStore.ios] writeApiKey OK (updated, length=${value.length})")
-                ApiKeyState.set(true)
+                println("[SecureKeyStore.ios] writeRaw OK (updated, account=$account, length=${value.length})")
             }
         } catch (t: Throwable) {
-            println("[SecureKeyStore.ios] writeApiKey crashed: $t")
+            println("[SecureKeyStore.ios] writeRaw crashed (account=$account): $t")
         }
     }
 
-    actual suspend fun readApiKey(): String? = withContext(Dispatchers.Default) {
-        try {
+    private fun readRaw(account: String): String? {
+        return try {
             memScoped {
                 val matchLimit: CPointer<*>? = kSecMatchLimitOne
                 val returnTrue: CPointer<*>? = kCFBooleanTrue
-                if (matchLimit == null || returnTrue == null) return@withContext null
+                if (matchLimit == null || returnTrue == null) return@memScoped null
 
-                val q = baseQueryDict(extras = arrayOf(
-                    kSecMatchLimit to matchLimit,
-                    kSecReturnData to returnTrue
-                ))
+                val q = baseQueryDict(
+                    account,
+                    extras = arrayOf(
+                        kSecMatchLimit to matchLimit,
+                        kSecReturnData to returnTrue
+                    )
+                )
                 val resultVar = alloc<CFTypeRefVar>()
                 val status = SecItemCopyMatching(q, resultVar.ptr)
-                if (status != errSecSuccess) return@withContext null
-                val cfData = resultVar.value ?: return@withContext null
+                if (status != errSecSuccess) return@memScoped null
+                val cfData = resultVar.value ?: return@memScoped null
 
                 @Suppress("UNCHECKED_CAST")
                 val cfDataRef = cfData as CFDataRef
                 val length = CFDataGetLength(cfDataRef).toInt()
                 if (length <= 0) {
                     CFRelease(cfData)
-                    return@withContext null
+                    return@memScoped null
                 }
                 val bytePtr = CFDataGetBytePtr(cfDataRef)
                 if (bytePtr == null) {
                     CFRelease(cfData)
-                    return@withContext null
+                    return@memScoped null
                 }
                 val bytes = ByteArray(length)
                 bytes.usePinned { pinned ->
                     memcpy(pinned.addressOf(0), bytePtr, length.convert())
                 }
                 CFRelease(cfData)
-                val str = bytes.decodeToString()
-                println("[SecureKeyStore.ios] readApiKey OK (length=${str.length})")
-                ApiKeyState.set(true)
-                str
+                bytes.decodeToString()
             }
         } catch (t: Throwable) {
-            println("[SecureKeyStore.ios] readApiKey crashed: $t")
+            println("[SecureKeyStore.ios] readRaw crashed (account=$account): $t")
             null
         }
     }
 
-    actual suspend fun clearApiKey() = withContext(Dispatchers.Default) {
+    private fun deleteRaw(account: String) {
         try {
-            memScoped { SecItemDelete(baseQueryDict()) }
-            ApiKeyState.set(false)
-            Unit
+            memScoped { SecItemDelete(baseQueryDict(account)) }
         } catch (t: Throwable) {
-            println("[SecureKeyStore.ios] clearApiKey crashed: $t")
-            Unit
+            println("[SecureKeyStore.ios] deleteRaw crashed (account=$account): $t")
         }
     }
+
+    /** Synchronous variant for use in ApiKeyState recompute. */
+    private fun listProvidersBlocking(): Set<ProviderId> =
+        ProviderId.entries.filter { p ->
+            readRaw(p.apiKeyAccount) != null || readRaw(p.oauthTokenAccount) != null
+        }.toSet()
 
     /**
      * Build the Keychain query dictionary using parallel-array CFDictionaryCreate.
@@ -160,10 +220,11 @@ actual class SecureKeyStore {
      * sort it out at the C boundary.
      */
     private fun MemScope.baseQueryDict(
+        account: String,
         extras: Array<Pair<CPointer<*>?, CPointer<*>?>> = emptyArray()
     ): CFDictionaryRef {
         val cfService: CPointer<*>? = (SERVICE as platform.Foundation.NSString).objcPointer()
-        val cfAccount: CPointer<*>? = (ACCOUNT as platform.Foundation.NSString).objcPointer()
+        val cfAccount: CPointer<*>? = (account as platform.Foundation.NSString).objcPointer()
         val classConst: CPointer<*>? = kSecClassGenericPassword
         val pairs: Array<Pair<CPointer<*>?, CPointer<*>?>> = arrayOf<Pair<CPointer<*>?, CPointer<*>?>>(
             kSecClass to classConst,
