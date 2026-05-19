@@ -106,6 +106,7 @@ fun AiWorkoutGenScreen(
                     state = state,
                     onMusclesChanged = viewModel::onMusclesChanged,
                     onExerciseCountChanged = viewModel::onExerciseCountChanged,
+                    onSetsPerExerciseChanged = viewModel::onSetsPerExerciseChanged,
                     onSplitStyleChanged = viewModel::onSplitStyleChanged,
                     onGenerate = viewModel::generate
                 )
@@ -124,6 +125,7 @@ fun AiWorkoutGenScreen(
                         state = state.originatingForm,
                         onMusclesChanged = {},
                         onExerciseCountChanged = {},
+                        onSetsPerExerciseChanged = {},
                         onSplitStyleChanged = {},
                         onGenerate = {}
                     )
@@ -157,6 +159,7 @@ private fun WorkoutFormBody(
     state: WorkoutAiUiState.Form,
     onMusclesChanged: (List<MuscleGroup>) -> Unit,
     onExerciseCountChanged: (Int) -> Unit,
+    onSetsPerExerciseChanged: (Int) -> Unit,
     onSplitStyleChanged: (WorkoutAiSplit) -> Unit,
     onGenerate: () -> Unit
 ) {
@@ -209,6 +212,32 @@ private fun WorkoutFormBody(
                 enabled = state.exerciseCount < 12
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Mehr")
+            }
+        }
+
+        SectionLabel("Anzahl Sätze")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            IconButton(
+                onClick = { onSetsPerExerciseChanged(state.setsPerExercise - 1) },
+                enabled = state.setsPerExercise > 1
+            ) {
+                Icon(Icons.Default.Remove, contentDescription = "Weniger Sätze")
+            }
+            Text(
+                text = "${state.setsPerExercise} Sätze",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+                fontWeight = FontWeight.SemiBold
+            )
+            IconButton(
+                onClick = { onSetsPerExerciseChanged(state.setsPerExercise + 1) },
+                enabled = state.setsPerExercise < 6
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Mehr Sätze")
             }
         }
 

@@ -62,7 +62,7 @@ completed: 2026-05-19
 - **Duration:** ~25 min
 - **Started:** 2026-05-19T10:00:00Z
 - **Completed:** 2026-05-19T10:26:04Z
-- **Tasks:** 4/4 abgeschlossen (Tasks 1-3 auto, Task 4 = visual checkpoint, approved)
+- **Tasks:** 3 auto-Tasks ausgefuehrt (Task 4 = visual checkpoint, ausstehend)
 - **Files modified:** 2 modifiziert, 1 neu erstellt
 
 ## Accomplishments
@@ -94,14 +94,14 @@ completed: 2026-05-19
 
 Keine — alle drei Auto-Tasks wurden exakt nach Plan ausgefuehrt. Keine unerwarteten Compile-Fehler, keine fehlenden Imports, keine Architektur-Abweichungen.
 
-## Visual UAT (Task 4)
+## Checkpoint Ausstehend
 
-Task 4 (Visual UAT, `checkpoint:human-verify`) — **Approved** am 2026-05-19.
-- Sets-Stepper (Range 1-6, Default 3 Saetze): bestaetigt
-- Mini-Bar Generating-State (3-Punkte-Animation + Label): bestaetigt
-- Mini-Bar Success-State (Checkmark + "tippen zum Ansehen"): bestaetigt
-- Error-State: Mini-Bar verschwindet: bestaetigt
-- Scaffold-Insets: Content nicht hinter Mini-Bar abgeschnitten: bestaetigt
+Task 4 (Visual UAT) ist ein `checkpoint:human-verify` — der Nutzer muss die App auf einem Android-Emulator/Geraet testen:
+- Sets-Stepper (Range 1-6, Default 3 Saetze)
+- Mini-Bar Generating-State (3-Punkte-Animation + Label)
+- Mini-Bar Success-State (Checkmark + "tippen zum Ansehen")
+- Error-State: Mini-Bar verschwindet
+- Scaffold-Insets: Content nicht hinter Mini-Bar abgeschnitten
 
 ## Threat Surface Scan
 
