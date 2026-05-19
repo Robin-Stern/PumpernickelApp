@@ -436,6 +436,11 @@ class SettingsRepositoryImpl(
         const val DEFAULT_MODEL_ANTHROPIC = "claude-opus-4-7"
         const val DEFAULT_BASE_URL_OPENAI = "https://api.openai.com/v1"
         const val DEFAULT_BASE_URL_TOGETHER = "https://api.together.ai/v1"
-        const val DEFAULT_BASE_URL_ANTHROPIC = "https://api.anthropic.com"
+        // WR-08 — keep the "base URL" suffix-stripped version of the actual
+        // AnthropicClient.MESSAGES_ENDPOINT (`https://api.anthropic.com/v1/messages`)
+        // so future refactors that honor the per-provider base URL do not
+        // silently route Anthropic requests to a non-existent endpoint. The
+        // value mirrors the OpenAI/Together pattern (root + `/v1`).
+        const val DEFAULT_BASE_URL_ANTHROPIC = "https://api.anthropic.com/v1"
     }
 }
