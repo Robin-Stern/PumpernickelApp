@@ -1,0 +1,144 @@
+# Phase 22 — iOS Settings Handoff
+
+**Status:** Spec — implementation by user (per MEMORY convention since Phase 15/17/18)
+**Updated:** 2026-05-19
+**Dependencies:** Plans 22-01 … 22-08 must be merged before SwiftUI updates compile
+
+## What broke
+
+`AISettingsView.swift` (current `iosApp/iosApp/Views/AI/AISettingsView.swift`) was written for Phase-18 single-provider settings. Plan 22-08 replaced the `AiSettingsViewModel` API completely.
+
+**Removed:** `providerPreset`, `baseUrl`, `model`, `apiKeyConfigured`; `setApiKey(value:)`, `clearApiKey()`, `setProviderPreset(preset:)`, `setBaseUrl(url:)`, `setModel(value:)`
+
+**New StateFlows on `AiSettingsViewModel`:**
+| Property | Type | Default |
+|----------|------|---------|
+| `activeProvider` | `StateFlow<ProviderId>` | `.openAI` |
+| `modelByProvider` | `StateFlow<Map<ProviderId, String>>` | empty |
+| `connectedProviders` | `StateFlow<Set<ProviderId>>` | empty |
+| `oauthInProgress` | `StateFlow<Bool>` | false |
+| `lastError` | `StateFlow<String?>` | nil |
+
+**New actions:**
+- `setActiveProvider(_ provider: ProviderId)`
+- `setModel(_ provider: ProviderId, _ model: String)`
+- `startAnthropicOAuth()`
+- `setAnthropicApiKey(_ key: String)`
+- `setApiKeyFor(_ provider: ProviderId, _ key: String)`
+- `disconnect(_ provider: ProviderId)`
+- `clearError()`
+
+`ProviderId` ist ein Kotlin-Enum mit drei Cases: `.openAI`, `.together`, `.anthropic` (Swift-Naming via KMP-Native: bestätige tatsächlichen Swift-Cases mit `print(ProviderId.allCases)` falls unsicher).
+
+## Required SwiftUI Surfaces
+
+### 1. AISettingsView (List-based Form)
+
+Eine Section pro Provider. Innerhalb jeder Section:
+- HStack: Radio (`Image(systemName: activeProvider == provider ? "largecircle.fill.circle" : "circle")`) — tap → `viewModel.setActiveProvider(provider)`
+- Label (Provider name)
+- Verbindungs-Status (✓ verbunden / – nicht verbunden) farblich differenziert (accentColor / secondary)
+- Menu-Picker für Modell-Auswahl (Per-Provider-Liste, see "Provider model lists" unten)
+- Connect/Disconnect Button:
+  - Wenn `connectedProviders.contains(provider)`: "Verbindung trennen" → `viewModel.disconnect(provider)`
+  - Wenn nicht verbunden:
+    - Für `.anthropic`: "Mit Claude.ai verbinden" → öffnet `.sheet(isPresented: $showAnthropicSheet)` mit `AnthropicConnectSheet`
+    - Für `.openAI` / `.together`: "API-Key eintippen" → öffnet `.alert` oder eigenes Sheet mit TextField + Save-Action → `viewModel.setApiKeyFor(provider, key)`
+
+`lastError`-Banner am unteren Rand wenn non-nil, mit Schließen-Button → `viewModel.clearError()`.
+
+### 2. AnthropicConnectSheet (separate SwiftUI View)
+
+Layout (vertikal):
+1. Titel: "Mit Anthropic verbinden"
+2. Hint: "Empfohlen: mit deinem Claude.ai-Konto verbinden um deine Pro/Max-Subscription zu nutzen."
+3. Primary-Button: "Mit Claude.ai verbinden" → `viewModel.startAnthropicOAuth()`
+   - Wenn `oauthInProgress == true`: zeige inline `ProgressView()` + disable button
+4. Divider mit "oder"-Label
+5. SecureField für API-Key (sk-ant-...)
+6. Save-Button: `viewModel.setAnthropicApiKey(key); isPresented = false`
+7. Cancel-Button: `isPresented = false`
+
+OAuth-Trigger: `viewModel.startAnthropicOAuth()` führt Kotlin-side den ASWebAuthenticationSession-Flow aus (Plan 22-05). Der User sieht das system-rendered Browser-Sheet, autorisiert in claude.ai, das Sheet schliesst sich automatisch nach Redirect.
+
+KEINE app-side URL-Handling-Logik nötig — `ASWebAuthenticationSession` ist self-contained. Aber: das Info.plist muss `CFBundleURLTypes` mit `pumpernickel-oauth` schema haben (Plan 22-07 hat das committet).
+
+### 3. Observer-Hooks (KMPNativeCoroutinesAsync)
+
+Beispiel-Snippet für Initialisierung:
+
+```swift
+@State private var activeProvider: ProviderId = .openAI
+@State private var connectedProviders: Set<ProviderId> = []
+@State private var oauthInProgress = false
+@State private var lastError: String? = nil
+@State private var modelByProvider: [ProviderId: String] = [:]
+
+.task { await observeActiveProvider() }
+.task { await observeConnectedProviders() }
+.task { await observeOauthInProgress() }
+.task { await observeLastError() }
+.task { await observeModelByProvider() }
+
+func observeActiveProvider() async {
+    for await value in asyncSequence(for: viewModel.activeProvider) {
+        activeProvider = value
+    }
+}
+// ... analog für die anderen vier
+```
+
+Hinweis: `asyncSequence(for:)` ist die KMPNativeCoroutinesAsync-API die bereits seit Phase 15 in den anderen Views verwendet wird (siehe `OverviewView.swift` für Vorbild).
+
+## Provider model lists
+
+```swift
+let openAIModels: [(id: String, label: String)] = [
+    ("gpt-4o-mini", "GPT-4o mini"),
+    ("gpt-4o", "GPT-4o")
+]
+let togetherModels: [(id: String, label: String)] = [
+    ("google/gemma-4-31B-it", "Gemma 4 31B"),
+    ("meta-llama/Llama-3.3-70B-Instruct-Turbo", "Llama 3.3 70B")
+]
+let anthropicModels: [(id: String, label: String)] = [
+    ("claude-opus-4-7",         "Opus 4.7 (beste Qualität)"),
+    ("claude-sonnet-4-6",       "Sonnet 4.6 (balanced)"),
+    ("claude-haiku-4-5-20251001","Haiku 4.5 (schnellst)")
+]
+```
+
+Reihenfolge per D-22-06: Opus → Sonnet → Haiku. Default = Opus 4.7.
+
+## Connection to AISettingsKoinHelper
+
+Die bestehende `AiSettingsKoinHelper` in `shared/src/iosMain/.../di/AiSettingsKoinHelper.kt` wird **nicht** angepasst (sie holt einfach `getKoin().get<AiSettingsViewModel>()` — die geänderte Signatur ist Koin's Problem, nicht Swift's).
+
+Im SwiftUI bleibt der Pattern unverändert:
+```swift
+@StateObject private var viewModel: AiSettingsViewModel = AiSettingsKoinHelper().getAiSettingsViewModel()
+```
+
+(falls KMP-Native dem ViewModel `@ObservableObject` macht; sonst plain `let viewModel = AiSettingsKoinHelper().getAiSettingsViewModel()` und @State-Mirror via asyncSequence wie oben.)
+
+## Acceptance Checklist for User
+
+- [ ] AISettingsView.swift rendert drei Provider-Sections (OpenAI / Together / Anthropic)
+- [ ] Tap auf eine Radio-Affordanz ruft `setActiveProvider(_:)`
+- [ ] Anthropic-Section "Mit Claude.ai verbinden" öffnet AnthropicConnectSheet
+- [ ] OAuth-Button im Sheet ruft `startAnthropicOAuth()`, zeigt ProgressView solange `oauthInProgress == true`
+- [ ] API-Key-Save in der jeweiligen Form persistiert via `setAnthropicApiKey(_:)` / `setApiKeyFor(_:_:)`
+- [ ] Model-Picker pro Provider ruft `setModel(_:_:)`
+- [ ] Disconnect-Button ruft `disconnect(_:)`
+- [ ] Banner-Card zeigt `lastError` mit Close-Action → `clearError()`
+- [ ] iOS-Build grün (xcodebuild)
+
+## Out of Scope for User
+
+- Keine Änderung an Info.plist nötig (Plan 22-07 hat es bereits committet)
+- Kein eigener URL-Handler in AppDelegate.swift / PumpernickelApp.swift nötig (ASWebAuthenticationSession bypasst URL-Routing)
+- Keine Modifikation an AiSettingsKoinHelper.kt nötig
+
+---
+
+*Spec for Phase 22 iOS surface. User implements; Claude code-review on PR.*
