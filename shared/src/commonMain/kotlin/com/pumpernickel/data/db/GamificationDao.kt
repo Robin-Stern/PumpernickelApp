@@ -29,6 +29,16 @@ interface GamificationDao {
     @Query("SELECT * FROM xp_ledger ORDER BY awardedAtMillis DESC")
     fun allEntriesFlow(): Flow<List<XpLedgerEntity>>
 
+    /**
+     * D-21-07 — returns true if at least one ledger row exists. Used by the
+     * engine's rank-promotion guard to distinguish "user has never earned XP"
+     * (RetroactiveWalker zero-state, must stay Unranked per D-11) from
+     * "user has earned XP but is currently net-negative due to a geofence-exit
+     * penalty" (must be promoted on the next workout).
+     */
+    @Query("SELECT EXISTS(SELECT 1 FROM xp_ledger LIMIT 1)")
+    suspend fun hasAnyLedgerEntry(): Boolean
+
     // ----- Blocker 3: nutrition-streak derivation from ledger -----
     /**
      * Returns the list of ISO dates (YYYY-MM-DD) for which a goal-day XP row

@@ -53,6 +53,8 @@ class GamificationRepositoryImpl(
     override suspend fun hasLedgerEntry(source: String, eventKey: String): Boolean =
         dao.findLedgerEntry(source, eventKey) != null
 
+    override suspend fun hasAnyLedgerEntry(): Boolean = dao.hasAnyLedgerEntry()
+
     override suspend fun setRankState(
         totalXp: Long,
         currentRank: Rank?,

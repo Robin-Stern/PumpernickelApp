@@ -34,6 +34,15 @@ interface GamificationRepository {
 
     suspend fun hasLedgerEntry(source: String, eventKey: String): Boolean
 
+    /**
+     * D-21-07 — true if at least one XP ledger row exists for the user.
+     * Used by the engine's rank-promotion guard to distinguish "no XP ever
+     * earned" (must stay Unranked per D-11 first-launch protection) from
+     * "XP earned but currently net-negative due to penalties" (must be
+     * promoted on the next workout).
+     */
+    suspend fun hasAnyLedgerEntry(): Boolean
+
     /** Upserts rank_state singleton (id = 1). */
     suspend fun setRankState(
         totalXp: Long,

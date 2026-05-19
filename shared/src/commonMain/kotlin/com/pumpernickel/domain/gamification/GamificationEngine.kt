@@ -53,7 +53,6 @@ class GamificationEngine(
      */
     suspend fun onWorkoutSaved(workoutId: Long) {
         val nowMillis = currentTimeMillis()
-        println("[B6] applyWorkoutCompletion start workoutId=$workoutId")
         processWorkout(workoutId = workoutId, awardedAtMillis = nowMillis, retroactive = false)
         runAchievementAndRankChecks(nowMillis = nowMillis)
     }
@@ -229,7 +228,6 @@ class GamificationEngine(
 
         // 2. Workout XP (D-02).
         val workoutXp = XpFormula.workoutXp(xpInputs)
-        println("[B6] xp awarded=$workoutXp setCount=${sets.size} retroactive=$retroactive")
         if (workoutXp > 0) {
             gamificationRepo.awardXp(
                 source = EventKeys.SOURCE_WORKOUT,
@@ -371,59 +369,33 @@ class GamificationEngine(
     // workout saves +N XP where N < 50 (typical for short workouts — XpFormula
     // floor(volume/100) yields modest values), so totalXp stays <= 0 and the
     // guard bails before SILVER is awarded. From the user's perspective: "I
-    // saved a workout, but I am still Unranked." Logs confirm `[B6] xp
-    // awarded=N > 0` flows correctly, but `checkRankPromotion` short-circuits
+    // saved a workout, but I am still Unranked." Diagnostic logs (since removed)
+    // confirmed XP-award flows correctly, but `checkRankPromotion` short-circuits
     // due to net-negative totalXp. The guard must distinguish "no XP ever earned"
     // from "XP earned but currently negative due to penalties" — only the former
     // is the RetroactiveWalker-zero-state we need to guard against.
     private suspend fun checkRankPromotion(nowMillis: Long) {
         val currentState = gamificationRepo.getRankStateSnapshot()
         val totalXp = gamificationRepo.totalXp.first()
-        println("[B6] rank check stateBefore=${currentState::class.simpleName} totalXp=$totalXp")
+        val hasLedger = gamificationRepo.hasAnyLedgerEntry()
 
-        // D-11: Rank 1 (Silver) unlocks at XP = 0 on the first workout — NOT on app
-        // launch. If the user is still Unranked and has earned zero XP, do not promote.
-        // Without this guard, the first-launch RetroactiveWalker replay (which always
-        // ends with runAchievementAndRankChecksForReplay) would flip isUnranked=false
-        // and persist Rank.SILVER at 0 XP before any workout is ever saved.
-        if (currentState is RankState.Unranked && totalXp <= 0L) {
-            println("[B6] rank check skipped — Unranked with totalXp<=0")
-            return
-        }
-
-        val newRank = RankLadder.rankForXp(totalXp)
-
-        val previousRank: Rank? = when (currentState) {
-            is RankState.Unranked -> null
-            is RankState.Ranked -> currentState.currentRank
-        }
-
-        // D-10: rank is monotonically non-decreasing.
-        val targetRank = if (previousRank != null && newRank.ordinal < previousRank.ordinal) {
-            previousRank
-        } else {
-            newRank
-        }
-
-        println("[B6] rank previous=$previousRank target=$targetRank")
-
-        if (previousRank == targetRank && currentState !is RankState.Unranked) return
+        val decision = RankPromotionPolicy.decide(currentState, totalXp, hasLedger)
+            ?: return
 
         gamificationRepo.setRankState(
             totalXp = totalXp,
-            currentRank = targetRank,
+            currentRank = decision.targetRank,
             lastPromotedAtMillis = nowMillis,
             isUnranked = false
         )
-        println("[B6] rank persisted=$targetRank totalXp=$totalXp")
 
-        if (previousRank != targetRank) {
+        if (decision.previousRank != decision.targetRank) {
             _unlockEvents.tryEmit(
                 UnlockEvent.RankPromotion(
-                    fromRank = previousRank,
-                    toRank = targetRank,
+                    fromRank = decision.previousRank,
+                    toRank = decision.targetRank,
                     totalXp = totalXp,
-                    flavourCopy = "Promoted to ${targetRank.displayName}."
+                    flavourCopy = "Promoted to ${decision.targetRank.displayName}."
                 )
             )
         }
