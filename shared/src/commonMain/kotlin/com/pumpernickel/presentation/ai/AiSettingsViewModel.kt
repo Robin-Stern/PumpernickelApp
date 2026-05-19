@@ -140,9 +140,13 @@ class AiSettingsViewModel(
 
     fun disconnect(provider: ProviderId) {
         viewModelScope.launch {
-            secureKeyStore.clearCredential(provider)
-            // If we just disconnected the active provider, fall back to OpenAI as default.
+            // WR-07 — read the current active provider BEFORE clearing so a
+            // concurrent provider-switch (user tapping another row mid-flight)
+            // cannot make us overwrite a legitimate later selection with the
+            // OpenAI fallback. If the user has already moved off `provider`,
+            // we skip the fallback assignment entirely.
             val currentActive = settingsRepository.activeProvider.first()
+            secureKeyStore.clearCredential(provider)
             if (currentActive == provider) {
                 settingsRepository.setActiveProvider(ProviderId.OpenAI)
             }
