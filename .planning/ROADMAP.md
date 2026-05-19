@@ -401,16 +401,16 @@ Plans:
 **Goal:** Zwei entkoppelte AI-UX-Verbesserungen auf Android + iOS-Parität-Spec: (1) Neuer `setsPerExercise`-Stepper (Range 1–6, Default 3) in der Workout-AI-Form, propagiert via shared `WorkoutAiForm` → `buildUserMessage()` → LLM; System-Prompt-Hard-Rule `targetSets ∈ 3..4` wird ersetzt durch `use setsPerExercise from user message exactly`. (2) Globale Background-Mini-Bar 44dp direkt über der `NavigationBar` / `TabView`: observiert `AiGenerationManager.state`, zeigt WhatsApp-Style Typing-Indicator mit Label `KI generiert Workout…` / `KI generiert Mahlzeit…` während Generation, wechselt zu Checkmark + `Workout bereit — tippen zum Ansehen` / `Mahlzeit bereit — tippen zum Ansehen` bei Success, ist nicht sichtbar bei Idle/Error. Tap navigiert via Tab-Switch + `launchSingleTop` zum aktiven Gen-Screen. Agent-Scope: Shared KMP + Android-UI. iOS-Implementation per `23-IOS-HANDOFF.md` (D-23-12) durch User.
 **Requirements**: D-23-01 … D-23-12 (CONTEXT.md decisions; no formal REQ-* IDs per project convention)
 **Depends on:** Phase 22
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 **Wave structure:**
 - Wave 1 (foundation): 01 (shared KMP — `WorkoutAiForm.setsPerExercise` + ViewModel-Handler + Prompt-Interpolation + `workout-system-prompt.md` Hard-Rule-Fix)
 - Wave 2 (parallel — different files): 02 (Android UI — Sets-Stepper in `WorkoutFormBody` + new `AiGenerationMiniBar.kt` + `MainScreen.kt` `bottomBar = Column { MiniBar; NavigationBar }`; checkpoint:human-verify); 03 (iOS handoff doc `23-IOS-HANDOFF.md` — SwiftUI Stepper + Mini-Bar Spec mit asyncSequence-Observer-Pattern)
 
 Plans:
-- [ ] 23-01-PLAN.md — Shared KMP: `WorkoutAiForm.setsPerExercise: Int = 3` + `WorkoutAiUiState.Form` + `onSetsPerExerciseChanged(coerceIn 1..6)` + `defaultForm` + `generate()` Propagation + `buildUserMessage()` Interpolation + `workout-system-prompt.md` Hard-Rule-Replace
+- [x] 23-01-PLAN.md — Shared KMP: `WorkoutAiForm.setsPerExercise: Int = 3` + `WorkoutAiUiState.Form` + `onSetsPerExerciseChanged(coerceIn 1..6)` + `defaultForm` + `generate()` Propagation + `buildUserMessage()` Interpolation + `workout-system-prompt.md` Hard-Rule-Replace
 - [ ] 23-02-PLAN.md — Android UI: Sets-Stepper Row im `WorkoutFormBody` (Pattern-Copy von `exerciseCount`-Stepper, Range 1..6) + neue Datei `AiGenerationMiniBar.kt` (AnimatedVisibility 44dp + `TypingIndicatorDots` InfiniteTransition + `MiniBarGenerating`/`MiniBarSuccess`) + `MainScreen.kt` `Scaffold.bottomBar = Column { AiGenerationMiniBar; NavigationBar }` mit Tab+navigate(launchSingleTop)-Lambda + visual UAT
-- [ ] 23-03-PLAN.md — `23-IOS-HANDOFF.md`: vollständige SwiftUI-Spec für Sets-`Stepper(in: 1...6)` in `AIWorkoutGenView` + `AiGenerationMiniBar` SwiftUI-View (44pt, `Color(.secondarySystemBackground)`, slide+fade 300ms) + asyncSequence-Observer für `AiGenerationManager.state` + Pitfalls + Acceptance Criteria
+- [x] 23-03-PLAN.md — `23-IOS-HANDOFF.md`: vollständige SwiftUI-Spec für Sets-`Stepper(in: 1...6)` in `AIWorkoutGenView` + `AiGenerationMiniBar` SwiftUI-View (44pt, `Color(.secondarySystemBackground)`, slide+fade 300ms) + asyncSequence-Observer für `AiGenerationManager.state` + Pitfalls + Acceptance Criteria
 
 ### Phase 24: Nutrition Search und Display Polish — Brand-Match in OFF-Suche, Macro-Pills überall statt Caption-Text, OFF-Pagination via Mehr-laden Button, Zutat im Rezept-Edit tappbar mit Detail-Sheet
 
