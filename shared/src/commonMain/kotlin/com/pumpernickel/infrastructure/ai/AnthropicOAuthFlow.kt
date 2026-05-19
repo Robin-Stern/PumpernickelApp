@@ -25,12 +25,10 @@ import kotlinx.serialization.json.Json
  * wires these into a concrete oauthClientId for the AnthropicClient
  * constructor.
  *
- * SEED — state-validation: [authorize] currently accepts the trust-on-first-use
- * compromise (Demo-deadline). [OAuthBrowserLauncher.startAuthFlow] returns
- * only the `code` parameter — a state-mismatch attack against the redirect
- * step would not be caught here. Hardening backlog: extend the launcher
- * return type to `Pair<code, state>` and compare against the `state` we
- * generated. Tracked in 22-05-SUMMARY.md SEED list.
+ * CR-03 (Phase 22 review-fix) — state validation is now enforced:
+ * [OAuthBrowserLauncher.startAuthFlow] returns both `code` and `state` and
+ * [authorize] rejects any redirect whose state does not match the value
+ * generated for this flow (RFC 6749 §10.12 CSRF defense).
  */
 class AnthropicOAuthFlow(
     private val httpClient: HttpClient,
@@ -58,10 +56,21 @@ class AnthropicOAuthFlow(
         val state = generateState()
         val authorizeUrl = buildAuthorizeUrl(challenge = challenge, state = state)
 
-        val code = browserLauncher.startAuthFlow(authorizeUrl, REDIRECT_SCHEME) ?: return null
-        // NOTE: state validation is deferred — see class KDoc SEED.
+        val redirect = browserLauncher.startAuthFlow(authorizeUrl, REDIRECT_SCHEME) ?: return null
 
-        return exchangeCodeForToken(code = code, verifier = verifier)
+        // CR-03 — RFC 6749 §10.12 CSRF defense. The browser launcher returns
+        // whatever `code` + `state` arrived at the redirect URI. We must reject
+        // any redirect whose state does not match the value we generated for
+        // this authorize round-trip; otherwise a malicious app or page could
+        // fire `pumpernickel-oauth://callback?code=ATTACKER_CODE` and have it
+        // accepted as if it were the legitimate response.
+        if (redirect.state != state) {
+            throw IllegalStateException(
+                "OAuth state mismatch — possible CSRF or stale redirect"
+            )
+        }
+
+        return exchangeCodeForToken(code = redirect.code, verifier = verifier)
     }
 
     private suspend fun exchangeCodeForToken(

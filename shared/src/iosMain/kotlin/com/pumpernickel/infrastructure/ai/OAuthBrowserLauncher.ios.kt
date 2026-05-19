@@ -38,9 +38,9 @@ actual class OAuthBrowserLauncher {
     @Volatile
     private var currentContextProvider: PresentationContextProvider? = null
 
-    actual suspend fun startAuthFlow(authorizeUrl: String, redirectScheme: String): String? {
+    actual suspend fun startAuthFlow(authorizeUrl: String, redirectScheme: String): OAuthRedirect? {
         val url = NSURL.URLWithString(authorizeUrl) ?: return null
-        val deferred = CompletableDeferred<String?>()
+        val deferred = CompletableDeferred<OAuthRedirect?>()
 
         val contextProvider = PresentationContextProvider()
         currentContextProvider = contextProvider
@@ -54,9 +54,9 @@ actual class OAuthBrowserLauncher {
                     deferred.complete(null)
                     return@ASWebAuthenticationSession
                 }
-                val code = extractCodeParam(callbackURL)
-                println("[OAuthBrowserLauncher.ios] redirect received code-present=${code != null}")
-                deferred.complete(code)
+                val redirect = extractRedirectParams(callbackURL)
+                println("[OAuthBrowserLauncher.ios] redirect received code-present=${redirect?.code != null} state-present=${redirect?.state != null}")
+                deferred.complete(redirect)
             }
         )
         session.presentationContextProvider = contextProvider
@@ -74,12 +74,18 @@ actual class OAuthBrowserLauncher {
         }
     }
 
-    /** Extracts the `code` query parameter from a redirect URL. */
-    private fun extractCodeParam(url: NSURL): String? {
+    /**
+     * Extracts `code` and `state` query parameters from a redirect URL.
+     * Returns null when `code` is absent (state alone is meaningless for the
+     * token exchange).
+     */
+    private fun extractRedirectParams(url: NSURL): OAuthRedirect? {
         val comps = NSURLComponents(uRL = url, resolvingAgainstBaseURL = false) ?: return null
         @Suppress("UNCHECKED_CAST")
         val items = comps.queryItems as? List<NSURLQueryItem> ?: return null
-        return items.firstOrNull { it.name == "code" }?.value
+        val code = items.firstOrNull { it.name == "code" }?.value ?: return null
+        val state = items.firstOrNull { it.name == "state" }?.value
+        return OAuthRedirect(code = code, state = state)
     }
 }
 
