@@ -70,6 +70,37 @@ interface SettingsRepository {
     suspend fun setAiBaseUrl(url: String)
     suspend fun setAiModel(model: String)
 
+    // Multi-Provider AI config (D-22-09 / Phase 22) — supersedes the single
+    // aiBaseUrl/aiModel/aiProviderPreset triple above. The legacy flows remain
+    // available so SettingsMigration (Plan 22-06) and any in-flight reader can
+    // migrate gracefully; new call sites must use the per-provider flows.
+
+    /** Currently active provider for all AI generation. Default: OpenAI. */
+    val activeProvider: Flow<com.pumpernickel.infrastructure.ai.ProviderId>
+    suspend fun setActiveProvider(provider: com.pumpernickel.infrastructure.ai.ProviderId)
+
+    /**
+     * Per-provider model id snapshot. Defaults:
+     * - OpenAI:    `gpt-4o-mini`
+     * - Together:  `google/gemma-4-31B-it`
+     * - Anthropic: `claude-opus-4-7` (D-22-06)
+     */
+    val modelByProvider: Flow<Map<com.pumpernickel.infrastructure.ai.ProviderId, String>>
+    suspend fun setModel(provider: com.pumpernickel.infrastructure.ai.ProviderId, model: String)
+
+    /**
+     * Per-provider base URL. Defaults:
+     * - OpenAI:    `https://api.openai.com/v1`
+     * - Together:  `https://api.together.ai/v1`
+     * - Anthropic: `https://api.anthropic.com` (fixed; user override has no effect)
+     */
+    val baseUrlByProvider: Flow<Map<com.pumpernickel.infrastructure.ai.ProviderId, String>>
+    suspend fun setBaseUrl(provider: com.pumpernickel.infrastructure.ai.ProviderId, url: String)
+
+    /** One-shot migration sentinel (D-22-08); true after SettingsMigration has run successfully. */
+    val migratedToMultiProvider: Flow<Boolean>
+    suspend fun setMigratedToMultiProvider(value: Boolean)
+
     // Phase 19 — monthly Early-Exit budget (D-19-07)
     //
     // Also exposed via the narrow `EarlyExitBudgetStore` port (D-20-05);
