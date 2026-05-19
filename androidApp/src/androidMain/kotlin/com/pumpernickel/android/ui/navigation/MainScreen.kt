@@ -2,6 +2,7 @@ package com.pumpernickel.android.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -51,7 +52,9 @@ import com.pumpernickel.android.ui.screens.NutritionFoodEntryScreen
 import com.pumpernickel.android.ui.screens.NutritionRecipeListScreen
 import com.pumpernickel.android.ui.screens.NutritionRecipeCreationScreen
 import com.pumpernickel.android.ui.screens.NutritionDailyLogScreen
+import com.pumpernickel.android.ui.screens.AiGenerationMiniBar
 import com.pumpernickel.android.ui.screens.UnlockModalHost
+import com.pumpernickel.domain.ai.AiType
 import com.pumpernickel.presentation.nutrition.RecipeListViewModel
 import com.pumpernickel.presentation.templates.TemplateEditorViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -76,19 +79,39 @@ fun MainScreen() {
     Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                TopLevelTab.entries.forEachIndexed { index, tab ->
-                    NavigationBarItem(
-                        selected = index == selectedTab,
-                        onClick = { selectedTab = index },
-                        icon = {
-                            Icon(
-                                imageVector = tab.icon,
-                                contentDescription = stringResource(tab.labelRes)
-                            )
-                        },
-                        label = { Text(stringResource(tab.labelRes)) }
-                    )
+            Column {
+                AiGenerationMiniBar(
+                    onTap = { aiType ->
+                        when (aiType) {
+                            AiType.WORKOUT -> {
+                                selectedTab = 0
+                                workoutNavController.navigate(AiWorkoutGenRoute) {
+                                    launchSingleTop = true
+                                }
+                            }
+                            AiType.RECIPE -> {
+                                selectedTab = 2
+                                nutritionNavController.navigate(AiMealGenRoute) {
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+                    }
+                )
+                NavigationBar {
+                    TopLevelTab.entries.forEachIndexed { index, tab ->
+                        NavigationBarItem(
+                            selected = index == selectedTab,
+                            onClick = { selectedTab = index },
+                            icon = {
+                                Icon(
+                                    imageVector = tab.icon,
+                                    contentDescription = stringResource(tab.labelRes)
+                                )
+                            },
+                            label = { Text(stringResource(tab.labelRes)) }
+                        )
+                    }
                 }
             }
         }
