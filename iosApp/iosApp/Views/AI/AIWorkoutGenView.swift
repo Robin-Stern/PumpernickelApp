@@ -35,6 +35,9 @@ struct AIWorkoutGenView: View {
             // 260518-eny — always start from a fresh Form when the user pushes
             // this screen, so a leftover Saved/Preview/Error state from the
             // previous navigation cycle cannot "burn" the view.
+            // D-21-02 fix (c) — the VM's reset() now guards Preview/Error too,
+            // so a notification-driven re-entry on a finished background
+            // generation no longer overwrites the visible workout.
             viewModel.reset()
         }
     }

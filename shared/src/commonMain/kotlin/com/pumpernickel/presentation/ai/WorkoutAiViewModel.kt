@@ -37,6 +37,29 @@ import kotlinx.coroutines.yield
  * - Preview (LLM returned a valid response; preview sheet shown; Save / Discard)
  * - Error (terminal until retry / dismiss; carries an AiError for per-class copy)
  * - Saved (commit() succeeded; templateIds returned for nav back to TemplateList)
+ *
+ * D-21-02 root-cause: (c) SwiftUI `.onAppear { viewModel.reset() }` re-runs every
+ * time the AIWorkoutGenView is presented (incl. when the user returns to the AI
+ * tab after a background generation finished). The Quick-Fix 260518-eny added a
+ * `reset()` whose only guard is `WorkoutAiUiState.Generating` — so when the user
+ * navigates back AFTER the LLM has already completed (state == `Preview`), the
+ * unguarded reset overwrites `Preview` with `defaultForm`. The AiGenerationManager
+ * is itself a Koin `single` running its own app-scope `SupervisorJob`, so
+ * hypothesis (b) "viewModelScope cancelled" is NOT the root cause; the generation
+ * job survives. Hypothesis (a) "factory VM recreated" is partially true (the
+ * `viewModel { }` binding is factory-default in Koin), but the freshly-instantiated
+ * VM picks up the manager's `Success` state via the `init { collect }` replay —
+ * unless `.onAppear` then immediately stomps the resulting `Preview` with reset().
+ * Fix targets the View+VM `reset()` semantics in Task 2, not the Koin scope.
+ *
+ * Evidence (code-trace only — no simulator run needed):
+ *   1. The `Success` collector at line ~122 sets the VM state to Preview.
+ *   2. SwiftUI calls `.onAppear { viewModel.reset() }` synchronously on re-entry.
+ *   3. The pre-fix `reset()` only guarded Generating, so it overwrote Preview
+ *      with defaultForm — the visible "workout disappeared" symptom of B1.
+ * Quick-Fix 260518-eny SUMMARY corroborates: the same VM-instance is long-lived on
+ * iOS, so the surviving `_uiState` is the right place to look — and the unguarded
+ * reset() it added is the regression that turned a recoverable Preview into Idle.
  */
 class WorkoutAiViewModel(
     private val useCase: WorkoutAiUseCase,
@@ -220,9 +243,25 @@ class WorkoutAiViewModel(
      * instance carries a stale `Saved` / `Preview` / `Error` state from a prior
      * navigation cycle. Does NOT cancel in-flight generations (would break the
      * Phase-19 BackgroundTaskManager flow); the `Generating` guard preserves that.
+     *
+     * D-21-02 fix (c) — additionally guards `Preview` and `Error`. When the user
+     * leaves the AI tab while the LLM is running and returns AFTER the "Workout
+     * fertig"-notification has flipped the AiGenerationManager state to
+     * `Success` (→ VM state = `Preview`), the previous guard let `.onAppear`
+     * stomp Preview with `defaultForm`, manifesting as "workout disappeared"
+     * (B1). Preview and Error must survive view re-entry — only the user's
+     * explicit Discard/Retry/Save (or a fresh `generate()`) may leave them, not
+     * a lifecycle callback. `Saved` is intentionally still resettable so the
+     * one-shot dismiss flow (260518-eny) keeps working: after `save()` flips
+     * through `Saved` for a single tick and emits `savedEvent`, a subsequent
+     * re-entry on a returning navigation cycle still falls back to the form.
      */
     fun reset() {
-        if (_uiState.value is WorkoutAiUiState.Generating) return
+        val current = _uiState.value
+        if (current is WorkoutAiUiState.Generating
+            || current is WorkoutAiUiState.Preview
+            || current is WorkoutAiUiState.Error
+        ) return
         _uiState.value = defaultForm
     }
 
