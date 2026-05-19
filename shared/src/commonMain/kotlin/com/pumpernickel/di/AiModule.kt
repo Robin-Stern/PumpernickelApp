@@ -97,7 +97,7 @@ val aiModule = module {
     }
 
     // === Use-cases + VMs (unchanged from Phase 18 — they inject AiClient) ===
-    viewModel { AiSettingsViewModel(get(), get()) }
+    viewModel { AiSettingsViewModel(get(), get(), get()) }
     single { WorkoutAiUseCase(get(), get(), get(), get(), get()) }
     single { RecipeAiUseCase(get(), get(), get(), get(), get(), get(), get()) }
     single { com.pumpernickel.domain.ai.AiGenerationManager(get(), get(), get(), get()) }
