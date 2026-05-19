@@ -1,6 +1,7 @@
 package com.pumpernickel.infrastructure.ai
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -10,7 +11,6 @@ import kotlin.time.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlin.random.Random
 
 /**
  * D-22-01 / D-22-12 — PKCE OAuth flow orchestrator. Constructs the authorize
@@ -26,12 +26,10 @@ import kotlin.random.Random
  * wires these into a concrete oauthClientId for the AnthropicClient
  * constructor.
  *
- * SEED — state-validation: [authorize] currently accepts the trust-on-first-use
- * compromise (Demo-deadline). [OAuthBrowserLauncher.startAuthFlow] returns
- * only the `code` parameter — a state-mismatch attack against the redirect
- * step would not be caught here. Hardening backlog: extend the launcher
- * return type to `Pair<code, state>` and compare against the `state` we
- * generated. Tracked in 22-05-SUMMARY.md SEED list.
+ * CR-03 (Phase 22 review-fix) — state validation is now enforced:
+ * [OAuthBrowserLauncher.startAuthFlow] returns both `code` and `state` and
+ * [authorize] rejects any redirect whose state does not match the value
+ * generated for this flow (RFC 6749 §10.12 CSRF defense).
  */
 class AnthropicOAuthFlow(
     private val httpClient: HttpClient,
@@ -59,10 +57,21 @@ class AnthropicOAuthFlow(
         val state = generateState()
         val authorizeUrl = buildAuthorizeUrl(challenge = challenge, state = state)
 
-        val code = browserLauncher.startAuthFlow(authorizeUrl, REDIRECT_SCHEME) ?: return null
-        // NOTE: state validation is deferred — see class KDoc SEED.
+        val redirect = browserLauncher.startAuthFlow(authorizeUrl, REDIRECT_SCHEME) ?: return null
 
-        return exchangeCodeForToken(code = code, verifier = verifier)
+        // CR-03 — RFC 6749 §10.12 CSRF defense. The browser launcher returns
+        // whatever `code` + `state` arrived at the redirect URI. We must reject
+        // any redirect whose state does not match the value we generated for
+        // this authorize round-trip; otherwise a malicious app or page could
+        // fire `pumpernickel-oauth://callback?code=ATTACKER_CODE` and have it
+        // accepted as if it were the legitimate response.
+        if (redirect.state != state) {
+            throw IllegalStateException(
+                "OAuth state mismatch — possible CSRF or stale redirect"
+            )
+        }
+
+        return exchangeCodeForToken(code = redirect.code, verifier = verifier)
     }
 
     private suspend fun exchangeCodeForToken(
@@ -71,6 +80,12 @@ class AnthropicOAuthFlow(
     ): Credential.OAuthToken {
         val response = httpClient.post(TOKEN_ENDPOINT) {
             contentType(ContentType.Application.Json)
+            timeout {
+                // WR-01 — bound the token exchange so a network stall does not
+                // leave `_oauthInProgress = true` indefinitely.
+                requestTimeoutMillis = 30_000
+                socketTimeoutMillis = 15_000
+            }
             setBody(
                 AnthropicAuthorizationCodeRequest(
                     code = code,
@@ -83,9 +98,15 @@ class AnthropicOAuthFlow(
         val body = response.bodyAsText()
         val status = response.status.value
         if (status !in 200..299) {
-            throw IllegalStateException(
-                "OAuth token exchange failed: HTTP $status — ${body.take(400)}"
-            )
+            // WR-05 — surface a typed AiError so callers (AiSettingsViewModel)
+            // can distinguish "token-exchange failed (HTTP 4xx)" from a
+            // user-cancel. Throwing a generic IllegalStateException made the UI
+            // message indistinguishable from a cancel.
+            throw if (status in 500..599) {
+                com.pumpernickel.domain.ai.AiError.Provider(status)
+            } else {
+                com.pumpernickel.domain.ai.AiError.AuthOrQuota(status)
+            }
         }
         val parsed = json.decodeFromString<AnthropicAuthorizationCodeResponse>(body)
         val nowSec = Clock.System.now().epochSeconds
@@ -105,18 +126,20 @@ class AnthropicOAuthFlow(
             "&state=$state" +
             "&scope=${urlEncode(SCOPE)}"
 
-    /** RFC 7636 §4.1 — 64-character URL-safe random string from the unreserved set. */
-    internal fun generateCodeVerifier(): String {
-        val unreserved =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
-        return buildString(64) {
-            repeat(64) { append(unreserved[Random.nextInt(unreserved.length)]) }
-        }
-    }
+    /**
+     * RFC 7636 §4.1 — URL-safe verifier from a cryptographically secure RNG.
+     * 48 random bytes → 64 base64url-no-padding characters, all in the
+     * unreserved set (`A–Z a–z 0–9 - _`).
+     */
+    internal fun generateCodeVerifier(): String =
+        base64UrlNoPadding(secureRandomBytes(48))
 
-    internal fun generateState(): String = buildString(32) {
-        repeat(32) { append(STATE_ALPHABET[Random.nextInt(STATE_ALPHABET.length)]) }
-    }
+    /**
+     * RFC 6749 §10.12 — state must be unguessable to defeat CSRF. 24 random
+     * bytes → 32 base64url-no-padding characters (URL-safe).
+     */
+    internal fun generateState(): String =
+        base64UrlNoPadding(secureRandomBytes(24))
 
     /** BASE64URL(SHA-256(verifier)), no padding. */
     internal fun codeChallengeS256(verifier: String): String {
@@ -125,9 +148,6 @@ class AnthropicOAuthFlow(
     }
 
     companion object {
-        private const val STATE_ALPHABET =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-
         // D-22-01 — Anthropic OAuth endpoints. Per CONTEXT.md canonical_refs:
         // authorize URL on claude.ai, token endpoint on claude.ai, NOT on
         // api.anthropic.com.
