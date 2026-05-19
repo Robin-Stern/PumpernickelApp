@@ -58,6 +58,8 @@ androidMain.dependencies {
             // Phase 18 — BYOK EncryptedSharedPreferences (REQ-AI-06 / T-18-04-01).
             implementation(libs.androidx.security.crypto)
             implementation(libs.play.services.location)
+            // Phase 22 — Chrome CustomTabs for the Anthropic OAuth browser flow (D-22-01).
+            implementation(libs.androidx.browser)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
