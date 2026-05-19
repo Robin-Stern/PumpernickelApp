@@ -354,7 +354,7 @@ Plans:
 **Goal:** Behebung von sechs konkreten Bugs aus der iOS Hands-on-Test-Session vom 2026-05-18 (B1-B6 in 21-CONTEXT.md). Vier Bug-Wellen in serialisierter Wave-Struktur: Wave A trivial (B4 Daily-Log Submit-Fix + B5 dynamische Grace-Period-Notification, parallelisierbar), Wave B sauberer OFF-Such-Baseline (B3 fields+sort_by+Brand-Re-Ranking, blockiert Wave C), Wave C Debug-Sessions (B1 AI-Workout state-loss Investigation+Fix, B2 Barcode 0-Macros Trace+Fix), Wave D Verifikation (B6 XP-Bookkeeping verify-first, fix only if real bug). Pure Bug-Fix, keine Refactors, keine neuen Features.
 **Requirements**: D-21-01 … D-21-09 (decisions in 21-CONTEXT.md serve as the requirement source — no formal REQ-* IDs)
 **Depends on:** Phase 20
-**Plans:** 3/6 plans executed
+**Plans:** 5/6 plans executed
 
 **Wave structure:**
 - Wave 1 (parallel — trivial, no file conflicts): 01 (B5 — grace-period formatter in commonMain + Android strings.xml + iOS notification body), 02 (B4 — iOS Daily-Log .onSubmit neutral fix in NutritionFoodEntryView.swift)
@@ -366,8 +366,8 @@ Plans:
 - [x] 21-01-PLAN.md — B5: formatGraceDuration helper in commonMain + commonTest + Android strings.xml %1$s template + iOS notification body wiring (D-21-06, D-21-08, D-21-09)
 - [x] 21-02-PLAN.md — B4: iOS NutritionFoodEntryView.swift .onSubmit neutralised (keyboard collapse only, no clear / no job cancel) per D-21-05
 - [x] 21-03-PLAN.md — B3: OFF v2 search-quality + adapter brand-match re-ranking (fields + generic_name + categories_tags, sort_by re-evaluation, +2/+1 score) + commonTest with 3 spec queries (D-21-04, D-21-08, D-21-09)
-- [ ] 21-04-PLAN.md — B1: WorkoutAiViewModel state-loss after background generation — investigation (3 hypotheses a/b/c) + targeted fix in the identified schicht (D-21-02)
-- [ ] 21-05-PLAN.md — B2: barcode-scanned ingredient zero-macros — trace OFF → Adapter → UseCase → ViewModel → Repository → DB + layer-specific fix or UI hint (D-21-03)
+- [x] 21-04-PLAN.md — B1: WorkoutAiViewModel state-loss after background generation — investigation (3 hypotheses a/b/c) + targeted fix in the identified schicht (D-21-02)
+- [x] 21-05-PLAN.md — B2: barcode-scanned ingredient zero-macros — trace OFF → Adapter → UseCase → ViewModel → Repository → DB + layer-specific fix or UI hint (D-21-03)
 - [ ] 21-06-PLAN.md — B6: XP-bookkeeping at unranked state — verify-first with logs across GamificationEngine + RankLadder + OverviewViewModel, then UI/doc update or real engine fix (D-21-07)
 
 ### Phase 22: Anthropic AI Provider — 3. Provider neben OpenAI/Together mit OAuth-Login + Modell-Picker (Opus 4.7 / Sonnet 4.6 / Haiku 4.5), Default Opus 4.7 mit bestehenden Prompts
