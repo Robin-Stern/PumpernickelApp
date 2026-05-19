@@ -3,7 +3,7 @@ package com.pumpernickel.data.repository
 import com.pumpernickel.domain.repository.SettingsRepository
 import com.pumpernickel.infrastructure.ai.Credential
 import com.pumpernickel.infrastructure.ai.ProviderId
-import com.pumpernickel.infrastructure.ai.SecureKeyStore
+import com.pumpernickel.infrastructure.ai.SecureKeyStoreSurface
 import kotlinx.coroutines.flow.first
 
 /**
@@ -38,7 +38,7 @@ import kotlinx.coroutines.flow.first
  */
 class SettingsMigration(
     private val settingsRepository: SettingsRepository,
-    private val secureKeyStore: SecureKeyStore
+    private val secureKeyStore: SecureKeyStoreSurface
 ) {
     suspend fun run() {
         if (settingsRepository.migratedToMultiProvider.first()) return

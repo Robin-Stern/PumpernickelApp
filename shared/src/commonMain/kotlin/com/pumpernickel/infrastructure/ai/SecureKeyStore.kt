@@ -45,3 +45,42 @@ expect class SecureKeyStore {
     /** Phase-18 legacy slot delete; for Plan-06 migration only (idempotent). */
     suspend fun clearLegacyApiKey()
 }
+
+/**
+ * D-22-13 (Plan 22-10) — Test-surface interface mirroring [SecureKeyStore]'s
+ * methods 1:1. Exists so [com.pumpernickel.data.repository.SettingsMigration]
+ * can be unit-tested with a fake credential store: Kotlin's `expect class`
+ * cannot be subclassed from `commonTest` (KMP test source sets resolve to the
+ * platform-actual, not a test-local fake), so Migration injects this interface
+ * instead. Production code wires the real [SecureKeyStore] via
+ * [SecureKeyStoreAdapter] at the Koin layer.
+ */
+interface SecureKeyStoreSurface {
+    suspend fun writeCredential(provider: ProviderId, credential: Credential)
+    suspend fun readCredential(provider: ProviderId): Credential?
+    suspend fun clearCredential(provider: ProviderId)
+    suspend fun listProviders(): Set<ProviderId>
+    suspend fun readLegacyApiKey(): String?
+    suspend fun clearLegacyApiKey()
+}
+
+/**
+ * Bridges the platform-`expect class` [SecureKeyStore] to the
+ * [SecureKeyStoreSurface] interface for [com.pumpernickel.data.repository.SettingsMigration]
+ * (Plan 22-10 testability patch). Delegation is total — no behaviour change vs.
+ * the original expect class.
+ */
+class SecureKeyStoreAdapter(private val real: SecureKeyStore) : SecureKeyStoreSurface {
+    override suspend fun writeCredential(provider: ProviderId, credential: Credential) =
+        real.writeCredential(provider, credential)
+    override suspend fun readCredential(provider: ProviderId): Credential? =
+        real.readCredential(provider)
+    override suspend fun clearCredential(provider: ProviderId) =
+        real.clearCredential(provider)
+    override suspend fun listProviders(): Set<ProviderId> =
+        real.listProviders()
+    override suspend fun readLegacyApiKey(): String? =
+        real.readLegacyApiKey()
+    override suspend fun clearLegacyApiKey() =
+        real.clearLegacyApiKey()
+}
