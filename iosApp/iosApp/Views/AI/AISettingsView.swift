@@ -29,7 +29,6 @@ struct AISettingsView: View {
     /// Wire names of providers that have credentials stored.
     @State private var connectedProvidersWireNames: Set<String> = []
 
-    @State private var oauthInProgress: Bool = false
     @State private var lastError: String? = nil
 
     @State private var keyDraft: String = ""
@@ -83,7 +82,6 @@ struct AISettingsView: View {
         .task { await observeProviderPreset() }
         .task { await observeModelByProvider() }
         .task { await observeConnectedProviders() }
-        .task { await observeOAuthInProgress() }
         .task { await observeLastError() }
     }
 
@@ -186,73 +184,54 @@ struct AISettingsView: View {
 
     private var anthropicApiKeySection: some View {
         Section {
-            // OAuth primary path
             HStack {
-                Button {
-                    viewModel.startAnthropicOAuth()
-                } label: {
-                    Label("Mit Anthropic verbinden (OAuth)", systemImage: "person.badge.key.fill")
+                Group {
+                    if keyVisible {
+                        TextField("sk-ant-…", text: $keyDraft)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                    } else {
+                        SecureField("sk-ant-…", text: $keyDraft)
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(oauthInProgress)
+                .focused($focusedField, equals: .key)
+                .submitLabel(.done)
+                .onSubmit { saveAnthropicKeyDraft() }
 
-                if oauthInProgress {
-                    Spacer()
-                    ProgressView()
+                Button {
+                    keyVisible.toggle()
+                } label: {
+                    Image(systemName: keyVisible ? "eye.slash" : "eye")
                 }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(keyVisible ? "Schlüssel verbergen" : "Schlüssel zeigen")
             }
 
             statusRow
 
             errorRow
 
-            // API-key fallback
-            DisclosureGroup("Stattdessen API-Key verwenden") {
-                HStack {
-                    Group {
-                        if keyVisible {
-                            TextField("sk-ant-…", text: $keyDraft)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled(true)
-                        } else {
-                            SecureField("sk-ant-…", text: $keyDraft)
-                        }
-                    }
-                    .focused($focusedField, equals: .key)
-                    .submitLabel(.done)
-                    .onSubmit { saveAnthropicKeyDraft() }
-
-                    Button {
-                        keyVisible.toggle()
-                    } label: {
-                        Image(systemName: keyVisible ? "eye.slash" : "eye")
-                    }
-                    .buttonStyle(.borderless)
-                    .accessibilityLabel(keyVisible ? "Schlüssel verbergen" : "Schlüssel zeigen")
+            HStack(spacing: 12) {
+                Button(action: saveAnthropicKeyDraft) {
+                    Text("Speichern")
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(keyDraft.trimmingCharacters(in: .whitespaces).isEmpty)
 
-                HStack(spacing: 12) {
-                    Button(action: saveAnthropicKeyDraft) {
-                        Text("Speichern")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(keyDraft.trimmingCharacters(in: .whitespaces).isEmpty)
-
-                    Button(role: .destructive) {
-                        viewModel.disconnect(provider: ProviderId.anthropic)
-                        keyDraft = ""
-                        keyVisible = false
-                    } label: {
-                        Text("Löschen")
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(!apiKeyConfigured)
+                Button(role: .destructive) {
+                    viewModel.disconnect(provider: ProviderId.anthropic)
+                    keyDraft = ""
+                    keyVisible = false
+                } label: {
+                    Text("Löschen")
                 }
+                .buttonStyle(.bordered)
+                .disabled(!apiKeyConfigured)
             }
         } header: {
             Text("API-Schlüssel · Anthropic")
         } footer: {
-            Text("Verbinde dein Anthropic-Konto via OAuth oder trage einen API-Key direkt ein.")
+            Text("API-Key aus console.anthropic.com einfügen. Wird nur lokal im Schlüsselbund gespeichert.")
                 .font(.caption2)
         }
     }
@@ -451,17 +430,6 @@ struct AISettingsView: View {
             }
         } catch {
             print("AISettingsView connectedProviders observation error: \(error)")
-        }
-    }
-
-    private func observeOAuthInProgress() async {
-        do {
-            for try await value in asyncSequence(for: viewModel.oauthInProgressFlow) {
-                // StateFlow<Boolean> bridges as KotlinBoolean.
-                self.oauthInProgress = value.boolValue
-            }
-        } catch {
-            print("AISettingsView oauthInProgress observation error: \(error)")
         }
     }
 
