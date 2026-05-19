@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Android Material 3 UI
-status: ready_to_plan
+status: executing
 stopped_at: Phase 22 context gathered
-last_updated: "2026-05-19T08:24:09.160Z"
-last_activity: 2026-05-19 -- Phase 18 execution started
+last_updated: "2026-05-19T09:08:33.908Z"
+last_activity: 2026-05-19 -- Phase 22 execution started
 progress:
   total_phases: 12
   completed_phases: 8
   total_plans: 78
-  completed_plans: 66
-  percent: 67
+  completed_plans: 68
+  percent: 87
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Users can select a workout template and execute it set-by-set — logging reps, weight, and rest periods — with a clean, reliable flow
-**Current focus:** Phase 18 — ai-features-f6-workout-generation-f8-meal-generation-byok-op
+**Current focus:** Phase 22 — anthropic-ai-provider
 
 ## Current Position
 
 Milestone: v1.5 (shipped 2026-03-31)
-Phase: 19
-Plan: Not started
+Phase: 22 (anthropic-ai-provider) — EXECUTING
+Plan: 1 of 10
 Branch: `android-ios-parity` (ahead of `main` by ~25 commits — merge pending)
-Status: Ready to plan
-Last activity: 2026-05-19
+Status: Executing Phase 22
+Last activity: 2026-05-19 -- Phase 22 execution started
 
 Progress: [██████████] 97%
 

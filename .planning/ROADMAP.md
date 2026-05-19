@@ -375,7 +375,7 @@ Plans:
 **Goal:** Anthropic-Modelle (Opus 4.7 / Sonnet 4.6 / Haiku 4.5) als dritten AI-Provider neben OpenAI/Together einführen. OAuth-Primary gegen `claude.ai/oauth/authorize` (PKCE, S256) nutzt User-eigene Claude-Pro/Max-Subscription ohne API-Credits; API-Key-Fallback für Console-User. Multi-Provider-Koexistenz mit Map-basiertem `SecureKeyStore` + sealed `Credential`-Class (OAuthToken | ApiKey). Settings-only Provider-Switch via Radio-Liste; per-Provider-Modell-Dropdown. DI-Wiring nutzt `DispatchingAiClient`-Facade die `activeProvider.first()` pro AI-Call dispatched; legacy Phase-18-User werden via lazy `SettingsMigration` (idempotent, sentinel-guarded) transparent auf Multi-Provider-Schema migriert. Bestehende Workout-/Recipe-Prompts werden 1:1 ans top-level `system`-Field gepasst (kein Prompt-Rewrite). Streaming-SSE-Parser handelt Anthropic named-events (`message_start`, `content_block_delta`, `message_stop`, `error`) und mapped auf gemeinsamen onProgress(content, "")-Callback. Pre-Request Token-Refresh (60sec-Schwelle) gegen `claude.ai/oauth/token`; Refresh-Fehler clear-en Slot + werfen `AuthOrQuota(401)`.
 **Requirements**: D-22-01 … D-22-13 (CONTEXT.md decisions; no formal REQ-* IDs per project convention)
 **Depends on:** Phase 21
-**Plans:** 10 plans
+**Plans:** 2/10 plans executed
 
 **Wave structure:**
 - Wave 1 (foundations, parallel): 01 (ProviderId + Credential + SecureKeyStore multi-slot expect/actual triple), 02 (SettingsRepository activeProvider/modelByProvider/baseUrlByProvider/migratedToMultiProvider)
@@ -384,8 +384,8 @@ Plans:
 - Wave 4 (UI + Tests + Handoff, parallel): 08 (AiSettingsViewModel multi-provider refactor + Android AiSettingsScreen Radio-Liste + AnthropicConnectSheet + ApiKeyDialog, checkpoint:human-verify), 09 (22-IOS-HANDOFF.md spec für User-written SwiftUI), 10 (commonTest: SettingsMigrationTest + AnthropicSseParserTest + DispatchingAiClientTest + Sha256Test + Fakes; konsequente Refactors für Testbarkeit in Plan 03/04/06)
 
 Plans:
-- [ ] 22-01-PLAN.md — ProviderId enum + sealed Credential + SecureKeyStore Multi-Slot expect/actual (iOS Keychain account-parametriert + Android EncryptedSharedPreferences multi-key); legacy-Read-Pfad bleibt für Migration
-- [ ] 22-02-PLAN.md — SettingsRepository Interface + Impl: activeProvider/modelByProvider/baseUrlByProvider Flows + Defaults (Anthropic BaseURL fixed, kein User-Override) + migratedToMultiProvider Sentinel
+- [x] 22-01-PLAN.md — ProviderId enum + sealed Credential + SecureKeyStore Multi-Slot expect/actual (iOS Keychain account-parametriert + Android EncryptedSharedPreferences multi-key); legacy-Read-Pfad bleibt für Migration
+- [x] 22-02-PLAN.md — SettingsRepository Interface + Impl: activeProvider/modelByProvider/baseUrlByProvider Flows + Defaults (Anthropic BaseURL fixed, kein User-Override) + migratedToMultiProvider Sentinel
 - [ ] 22-03-PLAN.md — AnthropicMessagesDto + AnthropicClient (Ktor, /v1/messages, anthropic-version header, OAuth/x-api-key dispatch, pre-request 60sec token-refresh) + AnthropicOAuthClient (POST claude.ai/oauth/token grant_type=refresh_token)
 - [ ] 22-04-PLAN.md — AnthropicAiClient adapter (implements AiClient, baseUrl ignored, schema ignored, systemPrompt→top-level system) + DispatchingAiClient facade (activeProvider.first() pro Aufruf) + WorkoutAi/RecipeAi UseCase migration auf baseUrlByProvider/modelByProvider
 - [ ] 22-05-PLAN.md — OAuthBrowserLauncher expect/actual (iOS ASWebAuthenticationSession + ephemeralWebBrowserSession, Android CustomTabsIntent + OAuthBrowserLauncherHost) + AnthropicOAuthFlow PKCE helper (S256 inline SHA-256, base64url-nopad, urlEncode); androidx-browser dependency in libs.versions.toml + shared/build.gradle.kts
