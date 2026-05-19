@@ -191,9 +191,10 @@ See PROJECT.md for full decision history across v1.0, v1.1, v1.5, and post-v1.5.
 | 260518-f1c | Android SettingsSheet scrollt nicht — ModalBottomSheet-Column mit verticalScroll(rememberScrollState()) versehen, KI-Sektion jetzt erreichbar auf kleineren Devices. Manual UAT pending | 2026-05-18 | 4b787fd | [260518-f1c-android-settingsscreen-scrollt-nicht-ki-](./quick/260518-f1c-android-settingsscreen-scrollt-nicht-ki-/) |
 | 260518-f2h | iOS AI Settings API-Key-Status-Anzeige falsch — Root cause: Picker.onChange feuert beim View-Re-Entry weil .task-Observer den initialen @State default ("openai") mit echtem StateFlow-Wert überschreibt → setProviderPreset → clearApiKey → "nicht gespeichert" obwohl Key real noch da. Fix: isSyncingProviderFromFlow @State-Flag als One-Shot-Skip in onChange-Handler. Task war ursprünglich als Android klassifiziert (Speech-to-text "Eiweiß"→iOS Artefakt). Manual UAT pending | 2026-05-18 | 7545b26 | [260518-f2h-android-ai-settings-api-key-status-anzei](./quick/260518-f2h-android-ai-settings-api-key-status-anzei/) |
 | 260518-fnk | iOS-App in "Pumpernickel" umbenennen und gleiches App-Icon (SVG → PNGs) für Android und iOS setzen — assets/app-icon.svg vendored, iOS CFBundleDisplayName=Pumpernickel via INFOPLIST_KEY in pbxproj (Debug+Release), AppIcon.png 1024×1024 in Assets.xcassets, Android app_name=Pumpernickel in strings.xml, AndroidManifest auf @string/app_name + @mipmap/ic_launcher{,_round} umgestellt, 10 mipmap-PNGs (5 Dichten × 2 Namen) via qlmanage+sips generiert. Human-Verify auf Simulator/Emulator pending | 2026-05-18 | c23909c | [260518-fnk-ios-app-in-pumpernickel-umbenennen-und-g](./quick/260518-fnk-ios-app-in-pumpernickel-umbenennen-und-g/) |
+| 260519-ip0 | fix AISettingsView.swift to match Phase 22 AiSettingsViewModel API — alle 24 Build-Fehler behoben, Multi-Provider-UI (OpenAI/Together/Anthropic), Anthropic OAuth-Pfad + API-Key-Fallback, baseUrl-Section entfernt | 2026-05-19 | d21dad9 | [260519-ip0-fix-aisettingsview-swift-to-match-the-ph](./quick/260519-ip0-fix-aisettingsview-swift-to-match-the-ph/) |
 
 ## Session Continuity
 
-Last session: 2026-05-19T14:00:00.000Z
-Stopped at: Phase 23 code review fixes approved and finalized (2026-05-19)
+Last session: 2026-05-19
+Stopped at: Quick task 260519-ip0 — iOS BUILD FIXED (AISettingsView Phase 22 API alignment)
 Next step: Optional — `android-ios-parity` → `main` merge; plan Phase 24 (Nutrition Search Polish) or Phase 25 (Nutrition Units); iOS-side implementation per 23-IOS-HANDOFF.md
