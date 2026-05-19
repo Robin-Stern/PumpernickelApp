@@ -26,48 +26,32 @@ import kotlinx.coroutines.CompletableDeferred
  * from PhotoCaptureLauncherHost).
  */
 object OAuthBrowserLauncherHost {
-    private val lock = Any()
-
     @Volatile
-    private var pending: CompletableDeferred<OAuthRedirect?>? = null
+    private var pending: CompletableDeferred<String?>? = null
 
     /**
      * Called from `OAuthBrowserLauncher.android.kt` before launching
      * `CustomTabsIntent`. Suspends until [handleRedirect] receives the
      * matching intent.
-     *
-     * WR-03 — atomic swap of the `pending` deferred + completion of any
-     * stale predecessor under a single monitor to close the previous-
-     * deferred race.
      */
-    suspend fun awaitRedirect(): OAuthRedirect? {
-        val deferred = CompletableDeferred<OAuthRedirect?>()
-        val previous = synchronized(lock) {
-            val p = pending
-            pending = deferred
-            p
-        }
+    suspend fun awaitRedirect(): String? {
         // Cancel any in-flight wait so no awaiter is stranded.
-        previous?.complete(null)
+        pending?.complete(null)
+        val deferred = CompletableDeferred<String?>()
+        pending = deferred
         return deferred.await()
     }
 
     /**
-     * Called from `MainActivity.onNewIntent`. Extracts `code` (and `state`)
-     * from the redirect URI and completes the pending deferred. No-op if no
-     * deferred is pending (defensive — e.g. user opened the redirect URL
-     * manually).
+     * Called from `MainActivity.onNewIntent`. Extracts `code` from the
+     * redirect URI and completes the pending deferred. No-op if no deferred
+     * is pending (defensive — e.g. user opened the redirect URL manually).
      */
     fun handleRedirect(intent: Intent) {
-        val data = intent.data
-        val code = data?.getQueryParameter("code")
-        val state = data?.getQueryParameter("state")
-        println("[OAuthBrowserLauncherHost.android] redirect code-present=${code != null} state-present=${state != null}")
-        val deferred = synchronized(lock) {
-            val p = pending
-            pending = null
-            p
-        } ?: return
-        deferred.complete(code?.let { OAuthRedirect(code = it, state = state) })
+        val code = intent.data?.getQueryParameter("code")
+        println("[OAuthBrowserLauncherHost.android] redirect code-present=${code != null}")
+        val deferred = pending ?: return
+        pending = null
+        deferred.complete(code)
     }
 }

@@ -2,7 +2,6 @@ package com.pumpernickel.data.api
 
 import com.pumpernickel.domain.ai.AiError
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.timeout
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -32,13 +31,6 @@ class AnthropicOAuthClient(
         try {
             val response = client.post(TOKEN_ENDPOINT) {
                 contentType(ContentType.Application.Json)
-                timeout {
-                    // WR-02 — bound the refresh so a flaky network does not
-                    // leave the pre-flight refresh hanging at the system socket
-                    // timeout (often 60-120s); UX-friendly bounded wait.
-                    requestTimeoutMillis = 30_000
-                    socketTimeoutMillis = 15_000
-                }
                 setBody(
                     AnthropicOAuthRefreshRequest(
                         refreshToken = refreshToken,

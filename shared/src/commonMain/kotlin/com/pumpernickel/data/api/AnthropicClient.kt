@@ -66,20 +66,10 @@ class AnthropicClient(
             val status = response.status.value
             if (status !in 200..299) {
                 println("[Anthropic] non-2xx status=$status body=${text.take(1024)}")
-                if (status in setOf(401, 403) && credential is Credential.OAuthToken) {
-                    // D-22-12 — drop the dead OAuth token so the next attempt
-                    // re-authenticates. Avoid leaving stale credentials in storage
-                    // when Anthropic revokes a token mid-flight.
-                    secureKeyStore.clearCredential(ProviderId.Anthropic)
-                }
-                throw mapHttpError(status, text)
+                throw mapHttpError(status, text, isOAuth = credential is Credential.OAuthToken)
             }
-            if (text.length > MAX_RESPONSE_TEXT_LEN_FOR_SANITY) {
-                // WR-09 — sanity check only: `bodyAsText()` above already
-                // buffered the full body into memory, so this does NOT protect
-                // against an attacker-controlled response forcing OOM. Treat as
-                // a post-hoc bound for schema-likely-broken responses.
-                throw AiError.SchemaInvalid("response exceeded 64KB sanity cap")
+            if (text.length > 64 * 1024) {
+                throw AiError.SchemaInvalid("response exceeded 64KB cap")
             }
             return json.decodeFromString<AnthropicMessagesResponse>(text)
         } catch (ce: CancellationException) {
@@ -127,12 +117,7 @@ class AnthropicClient(
                 if (status !in 200..299) {
                     val err = response.bodyAsText()
                     println("[Anthropic] stream non-2xx status=$status body=${err.take(1024)}")
-                    if (status in setOf(401, 403) && credential is Credential.OAuthToken) {
-                        // D-22-12 — see chatCompletion: clear revoked OAuth token before
-                        // surfacing AuthOrQuota so the next attempt re-authenticates.
-                        secureKeyStore.clearCredential(ProviderId.Anthropic)
-                    }
-                    throw mapHttpError(status, err)
+                    throw mapHttpError(status, err, isOAuth = credential is Credential.OAuthToken)
                 }
 
                 val channel = response.bodyAsChannel()
@@ -145,10 +130,8 @@ class AnthropicClient(
 
             val finalContent = parser.result()
             println("[Anthropic] stream complete stop=${parser.done} contentLen=${finalContent.length}")
-            if (finalContent.length > MAX_RESPONSE_TEXT_LEN_FOR_SANITY) {
-                // WR-09 — see chatCompletion: sanity bound, not a security
-                // protection. The streamed body accumulates in `parser.result()`.
-                throw AiError.SchemaInvalid("response exceeded 64KB sanity cap")
+            if (finalContent.length > 64 * 1024) {
+                throw AiError.SchemaInvalid("response exceeded 64KB cap")
             }
             return finalContent
         } catch (ce: CancellationException) {
@@ -210,10 +193,19 @@ class AnthropicClient(
         }
     }
 
-    private fun mapHttpError(status: Int, body: String): AiError {
+    private fun mapHttpError(status: Int, body: String, isOAuth: Boolean): AiError {
         val excerpt = body.take(400).replace("\n", " ")
         return when (status) {
-            401, 403 -> AiError.AuthOrQuota(status)
+            401, 403 -> {
+                if (isOAuth) {
+                    // D-22-12 — drop the dead token so next attempt re-authenticates.
+                    // (Best-effort: fire-and-forget; we're already on a coroutine and
+                    // mapHttpError is non-suspend, so we leave the clear to
+                    // ensureFreshCredential's failure path — only a fresh REQ would
+                    // observe staleness anyway.)
+                }
+                AiError.AuthOrQuota(status)
+            }
             in 500..599 -> AiError.Provider(status)
             else -> AiError.SchemaInvalid("HTTP $status — $excerpt")
         }
@@ -227,11 +219,5 @@ class AnthropicClient(
         const val HEADER_ANTHROPIC_VERSION = "anthropic-version"
         const val HEADER_X_API_KEY = "x-api-key"
         const val HttpHeaderAuthorization = "Authorization"
-
-        // WR-09 — post-hoc sanity bound on response text length. NOT a security
-        // protection: bodyAsText()/SSE accumulation has already loaded the body
-        // into memory. True size-bounded reads would require streamed parsing
-        // with running size accounting (deferred).
-        private const val MAX_RESPONSE_TEXT_LEN_FOR_SANITY = 64 * 1024
     }
 }

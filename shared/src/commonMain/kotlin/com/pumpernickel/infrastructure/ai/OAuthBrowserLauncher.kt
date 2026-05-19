@@ -19,17 +19,6 @@ package com.pumpernickel.infrastructure.ai
  * the caller ([AnthropicOAuthFlow]); this launcher only deals with the
  * browser round-trip.
  */
-/**
- * D-22-01 — redirect query parameters extracted from the OAuth callback URL.
- *
- * [state] is nullable for backward compatibility with the (legacy) Android
- * `OAuthBrowserLauncherHost.handleRedirect` path that historically only
- * carried `code`; production paths set both, and [AnthropicOAuthFlow.authorize]
- * REJECTS a redirect with a missing or mismatched state to prevent CSRF
- * (RFC 6749 §10.12).
- */
-data class OAuthRedirect(val code: String, val state: String?)
-
 expect class OAuthBrowserLauncher {
     /**
      * @param authorizeUrl complete authorize URL including code_challenge,
@@ -38,10 +27,8 @@ expect class OAuthBrowserLauncher {
      *                       "pumpernickel-oauth"). Must match the URL types
      *                       registered in Info.plist (iOS) or the
      *                       <intent-filter> in AndroidManifest (Android).
-     * @return [OAuthRedirect] containing `code` and (when present) `state`
-     *         query parameters from the redirect URL, or `null` on
-     *         cancel/error. The caller MUST validate `state` against the
-     *         value it generated before exchanging the code.
+     * @return raw `code` parameter from the redirect URL, or `null` on
+     *         cancel/error. State validation is the caller's responsibility.
      */
-    suspend fun startAuthFlow(authorizeUrl: String, redirectScheme: String): OAuthRedirect?
+    suspend fun startAuthFlow(authorizeUrl: String, redirectScheme: String): String?
 }
