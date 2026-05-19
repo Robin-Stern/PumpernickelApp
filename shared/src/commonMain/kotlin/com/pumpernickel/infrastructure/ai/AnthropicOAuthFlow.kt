@@ -1,6 +1,7 @@
 package com.pumpernickel.infrastructure.ai
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -79,6 +80,12 @@ class AnthropicOAuthFlow(
     ): Credential.OAuthToken {
         val response = httpClient.post(TOKEN_ENDPOINT) {
             contentType(ContentType.Application.Json)
+            timeout {
+                // WR-01 — bound the token exchange so a network stall does not
+                // leave `_oauthInProgress = true` indefinitely.
+                requestTimeoutMillis = 30_000
+                socketTimeoutMillis = 15_000
+            }
             setBody(
                 AnthropicAuthorizationCodeRequest(
                     code = code,
@@ -91,9 +98,15 @@ class AnthropicOAuthFlow(
         val body = response.bodyAsText()
         val status = response.status.value
         if (status !in 200..299) {
-            throw IllegalStateException(
-                "OAuth token exchange failed: HTTP $status — ${body.take(400)}"
-            )
+            // WR-05 — surface a typed AiError so callers (AiSettingsViewModel)
+            // can distinguish "token-exchange failed (HTTP 4xx)" from a
+            // user-cancel. Throwing a generic IllegalStateException made the UI
+            // message indistinguishable from a cancel.
+            throw if (status in 500..599) {
+                com.pumpernickel.domain.ai.AiError.Provider(status)
+            } else {
+                com.pumpernickel.domain.ai.AiError.AuthOrQuota(status)
+            }
         }
         val parsed = json.decodeFromString<AnthropicAuthorizationCodeResponse>(body)
         val nowSec = Clock.System.now().epochSeconds
