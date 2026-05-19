@@ -165,6 +165,7 @@ class WorkoutAiUseCase(
         return """
             targetMuscles: $targets
             exerciseCount: ${form.exerciseCount}
+            setsPerExercise: ${form.setsPerExercise}
             splitStyle: ${form.splitStyle.name}
             templatesExpected: ${form.splitStyle.templateCount}
 
