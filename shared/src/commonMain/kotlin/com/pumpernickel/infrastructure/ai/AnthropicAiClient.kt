@@ -37,6 +37,24 @@ class AnthropicAiClient(
         userPrompt: String,
         schema: AiJsonSchema,                  // ignored — schema lives in systemPrompt
         onProgress: (content: String, reasoning: String) -> Unit
+    ): String = complete(model, systemPrompt, userPrompt, onProgress)
+
+    override suspend fun completeJsonObject(
+        baseUrl: String,                       // ignored — see completeJsonSchema
+        model: String,
+        systemPrompt: String,
+        userPrompt: String,
+        onProgress: (content: String, reasoning: String) -> Unit
+    ): String = complete(model, systemPrompt, userPrompt, onProgress)
+
+    // WR-12 — single body shared by both AiClient entrypoints. Anthropic has no
+    // wire-level distinction between `json_schema` and `json_object` (D-22-10);
+    // both paths embed the schema requirement in the system prompt.
+    private suspend fun complete(
+        model: String,
+        systemPrompt: String,
+        userPrompt: String,
+        onProgress: (content: String, reasoning: String) -> Unit
     ): String {
         val request = AnthropicMessagesRequest(
             model = model,
@@ -45,27 +63,6 @@ class AnthropicAiClient(
             maxTokens = 4096,
             temperature = 0.7,
             stream = false  // overridden to true by AnthropicClient.chatCompletionStreaming
-        )
-        return client.chatCompletionStreaming(request, onProgress)
-    }
-
-    override suspend fun completeJsonObject(
-        baseUrl: String,                       // ignored — see completeJsonSchema
-        model: String,
-        systemPrompt: String,
-        userPrompt: String,
-        onProgress: (content: String, reasoning: String) -> Unit
-    ): String {
-        // Same body as completeJsonSchema — Anthropic doesn't distinguish
-        // json_schema vs json_object at the wire level; both paths inject the
-        // schema requirement through the system prompt (D-22-10).
-        val request = AnthropicMessagesRequest(
-            model = model,
-            system = systemPrompt,
-            messages = listOf(AnthropicMessage(role = "user", content = userPrompt)),
-            maxTokens = 4096,
-            temperature = 0.7,
-            stream = false
         )
         return client.chatCompletionStreaming(request, onProgress)
     }
