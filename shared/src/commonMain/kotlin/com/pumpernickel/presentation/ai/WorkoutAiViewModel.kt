@@ -53,9 +53,10 @@ import kotlinx.coroutines.yield
  * Fix targets the View+VM `reset()` semantics in Task 2, not the Koin scope.
  *
  * Evidence (code-trace only — no simulator run needed):
- *   1. `[AiVM] state=Preview` is set by the `Success` collector at line ~122.
+ *   1. The `Success` collector at line ~122 sets the VM state to Preview.
  *   2. SwiftUI calls `.onAppear { viewModel.reset() }` synchronously on re-entry.
- *   3. `reset()` only guards `Generating` → overwrites `Preview` with `defaultForm`.
+ *   3. The pre-fix `reset()` only guarded Generating, so it overwrote Preview
+ *      with defaultForm — the visible "workout disappeared" symptom of B1.
  * Quick-Fix 260518-eny SUMMARY corroborates: the same VM-instance is long-lived on
  * iOS, so the surviving `_uiState` is the right place to look — and the unguarded
  * reset() it added is the regression that turned a recoverable Preview into Idle.
@@ -100,7 +101,6 @@ class WorkoutAiViewModel(
     )
 
     init {
-        println("[AiVM] init instance=${this.hashCode()}")
         // Bootstrap ApiKeyState from Keychain on first init (read updates the flow).
         viewModelScope.launch { secureKeyStore.readApiKey() }
         // Live-react to key changes
@@ -111,11 +111,9 @@ class WorkoutAiViewModel(
                     !hasKey && current !is WorkoutAiUiState.Generating
                             && current !is WorkoutAiUiState.Preview
                             && current !is WorkoutAiUiState.Saved -> {
-                        println("[AiVM] state=NoKey instance=${this@WorkoutAiViewModel.hashCode()}")
                         _uiState.value = WorkoutAiUiState.NoKey
                     }
                     hasKey && current is WorkoutAiUiState.NoKey -> {
-                        println("[AiVM] state=Form(default,fromNoKey) instance=${this@WorkoutAiViewModel.hashCode()}")
                         _uiState.value = defaultForm
                     }
                     else -> {}
@@ -130,7 +128,6 @@ class WorkoutAiViewModel(
                 when (genState) {
                     is AiGenerationState.Idle -> {
                         if (current is WorkoutAiUiState.Generating) {
-                            println("[AiVM] state=Form(fromIdle) instance=${this@WorkoutAiViewModel.hashCode()}")
                             _uiState.value = defaultForm
                         }
                     }
@@ -138,7 +135,6 @@ class WorkoutAiViewModel(
                         if (genState.type == AiType.WORKOUT) {
                             val form = genState.originatingData as? WorkoutAiForm
                             val rows = form?.exerciseCount ?: (current as? WorkoutAiUiState.Form)?.exerciseCount ?: 5
-                            println("[AiVM] state=Generating rows=$rows instance=${this@WorkoutAiViewModel.hashCode()}")
                             _uiState.value = WorkoutAiUiState.Generating(skeletonRowCount = rows)
                         }
                     }
@@ -146,7 +142,6 @@ class WorkoutAiViewModel(
                         if (genState.type == AiType.WORKOUT) {
                             val preview = genState.preview as WorkoutAiPreview
                             val form = genState.originatingData as? WorkoutAiForm
-                            println("[AiVM] state=Preview instance=${this@WorkoutAiViewModel.hashCode()}")
                             _uiState.value = WorkoutAiUiState.Preview(
                                 preview = preview,
                                 originatingForm = if (form != null) {
@@ -161,7 +156,6 @@ class WorkoutAiViewModel(
                         if (genState.type == AiType.WORKOUT) {
                             val error = if (genState.exception is AiError) genState.exception else AiError.fromThrowable(genState.exception)
                             val form = genState.originatingData as? WorkoutAiForm
-                            println("[AiVM] state=Error instance=${this@WorkoutAiViewModel.hashCode()}")
                             _uiState.value = WorkoutAiUiState.Error(
                                 error = error,
                                 originatingForm = if (form != null) {
@@ -175,11 +169,6 @@ class WorkoutAiViewModel(
                 }
             }
         }
-    }
-
-    override fun onCleared() {
-        println("[AiVM] onCleared instance=${this.hashCode()}")
-        super.onCleared()
     }
 
     fun onMusclesChanged(muscles: List<MuscleGroup>) {
@@ -254,14 +243,25 @@ class WorkoutAiViewModel(
      * instance carries a stale `Saved` / `Preview` / `Error` state from a prior
      * navigation cycle. Does NOT cancel in-flight generations (would break the
      * Phase-19 BackgroundTaskManager flow); the `Generating` guard preserves that.
+     *
+     * D-21-02 fix (c) — additionally guards `Preview` and `Error`. When the user
+     * leaves the AI tab while the LLM is running and returns AFTER the "Workout
+     * fertig"-notification has flipped the AiGenerationManager state to
+     * `Success` (→ VM state = `Preview`), the previous guard let `.onAppear`
+     * stomp Preview with `defaultForm`, manifesting as "workout disappeared"
+     * (B1). Preview and Error must survive view re-entry — only the user's
+     * explicit Discard/Retry/Save (or a fresh `generate()`) may leave them, not
+     * a lifecycle callback. `Saved` is intentionally still resettable so the
+     * one-shot dismiss flow (260518-eny) keeps working: after `save()` flips
+     * through `Saved` for a single tick and emits `savedEvent`, a subsequent
+     * re-entry on a returning navigation cycle still falls back to the form.
      */
     fun reset() {
-        val before = _uiState.value
-        if (before is WorkoutAiUiState.Generating) {
-            println("[AiVM] reset() skipped (Generating) instance=${this.hashCode()}")
-            return
-        }
-        println("[AiVM] reset() before=${before::class.simpleName} instance=${this.hashCode()}")
+        val current = _uiState.value
+        if (current is WorkoutAiUiState.Generating
+            || current is WorkoutAiUiState.Preview
+            || current is WorkoutAiUiState.Error
+        ) return
         _uiState.value = defaultForm
     }
 
