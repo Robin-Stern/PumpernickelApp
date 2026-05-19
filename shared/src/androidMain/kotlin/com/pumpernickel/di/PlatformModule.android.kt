@@ -37,6 +37,10 @@ actual val platformModule: Module = module {
     single<BiometricGate> { BiometricGate(androidContext()) }
     // Phase 18 — BYOK key store (REQ-AI-06).
     single<SecureKeyStore> { SecureKeyStore(androidContext()) }
+    // Phase 22 — OAuth browser bridge for Anthropic Pro/Max auth flow (D-22-01).
+    single<com.pumpernickel.infrastructure.ai.OAuthBrowserLauncher> {
+        com.pumpernickel.infrastructure.ai.OAuthBrowserLauncher(androidContext())
+    }
 
     // Async AI generation: notifications + foreground-service-backed background work.
     single { com.pumpernickel.infrastructure.notification.NotificationService(androidContext()) }
