@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Android Material 3 UI
-status: verifying
+status: executing
 stopped_at: Phase 21 plans created (6 plans, 4 waves)
-last_updated: "2026-05-18T22:06:26.216Z"
-last_activity: 2026-05-18
+last_updated: "2026-05-18T22:16:20.396Z"
+last_activity: 2026-05-18 -- Phase 21 execution started
 progress:
   total_phases: 12
   completed_phases: 6
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Users can select a workout template and execute it set-by-set — logging reps, weight, and rest periods — with a clean, reliable flow
-**Current focus:** Phase 19 closed; ready for next phase or demo prep
+**Current focus:** Phase 21 — bug-wave-aus-ios-demo-test-2026-05-18-ai-workout-state-loss-
 
 ## Current Position
 
 Milestone: v1.5 (shipped 2026-03-31)
-Phase: 19 (geofencing-workout-enforcement) — COMPLETE (UAT confirmed 2026-05-17)
-Plan: 7 of 7
+Phase: 21 (bug-wave-aus-ios-demo-test-2026-05-18-ai-workout-state-loss-) — EXECUTING
+Plan: 1 of 6
 Branch: `android-ios-parity` (ahead of `main` by ~25 commits — merge pending)
-Status: Phase complete — ready for verification
-Last activity: 2026-05-18
+Status: Executing Phase 21
+Last activity: 2026-05-18 -- Phase 21 execution started
 
 Progress: [██████████] 97%
 
