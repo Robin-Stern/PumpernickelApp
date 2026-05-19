@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Android Material 3 UI
-status: executing
-stopped_at: context exhaustion at 76% (2026-05-19)
-last_updated: "2026-05-19T10:32:56.210Z"
-last_activity: 2026-05-19 -- Phase 23 execution started
+status: idle
+stopped_at: ""
+last_updated: "2026-05-19T12:55:00.000Z"
+last_activity: 2026-05-19 -- Phase 23 execution complete (human_needed: iOS implementation)
 progress:
   total_phases: 12
   completed_phases: 10
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Milestone: v1.5 (shipped 2026-03-31)
-Phase: 23 (ai-ux-und-ios-parit-t-ios-workout-gen-zielmuskel-auswahl-set) — EXECUTING
-Plan: 1 of 3
-Branch: `android-ios-parity` (ahead of `main` by ~25 commits — merge pending)
-Status: Executing Phase 23
-Last activity: 2026-05-19 -- Phase 23 execution started
+Phase: 23 (ai-ux-und-ios-parit-t-ios-workout-gen-zielmuskel-auswahl-set) — COMPLETE (human_needed: iOS implementation)
+Plan: 3 of 3
+Branch: `android-ios-parity` (ahead of `main` by ~178 commits — merge pending)
+Status: Phase 23 complete. Next: Phase 24 or merge to main.
+Last activity: 2026-05-19 -- Phase 23 execution complete
 
-Progress: [██████████] 97%
+Progress: [██████████] 100%
 
 ## ⚠️  Untracked Drift
 
