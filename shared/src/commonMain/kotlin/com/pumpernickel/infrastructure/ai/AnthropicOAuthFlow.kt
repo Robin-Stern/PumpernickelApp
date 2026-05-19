@@ -10,7 +10,6 @@ import kotlin.time.Clock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlin.random.Random
 
 /**
  * D-22-01 / D-22-12 — PKCE OAuth flow orchestrator. Constructs the authorize
@@ -105,18 +104,20 @@ class AnthropicOAuthFlow(
             "&state=$state" +
             "&scope=${urlEncode(SCOPE)}"
 
-    /** RFC 7636 §4.1 — 64-character URL-safe random string from the unreserved set. */
-    internal fun generateCodeVerifier(): String {
-        val unreserved =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
-        return buildString(64) {
-            repeat(64) { append(unreserved[Random.nextInt(unreserved.length)]) }
-        }
-    }
+    /**
+     * RFC 7636 §4.1 — URL-safe verifier from a cryptographically secure RNG.
+     * 48 random bytes → 64 base64url-no-padding characters, all in the
+     * unreserved set (`A–Z a–z 0–9 - _`).
+     */
+    internal fun generateCodeVerifier(): String =
+        base64UrlNoPadding(secureRandomBytes(48))
 
-    internal fun generateState(): String = buildString(32) {
-        repeat(32) { append(STATE_ALPHABET[Random.nextInt(STATE_ALPHABET.length)]) }
-    }
+    /**
+     * RFC 6749 §10.12 — state must be unguessable to defeat CSRF. 24 random
+     * bytes → 32 base64url-no-padding characters (URL-safe).
+     */
+    internal fun generateState(): String =
+        base64UrlNoPadding(secureRandomBytes(24))
 
     /** BASE64URL(SHA-256(verifier)), no padding. */
     internal fun codeChallengeS256(verifier: String): String {
@@ -125,9 +126,6 @@ class AnthropicOAuthFlow(
     }
 
     companion object {
-        private const val STATE_ALPHABET =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-
         // D-22-01 — Anthropic OAuth endpoints. Per CONTEXT.md canonical_refs:
         // authorize URL on claude.ai, token endpoint on claude.ai, NOT on
         // api.anthropic.com.
